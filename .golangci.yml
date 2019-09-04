@@ -1,0 +1,17 @@
+run:
+  deadline: 60s
+  skip-dirs:
+  - hack
+  - website
+  - ui
+
+linters:
+  enable:
+  - misspell
+  - gofmt
+
+issues:
+  exclude-rules:
+  - path: _test\.go
+    linters:
+    - errcheck

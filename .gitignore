@@ -1,0 +1,15 @@
+/build
+/dist
+/enduro
+
+/hack/minio-data/sips/*
+!/hack/minio-data/sips/archivematica.png
+/hack/minio-data/.minio.sys/buckets/sips/*
+!/hack/minio-data/.minio.sys/buckets/sips/archivematica.png/
+
+/hack/watched-dir/*
+/hack/production-system-interface/*
+
+/hack/stuff
+
+rice-box.go

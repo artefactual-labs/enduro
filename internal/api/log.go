@@ -1,0 +1,24 @@
+package api
+
+import (
+	"github.com/go-logr/logr"
+	"goa.design/goa/middleware"
+)
+
+// adapter is a thin wrapper around logr.Logger that implements Goa's Logger.
+type adapter struct {
+	logger logr.Logger
+}
+
+// loggerAdapter returns a new adapter.
+func loggerAdapter(logger logr.Logger) middleware.Logger {
+	return &adapter{
+		logger: logger,
+	}
+}
+
+// Log implements middleware.Logger.
+func (a *adapter) Log(keyvals ...interface{}) error {
+	a.logger.Info("", keyvals...)
+	return nil
+}

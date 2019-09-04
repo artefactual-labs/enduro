@@ -1,0 +1,1 @@
+<NotificationConfiguration xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><QueueConfiguration><Id></Id><Filter><S3Key></S3Key></Filter><Event>s3:ObjectCreated:*</Event><Queue>arn:minio:sqs::1:redis</Queue></QueueConfiguration></NotificationConfiguration>

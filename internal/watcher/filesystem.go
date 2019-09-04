@@ -1,0 +1,94 @@
+package watcher
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"os"
+	"path/filepath"
+
+	"github.com/fsnotify/fsnotify"
+	"gocloud.dev/blob"
+	"gocloud.dev/blob/fileblob"
+)
+
+// filesystemWatcher implements a Watcher for watching paths in a local filesystem.
+type filesystemWatcher struct {
+	ctx  context.Context
+	fsw  *fsnotify.Watcher
+	ch   chan *fsnotify.Event
+	path string
+	*commonWatcherImpl
+}
+
+var _ Watcher = (*filesystemWatcher)(nil)
+
+func NewFilesystemWatcher(ctx context.Context, config *FilesystemConfig) (*filesystemWatcher, error) {
+	stat, err := os.Stat(config.Path)
+	if err != nil {
+		return nil, fmt.Errorf("error looking up stat info: %w", err)
+	}
+	if !stat.IsDir() {
+		return nil, errors.New("given path is not a directory")
+	}
+
+	fsw, err := fsnotify.NewWatcher()
+	if err != nil {
+		return nil, fmt.Errorf("error creating filesystem watcher: %w", err)
+	}
+
+	w := &filesystemWatcher{
+		ctx:  ctx,
+		fsw:  fsw,
+		ch:   make(chan *fsnotify.Event, 100),
+		path: config.Path,
+		commonWatcherImpl: &commonWatcherImpl{
+			name:     config.Name,
+			pipeline: config.Pipeline,
+		},
+	}
+
+	go w.loop()
+
+	if err := fsw.Add(config.Path); err != nil {
+		return nil, fmt.Errorf("error configuring filesystem watcher: %w", err)
+	}
+
+	return w, nil
+}
+
+func (w *filesystemWatcher) loop() {
+	for {
+		select {
+		case event, ok := <-w.fsw.Events:
+			if !ok || event.Op != fsnotify.Create {
+				continue
+			}
+			w.ch <- &event
+		case _, ok := <-w.fsw.Errors:
+			if !ok {
+				continue
+			}
+		case <-w.ctx.Done():
+			_ = w.fsw.Close()
+			close(w.ch)
+			return
+		}
+	}
+}
+
+func (w *filesystemWatcher) Watch(ctx context.Context) (*BlobEvent, error) {
+	fsevent, ok := <-w.ch
+	if !ok {
+		return nil, ErrWatchTimeout
+	}
+	rel, err := filepath.Rel(w.path, fsevent.Name)
+	if err != nil {
+		return nil, fmt.Errorf("error generating relative path of fsvent.Name %s - %w", fsevent.Name, err)
+	}
+	return NewBlobEvent(w, rel), nil
+}
+
+func (w *filesystemWatcher) OpenBucket(context.Context, *BlobEvent) (*blob.Bucket, error) {
+	return fileblob.OpenBucket(w.path, nil)
+}

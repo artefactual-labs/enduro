@@ -1,0 +1,28 @@
+on:
+  push:
+    tags:
+      - 'v*'
+name: GoReleaser
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    #needs: [ test ]
+    steps:
+    - name: Check out code
+      uses: actions/checkout@master
+    - name: Install Node.js
+      uses: actions/setup-node@v1
+      with:
+        node-version: '12.x'
+    - name: Install UI dependencies
+      run: yarn --cwd ui install
+    - name: Build UI
+      run: yarn --cwd ui build
+    - name: GoReleaser
+      uses: docker://goreleaser/goreleaser
+      env:
+        GITHUB_TOKEN: ${{ secrets.QUBOT_GITHUB_TOKEN }}
+      with:
+        args: release
+      if: success()

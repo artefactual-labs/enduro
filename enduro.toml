@@ -1,0 +1,46 @@
+# This is the configuration file valid for the development environment.
+
+debug = true
+debugListen = "127.0.0.1:9001"
+
+[cadence]
+domain = "enduro"
+address = "127.0.0.1:7400"
+
+[api]
+listen = "127.0.0.1:9000"
+debug = false
+
+[database]
+dsn = "enduro:enduro123@tcp(127.0.0.1:7450)/enduro"
+
+[[watcher.minio]]
+name = "dev-minio"
+redisAddress = "redis://127.0.0.1:7470"
+redisList = "minio-events"
+endpoint = "http://127.0.0.1:7460"
+pathStyle = true
+key = "36J9X8EZI4KEV1G7EHXA"
+secret = "ECk2uqOoNqvtJIMQ3WYugvmNPL_-zm3WcRqP5vUM"
+region = "us-west-1"
+pipeline = "am"
+
+[[watcher.filesystem]]
+name = "dev-fs"
+path = "./hack/watched-dir"
+pipeline = "am"
+
+[[pipeline]]
+name = "am"
+baseURL = "http://127.0.0.1:62080"
+user = "test"
+key = "test"
+transferDir = "~/.am/ss-location-data"
+processingDir = ""
+
+[[hooks."hari"]]
+mock = true
+baseURL = "" # E.g.: "https://192.168.1.50:8080/api"
+
+[[hooks."prod"]]
+receiptPath = "./hack/production-system-interface"
