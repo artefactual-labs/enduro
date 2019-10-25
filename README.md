@@ -1,5 +1,5 @@
 <p align="left">
-  <a href="https://github.com/artefactual-labs/enduro/releases/latest"><img src="https://img.shields.io/github/release/artefactual-labs/enduro.svg"/></a>
+  <a href="https://github.com/artefactual-labs/enduro/releases/latest"><img src="https://img.shields.io/github/v/release/artefactual-labs/enduro.svg?color=orange"/></a>
   <img src="https://github.com/artefactual-labs/enduro/workflows/Test/badge.svg"/>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache%202.0-blue.svg"/></a>
 </p>
