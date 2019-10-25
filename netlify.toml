@@ -1,6 +1,6 @@
 [build]
 base = "website"
-publish = "website/public"
+publish = "public"
 command = "git submodule update --init --recursive && hugo --gc --minify"
 
 [context.split1]
