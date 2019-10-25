@@ -95,9 +95,9 @@ func main() {
 	}
 
 	if configFileFound {
-		logger.Info("Configuration file not found.")
-	} else {
 		logger.Info("Configuration file loaded.", "path", v.ConfigFileUsed())
+	} else {
+		logger.Info("Configuration file not found.")
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -328,8 +328,11 @@ func readConfig(v *viper.Viper, config *configuration, configFile string) (found
 	}
 
 	err = v.ReadInConfig()
-	_, found = err.(viper.ConfigFileNotFoundError)
-	if err != nil && !found {
+	_, ok := err.(viper.ConfigFileNotFoundError)
+	if !ok {
+		found = true
+	}
+	if found && err != nil {
 		return found, fmt.Errorf("Failed to read configuration file: %w", err)
 	}
 
