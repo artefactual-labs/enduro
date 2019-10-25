@@ -7,14 +7,14 @@ command = "git submodule update --init --recursive && hugo --gc --minify"
 command = "git submodule update --init --recursive && hugo --gc --minify --enableGitInfo"
 
 [context.split1.environment]
-HUGO_VERSION = "0.58.3"
+HUGO_VERSION = "0.59.0"
 HUGO_ENV = "production"
 
 [context.deploy-preview]
 command = "git submodule update --init --recursive && hugo --gc --minify --buildFuture -b $DEPLOY_PRIME_URL"
 
 [context.deploy-preview.environment]
-HUGO_VERSION = "0.58.3"
+HUGO_VERSION = "0.59.0"
 
 [context.branch-deploy]
 command = "git submodule update --init --recursive && hugo --gc --minify -b $DEPLOY_PRIME_URL"
@@ -26,7 +26,7 @@ HUGO_VERSION = "ç"
 HUGO_ENABLEGITINFO = "true"
 
 [context.production.environment]
-HUGO_VERSION = "0.58.3"
+HUGO_VERSION = "0.59.0"
 HUGO_ENV = "production"
 HUGO_ENABLEGITINFO = "true"
 
