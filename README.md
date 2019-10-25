@@ -1,4 +1,8 @@
-![Build status][badge-test]
+<p align="left">
+  <a href="https://github.com/artefactual-labs/enduro/releases/latest"><img src="https://img.shields.io/github/release/artefactual-labs/enduro.svg"/></a>
+  <img src="https://github.com/artefactual-labs/enduro/workflows/Test/badge.svg"/>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache%202.0-blue.svg"/></a>
+</p>
 
 # Enduro
 
@@ -14,5 +18,4 @@ fault-tolerant workflows suited for preservation.
 
 Visit https://enduroproject.netlify.com for more details.
 
-[badge-test]: https://github.com/artefactual-labs/enduro/workflows/Test/badge.svg
 [nha-piql-post]: https://www.piql.com/norwegians-digital-health-data-to-be-preserved-for-future-generations/
