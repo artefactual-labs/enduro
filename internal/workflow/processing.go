@@ -38,6 +38,7 @@ const (
 	UpdateHARIActivityName             = "update-hari-activity"
 	UpdateProductionSystemActivityName = "update-production-system-activity"
 	CleanUpActivityName                = "clean-up-activity"
+	HidePackageActivityName            = "hide-package-activity"
 
 	processingConfig = "automated"
 )
@@ -144,6 +145,17 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, event *watcher.BlobEv
 	}
 
 	defer workflow.CompleteSession(sessCtx)
+
+	// Hide packages from Archivematica Dashboard.
+	if tinfo.Status == collection.StatusDone {
+		futures = []workflow.Future{}
+		activityOpts = withActivityOptsForRequest(ctx)
+		futures = append(futures, workflow.ExecuteActivity(activityOpts, HidePackageActivityName, tinfo.TransferID, "transfer", tinfo.Event.PipelineName))
+		futures = append(futures, workflow.ExecuteActivity(activityOpts, HidePackageActivityName, tinfo.SIPID, "ingest", tinfo.Event.PipelineName))
+		for _, f := range futures {
+			_ = f.Get(activityOpts, nil)
+		}
+	}
 
 	activityOpts = withActivityOptsForRequest(sessCtx)
 	err = workflow.ExecuteActivity(activityOpts, CleanUpActivityName, tinfo).Get(activityOpts, nil)
@@ -455,17 +467,15 @@ func NewCleanUpActivity(m *Manager) *CleanUpActivity {
 }
 
 func (a *CleanUpActivity) Execute(ctx context.Context, tinfo *TransferInfo) error {
-	if tinfo.RelPath == "" {
-		return nil
-	}
-
 	cfg, err := a.manager.Pipelines.Config(tinfo.Event.PipelineName)
 	if err != nil {
 		return err
 	}
 
-	if err := os.RemoveAll(filepath.Join(cfg.TransferDir, tinfo.RelPath)); err != nil {
-		return err
+	if tinfo.RelPath != "" {
+		if err := os.RemoveAll(filepath.Join(cfg.TransferDir, tinfo.RelPath)); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -500,4 +510,45 @@ func updatePackageStatusLocalActivity(ctx context.Context, colsvc collection.Ser
 	info := activity.GetInfo(ctx)
 
 	return colsvc.UpdateWorkflowStatus(ctx, tinfo.CollectionID, tinfo.Name, info.WorkflowExecution.ID, info.WorkflowExecution.RunID, tinfo.TransferID, tinfo.SIPID, tinfo.Status, tinfo.StoredAt)
+}
+
+type HidePackageActivity struct {
+	manager *Manager
+}
+
+func NewHidePackageActivity(m *Manager) *HidePackageActivity {
+	return &HidePackageActivity{manager: m}
+}
+
+func (a *HidePackageActivity) Execute(ctx context.Context, unitID, unitType, pipelineName string) error {
+	amc, err := a.manager.Pipelines.Client(pipelineName)
+	if err != nil {
+		return nonRetryableError(fmt.Errorf("error looking up pipeline config: %v", err))
+	}
+
+	if unitType != "transfer" && unitType != "ingest" {
+		return nonRetryableError(fmt.Errorf("unexpected unit type: %s", unitType))
+	}
+
+	if unitType == "transfer" {
+		resp, _, err := amc.Transfer.Hide(ctx, unitID)
+		if err != nil {
+			return fmt.Errorf("error hiding transfer: %v", err)
+		}
+		if resp.Removed != true {
+			return fmt.Errorf("error hiding transfer: not removed")
+		}
+	}
+
+	if unitType == "ingest" {
+		resp, _, err := amc.Ingest.Hide(ctx, unitID)
+		if err != nil {
+			return fmt.Errorf("error hiding sip: %v", err)
+		}
+		if resp.Removed != true {
+			return fmt.Errorf("error hiding sip: not removed")
+		}
+	}
+
+	return nil
 }
