@@ -467,15 +467,17 @@ func NewCleanUpActivity(m *Manager) *CleanUpActivity {
 }
 
 func (a *CleanUpActivity) Execute(ctx context.Context, tinfo *TransferInfo) error {
+	if tinfo.RelPath == "" {
+		return nil
+	}
+
 	cfg, err := a.manager.Pipelines.Config(tinfo.Event.PipelineName)
 	if err != nil {
 		return err
 	}
 
-	if tinfo.RelPath != "" {
-		if err := os.RemoveAll(filepath.Join(cfg.TransferDir, tinfo.RelPath)); err != nil {
-			return err
-		}
+	if err := os.RemoveAll(filepath.Join(cfg.TransferDir, tinfo.RelPath)); err != nil {
+		return err
 	}
 
 	return nil
