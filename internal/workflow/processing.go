@@ -535,7 +535,7 @@ func (a *HidePackageActivity) Execute(ctx context.Context, unitID, unitType, pip
 		if err != nil {
 			return fmt.Errorf("error hiding transfer: %v", err)
 		}
-		if resp.Removed != true {
+		if !resp.Removed {
 			return fmt.Errorf("error hiding transfer: not removed")
 		}
 	}
@@ -545,7 +545,7 @@ func (a *HidePackageActivity) Execute(ctx context.Context, unitID, unitType, pip
 		if err != nil {
 			return fmt.Errorf("error hiding sip: %v", err)
 		}
-		if resp.Removed != true {
+		if !resp.Removed {
 			return fmt.Errorf("error hiding sip: not removed")
 		}
 	}
