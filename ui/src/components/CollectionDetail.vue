@@ -21,10 +21,12 @@
             </template>
             <dt>Created</dt>
             <dd>{{ collection.createdAt | formatDateTime }}</dd>
-            <template v-if="collection.status == 'done'">
-              <hr />
+            <template v-if="collection.transferId">
               <dt>Transfer</dt>
               <dd>{{ collection.transferId }}</dd>
+            </template>
+            <template v-if="collection.status == 'done'">
+              <hr />
               <dt>AIP</dt>
               <dd>{{ collection.aipId }}</dd>
               <dt>Completed</dt>
