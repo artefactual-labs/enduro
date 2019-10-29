@@ -29,6 +29,8 @@ func TransferStatus(ctx context.Context, client *amclient.Client, ID string) (st
 	}
 
 	switch {
+
+	// State that we can't handle.
 	default:
 		fallthrough
 	case status.Status == "COMPLETE" && status.SIPID == "BACKLOG":
@@ -39,10 +41,20 @@ func TransferStatus(ctx context.Context, client *amclient.Client, ID string) (st
 		fallthrough
 	case status.Status == "FAILED" || status.Status == "REJECTED":
 		return "", fmt.Errorf("error checking transfer status (%w): transfer is in a state that we can't handle: %s", ErrStatusNonRetryable, status.Status)
+
+	// Processing state where we want to keep waiting.
+	case status.Status == "COMPLETE" && status.SIPID == "":
+		// It is possible (due to https://github.com/archivematica/Issues/issues/690),
+		// that AM tells us that the transfer completed but the SIPID field is
+		// not populated.
+		fallthrough
 	case status.Status == "PROCESSING":
 		return "", ErrStatusInProgress
+
+	// Success!
 	case status.Status == "COMPLETE":
 		return status.SIPID, nil
+
 	}
 }
 
