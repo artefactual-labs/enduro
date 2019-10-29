@@ -11,6 +11,7 @@ const ingestBasePath = "api/ingest"
 // Dashboard API.
 type IngestService interface {
 	Status(context.Context, string) (*IngestStatusResponse, *Response, error)
+	Hide(context.Context, string) (*IngestHideResponse, *Response, error)
 }
 
 // IngestServiceOp handles communication with the Ingest related methods of
@@ -42,6 +43,24 @@ func (s *IngestServiceOp) Status(ctx context.Context, ID string) (*IngestStatusR
 	}
 
 	payload := &IngestStatusResponse{}
+	resp, err := s.client.Do(ctx, req, payload)
+
+	return payload, resp, err
+}
+
+type IngestHideResponse struct {
+	Removed bool `json:"removed"`
+}
+
+func (s *IngestServiceOp) Hide(ctx context.Context, ID string) (*IngestHideResponse, *Response, error) {
+	path := fmt.Sprintf("%s/%s/delete/", ingestBasePath, ID)
+
+	req, err := s.client.NewRequest(ctx, "DELETE", path, nil)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	payload := &IngestHideResponse{}
 	resp, err := s.client.Do(ctx, req, payload)
 
 	return payload, resp, err

@@ -123,3 +123,25 @@ func TestTransfer_Status(t *testing.T) {
 		Type:         "transfer",
 	}, payload)
 }
+
+func TestTransfer_Hide(t *testing.T) {
+	setup()
+	defer teardown()
+
+	mux.HandleFunc("/api/transfer/52dd0c01-e803-423a-be5f-b592b5d5d61c/delete/", func(w http.ResponseWriter, r *http.Request) {
+		testMethod(t, r, "DELETE")
+		fmt.Fprint(w, `{
+	"removed": true
+}`)
+	})
+
+	payload, _, err := client.Transfer.Hide(ctx, "52dd0c01-e803-423a-be5f-b592b5d5d61c")
+	if err != nil {
+		t.Errorf("Transfer.Hide() returned error: %v", err)
+	}
+
+	assert.NoError(t, err)
+	assert.Equal(t, &TransferHideResponse{
+		Removed: true,
+	}, payload)
+}

@@ -17,6 +17,7 @@ type TransferService interface {
 	Approve(context.Context, *TransferApproveRequest) (*TransferApproveResponse, *Response, error)
 	Unapproved(context.Context, *TransferUnapprovedRequest) (*TransferUnapprovedResponse, *Response, error)
 	Status(context.Context, string) (*TransferStatusResponse, *Response, error)
+	Hide(context.Context, string) (*TransferHideResponse, *Response, error)
 }
 
 // TransferServiceOp handles communication with the Tranfer related methods of
@@ -159,6 +160,24 @@ func (s *TransferServiceOp) Status(ctx context.Context, ID string) (*TransferSta
 	}
 
 	payload := &TransferStatusResponse{}
+	resp, err := s.client.Do(ctx, req, payload)
+
+	return payload, resp, err
+}
+
+type TransferHideResponse struct {
+	Removed bool `json:"removed"`
+}
+
+func (s *TransferServiceOp) Hide(ctx context.Context, ID string) (*TransferHideResponse, *Response, error) {
+	path := fmt.Sprintf("%s/%s/delete/", transferBasePath, ID)
+
+	req, err := s.client.NewRequest(ctx, "DELETE", path, nil)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	payload := &TransferHideResponse{}
 	resp, err := s.client.Do(ctx, req, payload)
 
 	return payload, resp, err
