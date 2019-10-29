@@ -62,6 +62,7 @@ func WaitUntilStored(ctx context.Context, c *Client, transferID string) (SIPID s
 		}
 		var match *Job
 		for _, job := range jobs {
+			job := job
 			if job.LinkID == workflowLinkStoreAIPID {
 				match = &job
 				break
