@@ -24,12 +24,14 @@ key = "36J9X8EZI4KEV1G7EHXA"
 secret = "ECk2uqOoNqvtJIMQ3WYugvmNPL_-zm3WcRqP5vUM"
 region = "us-west-1"
 pipeline = "am"
+retentionPeriod = "10s"
 
 [[watcher.filesystem]]
 name = "dev-fs"
 path = "./hack/watched-dir"
 inotify = true
 pipeline = "am"
+retentionPeriod = "11s"
 
 [[pipeline]]
 name = "am"

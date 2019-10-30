@@ -9,7 +9,6 @@ import (
 
 	goacollection "github.com/artefactual-labs/enduro/internal/api/gen/collection"
 	"github.com/artefactual-labs/enduro/internal/cadence"
-	"github.com/artefactual-labs/enduro/internal/watcher"
 
 	"go.uber.org/cadence/.gen/go/shared"
 )
@@ -135,14 +134,17 @@ func (w *goaWrapper) Retry(ctx context.Context, payload *goacollection.RetryPayl
 		return fmt.Errorf("error loading history of the previous workflow run: initiator state not found")
 	}
 
-	var attrs = bytes.Split(historyEvent.WorkflowExecutionStartedEventAttributes.Input, []byte("\n"))
-	var event = &watcher.BlobEvent{}
+	var input = historyEvent.WorkflowExecutionStartedEventAttributes.Input
+	var attrs = bytes.Split(input, []byte("\n"))
+	var req = &ProcessingWorkflowRequest{}
 
-	if err := json.Unmarshal(attrs[0], event); err != nil {
+	if err := json.Unmarshal(attrs[0], req); err != nil {
 		return fmt.Errorf("error loading state of the previous workflow run: %w", err)
 	}
 
-	if err := TriggerProcessingWorkflow(ctx, w.cc, event, goacol.ID, *goacol.WorkflowID); err != nil {
+	req.WorkflowID = *goacol.WorkflowID
+	req.CollectionID = goacol.ID
+	if err := TriggerProcessingWorkflow(ctx, w.cc, req); err != nil {
 		return fmt.Errorf("error triggering the new workflow instance: %w", err)
 	}
 

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"sync"
+	"time"
 
 	"gocloud.dev/blob"
 )
@@ -22,12 +23,15 @@ type Watcher interface {
 	// Every watcher targets a pipeline.
 	Pipeline() string
 
+	RetentionPeriod() time.Duration
+
 	fmt.Stringer // It should return the name of the watcher.
 }
 
 type commonWatcherImpl struct {
-	name     string
-	pipeline string
+	name            string
+	pipeline        string
+	retentionPeriod time.Duration
 }
 
 func (w *commonWatcherImpl) String() string {
@@ -38,12 +42,19 @@ func (w *commonWatcherImpl) Pipeline() string {
 	return w.pipeline
 }
 
+func (w *commonWatcherImpl) RetentionPeriod() time.Duration {
+	return w.retentionPeriod
+}
+
 type Service interface {
 	// Watchers return all known watchers.
 	Watchers() []Watcher
 
 	// Download blob given an event.
 	Download(ctx context.Context, w io.Writer, e *BlobEvent) error
+
+	// Delete blob given an event.
+	Delete(ctx context.Context, e *BlobEvent) error
 }
 
 type serviceImpl struct {
@@ -93,13 +104,22 @@ func (svc *serviceImpl) Watchers() []Watcher {
 	return ww
 }
 
-func (svc *serviceImpl) Download(ctx context.Context, writer io.Writer, event *BlobEvent) error {
+func (svc *serviceImpl) watcher(name string) (Watcher, error) {
 	svc.mu.RLock()
 	defer svc.mu.RUnlock()
 
-	w, ok := svc.watchers[event.WatcherName]
+	w, ok := svc.watchers[name]
 	if !ok {
-		return fmt.Errorf("error loading watcher: unknown watcher %s", event.WatcherName)
+		return nil, fmt.Errorf("error loading watcher: unknown watcher %s", name)
+	}
+
+	return w, nil
+}
+
+func (svc *serviceImpl) Download(ctx context.Context, writer io.Writer, event *BlobEvent) error {
+	w, err := svc.watcher(event.WatcherName)
+	if err != nil {
+		return err
 	}
 
 	bucket, err := w.OpenBucket(ctx, event)
@@ -119,4 +139,19 @@ func (svc *serviceImpl) Download(ctx context.Context, writer io.Writer, event *B
 	}
 
 	return nil
+}
+
+func (svc *serviceImpl) Delete(ctx context.Context, event *BlobEvent) error {
+	w, err := svc.watcher(event.WatcherName)
+	if err != nil {
+		return err
+	}
+
+	bucket, err := w.OpenBucket(ctx, event)
+	if err != nil {
+		return fmt.Errorf("error opening bucket: %w", err)
+	}
+	defer bucket.Close()
+
+	return bucket.Delete(ctx, event.Key)
 }

@@ -58,8 +58,9 @@ func NewMinioWatcher(ctx context.Context, config *MinioConfig) (*minioWatcher, e
 		sess:     sess,
 		listName: config.RedisList,
 		commonWatcherImpl: &commonWatcherImpl{
-			name:     config.Name,
-			pipeline: config.Pipeline,
+			name:            config.Name,
+			pipeline:        config.Pipeline,
+			retentionPeriod: config.RetentionPeriod,
 		},
 	}, nil
 }

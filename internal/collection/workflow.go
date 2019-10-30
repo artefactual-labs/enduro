@@ -22,23 +22,38 @@ const (
 	ProcessingWorkflowStartToCloseTimeout = time.Hour * 24 * 7
 )
 
-func InitProcessingWorkflow(ctx context.Context, c client.Client, event *watcher.BlobEvent) error {
-	var workflowID = fmt.Sprintf("processing-workflow-%s", uuid.New().String())
+type ProcessingWorkflowRequest struct {
+	WorkflowID string `json:"-"`
 
-	return TriggerProcessingWorkflow(ctx, c, event, 0, workflowID)
+	// The zero value represents a new collection. It can be used to indicate
+	// an existing collection in retries.
+	CollectionID uint
+
+	// Captured by the watcher, the event contains information about the
+	// incoming dataset.
+	Event *watcher.BlobEvent
 }
 
-func TriggerProcessingWorkflow(ctx context.Context, c client.Client, event *watcher.BlobEvent, collectionID uint, workflowID string) error {
+func InitProcessingWorkflow(ctx context.Context, c client.Client, event *watcher.BlobEvent) error {
+	req := &ProcessingWorkflowRequest{
+		WorkflowID: fmt.Sprintf("processing-workflow-%s", uuid.New().String()),
+		Event:      event,
+	}
+
+	return TriggerProcessingWorkflow(ctx, c, req)
+}
+
+func TriggerProcessingWorkflow(ctx context.Context, c client.Client, req *ProcessingWorkflowRequest) error {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*5)
 	defer cancel()
 
 	opts := client.StartWorkflowOptions{
-		ID:                           workflowID,
+		ID:                           req.WorkflowID,
 		TaskList:                     cce.GlobalTaskListName,
 		ExecutionStartToCloseTimeout: ProcessingWorkflowStartToCloseTimeout,
 		WorkflowIDReusePolicy:        client.WorkflowIDReusePolicyAllowDuplicate,
 	}
-	_, err := c.StartWorkflow(ctx, opts, ProcessingWorkflowName, event, collectionID)
+	_, err := c.StartWorkflow(ctx, opts, ProcessingWorkflowName, req)
 
 	return err
 }

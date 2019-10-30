@@ -39,6 +39,7 @@ const (
 	UpdateProductionSystemActivityName = "update-production-system-activity"
 	CleanUpActivityName                = "clean-up-activity"
 	HidePackageActivityName            = "hide-package-activity"
+	DeleteOriginalActivityName         = "delete-original-activity"
 
 	processingConfig = "automated"
 )
@@ -78,13 +79,13 @@ type TransferInfo struct {
 // Retrying this workflow would result in a new Archivematica transfer. We  do
 // not have a retry policy in place. The user could trigger a new instance via
 // the API.
-func (w *ProcessingWorkflow) Execute(ctx workflow.Context, event *watcher.BlobEvent, collectionID uint) error {
+func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.ProcessingWorkflowRequest) error {
 	tinfo := &TransferInfo{
-		CollectionID:     collectionID,
-		Event:            event,
+		CollectionID:     req.CollectionID,
+		Event:            req.Event,
 		ProcessingConfig: processingConfig,
 		AutoApprove:      true,
-		OriginalID:       event.NameUUID(),
+		OriginalID:       req.Event.NameUUID(),
 	}
 
 	// Persist collection as early as possible.
@@ -133,6 +134,12 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, event *watcher.BlobEv
 		return sessErr
 	}
 
+	// Schedule deletion of the original in the watched data source.
+	var deletionTimer workflow.Future
+	if tinfo.Status == collection.StatusDone {
+		deletionTimer = workflow.NewTimer(ctx, tinfo.Event.RetentionPeriod)
+	}
+
 	// Activities that we want to run within the session regardless the
 	// result. E.g. receipts, clean-ups, etc...
 	// Passing the activity lets the activity determine if the process failed.
@@ -143,8 +150,6 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, event *watcher.BlobEv
 	for _, f := range futures {
 		_ = f.Get(activityOpts, nil)
 	}
-
-	defer workflow.CompleteSession(sessCtx)
 
 	// Hide packages from Archivematica Dashboard.
 	if tinfo.Status == collection.StatusDone {
@@ -157,13 +162,26 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, event *watcher.BlobEv
 		}
 	}
 
+	// This is the last activity that depends on the session.
 	activityOpts = withActivityOptsForRequest(sessCtx)
-	err = workflow.ExecuteActivity(activityOpts, CleanUpActivityName, tinfo).Get(activityOpts, nil)
-	if err != nil {
-		return err
+	_ = workflow.ExecuteActivity(activityOpts, CleanUpActivityName, tinfo).Get(activityOpts, nil)
+
+	workflow.CompleteSession(sessCtx)
+
+	var logger = workflow.GetLogger(ctx)
+
+	// Delete original once the timer returns.
+	if deletionTimer != nil {
+		err := deletionTimer.Get(ctx, nil)
+		if err != nil {
+			logger.Warn("Retention policy timer failed", zap.Error(err))
+		} else {
+			activityOpts = withActivityOptsForRequest(ctx)
+			_ = workflow.ExecuteActivity(activityOpts, DeleteOriginalActivityName, tinfo.Event).Get(activityOpts, nil)
+		}
 	}
 
-	workflow.GetLogger(ctx).Info(
+	logger.Info(
 		"Workflow completed successfully!",
 		zap.Uint("collectionID", tinfo.CollectionID),
 		zap.String("originalID", tinfo.OriginalID),
@@ -292,6 +310,9 @@ func (a *DownloadActivity) Execute(ctx context.Context, tinfo *TransferInfo) (*T
 		if err := archiver.Unarchive(tmpFile.Name(), tmpDir); err != nil {
 			return tinfo, nonRetryableError(fmt.Errorf("Error unarchiving package: %s", err))
 		}
+
+		// Delete the archive. We still have a copy in the watched source.
+		_ = os.Remove(tmpFile.Name())
 
 		kind = res[1]                                     // E.g.: DPJ-SIP
 		name = fmt.Sprintf("%s-%s", res[1], res[2][0:13]) // E.g.: DPJ-SIP-<uuid[0:13]>
@@ -494,37 +515,6 @@ func (a *CleanUpActivity) Execute(ctx context.Context, tinfo *TransferInfo) erro
 	return nil
 }
 
-func createPackageLocalActivity(ctx context.Context, colsvc collection.Service, tinfo *TransferInfo) (*TransferInfo, error) {
-	info := activity.GetInfo(ctx)
-	tinfo.Status = collection.StatusInProgress
-
-	if tinfo.CollectionID > 0 {
-		err := updatePackageStatusLocalActivity(ctx, colsvc, tinfo)
-		return tinfo, err
-	}
-
-	col := &collection.Collection{
-		WorkflowID: info.WorkflowExecution.ID,
-		RunID:      info.WorkflowExecution.RunID,
-		OriginalID: tinfo.OriginalID,
-		Status:     tinfo.Status,
-	}
-
-	if err := colsvc.Create(ctx, col); err != nil {
-		return tinfo, err
-	}
-
-	tinfo.CollectionID = col.ID
-
-	return tinfo, nil
-}
-
-func updatePackageStatusLocalActivity(ctx context.Context, colsvc collection.Service, tinfo *TransferInfo) error {
-	info := activity.GetInfo(ctx)
-
-	return colsvc.UpdateWorkflowStatus(ctx, tinfo.CollectionID, tinfo.Name, info.WorkflowExecution.ID, info.WorkflowExecution.RunID, tinfo.TransferID, tinfo.SIPID, tinfo.Status, tinfo.StoredAt)
-}
-
 type HidePackageActivity struct {
 	manager *Manager
 }
@@ -564,4 +554,47 @@ func (a *HidePackageActivity) Execute(ctx context.Context, unitID, unitType, pip
 	}
 
 	return nil
+}
+
+type DeleteOriginalActivity struct {
+	manager *Manager
+}
+
+func NewDeleteOriginalActivity(m *Manager) *DeleteOriginalActivity {
+	return &DeleteOriginalActivity{manager: m}
+}
+
+func (a *DeleteOriginalActivity) Execute(ctx context.Context, event *watcher.BlobEvent) error {
+	return a.manager.Watcher.Delete(ctx, event)
+}
+
+func createPackageLocalActivity(ctx context.Context, colsvc collection.Service, tinfo *TransferInfo) (*TransferInfo, error) {
+	info := activity.GetInfo(ctx)
+	tinfo.Status = collection.StatusInProgress
+
+	if tinfo.CollectionID > 0 {
+		err := updatePackageStatusLocalActivity(ctx, colsvc, tinfo)
+		return tinfo, err
+	}
+
+	col := &collection.Collection{
+		WorkflowID: info.WorkflowExecution.ID,
+		RunID:      info.WorkflowExecution.RunID,
+		OriginalID: tinfo.OriginalID,
+		Status:     tinfo.Status,
+	}
+
+	if err := colsvc.Create(ctx, col); err != nil {
+		return tinfo, err
+	}
+
+	tinfo.CollectionID = col.ID
+
+	return tinfo, nil
+}
+
+func updatePackageStatusLocalActivity(ctx context.Context, colsvc collection.Service, tinfo *TransferInfo) error {
+	info := activity.GetInfo(ctx)
+
+	return colsvc.UpdateWorkflowStatus(ctx, tinfo.CollectionID, tinfo.Name, info.WorkflowExecution.ID, info.WorkflowExecution.RunID, tinfo.TransferID, tinfo.SIPID, tinfo.Status, tinfo.StoredAt)
 }
