@@ -205,6 +205,7 @@ func main() {
 		cadence.RegisterActivity(workflow.NewUpdateProductionSystemActivity(m).Execute, workflow.UpdateProductionSystemActivityName)
 		cadence.RegisterActivity(workflow.NewCleanUpActivity(m).Execute, workflow.CleanUpActivityName)
 		cadence.RegisterActivity(workflow.NewHidePackageActivity(m).Execute, workflow.HidePackageActivityName)
+		cadence.RegisterActivity(workflow.NewDeleteOriginalActivity(m).Execute, workflow.DeleteOriginalActivityName)
 
 		done := make(chan struct{})
 		w, err := cadence.NewWorker(zlogger.Named("cadence-worker"), appName, config.Cadence)

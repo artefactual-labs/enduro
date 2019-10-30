@@ -1,5 +1,7 @@
 package watcher
 
+import "time"
+
 type Config struct {
 	Filesystem []*FilesystemConfig
 	Minio      []*MinioConfig
@@ -11,7 +13,8 @@ type FilesystemConfig struct {
 	Path    string
 	Inotify bool
 
-	Pipeline string
+	Pipeline        string
+	RetentionPeriod time.Duration
 }
 
 // See minio.go for more.
@@ -27,5 +30,6 @@ type MinioConfig struct {
 	Secret       string
 	Token        string
 
-	Pipeline string
+	Pipeline        string
+	RetentionPeriod time.Duration
 }

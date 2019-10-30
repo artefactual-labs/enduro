@@ -3,6 +3,7 @@ package watcher
 import (
 	"fmt"
 	"regexp"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -21,6 +22,9 @@ type BlobEvent struct {
 	// Name of the pipeline that the watcher targets.
 	PipelineName string
 
+	// Retention period for this blob.
+	RetentionPeriod time.Duration
+
 	// Key of the blob.
 	Key string
 
@@ -30,9 +34,10 @@ type BlobEvent struct {
 
 func NewBlobEvent(w Watcher, key string) *BlobEvent {
 	return &BlobEvent{
-		WatcherName:  w.String(),
-		PipelineName: w.Pipeline(),
-		Key:          key,
+		WatcherName:     w.String(),
+		PipelineName:    w.Pipeline(),
+		RetentionPeriod: w.RetentionPeriod(),
+		Key:             key,
 	}
 }
 
