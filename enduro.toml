@@ -28,6 +28,7 @@ pipeline = "am"
 [[watcher.filesystem]]
 name = "dev-fs"
 path = "./hack/watched-dir"
+inotify = true
 pipeline = "am"
 
 [[pipeline]]

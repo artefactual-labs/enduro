@@ -7,8 +7,9 @@ type Config struct {
 
 // See filesystem.go for more.
 type FilesystemConfig struct {
-	Name string
-	Path string
+	Name    string
+	Path    string
+	Inotify bool
 
 	Pipeline string
 }
