@@ -37,6 +37,7 @@ user = "test"
 key = "test"
 transferDir = "~/.am/ss-location-data"
 processingDir = ""
+# transferLocationID = "88f6b517-c0cc-411b-8abf-79544ce96f54"
 
 [[hooks."hari"]]
 mock = true

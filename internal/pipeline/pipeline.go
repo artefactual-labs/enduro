@@ -18,12 +18,13 @@ import (
 // TODO: PipelineRegistry should return Pipeline objects!
 
 type Config struct {
-	Name          string
-	BaseURL       string
-	User          string
-	Key           string
-	TransferDir   string
-	ProcessingDir string
+	Name               string
+	BaseURL            string
+	User               string
+	Key                string
+	TransferDir        string
+	TransferLocationID string
+	ProcessingDir      string
 }
 
 // PipelineRegistry is a collection of known pipelines.

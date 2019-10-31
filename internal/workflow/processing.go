@@ -354,9 +354,20 @@ func (a *TransferActivity) Execute(ctx context.Context, tinfo *TransferInfo) (*T
 		return nil, err
 	}
 
+	config, err := a.manager.Pipelines.Config(tinfo.Event.PipelineName)
+	if err != nil {
+		return nil, err
+	}
+
+	// Transfer path should include the location UUID if defined.
+	var path = tinfo.RelPath
+	if config.TransferLocationID != "" {
+		path = fmt.Sprintf("%s:%s", config.TransferLocationID, path)
+	}
+
 	resp, httpResp, err := amc.Package.Create(ctx, &amclient.PackageCreateRequest{
 		Name:             tinfo.Name,
-		Path:             tinfo.RelPath,
+		Path:             path,
 		ProcessingConfig: tinfo.ProcessingConfig,
 		AutoApprove:      &tinfo.AutoApprove,
 	})
