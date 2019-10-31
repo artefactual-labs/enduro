@@ -24,12 +24,12 @@ Spin up the environment with the following command:
 Cadence will crash right away because the database has not been set up properly.
 Run the following command to introduce the MySQL tables needed by Cadence:
 
-    make seed
+    make cadence-seed
 
 After a few seconds, Cadence should be up again. Since Cadence is a multitenant
 service, we need to create a Cadence domain for Enduro:
 
-    make domain
+    make cadence-domain
 
 ## Run your first test
 
