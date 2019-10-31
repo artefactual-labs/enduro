@@ -34,9 +34,13 @@ func HTTPServer(logger logr.Logger, config *Config, colsvc collection.Service) *
 	swaggersvr.Mount(mux, swaggerService)
 
 	// Web handler.
-	web, _ := ui.Handler()
-	mux.Handle("GET", "/", web.ServeHTTP)
-	mux.Handle("GET", "/{*filename}", web.ServeHTTP)
+	web, err := ui.Handler()
+	if err != nil {
+		logger.Error(err, "This build does not embed the ui package!")
+	} else {
+		mux.Handle("GET", "/", web.ServeHTTP)
+		mux.Handle("GET", "/{*filename}", web.ServeHTTP)
+	}
 
 	// Global middlewares.
 	var handler http.Handler = mux
