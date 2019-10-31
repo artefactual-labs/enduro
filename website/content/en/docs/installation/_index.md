@@ -10,6 +10,15 @@ description: >
 Enduro is still at its early stages. **Use with caution!**
 {{% /alert %}}
 
+## Introduction
+
+This is a work-in-progress document that we expect to extend as we refine the
+design of Enduro and we learn more about Cadence. You may prefer to use our
+[development environment][enduro-devenv] if you only came here for evaluating
+purposes.
+
+The instructions below are not specific to a particular environment.
+
 ## Dependencies
 
 Enduro's two main dependencies are MySQL and Cadence.
@@ -204,3 +213,4 @@ the API via cURL is `curl -Ls 127.0.0.1:9000/collection | jq`:
 [docker-restart-policy]: https://docs.docker.com/config/containers/start-containers-automatically/#use-a-restart-policy
 [enduro-release-page]: https://github.com/artefactual-labs/enduro/releases
 [enduro-config]: https://github.com/artefactual-labs/enduro/blob/main/enduro.toml
+[enduro-devenv]: {{< ref "/docs/development/environment" >}}
