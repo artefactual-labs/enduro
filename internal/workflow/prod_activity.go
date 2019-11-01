@@ -3,6 +3,7 @@ package workflow
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -25,6 +26,10 @@ func NewUpdateProductionSystemActivity(m *Manager) *UpdateProductionSystemActivi
 }
 
 func (a *UpdateProductionSystemActivity) Execute(ctx context.Context, tinfo *TransferInfo) error {
+	if tinfo.OriginalID == "" {
+		return nonRetryableError(errors.New("unknown originalID"))
+	}
+
 	// We expect tinfo.StoredAt to have the zero value when the ingestion
 	// has failed. Here we set a new value as it is a required field.
 	if tinfo.StoredAt.IsZero() {
