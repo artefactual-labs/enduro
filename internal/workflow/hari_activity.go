@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -34,6 +35,10 @@ func NewUpdateHARIActivity(m *Manager) *UpdateHARIActivity {
 }
 
 func (a UpdateHARIActivity) Execute(ctx context.Context, tinfo *TransferInfo) error {
+	if tinfo.OriginalID == "" {
+		return nonRetryableError(errors.New("unknown originalID"))
+	}
+
 	apiURL, err := a.url()
 	if err != nil {
 		return nonRetryableError(fmt.Errorf("error in URL construction: %w", err))
