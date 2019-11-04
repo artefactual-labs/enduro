@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"strconv"
 
 	goacollection "github.com/artefactual-labs/enduro/internal/api/gen/collection"
 	"github.com/artefactual-labs/enduro/internal/cadence"
@@ -22,14 +23,33 @@ type goaWrapper struct {
 var _ goacollection.Service = (*goaWrapper)(nil)
 
 // List all stored collections. It implements goacollection.Service.
-func (w *goaWrapper) List(ctx context.Context, payload *goacollection.ListPayload) (goacollection.EnduroStoredCollectionCollection, error) {
+func (w *goaWrapper) List(ctx context.Context, payload *goacollection.ListPayload) (*goacollection.ListResult, error) {
 	var query = "SELECT id, name, workflow_id, run_id, transfer_id, aip_id, original_id, status, CONVERT_TZ(created_at, @@session.time_zone, '+00:00') AS created_at, CONVERT_TZ(completed_at, @@session.time_zone, '+00:00') AS completed_at FROM collection"
 	var args = []interface{}{}
 
+	// We extract one extra item so we can tell the next cursor.
+	const limit = 20
+
+	var conds = [][2]string{}
 	if payload.OriginalID != nil {
-		query += " WHERE original_id = (?)"
 		args = append(args, payload.OriginalID)
+		conds = append(conds, [2]string{"", "original_id = (?)"})
 	}
+	if payload.Cursor != nil {
+		args = append(args, *payload.Cursor)
+		conds = append(conds, [2]string{"AND", "id <= (?)"})
+	}
+
+	var where string
+	for i, cond := range conds {
+		if i == 0 {
+			where = " WHERE " + cond[1]
+			continue
+		}
+		where += fmt.Sprintf(" %s %s", cond[0], cond[1])
+	}
+
+	query += where + " ORDER BY id DESC LIMIT " + strconv.Itoa(limit+1)
 
 	rows, err := w.db.QueryxContext(ctx, query, args...)
 	if err != nil {
@@ -46,7 +66,19 @@ func (w *goaWrapper) List(ctx context.Context, payload *goacollection.ListPayloa
 		cols = append(cols, c.Goa())
 	}
 
-	return cols, nil
+	var res = &goacollection.ListResult{
+		Items: cols,
+	}
+
+	var length = len(cols)
+	if length > limit {
+		last := cols[length-1]               // Capture last item.
+		lastID := strconv.Itoa(int(last.ID)) // We also need its ID (cursor).
+		res.Items = cols[:len(cols)-1]       // Remove it from the results.
+		res.NextCursor = &lastID             // Populate cursor.
+	}
+
+	return res, nil
 }
 
 // Show collection by ID. It implements goacollection.Service.

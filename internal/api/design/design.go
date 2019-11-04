@@ -27,13 +27,15 @@ var _ = Service("collection", func() {
 		Description("List all stored collections")
 		Payload(func() {
 			Attribute("original_id", String, "ID of the original dataset")
+			Attribute("cursor", String, "Pagination cursor")
 		})
-		Result(CollectionOf(StoredCollection))
+		Result(PaginatedCollectionOf(StoredCollection))
 		HTTP(func() {
 			GET("/")
 			Response(StatusOK)
 			Params(func() {
 				Param("original_id")
+				Param("cursor")
 			})
 		})
 	})

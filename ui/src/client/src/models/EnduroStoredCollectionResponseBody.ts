@@ -16,76 +16,76 @@ import { exists, mapValues } from '../runtime';
 /**
  * StoredPackage describes a collection retrieved by the service. (default view)
  * @export
- * @interface EnduroStoredCollectionResponse
+ * @interface EnduroStoredCollectionResponseBody
  */
-export interface EnduroStoredCollectionResponse {
+export interface EnduroStoredCollectionResponseBody {
     /**
      * Identifier of Archivematica AIP
      * @type {string}
-     * @memberof EnduroStoredCollectionResponse
+     * @memberof EnduroStoredCollectionResponseBody
      */
     aipId?: string;
     /**
      * Completion datetime
      * @type {Date}
-     * @memberof EnduroStoredCollectionResponse
+     * @memberof EnduroStoredCollectionResponseBody
      */
     completedAt?: Date;
     /**
      * Creation datetime
      * @type {Date}
-     * @memberof EnduroStoredCollectionResponse
+     * @memberof EnduroStoredCollectionResponseBody
      */
     createdAt: Date;
     /**
      * Identifier of collection
      * @type {number}
-     * @memberof EnduroStoredCollectionResponse
+     * @memberof EnduroStoredCollectionResponseBody
      */
     id: number;
     /**
      * Name of the collection
      * @type {string}
-     * @memberof EnduroStoredCollectionResponse
+     * @memberof EnduroStoredCollectionResponseBody
      */
     name?: string;
     /**
      * Identifier provided by the client
      * @type {string}
-     * @memberof EnduroStoredCollectionResponse
+     * @memberof EnduroStoredCollectionResponseBody
      */
     originalId?: string;
     /**
      * Identifier of latest processing workflow run
      * @type {string}
-     * @memberof EnduroStoredCollectionResponse
+     * @memberof EnduroStoredCollectionResponseBody
      */
     runId?: string;
     /**
      * Status of the collection
      * @type {string}
-     * @memberof EnduroStoredCollectionResponse
+     * @memberof EnduroStoredCollectionResponseBody
      */
-    status: EnduroStoredCollectionResponseStatusEnum;
+    status: EnduroStoredCollectionResponseBodyStatusEnum;
     /**
      * Identifier of Archivematica transfer
      * @type {string}
-     * @memberof EnduroStoredCollectionResponse
+     * @memberof EnduroStoredCollectionResponseBody
      */
     transferId?: string;
     /**
      * Identifier of processing workflow
      * @type {string}
-     * @memberof EnduroStoredCollectionResponse
+     * @memberof EnduroStoredCollectionResponseBody
      */
     workflowId?: string;
 }
 
-export function EnduroStoredCollectionResponseFromJSON(json: any): EnduroStoredCollectionResponse {
-    return EnduroStoredCollectionResponseFromJSONTyped(json, false);
+export function EnduroStoredCollectionResponseBodyFromJSON(json: any): EnduroStoredCollectionResponseBody {
+    return EnduroStoredCollectionResponseBodyFromJSONTyped(json, false);
 }
 
-export function EnduroStoredCollectionResponseFromJSONTyped(json: any, ignoreDiscriminator: boolean): EnduroStoredCollectionResponse {
+export function EnduroStoredCollectionResponseBodyFromJSONTyped(json: any, ignoreDiscriminator: boolean): EnduroStoredCollectionResponseBody {
     if ((json === undefined) || (json === null)) {
         return json;
     }
@@ -104,7 +104,7 @@ export function EnduroStoredCollectionResponseFromJSONTyped(json: any, ignoreDis
     };
 }
 
-export function EnduroStoredCollectionResponseToJSON(value?: EnduroStoredCollectionResponse | null): any {
+export function EnduroStoredCollectionResponseBodyToJSON(value?: EnduroStoredCollectionResponseBody | null): any {
     if (value === undefined) {
         return undefined;
     }
@@ -130,7 +130,7 @@ export function EnduroStoredCollectionResponseToJSON(value?: EnduroStoredCollect
 * @export
 * @enum {string}
 */
-export enum EnduroStoredCollectionResponseStatusEnum {
+export enum EnduroStoredCollectionResponseBodyStatusEnum {
     New = 'new',
     InProgress = 'in progress',
     Done = 'done',

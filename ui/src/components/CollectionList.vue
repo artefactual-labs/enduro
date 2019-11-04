@@ -22,6 +22,16 @@
         </tr>
       </tbody>
     </table>
+    <nav>
+      <ul class="pagination">
+        <li class="page-item">
+          <button class="page-link" @click="next('')">Reload</button>
+        </li>
+        <li class="page-item" v-if="nextCursor">
+          <button class="page-link" @click="next(nextCursor)">Next</button>
+        </li>
+      </ul>
+    </nav>
   </div>
 </template>
 
@@ -29,7 +39,7 @@
 import { Component, Prop, Provide, Vue } from 'vue-property-decorator';
 import { EnduroCollectionClient } from '../main';
 import CollectionStatusBadge from '@/components/CollectionStatusBadge.vue';
-import { CollectionEnduroStoredCollectionResponseCollection } from '../client/src';
+import { CollectionListRequest, CollectionListResponseBody, EnduroStoredCollectionResponseBodyCollection } from '../client/src';
 
 @Component({
   components: {
@@ -39,20 +49,25 @@ import { CollectionEnduroStoredCollectionResponseCollection } from '../client/sr
 export default class CollectionList extends Vue {
 
   private interval: number = 0;
-  private collections: object[] = [];
+  private collections: EnduroStoredCollectionResponseBodyCollection = [];
+  private nextCursor?: string = '';
 
   private created() {
-    this.interval = setInterval(() => this.populate(), 500);
-    return this.populate();
+    this.next();
   }
 
-  private beforeDestroy() {
-    clearInterval(this.interval);
+  private load(cursor?: string) {
+    const request: CollectionListRequest = {};
+    if (cursor) {
+      request.cursor = cursor;
+    }
+    return EnduroCollectionClient.collectionList(request);
   }
 
-  private populate() {
-    return EnduroCollectionClient.collectionList({}).then((response: CollectionEnduroStoredCollectionResponseCollection) => {
-      this.collections = response;
+  private next(cursor?: string) {
+    this.load(cursor).then((response: CollectionListResponseBody) => {
+      this.collections = response.items;
+      this.nextCursor = response.nextCursor;
     });
   }
 

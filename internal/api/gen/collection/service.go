@@ -3,7 +3,8 @@
 // collection service
 //
 // Command:
-// $ goa gen github.com/artefactual-labs/enduro/internal/api/design -o internal/api
+// $ goa gen github.com/artefactual-labs/enduro/internal/api/design -o
+// internal/api
 
 package collection
 
@@ -17,7 +18,7 @@ import (
 // The collection service manages packages being transferred to Archivematica.
 type Service interface {
 	// List all stored collections
-	List(context.Context, *ListPayload) (res EnduroStoredCollectionCollection, err error)
+	List(context.Context, *ListPayload) (res *ListResult, err error)
 	// Show collection by ID
 	Show(context.Context, *ShowPayload) (res *EnduroStoredCollection, err error)
 	// Delete collection by ID
@@ -44,11 +45,15 @@ var MethodNames = [6]string{"list", "show", "delete", "cancel", "retry", "workfl
 type ListPayload struct {
 	// ID of the original dataset
 	OriginalID *string
+	// Pagination cursor
+	Cursor *string
 }
 
-// EnduroStoredCollectionCollection is the result type of the collection
-// service list method.
-type EnduroStoredCollectionCollection []*EnduroStoredCollection
+// ListResult is the result type of the collection service list method.
+type ListResult struct {
+	Items      EnduroStoredCollectionCollection
+	NextCursor *string
+}
 
 // ShowPayload is the payload type of the collection service show method.
 type ShowPayload struct {
@@ -113,6 +118,8 @@ type EnduroCollectionWorkflowStatus struct {
 	History EnduroCollectionWorkflowHistoryCollection
 }
 
+type EnduroStoredCollectionCollection []*EnduroStoredCollection
+
 type EnduroCollectionWorkflowHistoryCollection []*EnduroCollectionWorkflowHistory
 
 // WorkflowHistoryEvent describes a history event in Cadence.
@@ -151,31 +158,6 @@ func MakeNotRunning(err error) *goa.ServiceError {
 		ID:      goa.NewErrorID(),
 		Message: err.Error(),
 	}
-}
-
-// NewEnduroStoredCollectionCollection initializes result type
-// EnduroStoredCollectionCollection from viewed result type
-// EnduroStoredCollectionCollection.
-func NewEnduroStoredCollectionCollection(vres collectionviews.EnduroStoredCollectionCollection) EnduroStoredCollectionCollection {
-	var res EnduroStoredCollectionCollection
-	switch vres.View {
-	case "default", "":
-		res = newEnduroStoredCollectionCollection(vres.Projected)
-	}
-	return res
-}
-
-// NewViewedEnduroStoredCollectionCollection initializes viewed result type
-// EnduroStoredCollectionCollection from result type
-// EnduroStoredCollectionCollection using the given view.
-func NewViewedEnduroStoredCollectionCollection(res EnduroStoredCollectionCollection, view string) collectionviews.EnduroStoredCollectionCollection {
-	var vres collectionviews.EnduroStoredCollectionCollection
-	switch view {
-	case "default", "":
-		p := newEnduroStoredCollectionCollectionView(res)
-		vres = collectionviews.EnduroStoredCollectionCollection{p, "default"}
-	}
-	return vres
 }
 
 // NewEnduroStoredCollection initializes result type EnduroStoredCollection
@@ -223,28 +205,6 @@ func NewViewedEnduroCollectionWorkflowStatus(res *EnduroCollectionWorkflowStatus
 	case "default", "":
 		p := newEnduroCollectionWorkflowStatusView(res)
 		vres = &collectionviews.EnduroCollectionWorkflowStatus{p, "default"}
-	}
-	return vres
-}
-
-// newEnduroStoredCollectionCollection converts projected type
-// EnduroStoredCollectionCollection to service type
-// EnduroStoredCollectionCollection.
-func newEnduroStoredCollectionCollection(vres collectionviews.EnduroStoredCollectionCollectionView) EnduroStoredCollectionCollection {
-	res := make(EnduroStoredCollectionCollection, len(vres))
-	for i, n := range vres {
-		res[i] = newEnduroStoredCollection(n)
-	}
-	return res
-}
-
-// newEnduroStoredCollectionCollectionView projects result type
-// EnduroStoredCollectionCollection to projected type
-// EnduroStoredCollectionCollectionView using the "default" view.
-func newEnduroStoredCollectionCollectionView(res EnduroStoredCollectionCollection) collectionviews.EnduroStoredCollectionCollectionView {
-	vres := make(collectionviews.EnduroStoredCollectionCollectionView, len(res))
-	for i, n := range res {
-		vres[i] = newEnduroStoredCollectionView(n)
 	}
 	return vres
 }

@@ -3,7 +3,8 @@
 // collection HTTP client CLI support package
 //
 // Command:
-// $ goa gen github.com/artefactual-labs/enduro/internal/api/design -o internal/api
+// $ goa gen github.com/artefactual-labs/enduro/internal/api/design -o
+// internal/api
 
 package client
 
@@ -16,15 +17,22 @@ import (
 
 // BuildListPayload builds the payload for the collection list endpoint from
 // CLI flags.
-func BuildListPayload(collectionListOriginalID string) (*collection.ListPayload, error) {
+func BuildListPayload(collectionListOriginalID string, collectionListCursor string) (*collection.ListPayload, error) {
 	var originalID *string
 	{
 		if collectionListOriginalID != "" {
 			originalID = &collectionListOriginalID
 		}
 	}
+	var cursor *string
+	{
+		if collectionListCursor != "" {
+			cursor = &collectionListCursor
+		}
+	}
 	payload := &collection.ListPayload{
 		OriginalID: originalID,
+		Cursor:     cursor,
 	}
 	return payload, nil
 }

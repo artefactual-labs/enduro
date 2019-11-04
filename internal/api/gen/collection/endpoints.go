@@ -3,7 +3,8 @@
 // collection endpoints
 //
 // Command:
-// $ goa gen github.com/artefactual-labs/enduro/internal/api/design -o internal/api
+// $ goa gen github.com/artefactual-labs/enduro/internal/api/design -o
+// internal/api
 
 package collection
 
@@ -50,12 +51,7 @@ func (e *Endpoints) Use(m func(goa.Endpoint) goa.Endpoint) {
 func NewListEndpoint(s Service) goa.Endpoint {
 	return func(ctx context.Context, req interface{}) (interface{}, error) {
 		p := req.(*ListPayload)
-		res, err := s.List(ctx, p)
-		if err != nil {
-			return nil, err
-		}
-		vres := NewViewedEnduroStoredCollectionCollection(res, "default")
-		return vres, nil
+		return s.List(ctx, p)
 	}
 }
 

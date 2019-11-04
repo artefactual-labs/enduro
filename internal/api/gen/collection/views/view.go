@@ -3,22 +3,14 @@
 // collection views
 //
 // Command:
-// $ goa gen github.com/artefactual-labs/enduro/internal/api/design -o internal/api
+// $ goa gen github.com/artefactual-labs/enduro/internal/api/design -o
+// internal/api
 
 package views
 
 import (
 	goa "goa.design/goa/v3/pkg"
 )
-
-// EnduroStoredCollectionCollection is the viewed result type that is projected
-// based on a view.
-type EnduroStoredCollectionCollection struct {
-	// Type to project
-	Projected EnduroStoredCollectionCollectionView
-	// View to render
-	View string
-}
 
 // EnduroStoredCollection is the viewed result type that is projected based on
 // a view.
@@ -37,10 +29,6 @@ type EnduroCollectionWorkflowStatus struct {
 	// View to render
 	View string
 }
-
-// EnduroStoredCollectionCollectionView is a type that runs validations on a
-// projected type.
-type EnduroStoredCollectionCollectionView []*EnduroStoredCollectionView
 
 // EnduroStoredCollectionView is a type that runs validations on a projected
 // type.
@@ -90,22 +78,6 @@ type EnduroCollectionWorkflowHistoryView struct {
 }
 
 var (
-	// EnduroStoredCollectionCollectionMap is a map of attribute names in result
-	// type EnduroStoredCollectionCollection indexed by view name.
-	EnduroStoredCollectionCollectionMap = map[string][]string{
-		"default": []string{
-			"id",
-			"name",
-			"status",
-			"workflow_id",
-			"run_id",
-			"transfer_id",
-			"aip_id",
-			"original_id",
-			"created_at",
-			"completed_at",
-		},
-	}
 	// EnduroStoredCollectionMap is a map of attribute names in result type
 	// EnduroStoredCollection indexed by view name.
 	EnduroStoredCollectionMap = map[string][]string{
@@ -150,18 +122,6 @@ var (
 	}
 )
 
-// ValidateEnduroStoredCollectionCollection runs the validations defined on the
-// viewed result type EnduroStoredCollectionCollection.
-func ValidateEnduroStoredCollectionCollection(result EnduroStoredCollectionCollection) (err error) {
-	switch result.View {
-	case "default", "":
-		err = ValidateEnduroStoredCollectionCollectionView(result.Projected)
-	default:
-		err = goa.InvalidEnumValueError("view", result.View, []interface{}{"default"})
-	}
-	return
-}
-
 // ValidateEnduroStoredCollection runs the validations defined on the viewed
 // result type EnduroStoredCollection.
 func ValidateEnduroStoredCollection(result *EnduroStoredCollection) (err error) {
@@ -182,17 +142,6 @@ func ValidateEnduroCollectionWorkflowStatus(result *EnduroCollectionWorkflowStat
 		err = ValidateEnduroCollectionWorkflowStatusView(result.Projected)
 	default:
 		err = goa.InvalidEnumValueError("view", result.View, []interface{}{"default"})
-	}
-	return
-}
-
-// ValidateEnduroStoredCollectionCollectionView runs the validations defined on
-// EnduroStoredCollectionCollectionView using the "default" view.
-func ValidateEnduroStoredCollectionCollectionView(result EnduroStoredCollectionCollectionView) (err error) {
-	for _, item := range result {
-		if err2 := ValidateEnduroStoredCollectionView(item); err2 != nil {
-			err = goa.MergeErrors(err, err2)
-		}
 	}
 	return
 }

@@ -3,7 +3,8 @@
 // collection client
 //
 // Command:
-// $ goa gen github.com/artefactual-labs/enduro/internal/api/design -o internal/api
+// $ goa gen github.com/artefactual-labs/enduro/internal/api/design -o
+// internal/api
 
 package collection
 
@@ -36,13 +37,13 @@ func NewClient(list, show, delete_, cancel, retry, workflow goa.Endpoint) *Clien
 }
 
 // List calls the "list" endpoint of the "collection" service.
-func (c *Client) List(ctx context.Context, p *ListPayload) (res EnduroStoredCollectionCollection, err error) {
+func (c *Client) List(ctx context.Context, p *ListPayload) (res *ListResult, err error) {
 	var ires interface{}
 	ires, err = c.ListEndpoint(ctx, p)
 	if err != nil {
 		return
 	}
-	return ires.(EnduroStoredCollectionCollection), nil
+	return ires.(*ListResult), nil
 }
 
 // Show calls the "show" endpoint of the "collection" service.

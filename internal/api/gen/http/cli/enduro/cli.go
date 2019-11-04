@@ -3,7 +3,8 @@
 // enduro HTTP client CLI support package
 //
 // Command:
-// $ goa gen github.com/artefactual-labs/enduro/internal/api/design -o internal/api
+// $ goa gen github.com/artefactual-labs/enduro/internal/api/design -o
+// internal/api
 
 package cli
 
@@ -29,7 +30,7 @@ func UsageCommands() string {
 
 // UsageExamples produces an example of a valid invocation of the CLI tool.
 func UsageExamples() string {
-	return os.Args[0] + ` collection list --original-id "Quibusdam rerum eum sapiente tempore labore possimus."` + "\n" +
+	return os.Args[0] + ` collection list --original-id "Eum sapiente." --cursor "Labore possimus et dolore eligendi autem aut."` + "\n" +
 		""
 }
 
@@ -47,6 +48,7 @@ func ParseEndpoint(
 
 		collectionListFlags          = flag.NewFlagSet("list", flag.ExitOnError)
 		collectionListOriginalIDFlag = collectionListFlags.String("original-id", "", "")
+		collectionListCursorFlag     = collectionListFlags.String("cursor", "", "")
 
 		collectionShowFlags  = flag.NewFlagSet("show", flag.ExitOnError)
 		collectionShowIDFlag = collectionShowFlags.String("id", "REQUIRED", "Identifier of collection to show")
@@ -150,7 +152,7 @@ func ParseEndpoint(
 			switch epn {
 			case "list":
 				endpoint = c.List()
-				data, err = collectionc.BuildListPayload(*collectionListOriginalIDFlag)
+				data, err = collectionc.BuildListPayload(*collectionListOriginalIDFlag, *collectionListCursorFlag)
 			case "show":
 				endpoint = c.Show()
 				data, err = collectionc.BuildShowPayload(*collectionShowIDFlag)
@@ -196,13 +198,14 @@ Additional help:
 `, os.Args[0], os.Args[0])
 }
 func collectionListUsage() {
-	fmt.Fprintf(os.Stderr, `%s [flags] collection list -original-id STRING
+	fmt.Fprintf(os.Stderr, `%s [flags] collection list -original-id STRING -cursor STRING
 
 List all stored collections
     -original-id STRING: 
+    -cursor STRING: 
 
 Example:
-    `+os.Args[0]+` collection list --original-id "Quibusdam rerum eum sapiente tempore labore possimus."
+    `+os.Args[0]+` collection list --original-id "Eum sapiente." --cursor "Labore possimus et dolore eligendi autem aut."
 `, os.Args[0])
 }
 
@@ -213,7 +216,7 @@ Show collection by ID
     -id UINT: Identifier of collection to show
 
 Example:
-    `+os.Args[0]+` collection show --id 17779226269362418297
+    `+os.Args[0]+` collection show --id 17808898848586163601
 `, os.Args[0])
 }
 
@@ -224,7 +227,7 @@ Delete collection by ID
     -id UINT: Identifier of collection to delete
 
 Example:
-    `+os.Args[0]+` collection delete --id 9496589439743848182
+    `+os.Args[0]+` collection delete --id 18364581817496227179
 `, os.Args[0])
 }
 
@@ -235,7 +238,7 @@ Cancel collection processing by ID
     -id UINT: Identifier of collection to remove
 
 Example:
-    `+os.Args[0]+` collection cancel --id 8729976341211730889
+    `+os.Args[0]+` collection cancel --id 36564123353455169
 `, os.Args[0])
 }
 
@@ -246,7 +249,7 @@ Retry collection processing by ID
     -id UINT: Identifier of collection to retry
 
 Example:
-    `+os.Args[0]+` collection retry --id 14355586344563939112
+    `+os.Args[0]+` collection retry --id 8542895512646707072
 `, os.Args[0])
 }
 
@@ -257,6 +260,6 @@ Retrieve workflow status by ID
     -id UINT: Identifier of collection to look up
 
 Example:
-    `+os.Args[0]+` collection workflow --id 1357525348910922129
+    `+os.Args[0]+` collection workflow --id 11505637339032976804
 `, os.Args[0])
 }

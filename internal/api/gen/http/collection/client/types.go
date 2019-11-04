@@ -3,7 +3,8 @@
 // collection HTTP client types
 //
 // Command:
-// $ goa gen github.com/artefactual-labs/enduro/internal/api/design -o internal/api
+// $ goa gen github.com/artefactual-labs/enduro/internal/api/design -o
+// internal/api
 
 package client
 
@@ -15,7 +16,10 @@ import (
 
 // ListResponseBody is the type of the "collection" service "list" endpoint
 // HTTP response body.
-type ListResponseBody []*EnduroStoredCollectionResponse
+type ListResponseBody struct {
+	Items      EnduroStoredCollectionCollectionResponseBody `form:"items,omitempty" json:"items,omitempty" xml:"items,omitempty"`
+	NextCursor *string                                      `form:"next_cursor,omitempty" json:"next_cursor,omitempty" xml:"next_cursor,omitempty"`
+}
 
 // ShowResponseBody is the type of the "collection" service "show" endpoint
 // HTTP response body.
@@ -130,9 +134,13 @@ type WorkflowNotFoundResponseBody struct {
 	ID *uint `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
 }
 
-// EnduroStoredCollectionResponse is used to define fields on response body
+// EnduroStoredCollectionCollectionResponseBody is used to define fields on
+// response body types.
+type EnduroStoredCollectionCollectionResponseBody []*EnduroStoredCollectionResponseBody
+
+// EnduroStoredCollectionResponseBody is used to define fields on response body
 // types.
-type EnduroStoredCollectionResponse struct {
+type EnduroStoredCollectionResponseBody struct {
 	// Identifier of collection
 	ID *uint `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
 	// Name of the collection
@@ -170,23 +178,15 @@ type EnduroCollectionWorkflowHistoryResponseBody struct {
 	Details interface{} `form:"details,omitempty" json:"details,omitempty" xml:"details,omitempty"`
 }
 
-// NewListEnduroStoredCollectionCollectionOK builds a "collection" service
-// "list" endpoint result from a HTTP "OK" response.
-func NewListEnduroStoredCollectionCollectionOK(body ListResponseBody) collectionviews.EnduroStoredCollectionCollectionView {
-	v := make([]*collectionviews.EnduroStoredCollectionView, len(body))
-	for i, val := range body {
-		v[i] = &collectionviews.EnduroStoredCollectionView{
-			ID:          val.ID,
-			Name:        val.Name,
-			Status:      val.Status,
-			WorkflowID:  val.WorkflowID,
-			RunID:       val.RunID,
-			TransferID:  val.TransferID,
-			AipID:       val.AipID,
-			OriginalID:  val.OriginalID,
-			CreatedAt:   val.CreatedAt,
-			CompletedAt: val.CompletedAt,
-		}
+// NewListResultOK builds a "collection" service "list" endpoint result from a
+// HTTP "OK" response.
+func NewListResultOK(body *ListResponseBody) *collection.ListResult {
+	v := &collection.ListResult{
+		NextCursor: body.NextCursor,
+	}
+	v.Items = make([]*collection.EnduroStoredCollection, len(body.Items))
+	for i, val := range body.Items {
+		v.Items[i] = unmarshalEnduroStoredCollectionResponseBodyToCollectionEnduroStoredCollection(val)
 	}
 	return v
 }
@@ -300,6 +300,21 @@ func NewWorkflowNotFound(body *WorkflowNotFoundResponseBody) *collection.NotFoun
 	return v
 }
 
+// ValidateListResponseBody runs the validations defined on ListResponseBody
+func ValidateListResponseBody(body *ListResponseBody) (err error) {
+	if body.Items == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("items", "body"))
+	}
+	for _, e := range body.Items {
+		if e != nil {
+			if err2 := ValidateEnduroStoredCollectionResponseBody(e); err2 != nil {
+				err = goa.MergeErrors(err, err2)
+			}
+		}
+	}
+	return
+}
+
 // ValidateShowNotFoundResponseBody runs the validations defined on
 // show_not_found_response_body
 func ValidateShowNotFoundResponseBody(body *ShowNotFoundResponseBody) (err error) {
@@ -408,9 +423,22 @@ func ValidateWorkflowNotFoundResponseBody(body *WorkflowNotFoundResponseBody) (e
 	return
 }
 
-// ValidateEnduroStoredCollectionResponse runs the validations defined on
-// EnduroStored-CollectionResponse
-func ValidateEnduroStoredCollectionResponse(body *EnduroStoredCollectionResponse) (err error) {
+// ValidateEnduroStoredCollectionCollectionResponseBody runs the validations
+// defined on EnduroStored-CollectionCollectionResponseBody
+func ValidateEnduroStoredCollectionCollectionResponseBody(body EnduroStoredCollectionCollectionResponseBody) (err error) {
+	for _, e := range body {
+		if e != nil {
+			if err2 := ValidateEnduroStoredCollectionResponseBody(e); err2 != nil {
+				err = goa.MergeErrors(err, err2)
+			}
+		}
+	}
+	return
+}
+
+// ValidateEnduroStoredCollectionResponseBody runs the validations defined on
+// EnduroStored-CollectionResponseBody
+func ValidateEnduroStoredCollectionResponseBody(body *EnduroStoredCollectionResponseBody) (err error) {
 	if body.ID == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("id", "body"))
 	}

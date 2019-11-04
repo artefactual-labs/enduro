@@ -3,7 +3,8 @@
 // collection HTTP client encoders and decoders
 //
 // Command:
-// $ goa gen github.com/artefactual-labs/enduro/internal/api/design -o internal/api
+// $ goa gen github.com/artefactual-labs/enduro/internal/api/design -o
+// internal/api
 
 package client
 
@@ -46,6 +47,9 @@ func EncodeListRequest(encoder func(*http.Request) goahttp.Encoder) func(*http.R
 		if p.OriginalID != nil {
 			values.Add("original_id", *p.OriginalID)
 		}
+		if p.Cursor != nil {
+			values.Add("cursor", *p.Cursor)
+		}
 		req.URL.RawQuery = values.Encode()
 		return nil
 	}
@@ -78,13 +82,11 @@ func DecodeListResponse(decoder func(*http.Response) goahttp.Decoder, restoreBod
 			if err != nil {
 				return nil, goahttp.ErrDecodingError("collection", "list", err)
 			}
-			p := NewListEnduroStoredCollectionCollectionOK(body)
-			view := "default"
-			vres := collectionviews.EnduroStoredCollectionCollection{p, view}
-			if err = collectionviews.ValidateEnduroStoredCollectionCollection(vres); err != nil {
+			err = ValidateListResponseBody(&body)
+			if err != nil {
 				return nil, goahttp.ErrValidationError("collection", "list", err)
 			}
-			res := collection.NewEnduroStoredCollectionCollection(vres)
+			res := NewListResultOK(&body)
 			return res, nil
 		default:
 			body, _ := ioutil.ReadAll(resp.Body)
@@ -496,6 +498,26 @@ func DecodeWorkflowResponse(decoder func(*http.Response) goahttp.Decoder, restor
 			return nil, goahttp.ErrInvalidResponse("collection", "workflow", resp.StatusCode, string(body))
 		}
 	}
+}
+
+// unmarshalEnduroStoredCollectionResponseBodyToCollectionEnduroStoredCollection
+// builds a value of type *collection.EnduroStoredCollection from a value of
+// type *EnduroStoredCollectionResponseBody.
+func unmarshalEnduroStoredCollectionResponseBodyToCollectionEnduroStoredCollection(v *EnduroStoredCollectionResponseBody) *collection.EnduroStoredCollection {
+	res := &collection.EnduroStoredCollection{
+		ID:          *v.ID,
+		Name:        v.Name,
+		Status:      *v.Status,
+		WorkflowID:  v.WorkflowID,
+		RunID:       v.RunID,
+		TransferID:  v.TransferID,
+		AipID:       v.AipID,
+		OriginalID:  v.OriginalID,
+		CreatedAt:   *v.CreatedAt,
+		CompletedAt: v.CompletedAt,
+	}
+
+	return res
 }
 
 // unmarshalEnduroCollectionWorkflowHistoryResponseBodyToCollectionviewsEnduroCollectionWorkflowHistoryView

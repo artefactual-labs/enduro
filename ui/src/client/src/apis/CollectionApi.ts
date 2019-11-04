@@ -24,9 +24,9 @@ import {
     CollectionDeleteNotFoundResponseBody,
     CollectionDeleteNotFoundResponseBodyFromJSON,
     CollectionDeleteNotFoundResponseBodyToJSON,
-    CollectionEnduroStoredCollectionResponseCollection,
-    CollectionEnduroStoredCollectionResponseCollectionFromJSON,
-    CollectionEnduroStoredCollectionResponseCollectionToJSON,
+    CollectionListResponseBody,
+    CollectionListResponseBodyFromJSON,
+    CollectionListResponseBodyToJSON,
     CollectionRetryNotFoundResponseBody,
     CollectionRetryNotFoundResponseBodyFromJSON,
     CollectionRetryNotFoundResponseBodyToJSON,
@@ -57,6 +57,7 @@ export interface CollectionDeleteRequest {
 
 export interface CollectionListRequest {
     originalId?: string;
+    cursor?: string;
 }
 
 export interface CollectionRetryRequest {
@@ -142,11 +143,15 @@ export class CollectionApi extends runtime.BaseAPI {
      * List all stored collections
      * list collection
      */
-    async collectionListRaw(requestParameters: CollectionListRequest): Promise<runtime.ApiResponse<CollectionEnduroStoredCollectionResponseCollection>> {
+    async collectionListRaw(requestParameters: CollectionListRequest): Promise<runtime.ApiResponse<CollectionListResponseBody>> {
         const queryParameters: runtime.HTTPQuery = {};
 
         if (requestParameters.originalId !== undefined) {
             queryParameters['original_id'] = requestParameters.originalId;
+        }
+
+        if (requestParameters.cursor !== undefined) {
+            queryParameters['cursor'] = requestParameters.cursor;
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -158,14 +163,14 @@ export class CollectionApi extends runtime.BaseAPI {
             query: queryParameters,
         });
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => CollectionEnduroStoredCollectionResponseCollectionFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => CollectionListResponseBodyFromJSON(jsonValue));
     }
 
     /**
      * List all stored collections
      * list collection
      */
-    async collectionList(requestParameters: CollectionListRequest): Promise<CollectionEnduroStoredCollectionResponseCollection> {
+    async collectionList(requestParameters: CollectionListRequest): Promise<CollectionListResponseBody> {
         const response = await this.collectionListRaw(requestParameters);
         return await response.value();
     }
