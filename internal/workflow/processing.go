@@ -182,7 +182,6 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 	logger.Info(
 		"Workflow completed successfully!",
 		zap.Uint("collectionID", tinfo.CollectionID),
-		zap.String("originalID", tinfo.OriginalID),
 		zap.String("pipeline", tinfo.Event.PipelineName),
 		zap.String("event", tinfo.Event.String()),
 		zap.String("status", tinfo.Status.String()),
@@ -263,10 +262,9 @@ func (a *DownloadActivity) Execute(ctx context.Context, tinfo *TransferInfo) (*T
 	}
 
 	var (
-		name       string
-		kind       string
-		path       string
-		originalID string
+		name string
+		kind string
+		path string
 	)
 
 	var isArchived bool
@@ -315,7 +313,6 @@ func (a *DownloadActivity) Execute(ctx context.Context, tinfo *TransferInfo) (*T
 		kind = res[1]                                     // E.g.: DPJ-SIP
 		name = fmt.Sprintf("%s-%s", res[1], res[2][0:13]) // E.g.: DPJ-SIP-<uuid[0:13]>
 		path = tmpDir                                     // E.g.: /foo/bar/DPJ-SIP-uuid
-		originalID = res[2]                               // E.g.: <uuid>
 	} else {
 		//
 		// When we just have a file or an archive with a format that we can't handle.
@@ -352,7 +349,6 @@ func (a *DownloadActivity) Execute(ctx context.Context, tinfo *TransferInfo) (*T
 
 	tinfo.Name = name
 	tinfo.Kind = kind
-	tinfo.OriginalID = originalID
 	tinfo.RelPath = relPath
 	tinfo.FullPath = path
 
