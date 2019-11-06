@@ -145,8 +145,12 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 	// Passing the activity lets the activity determine if the process failed.
 	var futures []workflow.Future
 	activityOpts = withActivityOptsForRequest(sessCtx)
-	futures = append(futures, workflow.ExecuteActivity(activityOpts, UpdateHARIActivityName, tinfo))
-	futures = append(futures, workflow.ExecuteActivity(activityOpts, UpdateProductionSystemActivityName, tinfo))
+	if disabled, _ := hookAttrBool(w.manager.Hooks, "hari", "disabled"); !disabled {
+		futures = append(futures, workflow.ExecuteActivity(activityOpts, UpdateHARIActivityName, tinfo))
+	}
+	if disabled, _ := hookAttrBool(w.manager.Hooks, "prod", "disabled"); !disabled {
+		futures = append(futures, workflow.ExecuteActivity(activityOpts, UpdateProductionSystemActivityName, tinfo))
+	}
 	for _, f := range futures {
 		_ = f.Get(activityOpts, nil)
 	}
