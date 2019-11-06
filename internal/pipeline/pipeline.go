@@ -25,6 +25,7 @@ type Config struct {
 	TransferDir        string
 	TransferLocationID string
 	ProcessingDir      string
+	ProcessingConfig   string
 }
 
 // PipelineRegistry is a collection of known pipelines.

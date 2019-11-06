@@ -40,8 +40,6 @@ const (
 	CleanUpActivityName                = "clean-up-activity"
 	HidePackageActivityName            = "hide-package-activity"
 	DeleteOriginalActivityName         = "delete-original-activity"
-
-	processingConfig = "automated"
 )
 
 type ProcessingWorkflow struct {
@@ -56,17 +54,15 @@ func NewProcessingWorkflow(m *Manager) *ProcessingWorkflow {
 // useful for hooks that may require quick access to processing state.
 // TODO: clean this up, e.g.: it can embed a collection.Collection.
 type TransferInfo struct {
-	CollectionID     uint               // Enduro internal collection ID.
-	Event            *watcher.BlobEvent // Original watcher event.
-	Name             string             // Name of the transfer.
-	FullPath         string             // Path to the transfer directory in the pipeline.
-	RelPath          string             // Path relative to transfer directory in the pipeline.
-	ProcessingConfig string             // Archivematica processing configuration.
-	AutoApprove      bool               // Archivematica auto-approval setting.
-	TransferID       string             // Transfer ID given by Archivematica.
-	SIPID            string             // SIP ID given by Archivematica.
-	StoredAt         time.Time
-	Status           collection.Status
+	CollectionID uint               // Enduro internal collection ID.
+	Event        *watcher.BlobEvent // Original watcher event.
+	Name         string             // Name of the transfer.
+	FullPath     string             // Path to the transfer directory in the pipeline.
+	RelPath      string             // Path relative to transfer directory in the pipeline.
+	TransferID   string             // Transfer ID given by Archivematica.
+	SIPID        string             // SIP ID given by Archivematica.
+	StoredAt     time.Time
+	Status       collection.Status
 
 	OriginalID string // Client specific, obtained from name.
 	Kind       string // Client specific, obtained from name, e.g. "DPJ-SIP".
@@ -81,11 +77,9 @@ type TransferInfo struct {
 // the API.
 func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.ProcessingWorkflowRequest) error {
 	tinfo := &TransferInfo{
-		CollectionID:     req.CollectionID,
-		Event:            req.Event,
-		ProcessingConfig: processingConfig,
-		AutoApprove:      true,
-		OriginalID:       req.Event.NameUUID(),
+		CollectionID: req.CollectionID,
+		Event:        req.Event,
+		OriginalID:   req.Event.NameUUID(),
 	}
 
 	// Persist collection as early as possible.
@@ -390,11 +384,12 @@ func (a *TransferActivity) Execute(ctx context.Context, tinfo *TransferInfo) (*T
 		path = fmt.Sprintf("%s:%s", config.TransferLocationID, path)
 	}
 
+	var autoApprove = true
 	resp, httpResp, err := amc.Package.Create(ctx, &amclient.PackageCreateRequest{
 		Name:             tinfo.Name,
 		Path:             path,
-		ProcessingConfig: tinfo.ProcessingConfig,
-		AutoApprove:      &tinfo.AutoApprove,
+		ProcessingConfig: config.ProcessingConfig,
+		AutoApprove:      &autoApprove,
 	})
 	if err != nil {
 		if httpResp != nil {
