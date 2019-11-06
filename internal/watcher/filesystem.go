@@ -9,6 +9,7 @@ import (
 	"runtime"
 
 	"github.com/artefactual-labs/enduro/internal/filenotify"
+
 	"github.com/fsnotify/fsnotify"
 	"gocloud.dev/blob"
 	"gocloud.dev/blob/fileblob"
@@ -33,23 +34,27 @@ func NewFilesystemWatcher(ctx context.Context, config *FilesystemConfig) (*files
 	if !stat.IsDir() {
 		return nil, errors.New("given path is not a directory")
 	}
+	abspath, err := filepath.Abs(config.Path)
+	if err != nil {
+		return nil, fmt.Errorf("error generating absolute path of %s: %v", config.Path, err)
+	}
 
 	// The inotify API isn't always available, fall back to polling.
 	var fsw filenotify.FileWatcher
 	if config.Inotify && runtime.GOOS != "windows" {
 		fsw, err = filenotify.New()
-		if err != nil {
-			return nil, fmt.Errorf("error creating filesystem watcher: %w", err)
-		}
 	} else {
-		fsw = filenotify.NewPollingWatcher()
+		fsw, err = filenotify.NewPollingWatcher()
+	}
+	if err != nil {
+		return nil, fmt.Errorf("error creating filesystem watcher: %w", err)
 	}
 
 	w := &filesystemWatcher{
 		ctx:  ctx,
 		fsw:  fsw,
 		ch:   make(chan *fsnotify.Event, 100),
-		path: config.Path,
+		path: abspath,
 		commonWatcherImpl: &commonWatcherImpl{
 			name:            config.Name,
 			pipeline:        config.Pipeline,
@@ -59,7 +64,7 @@ func NewFilesystemWatcher(ctx context.Context, config *FilesystemConfig) (*files
 
 	go w.loop()
 
-	if err := fsw.Add(config.Path); err != nil {
+	if err := fsw.Add(abspath); err != nil {
 		return nil, fmt.Errorf("error configuring filesystem watcher: %w", err)
 	}
 

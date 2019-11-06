@@ -4,52 +4,27 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"runtime"
+	"path/filepath"
 	"testing"
 	"time"
 
 	"github.com/fsnotify/fsnotify"
 )
 
-func TestPollerAddRemove(t *testing.T) {
-	w := NewPollingWatcher()
-
-	if err := w.Add("no-such-file"); err == nil {
-		t.Fatal("should have gotten error when adding a non-existent file")
-	}
-	if err := w.Remove("no-such-file"); err == nil {
-		t.Fatal("should have gotten error when removing non-existent watch")
-	}
-
-	f, err := ioutil.TempFile("", "asdf")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer os.RemoveAll(f.Name())
-
-	if err := w.Add(f.Name()); err != nil {
-		t.Fatal(err)
-	}
-
-	if err := w.Remove(f.Name()); err != nil {
-		t.Fatal(err)
-	}
-}
-
 func TestPollerEvent(t *testing.T) {
-	if runtime.GOOS == "windows" {
-		t.Skip("No chmod on Windows")
+	w, err := NewPollingWatcher()
+	if err != nil {
+		t.Fatal("error creating poller")
 	}
-	w := NewPollingWatcher()
+	defer w.Close()
 
-	f, err := ioutil.TempFile("", "test-poller")
+	tmpdir, err := ioutil.TempDir("", "test-poller")
 	if err != nil {
 		t.Fatal("error creating temp file")
 	}
-	defer os.RemoveAll(f.Name())
-	f.Close()
+	defer os.RemoveAll(tmpdir)
 
-	if err := w.Add(f.Name()); err != nil {
+	if err := w.Add(tmpdir); err != nil {
 		t.Fatal(err)
 	}
 
@@ -61,58 +36,12 @@ func TestPollerEvent(t *testing.T) {
 	default:
 	}
 
-	if err := ioutil.WriteFile(f.Name(), []byte("hello"), 0600); err != nil {
+	path := filepath.Join(tmpdir, "hello.txt")
+	if err := ioutil.WriteFile(path, []byte("hello"), 0600); err != nil {
 		t.Fatal(err)
 	}
-	assertFileMode(t, f.Name(), 0600)
-	if err := assertEvent(w, fsnotify.Write); err != nil {
+	if err := assertEvent(w, fsnotify.Create); err != nil {
 		t.Fatal(err)
-	}
-
-	if err := os.Chmod(f.Name(), 0644); err != nil {
-		t.Fatal(err)
-	}
-	assertFileMode(t, f.Name(), 0644)
-	if err := assertEvent(w, fsnotify.Chmod); err != nil {
-		t.Fatal(err)
-	}
-
-	if err := os.Remove(f.Name()); err != nil {
-		t.Fatal(err)
-	}
-	if err := assertEvent(w, fsnotify.Remove); err != nil {
-		t.Fatal(err)
-	}
-}
-
-func TestPollerClose(t *testing.T) {
-	w := NewPollingWatcher()
-	if err := w.Close(); err != nil {
-		t.Fatal(err)
-	}
-	// test double-close
-	if err := w.Close(); err != nil {
-		t.Fatal(err)
-	}
-
-	f, err := ioutil.TempFile("", "asdf")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer os.RemoveAll(f.Name())
-	if err := w.Add(f.Name()); err == nil {
-		t.Fatal("should have gotten error adding watch for closed watcher")
-	}
-}
-
-func assertFileMode(t *testing.T, fileName string, mode uint32) {
-	t.Helper()
-	f, err := os.Stat(fileName)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if f.Mode() != os.FileMode(mode) {
-		t.Fatalf("expected file %s to have mode %#o, but got %#o", fileName, mode, f.Mode())
 	}
 }
 

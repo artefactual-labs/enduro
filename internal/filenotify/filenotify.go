@@ -3,7 +3,10 @@
 // These are wrapped up in a common interface so that either can be used interchangeably in your code.
 package filenotify
 
-import "github.com/fsnotify/fsnotify"
+import (
+	"github.com/fsnotify/fsnotify"
+	"github.com/radovskyb/watcher"
+)
 
 // FileWatcher is an interface for implementing file notification watchers
 type FileWatcher interface {
@@ -19,15 +22,7 @@ func New() (FileWatcher, error) {
 	if watcher, err := NewEventWatcher(); err == nil {
 		return watcher, nil
 	}
-	return NewPollingWatcher(), nil
-}
-
-// NewPollingWatcher returns a poll-based file watcher
-func NewPollingWatcher() FileWatcher {
-	return &filePoller{
-		events: make(chan fsnotify.Event),
-		errors: make(chan error),
-	}
+	return NewPollingWatcher()
 }
 
 // NewEventWatcher returns an fs-event based file watcher
@@ -36,5 +31,37 @@ func NewEventWatcher() (FileWatcher, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &fsNotifyWatcher{watcher}, nil
+	return &fsNotifyWatcher{
+		Watcher: watcher,
+	}, nil
+}
+
+// NewPollingWatcher returns a poll-based file watcher
+func NewPollingWatcher() (FileWatcher, error) {
+	poller := &filePoller{
+		wr:     watcher.New(),
+		events: make(chan fsnotify.Event),
+		errors: make(chan error),
+	}
+	poller.wr.FilterOps(watcher.Create)
+	go poller.loop()
+
+	done := make(chan error)
+	{
+		go func() {
+			err := poller.wr.Start(watchWaitTime)
+			if err != nil {
+				done <- err
+			}
+		}()
+		go func() {
+			poller.wr.Wait()
+			done <- nil
+		}()
+	}
+	if err := <-done; err != nil {
+		return nil, err
+	}
+
+	return poller, nil
 }
