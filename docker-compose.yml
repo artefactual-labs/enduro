@@ -15,7 +15,7 @@ services:
       - "127.0.0.1:7450:3306"
 
   cadence:
-    image: "ubercadence/server:0.9.4"
+    image: "ubercadence/server:0.9.5"
     command: ["cadence-server", "--root=/etc/cadence", "--env=docker", "start", "--services=frontend,matching,history,worker"]
     restart: "on-failure"
     ports:
