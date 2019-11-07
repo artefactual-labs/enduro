@@ -57,24 +57,26 @@ func (p PipelineRegistry) Config(name string) (*Config, error) {
 func (p PipelineRegistry) Client(name string) (*amclient.Client, error) {
 	cfg, err := p.Config(name)
 	if err != nil {
-		return nil, fmt.Errorf("Error fetching pipeline configuration: %w", err)
+		return nil, fmt.Errorf("error fetching pipeline configuration: %w", err)
 	}
 
 	client, err := amclient.New(httpClient(), cfg.BaseURL, cfg.User, cfg.Key)
 	if err != nil {
-		return nil, fmt.Errorf("Error creating Archivematica API client: %w", err)
+		return nil, fmt.Errorf("error creating Archivematica API client: %w", err)
 	}
 
 	return client, nil
 }
 
-func (p PipelineRegistry) TempFile(name, key string) (*os.File, error) {
+// TempFile returns a new temporary file inside the processing directory of the
+// given pipeline.
+func (p PipelineRegistry) TempFile(name string) (*os.File, error) {
 	cfg, err := p.Config(name)
 	if err != nil {
-		return nil, fmt.Errorf("Error fetching pipeline configuration: %w", err)
+		return nil, fmt.Errorf("error fetching pipeline configuration: %w", err)
 	}
 
-	return ioutil.TempFile(cfg.ProcessingDir, fmt.Sprintf("*-%s", key))
+	return ioutil.TempFile(cfg.ProcessingDir, "blob-*")
 }
 
 func expandPath(path string) string {

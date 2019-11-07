@@ -70,7 +70,7 @@ func (a UpdateProductionSystemActivity) generateReceipt(tinfo *TransferInfo, wri
 
 	receipt := prodSystemReceipt{
 		Identifier: tinfo.OriginalID,
-		Type:       strings.ToLower(tinfo.Kind),
+		Type:       strings.ToLower(tinfo.Bundle.Kind),
 		Accepted:   accepted,
 		Message:    message,
 		Timestamp:  tinfo.StoredAt,

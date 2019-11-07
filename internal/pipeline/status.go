@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	ErrStatusNonRetryable = errors.New("non-retryable error")
+	ErrStatusNonRetryable = errors.New("non retryable error")
 	ErrStatusRetryable    = errors.New("retryable error")
 	ErrStatusInProgress   = errors.New("waitable error")
 )

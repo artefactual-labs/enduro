@@ -1,6 +1,8 @@
 package workflow
 
 import (
+	"errors"
+
 	"go.uber.org/cadence"
 	"go.uber.org/cadence/.gen/go/shared"
 	"go.uber.org/cadence/workflow"
@@ -28,3 +30,5 @@ const NRE = "non retryable error"
 func nonRetryableError(err error) error {
 	return cadence.NewCustomError(NRE, err.Error())
 }
+
+var errMissingParameters = errors.New("missing parameters")

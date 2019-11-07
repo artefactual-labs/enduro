@@ -76,7 +76,7 @@ func (a UpdateHARIActivity) url() (string, error) {
 
 func (a UpdateHARIActivity) sendRequest(ctx context.Context, apiURL string, tinfo *TransferInfo) error {
 	// Location of AVLXML, e.g.: // e.g. `/transfer-path/<uuid>/DPJ/journal/<uuid>.xml`.
-	var path = filepath.Join(tinfo.FullPath, tinfo.OriginalID, "DPJ", "journal", tinfo.OriginalID+".xml")
+	var path = filepath.Join(tinfo.Bundle.FullPath, tinfo.OriginalID, "DPJ", "journal", tinfo.OriginalID+".xml")
 
 	// Is there a better way to do this? We need to build the JSON document but
 	// maybe this can be done with a buffer?
@@ -88,7 +88,7 @@ func (a UpdateHARIActivity) sendRequest(ctx context.Context, apiURL string, tinf
 	payload := &avlRequest{
 		XML:       blob,
 		Message:   "AVLXML was processed by DPJ Archivematica pipeline",
-		Type:      strings.ToLower(tinfo.Kind),
+		Type:      strings.ToLower(tinfo.Bundle.Kind),
 		Timestamp: tinfo.StoredAt,
 		AIPID:     tinfo.SIPID,
 	}

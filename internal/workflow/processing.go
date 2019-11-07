@@ -7,24 +7,13 @@ package workflow
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"io/ioutil"
-	"net/http"
-	"os"
-	"path/filepath"
-	"regexp"
 	"time"
 
-	"github.com/artefactual-labs/enduro/internal/amclient"
-	"github.com/artefactual-labs/enduro/internal/amclient/bundler"
 	"github.com/artefactual-labs/enduro/internal/collection"
 	"github.com/artefactual-labs/enduro/internal/pipeline"
 	"github.com/artefactual-labs/enduro/internal/watcher"
 
-	"github.com/cenkalti/backoff/v3"
-	"github.com/google/uuid"
-	"github.com/mholt/archiver"
 	"go.uber.org/cadence/activity"
 	"go.uber.org/cadence/workflow"
 	"go.uber.org/zap"
@@ -32,6 +21,7 @@ import (
 
 const (
 	DownloadActivityName               = "download-activity"
+	BundleActivityName                 = "bundle-activity"
 	TransferActivityName               = "transfer-activity"
 	PollTransferActivityName           = "poll-transfer-activity"
 	PollIngestActivityName             = "poll-ingest-activity"
@@ -50,22 +40,70 @@ func NewProcessingWorkflow(m *Manager) *ProcessingWorkflow {
 	return &ProcessingWorkflow{manager: m}
 }
 
+type BundleInfo struct {
+}
+
 // TransferInfo is shared state that is passed down to activities. It can be
 // useful for hooks that may require quick access to processing state.
 // TODO: clean this up, e.g.: it can embed a collection.Collection.
 type TransferInfo struct {
-	CollectionID uint               // Enduro internal collection ID.
-	Event        *watcher.BlobEvent // Original watcher event.
-	Name         string             // Name of the transfer.
-	FullPath     string             // Path to the transfer directory in the pipeline.
-	RelPath      string             // Path relative to transfer directory in the pipeline.
-	TransferID   string             // Transfer ID given by Archivematica.
-	SIPID        string             // SIP ID given by Archivematica.
-	StoredAt     time.Time
-	Status       collection.Status
 
-	OriginalID string // Client specific, obtained from name.
-	Kind       string // Client specific, obtained from name, e.g. "DPJ-SIP".
+	// TempFile is the temporary location where the blob is downloaded.
+	//
+	// It is populated by the workflow with the result of DownloadActivity.
+	TempFile string
+
+	// TransferID given by Archivematica.
+	//
+	// It is populated by TransferActivity.
+	TransferID string
+
+	// SIPID given by Archivematica.
+	//
+	// It is populated by PollTransferActivity.
+	SIPID string
+
+	// Enduro internal collection ID.
+	//
+	// It is populated via the workflow request or createPackageLocalActivity.
+	CollectionID uint
+
+	// Original watcher event.
+	//
+	// It is populated via the workflow request.
+	Event *watcher.BlobEvent
+
+	// OriginalID is the UUID found in the key of the blob. It can be empty.
+	//
+	// It is populated from the workflow (deterministically).
+	OriginalID string
+
+	// Status of the collection.
+	//
+	// It is populated from the workflow (deterministically)
+	Status collection.Status
+
+	// StoredAt is the time when the AIP is stored.
+	//
+	// It is populated by PollIngestActivity as long as Ingest completes.
+	StoredAt time.Time
+
+	// PipelineConfig is the configuration of the pipeline that this workflow
+	// uses to provide access to its activities.
+	//
+	// It is populated by loadConfigLocalActivity.
+	PipelineConfig *pipeline.Config
+
+	// Hooks is the hook config store.
+	//
+	// It is populated by loadConfigLocalActivity.
+	Hooks map[string]map[string]interface{}
+
+	// Information about the bundle (transfer) that we submit to Archivematica.
+	// Full path, relative path, name, kind...
+	//
+	// It is populated by BundleActivity.
+	Bundle BundleActivityResult
 }
 
 // ProcessingWorkflow orchestrates all the activities related to the processing
@@ -80,13 +118,21 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 		CollectionID: req.CollectionID,
 		Event:        req.Event,
 		OriginalID:   req.Event.NameUUID(),
+		Status:       collection.StatusInProgress,
 	}
 
 	// Persist collection as early as possible.
 	activityOpts := withLocalActivityOpts(ctx)
 	err := workflow.ExecuteLocalActivity(activityOpts, createPackageLocalActivity, w.manager.Collection, tinfo).Get(activityOpts, &tinfo)
 	if err != nil {
-		return nonRetryableError(fmt.Errorf("Error persisting collection: %w", err))
+		return nonRetryableError(fmt.Errorf("error persisting collection: %v", err))
+	}
+
+	// Load pipeline configuration and hooks.
+	activityOpts = withLocalActivityOpts(ctx)
+	err = workflow.ExecuteLocalActivity(activityOpts, loadConfigLocalActivity, w.manager, req.Event.PipelineName, tinfo).Get(activityOpts, &tinfo)
+	if err != nil {
+		return nonRetryableError(fmt.Errorf("error loading configuration: %v", err))
 	}
 
 	// A session guarantees that activities within it are scheduled on the same
@@ -103,7 +149,7 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 			ExecutionTimeout: time.Hour * 24 * 5,
 		})
 		if err != nil {
-			return nonRetryableError(fmt.Errorf("Error creating session: %w", err))
+			return nonRetryableError(fmt.Errorf("error creating session: %w", err))
 		}
 
 		sessErr = w.SessionHandler(ctx, sessCtx, tinfo)
@@ -139,10 +185,10 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 	// Passing the activity lets the activity determine if the process failed.
 	var futures []workflow.Future
 	activityOpts = withActivityOptsForRequest(sessCtx)
-	if disabled, _ := hookAttrBool(w.manager.Hooks, "hari", "disabled"); !disabled {
+	if disabled, _ := hookAttrBool(tinfo.Hooks, "hari", "disabled"); !disabled {
 		futures = append(futures, workflow.ExecuteActivity(activityOpts, UpdateHARIActivityName, tinfo))
 	}
-	if disabled, _ := hookAttrBool(w.manager.Hooks, "prod", "disabled"); !disabled {
+	if disabled, _ := hookAttrBool(tinfo.Hooks, "prod", "disabled"); !disabled {
 		futures = append(futures, workflow.ExecuteActivity(activityOpts, UpdateProductionSystemActivityName, tinfo))
 	}
 	for _, f := range futures {
@@ -162,7 +208,9 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 
 	// This is the last activity that depends on the session.
 	activityOpts = withActivityOptsForRequest(sessCtx)
-	_ = workflow.ExecuteActivity(activityOpts, CleanUpActivityName, tinfo).Get(activityOpts, nil)
+	_ = workflow.ExecuteActivity(activityOpts, CleanUpActivityName, &CleanUpActivityParams{
+		FullPath: tinfo.Bundle.FullPath,
+	}).Get(activityOpts, nil)
 
 	workflow.CompleteSession(sessCtx)
 
@@ -198,34 +246,43 @@ func (w *ProcessingWorkflow) SessionHandler(ctx workflow.Context, sessCtx workfl
 
 	// Download.
 	activityOpts = withActivityOptsForLongLivedRequest(sessCtx)
-	err = workflow.ExecuteActivity(activityOpts, DownloadActivityName, tinfo).Get(activityOpts, &tinfo)
+	err = workflow.ExecuteActivity(activityOpts, DownloadActivityName, tinfo.Event).Get(activityOpts, &tinfo.TempFile)
+	if err != nil {
+		return err
+	}
+
+	// Bundle.
+	activityOpts = withActivityOptsForLongLivedRequest(sessCtx)
+	err = workflow.ExecuteActivity(activityOpts, BundleActivityName, &BundleActivityParams{
+		TransferDir: tinfo.PipelineConfig.TransferDir,
+		Key:         tinfo.Event.Key,
+		TempFile:    tinfo.TempFile,
+	}).Get(activityOpts, &tinfo.Bundle)
 	if err != nil {
 		return err
 	}
 
 	// Transfer.
-	//
-	// This is our first interaction with Archivematica. The workflow ends here
-	// after authentication errors.
 	activityOpts = withActivityOptsForRequest(sessCtx)
-	err = workflow.ExecuteActivity(activityOpts, TransferActivityName, tinfo).Get(activityOpts, &tinfo)
+	err = workflow.ExecuteActivity(activityOpts, TransferActivityName, tinfo).Get(activityOpts, &tinfo.TransferID)
 	if err != nil {
 		return err
 	}
 
+	// Update status of collection.
 	activityOpts = withLocalActivityOpts(ctx)
 	_ = workflow.ExecuteLocalActivity(activityOpts, updatePackageStatusLocalActivity, w.manager.Collection, tinfo).Get(activityOpts, nil)
 
 	// Poll transfer.
 	activityOpts = withActivityOptsForHeartbeatedRequest(sessCtx, time.Minute)
-	err = workflow.ExecuteActivity(activityOpts, PollTransferActivityName, tinfo).Get(activityOpts, &tinfo)
+	err = workflow.ExecuteActivity(activityOpts, PollTransferActivityName, tinfo).Get(activityOpts, &tinfo.SIPID)
 	if err != nil {
 		return err
 	}
 
 	// Poll ingest.
 	activityOpts = withActivityOptsForHeartbeatedRequest(sessCtx, time.Minute)
-	err = workflow.ExecuteActivity(activityOpts, PollIngestActivityName, tinfo).Get(activityOpts, &tinfo)
+	err = workflow.ExecuteActivity(activityOpts, PollIngestActivityName, tinfo).Get(activityOpts, &tinfo.StoredAt)
 	if err != nil {
 		return err
 	}
@@ -233,339 +290,10 @@ func (w *ProcessingWorkflow) SessionHandler(ctx workflow.Context, sessCtx workfl
 	return nil
 }
 
-type DownloadActivity struct {
-	manager *Manager
-}
-
-func NewDownloadActivity(m *Manager) *DownloadActivity {
-	return &DownloadActivity{manager: m}
-}
-
-// Execute downloads the submitted package.
-//
-// This implementation is client-specific for now.
-// It needs to be cleaned up and generalized.
-//
-// We're making the following assumptions:
-//
-// * The blob is a file using the tar or zip archival formats.
-// * Expected blob key: `DPJ-SIP-<uuid>.tar`.
-// * AVLXML file found at: `DPJ-SIP-<uuid>.tar:/<uuid>/DPJ/journal/<uuid>.xml`.
-// * The contents are submitted to Archivematica as-is.
-//
-// A broader implementation could try to identify the format of the package and
-// submit to Archivematica without extracting th econtents.
-func (a *DownloadActivity) Execute(ctx context.Context, tinfo *TransferInfo) (*TransferInfo, error) {
-	cfg, err := a.manager.Pipelines.Config(tinfo.Event.PipelineName)
-	if err != nil {
-		return tinfo, nonRetryableError(fmt.Errorf("Error loading pipeline configuration: %v", err))
-	}
-
-	var (
-		name string
-		kind string
-		path string
-	)
-
-	var isArchived bool
-	if _, err := archiver.ByExtension(tinfo.Event.Key); err == nil {
-		isArchived = true
-	}
-
-	if isArchived {
-		//
-		// Client-specific, temporary solution.
-		//
-
-		// Relevant information is encoded in the name of the blob, e.g.: DPJ-SIP-<uuid>.tar.
-		var clientNameRegex = regexp.MustCompile(`^(?P<kind>.*)-(?P<uuid>[a-z0-9]{8}-[a-z0-9]{4}-[1-5][a-z0-9]{3}-[a-z0-9]{4}-[a-z0-9]{12})\.(?P<fileext>.*)`)
-		res := clientNameRegex.FindStringSubmatch(tinfo.Event.Key)
-		if len(res) < 3 {
-			return tinfo, nonRetryableError(fmt.Errorf("Error identifying blob name: %s", tinfo.Event.Key))
-		}
-		if _, err := uuid.Parse(res[2]); err != nil {
-			return tinfo, nonRetryableError(fmt.Errorf("Error identifying UUID in blob name: %v", err))
-		}
-
-		// Download the stream in a new temporary file in the local processing directory.
-		tmpFile, err := a.manager.Pipelines.TempFile(tinfo.Event.PipelineName, tinfo.Event.Key)
-		if err != nil {
-			return tinfo, nonRetryableError(fmt.Errorf("Error creating temporary file: %v", err))
-		}
-		if err := a.manager.Watcher.Download(ctx, tmpFile, tinfo.Event); err != nil {
-			return tinfo, nonRetryableError(fmt.Errorf("Error downloading blob: %v", err))
-		}
-
-		// Unarchive the file in a new directory inside the transfer location to avoid collisions.
-		const tmpDirPrefix = "enduro"
-		tmpDir, err := ioutil.TempDir(cfg.TransferDir, tmpDirPrefix)
-		if err != nil {
-			return tinfo, nonRetryableError(fmt.Errorf("Error creating temporary directory: %s", err))
-		}
-		_ = os.Chmod(tmpDir, os.FileMode(0o755))
-		if err := archiver.Unarchive(tmpFile.Name(), tmpDir); err != nil {
-			return tinfo, nonRetryableError(fmt.Errorf("Error unarchiving package: %s", err))
-		}
-
-		// Delete the archive. We still have a copy in the watched source.
-		_ = os.Remove(tmpFile.Name())
-
-		kind = res[1]                                     // E.g.: DPJ-SIP
-		name = fmt.Sprintf("%s-%s", res[1], res[2][0:13]) // E.g.: DPJ-SIP-<uuid[0:13]>
-		path = tmpDir                                     // E.g.: /foo/bar/DPJ-SIP-uuid
-	} else {
-		//
-		// When we just have a file or an archive with a format that we can't handle.
-		//
-
-		b, err := bundler.NewBundlerWithTempDir(cfg.TransferDir)
-		if err != nil {
-			return tinfo, nonRetryableError(fmt.Errorf("Error bootstrapping bundle: %v", err))
-		}
-
-		file, err := b.Create(filepath.Join("objects", tinfo.Event.Key))
-		if err != nil {
-			return tinfo, nonRetryableError(fmt.Errorf("Error creating file: %v", err))
-		}
-
-		if err := a.manager.Watcher.Download(ctx, file, tinfo.Event); err != nil {
-			return tinfo, nonRetryableError(fmt.Errorf("Error downloading blob: %v", err))
-		}
-
-		if err := b.Bundle(); err != nil {
-			return tinfo, nonRetryableError(fmt.Errorf("Error creating transfer bundle: %v", err))
-		}
-
-		path = b.FullBaseFsPath()
-		name = filepath.Base(path)
-	}
-
-	// We must return the relative path which is persisted in the workflow and
-	// used by other activities.
-	relPath, err := filepath.Rel(cfg.TransferDir, path)
-	if err != nil {
-		return tinfo, nonRetryableError(fmt.Errorf("Error calculating relative path: %v", err))
-	}
-
-	tinfo.Name = name
-	tinfo.Kind = kind
-	tinfo.RelPath = relPath
-	tinfo.FullPath = path
-
-	return tinfo, nil
-}
-
-type TransferActivity struct {
-	manager *Manager
-}
-
-func NewTransferActivity(m *Manager) *TransferActivity {
-	return &TransferActivity{manager: m}
-}
-
-func (a *TransferActivity) Execute(ctx context.Context, tinfo *TransferInfo) (*TransferInfo, error) {
-	amc, err := a.manager.Pipelines.Client(tinfo.Event.PipelineName)
-	if err != nil {
-		return nil, err
-	}
-
-	config, err := a.manager.Pipelines.Config(tinfo.Event.PipelineName)
-	if err != nil {
-		return nil, err
-	}
-
-	// Transfer path should include the location UUID if defined.
-	var path = tinfo.RelPath
-	if config.TransferLocationID != "" {
-		path = fmt.Sprintf("%s:%s", config.TransferLocationID, path)
-	}
-
-	var autoApprove = true
-	resp, httpResp, err := amc.Package.Create(ctx, &amclient.PackageCreateRequest{
-		Name:             tinfo.Name,
-		Path:             path,
-		ProcessingConfig: config.ProcessingConfig,
-		AutoApprove:      &autoApprove,
-	})
-	if err != nil {
-		if httpResp != nil {
-			switch {
-			case httpResp.StatusCode == http.StatusForbidden:
-				return tinfo, nonRetryableError(fmt.Errorf("Authentication error in Archivematica: %v", err))
-			}
-		}
-		return tinfo, err
-	}
-
-	tinfo.TransferID = resp.ID
-
-	return tinfo, nil
-}
-
-type PollTransferActivity struct {
-	manager *Manager
-}
-
-func NewPollTransferActivity(m *Manager) *PollTransferActivity {
-	return &PollTransferActivity{manager: m}
-}
-
-func (a *PollTransferActivity) Execute(ctx context.Context, tinfo *TransferInfo) (*TransferInfo, error) {
-	amc, err := a.manager.Pipelines.Client(tinfo.Event.PipelineName)
-	if err != nil {
-		return tinfo, err
-	}
-
-	var sipID string
-	var backoffStrategy = backoff.WithContext(backoff.NewConstantBackOff(time.Second*5), ctx)
-
-	err = backoff.RetryNotify(
-		func() (err error) {
-			ctx, cancel := context.WithTimeout(ctx, time.Second*2)
-			defer cancel()
-
-			sipID, err = pipeline.TransferStatus(ctx, amc, tinfo.TransferID)
-			if errors.Is(err, pipeline.ErrStatusNonRetryable) {
-				return backoff.Permanent(err)
-			}
-
-			return err
-		},
-		backoffStrategy,
-		func(err error, duration time.Duration) {
-			activity.RecordHeartbeat(ctx, err.Error())
-		},
-	)
-
-	if err == nil {
-		tinfo.SIPID = sipID
-	}
-
-	return tinfo, err
-}
-
-type PollIngestActivity struct {
-	manager *Manager
-}
-
-func NewPollIngestActivity(m *Manager) *PollIngestActivity {
-	return &PollIngestActivity{manager: m}
-}
-
-func (a *PollIngestActivity) Execute(ctx context.Context, tinfo *TransferInfo) (*TransferInfo, error) {
-	amc, err := a.manager.Pipelines.Client(tinfo.Event.PipelineName)
-	if err != nil {
-		return tinfo, err
-	}
-
-	var backoffStrategy = backoff.WithContext(backoff.NewConstantBackOff(time.Second*5), ctx)
-
-	err = backoff.RetryNotify(
-		func() (err error) {
-			ctx, cancel := context.WithTimeout(ctx, time.Second*2)
-			defer cancel()
-
-			err = pipeline.IngestStatus(ctx, amc, tinfo.SIPID)
-			if errors.Is(err, pipeline.ErrStatusNonRetryable) {
-				return backoff.Permanent(err)
-			}
-
-			return err
-		},
-		backoffStrategy,
-		func(err error, duration time.Duration) {
-			activity.RecordHeartbeat(ctx, err.Error())
-		},
-	)
-
-	if err == nil {
-		tinfo.StoredAt = time.Now().UTC()
-	}
-
-	return tinfo, err
-}
-
-type CleanUpActivity struct {
-	manager *Manager
-}
-
-func NewCleanUpActivity(m *Manager) *CleanUpActivity {
-	return &CleanUpActivity{manager: m}
-}
-
-func (a *CleanUpActivity) Execute(ctx context.Context, tinfo *TransferInfo) error {
-	if tinfo.RelPath == "" {
-		return nil
-	}
-
-	cfg, err := a.manager.Pipelines.Config(tinfo.Event.PipelineName)
-	if err != nil {
-		return err
-	}
-
-	if err := os.RemoveAll(filepath.Join(cfg.TransferDir, tinfo.RelPath)); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-type HidePackageActivity struct {
-	manager *Manager
-}
-
-func NewHidePackageActivity(m *Manager) *HidePackageActivity {
-	return &HidePackageActivity{manager: m}
-}
-
-func (a *HidePackageActivity) Execute(ctx context.Context, unitID, unitType, pipelineName string) error {
-	amc, err := a.manager.Pipelines.Client(pipelineName)
-	if err != nil {
-		return nonRetryableError(fmt.Errorf("error looking up pipeline config: %v", err))
-	}
-
-	if unitType != "transfer" && unitType != "ingest" {
-		return nonRetryableError(fmt.Errorf("unexpected unit type: %s", unitType))
-	}
-
-	if unitType == "transfer" {
-		resp, _, err := amc.Transfer.Hide(ctx, unitID)
-		if err != nil {
-			return fmt.Errorf("error hiding transfer: %v", err)
-		}
-		if !resp.Removed {
-			return fmt.Errorf("error hiding transfer: not removed")
-		}
-	}
-
-	if unitType == "ingest" {
-		resp, _, err := amc.Ingest.Hide(ctx, unitID)
-		if err != nil {
-			return fmt.Errorf("error hiding sip: %v", err)
-		}
-		if !resp.Removed {
-			return fmt.Errorf("error hiding sip: not removed")
-		}
-	}
-
-	return nil
-}
-
-type DeleteOriginalActivity struct {
-	manager *Manager
-}
-
-func NewDeleteOriginalActivity(m *Manager) *DeleteOriginalActivity {
-	return &DeleteOriginalActivity{manager: m}
-}
-
-func (a *DeleteOriginalActivity) Execute(ctx context.Context, event *watcher.BlobEvent) error {
-	return a.manager.Watcher.Delete(ctx, event)
-}
+// Local activities.
 
 func createPackageLocalActivity(ctx context.Context, colsvc collection.Service, tinfo *TransferInfo) (*TransferInfo, error) {
 	info := activity.GetInfo(ctx)
-	tinfo.Status = collection.StatusInProgress
 
 	if tinfo.CollectionID > 0 {
 		err := updatePackageStatusLocalActivity(ctx, colsvc, tinfo)
@@ -591,5 +319,20 @@ func createPackageLocalActivity(ctx context.Context, colsvc collection.Service, 
 func updatePackageStatusLocalActivity(ctx context.Context, colsvc collection.Service, tinfo *TransferInfo) error {
 	info := activity.GetInfo(ctx)
 
-	return colsvc.UpdateWorkflowStatus(ctx, tinfo.CollectionID, tinfo.Name, info.WorkflowExecution.ID, info.WorkflowExecution.RunID, tinfo.TransferID, tinfo.SIPID, tinfo.Status, tinfo.StoredAt)
+	return colsvc.UpdateWorkflowStatus(
+		ctx, tinfo.CollectionID, tinfo.Bundle.Name, info.WorkflowExecution.ID,
+		info.WorkflowExecution.RunID, tinfo.TransferID, tinfo.SIPID,
+		tinfo.Status, tinfo.StoredAt,
+	)
+}
+
+func loadConfigLocalActivity(ctx context.Context, m *Manager, pipeline string, tinfo *TransferInfo) (*TransferInfo, error) {
+	pipelineConfig, err := m.Pipelines.Config(tinfo.Event.PipelineName)
+	if err != nil {
+		return nil, fmt.Errorf("error loading configuration of pipeline %s: %v", pipeline, err)
+	}
+	tinfo.PipelineConfig = pipelineConfig
+	tinfo.Hooks = m.Hooks
+
+	return tinfo, nil
 }

@@ -198,6 +198,7 @@ func main() {
 
 		cadence.RegisterWorkflow(workflow.NewProcessingWorkflow(m).Execute, collection.ProcessingWorkflowName)
 		cadence.RegisterActivity(workflow.NewDownloadActivity(m).Execute, workflow.DownloadActivityName)
+		cadence.RegisterActivity(workflow.NewBundleActivity().Execute, workflow.BundleActivityName)
 		cadence.RegisterActivity(workflow.NewTransferActivity(m).Execute, workflow.TransferActivityName)
 		cadence.RegisterActivity(workflow.NewPollTransferActivity(m).Execute, workflow.PollTransferActivityName)
 		cadence.RegisterActivity(workflow.NewPollIngestActivity(m).Execute, workflow.PollIngestActivityName)
