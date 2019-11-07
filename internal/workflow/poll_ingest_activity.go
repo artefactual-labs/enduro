@@ -33,7 +33,7 @@ func (a *PollIngestActivity) Execute(ctx context.Context, tinfo *TransferInfo) (
 
 			err = pipeline.IngestStatus(ctx, amc, tinfo.SIPID)
 			if errors.Is(err, pipeline.ErrStatusNonRetryable) {
-				return backoff.Permanent(err)
+				return backoff.Permanent(nonRetryableError(err))
 			}
 
 			return err

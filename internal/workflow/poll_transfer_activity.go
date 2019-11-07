@@ -34,7 +34,7 @@ func (a *PollTransferActivity) Execute(ctx context.Context, tinfo *TransferInfo)
 
 			sipID, err = pipeline.TransferStatus(ctx, amc, tinfo.TransferID)
 			if errors.Is(err, pipeline.ErrStatusNonRetryable) {
-				return backoff.Permanent(err)
+				return backoff.Permanent(nonRetryableError(err))
 			}
 
 			return err
