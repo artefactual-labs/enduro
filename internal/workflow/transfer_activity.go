@@ -20,24 +20,33 @@ func NewTransferActivity(m *Manager) *TransferActivity {
 	return &TransferActivity{manager: m}
 }
 
-func (a *TransferActivity) Execute(ctx context.Context, tinfo *TransferInfo) (string, error) {
-	amc, err := a.manager.Pipelines.Client(tinfo.PipelineConfig.Name)
+type TransferActivityParams struct {
+	PipelineName       string
+	TransferLocationID string
+	RelPath            string
+	Name               string
+	ProcessingConfig   string
+	AutoApprove        bool
+}
+
+func (a *TransferActivity) Execute(ctx context.Context, params *TransferActivityParams) (string, error) {
+	p, err := a.manager.Pipelines.Pipeline(params.PipelineName)
 	if err != nil {
-		return "", err
+		return "", nonRetryableError(err)
 	}
+	amc := p.Client()
 
 	// Transfer path should include the location UUID if defined.
-	var path = tinfo.Bundle.RelPath
-	if tinfo.PipelineConfig.TransferLocationID != "" {
-		path = fmt.Sprintf("%s:%s", tinfo.PipelineConfig.TransferLocationID, path)
+	var path = params.RelPath
+	if params.TransferLocationID != "" {
+		path = fmt.Sprintf("%s:%s", params.TransferLocationID, path)
 	}
 
-	var autoApprove = true
 	resp, httpResp, err := amc.Package.Create(ctx, &amclient.PackageCreateRequest{
-		Name:             tinfo.Bundle.Name,
+		Name:             params.Name,
 		Path:             path,
-		ProcessingConfig: tinfo.PipelineConfig.ProcessingConfig,
-		AutoApprove:      &autoApprove,
+		ProcessingConfig: params.ProcessingConfig,
+		AutoApprove:      &params.AutoApprove,
 	})
 	if err != nil {
 		if httpResp != nil {

@@ -1,8 +1,6 @@
 package pipeline
 
 import (
-	"errors"
-	"fmt"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -15,8 +13,6 @@ import (
 	"github.com/artefactual-labs/enduro/internal/amclient"
 )
 
-// TODO: PipelineRegistry should return Pipeline objects!
-
 type Config struct {
 	Name               string
 	BaseURL            string
@@ -28,68 +24,36 @@ type Config struct {
 	ProcessingConfig   string
 }
 
-// PipelineRegistry is a collection of known pipelines.
-type PipelineRegistry struct {
-	pipelines map[string]Config
+type Pipeline struct {
+	config *Config
+	client *http.Client
 }
 
-func NewPipelineRegistry(configs []Config) *PipelineRegistry {
-	pipelines := map[string]Config{}
-	for _, cfg := range configs {
-		cfg.TransferDir = expandPath(cfg.TransferDir)
-		pipelines[cfg.Name] = cfg
+func NewPipeline(config *Config) *Pipeline {
+	config.TransferDir = expandPath(config.TransferDir)
+	config.ProcessingDir = expandPath(config.ProcessingDir)
 
-	}
-	return &PipelineRegistry{
-		pipelines: pipelines,
+	return &Pipeline{
+		config: config,
+		client: httpClient(),
 	}
 }
 
-func (p PipelineRegistry) Config(name string) (*Config, error) {
-	cfg, ok := p.pipelines[name]
-	if !ok {
-		return nil, errors.New("client not found")
-	}
-
-	return &cfg, nil
+// Client returns the Archivematica API client ready for use.
+func (p Pipeline) Client() *amclient.Client {
+	return amclient.NewClient(p.client, p.config.BaseURL, p.config.User, p.config.Key)
 }
 
-func (p PipelineRegistry) Client(name string) (*amclient.Client, error) {
-	cfg, err := p.Config(name)
-	if err != nil {
-		return nil, fmt.Errorf("error fetching pipeline configuration: %w", err)
+// TempFile creates a temporary file in the processing directory.
+func (p Pipeline) TempFile(pattern string) (*os.File, error) {
+	if pattern == "" {
+		pattern = "blob-*"
 	}
-
-	client, err := amclient.New(httpClient(), cfg.BaseURL, cfg.User, cfg.Key)
-	if err != nil {
-		return nil, fmt.Errorf("error creating Archivematica API client: %w", err)
-	}
-
-	return client, nil
+	return ioutil.TempFile(p.config.ProcessingDir, pattern)
 }
 
-// TempFile returns a new temporary file inside the processing directory of the
-// given pipeline.
-func (p PipelineRegistry) TempFile(name string) (*os.File, error) {
-	cfg, err := p.Config(name)
-	if err != nil {
-		return nil, fmt.Errorf("error fetching pipeline configuration: %w", err)
-	}
-
-	return ioutil.TempFile(cfg.ProcessingDir, "blob-*")
-}
-
-func expandPath(path string) string {
-	usr, _ := user.Current()
-	dir := usr.HomeDir
-
-	if path == "~" {
-		path = dir
-	} else if strings.HasPrefix(path, "~/") {
-		path = filepath.Join(dir, path[2:])
-	}
-
-	return path
+func (p Pipeline) Config() *Config {
+	return p.config
 }
 
 func httpClient() *http.Client {
@@ -109,4 +73,17 @@ func httpClient() *http.Client {
 		Timeout:   timeout,
 		Transport: transport,
 	}
+}
+
+func expandPath(path string) string {
+	usr, _ := user.Current()
+	dir := usr.HomeDir
+
+	if path == "~" {
+		path = dir
+	} else if strings.HasPrefix(path, "~/") {
+		path = filepath.Join(dir, path[2:])
+	}
+
+	return path
 }

@@ -18,11 +18,17 @@ func NewPollIngestActivity(m *Manager) *PollIngestActivity {
 	return &PollIngestActivity{manager: m}
 }
 
-func (a *PollIngestActivity) Execute(ctx context.Context, tinfo *TransferInfo) (time.Time, error) {
-	amc, err := a.manager.Pipelines.Client(tinfo.Event.PipelineName)
+type PollIngestActivityParams struct {
+	PipelineName string
+	SIPID        string
+}
+
+func (a *PollIngestActivity) Execute(ctx context.Context, params *PollIngestActivityParams) (time.Time, error) {
+	p, err := a.manager.Pipelines.Pipeline(params.PipelineName)
 	if err != nil {
-		return time.Time{}, err
+		return time.Time{}, nonRetryableError(err)
 	}
+	amc := p.Client()
 
 	var backoffStrategy = backoff.WithContext(backoff.NewConstantBackOff(time.Second*5), ctx)
 
@@ -31,7 +37,7 @@ func (a *PollIngestActivity) Execute(ctx context.Context, tinfo *TransferInfo) (
 			ctx, cancel := context.WithTimeout(ctx, time.Second*2)
 			defer cancel()
 
-			err = pipeline.IngestStatus(ctx, amc, tinfo.SIPID)
+			err = pipeline.IngestStatus(ctx, amc, params.SIPID)
 			if errors.Is(err, pipeline.ErrStatusNonRetryable) {
 				return backoff.Permanent(nonRetryableError(err))
 			}

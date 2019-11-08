@@ -21,8 +21,12 @@ func (a *DownloadActivity) Execute(ctx context.Context, event *watcher.BlobEvent
 	if event == nil {
 		return "", nonRetryableError(errors.New("error reading parameters"))
 	}
+	p, err := a.manager.Pipelines.Pipeline(event.PipelineName)
+	if err != nil {
+		return "", nonRetryableError(err)
+	}
 
-	file, err := a.manager.Pipelines.TempFile(event.PipelineName)
+	file, err := p.TempFile("blob-*")
 	if err != nil {
 		return "", nonRetryableError(fmt.Errorf("error creating temporary file in processing directory: %v", err))
 	}

@@ -14,10 +14,11 @@ func NewHidePackageActivity(m *Manager) *HidePackageActivity {
 }
 
 func (a *HidePackageActivity) Execute(ctx context.Context, unitID, unitType, pipelineName string) error {
-	amc, err := a.manager.Pipelines.Client(pipelineName)
+	p, err := a.manager.Pipelines.Pipeline(pipelineName)
 	if err != nil {
-		return nonRetryableError(fmt.Errorf("error looking up pipeline config: %v", err))
+		return nonRetryableError(err)
 	}
+	amc := p.Client()
 
 	if unitType != "transfer" && unitType != "ingest" {
 		return nonRetryableError(fmt.Errorf("unexpected unit type: %s", unitType))

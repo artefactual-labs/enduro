@@ -264,7 +264,14 @@ func (w *ProcessingWorkflow) SessionHandler(ctx workflow.Context, sessCtx workfl
 
 	// Transfer.
 	activityOpts = withActivityOptsForRequest(sessCtx)
-	err = workflow.ExecuteActivity(activityOpts, TransferActivityName, tinfo).Get(activityOpts, &tinfo.TransferID)
+	err = workflow.ExecuteActivity(activityOpts, TransferActivityName, &TransferActivityParams{
+		PipelineName:       tinfo.Event.PipelineName,
+		TransferLocationID: tinfo.PipelineConfig.TransferLocationID,
+		RelPath:            tinfo.Bundle.RelPath,
+		Name:               tinfo.Bundle.Name,
+		ProcessingConfig:   tinfo.PipelineConfig.ProcessingConfig,
+		AutoApprove:        true,
+	}).Get(activityOpts, &tinfo.TransferID)
 	if err != nil {
 		return err
 	}
@@ -275,14 +282,20 @@ func (w *ProcessingWorkflow) SessionHandler(ctx workflow.Context, sessCtx workfl
 
 	// Poll transfer.
 	activityOpts = withActivityOptsForHeartbeatedRequest(sessCtx, time.Minute)
-	err = workflow.ExecuteActivity(activityOpts, PollTransferActivityName, tinfo).Get(activityOpts, &tinfo.SIPID)
+	err = workflow.ExecuteActivity(activityOpts, PollTransferActivityName, &PollTransferActivityParams{
+		PipelineName: tinfo.Event.PipelineName,
+		TransferID:   tinfo.TransferID,
+	}).Get(activityOpts, &tinfo.SIPID)
 	if err != nil {
 		return err
 	}
 
 	// Poll ingest.
 	activityOpts = withActivityOptsForHeartbeatedRequest(sessCtx, time.Minute)
-	err = workflow.ExecuteActivity(activityOpts, PollIngestActivityName, tinfo).Get(activityOpts, &tinfo.StoredAt)
+	err = workflow.ExecuteActivity(activityOpts, PollIngestActivityName, &PollIngestActivityParams{
+		PipelineName: tinfo.Event.PipelineName,
+		SIPID:        tinfo.SIPID,
+	}).Get(activityOpts, &tinfo.StoredAt)
 	if err != nil {
 		return err
 	}
@@ -327,11 +340,12 @@ func updatePackageStatusLocalActivity(ctx context.Context, colsvc collection.Ser
 }
 
 func loadConfigLocalActivity(ctx context.Context, m *Manager, pipeline string, tinfo *TransferInfo) (*TransferInfo, error) {
-	pipelineConfig, err := m.Pipelines.Config(tinfo.Event.PipelineName)
+	p, err := m.Pipelines.Pipeline(pipeline)
 	if err != nil {
-		return nil, fmt.Errorf("error loading configuration of pipeline %s: %v", pipeline, err)
+		return nil, err
 	}
-	tinfo.PipelineConfig = pipelineConfig
+
+	tinfo.PipelineConfig = p.Config()
 	tinfo.Hooks = m.Hooks
 
 	return tinfo, nil

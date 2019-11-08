@@ -15,12 +15,12 @@ type Manager struct {
 	Logger     logr.Logger
 	Collection collection.Service
 	Watcher    watcher.Service
-	Pipelines  *pipeline.PipelineRegistry
+	Pipelines  *pipeline.Registry
 	Hooks      map[string]map[string]interface{}
 }
 
 // NewManager returns a pointer to a new Manager.
-func NewManager(logger logr.Logger, colsvc collection.Service, wsvc watcher.Service, pipelines *pipeline.PipelineRegistry, hooks map[string]map[string]interface{}) *Manager {
+func NewManager(logger logr.Logger, colsvc collection.Service, wsvc watcher.Service, pipelines *pipeline.Registry, hooks map[string]map[string]interface{}) *Manager {
 	return &Manager{
 		Logger:     logger,
 		Collection: colsvc,
