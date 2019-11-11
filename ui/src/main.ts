@@ -5,12 +5,23 @@ import store from './store';
 import BootstrapVue from 'bootstrap-vue';
 import * as client from './client/src';
 
-const url = window.location.href.split('/');
-const basePath = url[0] + '//' + url[2];
+function apiPath(): string {
+  const location = window.location;
+  const path = location.protocol
+    + '//'
+    + location.hostname
+    + (location.port ? ':' + location.port : '')
+    + location.pathname
+    + (location.search ? location.search : '');
 
-export let EnduroCollectionClient = new client.CollectionApi(new client.Configuration({
-  basePath,
-}));
+  return path.replace(/\/$/, '');
+}
+
+console.log(apiPath());
+
+export let EnduroCollectionClient = new client.CollectionApi(
+  new client.Configuration({basePath: apiPath()},
+));
 
 Vue.use(BootstrapVue);
 
