@@ -73,7 +73,7 @@
 
 <script lang="ts">
 import { CollectionShowResponseBody } from '../client/src';
-import { EnduroCollectionClient } from '../main';
+import { EnduroCollectionClient } from '../client';
 import { Component, Inject, Prop, Provide, Vue } from 'vue-property-decorator';
 import CollectionStatusBadge from '@/components/CollectionStatusBadge.vue';
 

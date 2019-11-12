@@ -3,25 +3,7 @@ import App from './App.vue';
 import router from './router';
 import store from './store';
 import BootstrapVue from 'bootstrap-vue';
-import * as client from './client/src';
-
-function apiPath(): string {
-  const location = window.location;
-  const path = location.protocol
-    + '//'
-    + location.hostname
-    + (location.port ? ':' + location.port : '')
-    + location.pathname
-    + (location.search ? location.search : '');
-
-  return path.replace(/\/$/, '');
-}
-
-console.log(apiPath());
-
-export let EnduroCollectionClient = new client.CollectionApi(
-  new client.Configuration({basePath: apiPath()},
-));
+import { EnduroCollectionClient, setUpEnduroClient } from './client';
 
 Vue.use(BootstrapVue);
 
@@ -45,4 +27,7 @@ new Vue({
   router,
   store,
   render: (h) => h(App),
+  beforeMount: () => {
+    setUpEnduroClient();
+  },
 }).$mount('#app');

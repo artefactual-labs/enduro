@@ -37,7 +37,7 @@
 
 <script lang="ts">
 import { Component, Prop, Provide, Vue } from 'vue-property-decorator';
-import { EnduroCollectionClient } from '../main';
+import { EnduroCollectionClient } from '../client';
 import CollectionStatusBadge from '@/components/CollectionStatusBadge.vue';
 import { CollectionListRequest, CollectionListResponseBody, EnduroStoredCollectionResponseBodyCollection } from '../client/src';
 
