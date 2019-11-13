@@ -50,7 +50,7 @@ func (a *BundleActivity) Execute(ctx context.Context, params *BundleActivityPara
 		res.FullPath, err = a.Bundle(ctx, unar, params.TransferDir, params.Key, params.TempFile)
 	}
 	if err != nil {
-		return nil, err
+		return nil, nonRetryableError(err)
 	}
 
 	res.RelPath, err = filepath.Rel(params.TransferDir, res.FullPath)
@@ -96,8 +96,13 @@ func (a *BundleActivity) SingleFile(ctx context.Context, transferDir, key, tempF
 	}
 	defer dest.Close()
 
-	if err := os.Rename(tempFile, filepath.Join(transferDir, dest.Name())); err != nil {
-		return "", fmt.Errorf("error moving file (from %s to %s): %v", tempFile, dest.Name(), err)
+	var path = filepath.Join(transferDir, dest.Name())
+	if err := os.Rename(tempFile, path); err != nil {
+		return "", fmt.Errorf("error moving file (from %s to %s): %v", tempFile, path, err)
+	}
+
+	if err := os.Chmod(path, os.FileMode(0o755)); err != nil {
+		return "", fmt.Errorf("error changing file mode: %v", err)
 	}
 
 	if err := b.Bundle(); err != nil {
