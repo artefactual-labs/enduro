@@ -23,7 +23,7 @@ type Watcher interface {
 	// Every watcher targets a pipeline.
 	Pipeline() string
 
-	RetentionPeriod() time.Duration
+	RetentionPeriod() *time.Duration
 
 	fmt.Stringer // It should return the name of the watcher.
 }
@@ -31,7 +31,7 @@ type Watcher interface {
 type commonWatcherImpl struct {
 	name            string
 	pipeline        string
-	retentionPeriod time.Duration
+	retentionPeriod *time.Duration
 }
 
 func (w *commonWatcherImpl) String() string {
@@ -42,7 +42,7 @@ func (w *commonWatcherImpl) Pipeline() string {
 	return w.pipeline
 }
 
-func (w *commonWatcherImpl) RetentionPeriod() time.Duration {
+func (w *commonWatcherImpl) RetentionPeriod() *time.Duration {
 	return w.retentionPeriod
 }
 

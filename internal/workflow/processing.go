@@ -176,8 +176,8 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 
 	// Schedule deletion of the original in the watched data source.
 	var deletionTimer workflow.Future
-	if tinfo.Status == collection.StatusDone {
-		deletionTimer = workflow.NewTimer(ctx, tinfo.Event.RetentionPeriod)
+	if tinfo.Status == collection.StatusDone && tinfo.Event.RetentionPeriod != nil {
+		deletionTimer = workflow.NewTimer(ctx, *tinfo.Event.RetentionPeriod)
 	}
 
 	// Activities that we want to run within the session regardless the

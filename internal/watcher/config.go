@@ -14,7 +14,7 @@ type FilesystemConfig struct {
 	Inotify bool
 
 	Pipeline        string
-	RetentionPeriod time.Duration
+	RetentionPeriod *time.Duration
 }
 
 // See minio.go for more.
@@ -31,5 +31,5 @@ type MinioConfig struct {
 	Token        string
 
 	Pipeline        string
-	RetentionPeriod time.Duration
+	RetentionPeriod *time.Duration
 }

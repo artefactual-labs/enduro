@@ -23,7 +23,7 @@ type BlobEvent struct {
 	PipelineName string
 
 	// Retention period for this blob.
-	RetentionPeriod time.Duration
+	RetentionPeriod *time.Duration
 
 	// Key of the blob.
 	Key string
