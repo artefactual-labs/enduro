@@ -7,8 +7,9 @@ before:
 
 changelog:
   sort: asc
-  exclude:
-  - '^docs:'
+  filters:
+    exclude:
+    - '^docs:'
 
 builds:
 - env:
