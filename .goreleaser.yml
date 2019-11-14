@@ -6,7 +6,9 @@ before:
   - make generate ui-gen
 
 changelog:
-  skip: true
+  sort: asc
+  exclude:
+  - '^docs:'
 
 builds:
 - env:
