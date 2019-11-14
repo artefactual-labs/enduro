@@ -24,7 +24,7 @@ var _ goacollection.Service = (*goaWrapper)(nil)
 
 // List all stored collections. It implements goacollection.Service.
 func (w *goaWrapper) List(ctx context.Context, payload *goacollection.ListPayload) (*goacollection.ListResult, error) {
-	var query = "SELECT id, name, workflow_id, run_id, transfer_id, aip_id, original_id, status, CONVERT_TZ(created_at, @@session.time_zone, '+00:00') AS created_at, CONVERT_TZ(completed_at, @@session.time_zone, '+00:00') AS completed_at FROM collection"
+	var query = "SELECT id, name, workflow_id, run_id, transfer_id, aip_id, original_id, pipeline_id, status, CONVERT_TZ(created_at, @@session.time_zone, '+00:00') AS created_at, CONVERT_TZ(completed_at, @@session.time_zone, '+00:00') AS completed_at FROM collection"
 	var args = []interface{}{}
 
 	// We extract one extra item so we can tell the next cursor.
@@ -83,7 +83,7 @@ func (w *goaWrapper) List(ctx context.Context, payload *goacollection.ListPayloa
 
 // Show collection by ID. It implements goacollection.Service.
 func (w *goaWrapper) Show(ctx context.Context, payload *goacollection.ShowPayload) (*goacollection.EnduroStoredCollection, error) {
-	var query = "SELECT id, name, workflow_id, run_id, transfer_id, aip_id, original_id, status, CONVERT_TZ(created_at, @@session.time_zone, '+00:00') AS created_at, CONVERT_TZ(completed_at, @@session.time_zone, '+00:00') AS completed_at FROM collection WHERE id = (?)"
+	var query = "SELECT id, name, workflow_id, run_id, transfer_id, aip_id, original_id, pipeline_id, status, CONVERT_TZ(created_at, @@session.time_zone, '+00:00') AS created_at, CONVERT_TZ(completed_at, @@session.time_zone, '+00:00') AS completed_at FROM collection WHERE id = (?)"
 	var c = Collection{}
 
 	query = w.db.Rebind(query)

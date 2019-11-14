@@ -1,6 +1,6 @@
 <template>
   <div class="collection-list">
-    <table class="table table-bordered table-hover">
+    <table class="table table-bordered table-hover table-sm">
       <thead class="thead">
         <tr>
           <th scope="col">ID</th>
@@ -84,7 +84,7 @@ export default class CollectionList extends Vue {
 <style scoped lang="scss">
 
 .table {
-  font-size: 1rem;
+  font-size: .9rem;
 }
 
 .table thead th {
@@ -92,7 +92,6 @@ export default class CollectionList extends Vue {
 }
 
 .table th, .table td {
-  padding: 0.50rem;
   cursor: pointer;
 }
 

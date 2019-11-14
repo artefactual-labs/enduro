@@ -142,6 +142,9 @@ var Collection = Type("Collection", func() {
 		Format(FormatUUID)
 	})
 	Attribute("original_id", String, "Identifier provided by the client")
+	Attribute("pipeline_id", String, "Identifier of Archivematica pipeline", func() {
+		Format(FormatUUID)
+	})
 	Attribute("created_at", String, "Creation datetime", func() {
 		Format(FormatDateTime)
 	})
@@ -163,6 +166,7 @@ var StoredCollection = ResultType("application/vnd.enduro.stored-collection", fu
 		Attribute("transfer_id")
 		Attribute("aip_id")
 		Attribute("original_id")
+		Attribute("pipeline_id")
 		Attribute("created_at")
 		Attribute("completed_at")
 	})
@@ -175,6 +179,7 @@ var StoredCollection = ResultType("application/vnd.enduro.stored-collection", fu
 		Attribute("transfer_id")
 		Attribute("aip_id")
 		Attribute("original_id")
+		Attribute("pipeline_id")
 		Attribute("created_at")
 		Attribute("completed_at")
 	})

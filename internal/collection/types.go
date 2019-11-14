@@ -16,6 +16,7 @@ type Collection struct {
 	TransferID string `db:"transfer_id"`
 	AIPID      string `db:"aip_id"`
 	OriginalID string `db:"original_id"`
+	PipelineID string `db:"pipeline_id"`
 	Status     Status `db:"status"`
 
 	// It defaults to CURRENT_TIMESTAMP(6) so populated as soon as possible.
@@ -35,6 +36,7 @@ func (c Collection) Goa() *goacollection.EnduroStoredCollection {
 		TransferID:  formatOptionalString(c.TransferID),
 		AipID:       formatOptionalString(c.AIPID),
 		OriginalID:  formatOptionalString(c.OriginalID),
+		PipelineID:  formatOptionalString(c.PipelineID),
 		Status:      c.Status.String(),
 		CreatedAt:   formatTime(c.CreatedAt),
 		CompletedAt: formatOptionalTime(c.CompletedAt),

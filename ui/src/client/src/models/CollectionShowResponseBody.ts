@@ -56,6 +56,12 @@ export interface CollectionShowResponseBody {
      */
     originalId?: string;
     /**
+     * Identifier of Archivematica pipeline
+     * @type {string}
+     * @memberof CollectionShowResponseBody
+     */
+    pipelineId?: string;
+    /**
      * Identifier of latest processing workflow run
      * @type {string}
      * @memberof CollectionShowResponseBody
@@ -97,6 +103,7 @@ export function CollectionShowResponseBodyFromJSONTyped(json: any, ignoreDiscrim
         'id': json['id'],
         'name': !exists(json, 'name') ? undefined : json['name'],
         'originalId': !exists(json, 'original_id') ? undefined : json['original_id'],
+        'pipelineId': !exists(json, 'pipeline_id') ? undefined : json['pipeline_id'],
         'runId': !exists(json, 'run_id') ? undefined : json['run_id'],
         'status': json['status'],
         'transferId': !exists(json, 'transfer_id') ? undefined : json['transfer_id'],
@@ -119,6 +126,7 @@ export function CollectionShowResponseBodyToJSON(value?: CollectionShowResponseB
         'id': value.id,
         'name': value.name,
         'original_id': value.originalId,
+        'pipeline_id': value.pipelineId,
         'run_id': value.runId,
         'status': value.status,
         'transfer_id': value.transferId,

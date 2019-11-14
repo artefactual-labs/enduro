@@ -29,10 +29,16 @@ type TransferActivityParams struct {
 	AutoApprove        bool
 }
 
-func (a *TransferActivity) Execute(ctx context.Context, params *TransferActivityParams) (string, error) {
+type TransferActivityResponse struct {
+	TransferID      string
+	PipelineVersion string
+	PipelineID      string
+}
+
+func (a *TransferActivity) Execute(ctx context.Context, params *TransferActivityParams) (*TransferActivityResponse, error) {
 	p, err := a.manager.Pipelines.Pipeline(params.PipelineName)
 	if err != nil {
-		return "", nonRetryableError(err)
+		return nil, nonRetryableError(err)
 	}
 	amc := p.Client()
 
@@ -52,11 +58,15 @@ func (a *TransferActivity) Execute(ctx context.Context, params *TransferActivity
 		if httpResp != nil {
 			switch {
 			case httpResp.StatusCode == http.StatusForbidden:
-				return "", nonRetryableError(fmt.Errorf("authentication error: %v", err))
+				return nil, nonRetryableError(fmt.Errorf("authentication error: %v", err))
 			}
 		}
-		return "", err
+		return nil, err
 	}
 
-	return resp.ID, nil
+	return &TransferActivityResponse{
+		TransferID:      resp.ID,
+		PipelineVersion: httpResp.Header.Get("X-Archivematica-Version"),
+		PipelineID:      httpResp.Header.Get("X-Archivematica-ID"),
+	}, nil
 }

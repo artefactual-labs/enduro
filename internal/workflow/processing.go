@@ -94,6 +94,12 @@ type TransferInfo struct {
 	// It is populated by loadConfigLocalActivity.
 	PipelineConfig *pipeline.Config
 
+	// PipelineID is the UUID of the Archivematica pipeline. Extracted from
+	// the API response header when the transfer is submitted.
+	//
+	// It is populated by transferActivity.
+	PipelineID string
+
 	// Hooks is the hook config store.
 	//
 	// It is populated by loadConfigLocalActivity.
@@ -264,6 +270,7 @@ func (w *ProcessingWorkflow) SessionHandler(ctx workflow.Context, sessCtx workfl
 
 	// Transfer.
 	activityOpts = withActivityOptsForRequest(sessCtx)
+	var transferResponse = TransferActivityResponse{}
 	err = workflow.ExecuteActivity(activityOpts, TransferActivityName, &TransferActivityParams{
 		PipelineName:       tinfo.Event.PipelineName,
 		TransferLocationID: tinfo.PipelineConfig.TransferLocationID,
@@ -271,10 +278,12 @@ func (w *ProcessingWorkflow) SessionHandler(ctx workflow.Context, sessCtx workfl
 		Name:               tinfo.Bundle.Name,
 		ProcessingConfig:   tinfo.PipelineConfig.ProcessingConfig,
 		AutoApprove:        true,
-	}).Get(activityOpts, &tinfo.TransferID)
+	}).Get(activityOpts, &transferResponse)
 	if err != nil {
 		return err
 	}
+	tinfo.TransferID = transferResponse.TransferID
+	tinfo.PipelineID = transferResponse.PipelineID
 
 	// Update status of collection.
 	activityOpts = withLocalActivityOpts(ctx)
@@ -334,7 +343,7 @@ func updatePackageStatusLocalActivity(ctx context.Context, colsvc collection.Ser
 
 	return colsvc.UpdateWorkflowStatus(
 		ctx, tinfo.CollectionID, tinfo.Bundle.Name, info.WorkflowExecution.ID,
-		info.WorkflowExecution.RunID, tinfo.TransferID, tinfo.SIPID,
+		info.WorkflowExecution.RunID, tinfo.TransferID, tinfo.SIPID, tinfo.PipelineID,
 		tinfo.Status, tinfo.StoredAt,
 	)
 }

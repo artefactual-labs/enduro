@@ -25,6 +25,10 @@
               <dt>Transfer</dt>
               <dd>{{ collection.transferId }}</dd>
             </template>
+            <template v-if="collection.pipelineId">
+              <dt>Pipeline</dt>
+              <dd>{{ collection.pipelineId }}</dd>
+            </template>
             <template v-if="collection.status == 'done'">
               <hr />
               <dt>AIP</dt>

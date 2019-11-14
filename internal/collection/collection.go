@@ -15,7 +15,7 @@ import (
 type Service interface {
 	Goa() goacollection.Service
 	Create(context.Context, *Collection) error
-	UpdateWorkflowStatus(ctx context.Context, ID uint, name string, workflowID, runID, transferID, aipID string, status Status, storedAt time.Time) error
+	UpdateWorkflowStatus(ctx context.Context, ID uint, name string, workflowID, runID, transferID, aipID, pipelineID string, status Status, storedAt time.Time) error
 }
 
 type collectionImpl struct {
@@ -37,7 +37,7 @@ func (svc *collectionImpl) Goa() goacollection.Service {
 }
 
 func (svc *collectionImpl) Create(ctx context.Context, col *Collection) error {
-	var query = `INSERT INTO collection (name, workflow_id, run_id, transfer_id, aip_id, original_id, status) VALUES ((?), (?), (?), (?), (?), (?), (?))`
+	var query = `INSERT INTO collection (name, workflow_id, run_id, transfer_id, aip_id, original_id, pipeline_id, status) VALUES ((?), (?), (?), (?), (?), (?), (?), (?))`
 	var args = []interface{}{
 		col.Name,
 		col.WorkflowID,
@@ -45,6 +45,7 @@ func (svc *collectionImpl) Create(ctx context.Context, col *Collection) error {
 		col.TransferID,
 		col.AIPID,
 		col.OriginalID,
+		col.PipelineID,
 		col.Status,
 	}
 
@@ -64,7 +65,7 @@ func (svc *collectionImpl) Create(ctx context.Context, col *Collection) error {
 	return err
 }
 
-func (svc *collectionImpl) UpdateWorkflowStatus(ctx context.Context, ID uint, name string, workflowID, runID, transferID, aipID string, status Status, storedAt time.Time) error {
+func (svc *collectionImpl) UpdateWorkflowStatus(ctx context.Context, ID uint, name string, workflowID, runID, transferID, aipID, pipelineID string, status Status, storedAt time.Time) error {
 	// Ensure that storedAt is reset during retries.
 	var completedAt = &storedAt
 	if status == StatusInProgress {
@@ -74,13 +75,14 @@ func (svc *collectionImpl) UpdateWorkflowStatus(ctx context.Context, ID uint, na
 		completedAt = nil
 	}
 
-	var query = `UPDATE collection SET name = (?), workflow_id = (?), run_id = (?), transfer_id = (?), aip_id = (?), status = (?), completed_at = (?) WHERE id = (?)`
+	var query = `UPDATE collection SET name = (?), workflow_id = (?), run_id = (?), transfer_id = (?), aip_id = (?), pipeline_id = (?), status = (?), completed_at = (?) WHERE id = (?)`
 	var args = []interface{}{
 		name,
 		workflowID,
 		runID,
 		transferID,
 		aipID,
+		pipelineID,
 		status,
 		completedAt,
 		ID,
