@@ -13,6 +13,7 @@ func TestBundleActivity_NameKind(t *testing.T) {
 		{"c5ecddb0-7a61-4234-80a9-fa7993e97867.tar", "c5ecddb0-7a61-4234-80a9-fa7993e97867.tar", ""},
 		{"DPJ-SIP-c5ecddb0-7a61-4234-80a9-fa7993e97867", "DPJ-SIP-c5ecddb0-7a61", "DPJ-SIP"},
 		{"DPJ-SIP-c5ecddb0-7a61-4234-80a9-fa7993e97867.tar", "DPJ-SIP-c5ecddb0-7a61", "DPJ-SIP"},
+		{"DPJ-SIP_c5ecddb0-7a61-4234-80a9-fa7993e97867.tar", "DPJ-SIP-c5ecddb0-7a61", "DPJ-SIP"},
 	}
 	for _, tt := range tests {
 		gotName, gotKind := a.NameKind(tt.key)
