@@ -195,7 +195,12 @@ func (w *goaWrapper) Workflow(ctx context.Context, payload *goacollection.Workfl
 
 	we, err := w.cc.DescribeWorkflowExecution(ctx, *goacol.WorkflowID, *goacol.RunID)
 	if err != nil {
-		return nil, fmt.Errorf("error looking up workflow history: %v", err)
+		switch err.(type) {
+		case *shared.EntityNotExistsError:
+			return nil, &goacollection.NotFound{Message: "not_found"}
+		default:
+			return nil, fmt.Errorf("error looking up history: %v", err)
+		}
 	}
 
 	var status = "ACTIVE"
