@@ -15,12 +15,14 @@
             <dd>
               <CollectionStatusBadge :status="collection.status"/>
             </dd>
-            <template v-if="collection.original_id">
+            <template v-if="collection.originalId">
               <dt>OriginalID</dt>
               <dd>{{ collection.originalId }}</dd>
             </template>
             <dt>Created</dt>
-            <dd>{{ collection.createdAt | formatDateTime }}</dd>
+            <dd>
+              {{ collection.createdAt | formatDateTime }}
+            </dd>
             <template v-if="collection.transferId">
               <dt>Transfer</dt>
               <dd>{{ collection.transferId }}</dd>
@@ -34,7 +36,10 @@
               <dt>AIP</dt>
               <dd>{{ collection.aipId }}</dd>
               <dt>Completed</dt>
-              <dd>{{ collection.completedAt | formatDateTime }}</dd>
+              <dd>
+                {{ collection.completedAt | formatDateTime }}
+                (took {{ took(collection.createdAt, collection.completedAt) }})
+              </dd>
             </template>
           </dl>
           <hr />
@@ -76,10 +81,10 @@
 </template>
 
 <script lang="ts">
-import { CollectionShowResponseBody } from '../client/src';
-import { EnduroCollectionClient } from '../client';
+import { api, EnduroCollectionClient } from '../client';
 import { Component, Inject, Prop, Provide, Vue } from 'vue-property-decorator';
 import CollectionStatusBadge from '@/components/CollectionStatusBadge.vue';
+import moment from 'moment';
 
 @Component({
   components: {
@@ -87,13 +92,12 @@ import CollectionStatusBadge from '@/components/CollectionStatusBadge.vue';
   },
 })
 export default class CollectionDetail extends Vue {
-
   private interval: number = 0;
   private collection: any = {};
 
-  private created() {
+  private mounted() {
     this.interval = setInterval(() => this.populate(), 500);
-    return this.populate();
+    this.populate();
   }
 
   private beforeDestroy() {
@@ -101,7 +105,7 @@ export default class CollectionDetail extends Vue {
   }
 
   private populate() {
-    EnduroCollectionClient.collectionShow({id: +this.$route.params.id}).then((response: CollectionShowResponseBody) => {
+    EnduroCollectionClient.collectionShow({id: +this.$route.params.id}).then((response: api.CollectionShowResponseBody) => {
       this.collection = response;
     });
   }
@@ -112,6 +116,11 @@ export default class CollectionDetail extends Vue {
       ret = this.$route.params.id;
     }
     return ret;
+  }
+
+  private took(created: Date, completed: Date): string {
+    const diff = moment(completed).diff(created);
+    return moment.duration(diff).humanize();
   }
 
   private retry(id: string): Promise<any> {

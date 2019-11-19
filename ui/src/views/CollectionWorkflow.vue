@@ -59,9 +59,8 @@
 
 <script lang="ts">
 import { Component, Prop, Provide, Vue } from 'vue-property-decorator';
-import { EnduroCollectionClient } from '../client';
 import CollectionStatusBadge from '@/components/CollectionStatusBadge.vue';
-import { CollectionShowResponseBody, CollectionWorkflowResponseBody, EnduroCollectionWorkflowHistoryResponseBody } from '../client/src';
+import { api, EnduroCollectionClient } from '../client';
 
 @Component({
   components: {
@@ -84,7 +83,7 @@ export default class CollectionWorkflow extends Vue {
     this.loadHistory();
   }
 
-  private getName(body: CollectionShowResponseBody): string {
+  private getName(body: api.CollectionShowResponseBody): string {
     if (body.name) {
       return body.name;
     }
@@ -93,14 +92,14 @@ export default class CollectionWorkflow extends Vue {
   }
 
   private loadCollection() {
-    EnduroCollectionClient.collectionShow({id: +this.$route.params.id}).then((response: CollectionShowResponseBody) => {
+    EnduroCollectionClient.collectionShow({id: +this.$route.params.id}).then((response: api.CollectionShowResponseBody) => {
       this.collection = response;
       this.name = this.getName(response);
     });
   }
 
   private loadHistory() {
-    return EnduroCollectionClient.collectionWorkflow({id: +this.$route.params.id}).then((response: CollectionWorkflowResponseBody) => {
+    return EnduroCollectionClient.collectionWorkflow({id: +this.$route.params.id}).then((response: api.CollectionWorkflowResponseBody) => {
       this.history = response;
       this.processHistory();
     });
@@ -153,7 +152,7 @@ export default class CollectionWorkflow extends Vue {
     }
   }
 
-  private renderDetails(event: EnduroCollectionWorkflowHistoryResponseBody): string {
+  private renderDetails(event: api.EnduroCollectionWorkflowHistoryResponseBody): string {
     let ret = '';
 
     if (!event || !event.type) {

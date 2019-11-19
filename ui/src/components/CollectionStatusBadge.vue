@@ -6,7 +6,7 @@
 
 <script lang="ts">
 
-import { CollectionShowResponseBodyStatusEnum } from '../client/src';
+import { api } from '../client';
 import { Component, Vue } from 'vue-property-decorator';
 
 @Component({
@@ -21,11 +21,11 @@ export default class CollectionStatusBadge extends Vue {
   private defvariant: string = 'secondary';
 
   private variants: any = {
-    [CollectionShowResponseBodyStatusEnum.Error]: 'danger',
-    [CollectionShowResponseBodyStatusEnum.InProgress]: 'warning',
-    [CollectionShowResponseBodyStatusEnum.Done]: 'success',
-    [CollectionShowResponseBodyStatusEnum.New]: 'secondary',
-    [CollectionShowResponseBodyStatusEnum.Unknown]: 'secondary',
+    [api.CollectionShowResponseBodyStatusEnum.Error]: 'danger',
+    [api.CollectionShowResponseBodyStatusEnum.InProgress]: 'warning',
+    [api.CollectionShowResponseBodyStatusEnum.Done]: 'success',
+    [api.CollectionShowResponseBodyStatusEnum.New]: 'secondary',
+    [api.CollectionShowResponseBodyStatusEnum.Unknown]: 'secondary',
   };
 
   private variant(): string {

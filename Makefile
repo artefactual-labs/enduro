@@ -68,16 +68,14 @@ ui-gen:
 
 ui-client:
 	rm -rf $(CURDIR)/ui/src/client
-	docker container run --rm --user $(shell id -u):$(shell id -g) --volume $(CURDIR):/local openapitools/openapi-generator-cli \
+	docker container run --rm --user $(shell id -u):$(shell id -g) --volume $(CURDIR):/local openapitools/openapi-generator-cli:v4.2.1 \
 		generate \
 			--input-spec /local/internal/api/gen/http/openapi.json \
 			--generator-name typescript-fetch \
-			--output /local/ui/src/client \
+			--output /local/ui/src/openapi-generator/ \
 			-p "generateAliasAsModel=true" \
 			-p "typescriptThreePlus=true" \
 			-p "withInterfaces=true"
-	rm $(CURDIR)/ui/src/client/tsconfig.json
-
 
 cadence-flush:
 	docker-compose exec mysql mysql -hlocalhost -uroot -proot123 -e "DROP DATABASE IF EXISTS cadence;"

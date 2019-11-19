@@ -98,8 +98,8 @@ export function EnduroStoredCollectionResponseBodyFromJSONTyped(json: any, ignor
     return {
         
         'aipId': !exists(json, 'aip_id') ? undefined : json['aip_id'],
-        'completedAt': !exists(json, 'completed_at') ? undefined : new Date(json['completed_at']),
-        'createdAt': new Date(json['created_at']),
+        'completedAt': !exists(json, 'completed_at') ? undefined : (new Date(json['completed_at'])),
+        'createdAt': (new Date(json['created_at'])),
         'id': json['id'],
         'name': !exists(json, 'name') ? undefined : json['name'],
         'originalId': !exists(json, 'original_id') ? undefined : json['original_id'],
@@ -121,8 +121,8 @@ export function EnduroStoredCollectionResponseBodyToJSON(value?: EnduroStoredCol
     return {
         
         'aip_id': value.aipId,
-        'completed_at': value.completedAt == null ? undefined : value.completedAt.toISOString(),
-        'created_at': value.createdAt.toISOString(),
+        'completed_at': value.completedAt === undefined ? undefined : (value.completedAt.toISOString()),
+        'created_at': (value.createdAt.toISOString()),
         'id': value.id,
         'name': value.name,
         'original_id': value.originalId,

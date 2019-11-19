@@ -1,45 +1,72 @@
 <template>
   <div class="collection-list">
-    <table class="table table-bordered table-hover table-sm">
-      <thead class="thead">
-        <tr>
-          <th scope="col">ID</th>
-          <th scope="col">Name</th>
-          <th scope="col">Created</th>
-          <th scope="col">Completed</th>
-          <th scope="col">Status</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="item in collections" v-bind:key="item.id" @click="view(item.id)">
-          <th scope="row">{{ item.id }}</th>
-          <td class="collection-name">{{ item.name }}</td>
-          <td>{{ item.created_at | formatDateTime }}</td>
-          <td>{{ item.completed_at | formatDateTime }}</td>
-          <td>
-            <CollectionStatusBadge :status="item.status"/>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-    <nav>
-      <ul class="pagination">
-        <li class="page-item">
-          <button class="page-link" @click="next('')">Reload</button>
-        </li>
-        <li class="page-item" v-if="nextCursor">
-          <button class="page-link" @click="next(nextCursor)">Next</button>
-        </li>
-      </ul>
-    </nav>
+    <template v-if="error">
+      <b-alert show dismissible variant="warning">
+        <h4 class="alert-heading">Search error</h4>
+        We couldn't connect to the API server. You may want to try again in a few seconds.
+        <hr />
+        <b-button @click="retryButtonClicked" class="m-1">Retry</b-button>
+      </b-alert>
+    </template>
+    <template v-else>
+      <div>
+        <b-form inline @submit="onSubmit" @reset="onReset" class="py-3">
+          <b-input-group size="sm" class="w-100">
+            <b-form-input autofocus v-model="query" type="text" placeholder="E.g.: a23bd138-4225-4cf7-845d-07a8983cf32f"></b-form-input>
+            <b-input-group-append>
+              <b-button type="submit" variant="info">Search</b-button>
+              <b-button type="reset">Reset</b-button>
+            </b-input-group-append>
+          </b-input-group>
+        </b-form>
+      </div>
+      <template v-if="results.length > 0">
+        <table class="table table-bordered table-hover table-sm">
+          <thead class="thead">
+            <tr>
+              <th scope="col">ID</th>
+              <th scope="col">Name</th>
+              <th scope="col">Created</th>
+              <th scope="col">Completed</th>
+              <th scope="col">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="item in results" v-bind:key="item.id" @click="rowClicked(item.id)">
+              <th scope="row">{{ item.id }}</th>
+              <td class="collection-name">{{ item.name }}</td>
+              <td>{{ item.createdAt | formatDateTime }}</td>
+              <td>{{ item.completedAt | formatDateTime }}</td>
+              <td><CollectionStatusBadge :status="item.status"/></td>
+            </tr>
+          </tbody>
+        </table>
+        <nav>
+          <ul class="pagination">
+            <li class="page-item">
+              <button class="page-link" @click="reloadButtonClicked">Reload</button>
+            </li>
+            <li class="page-item" v-if="nextCursor">
+              <button class="page-link" @click="nextButtonClicked(nextCursor)">Next</button>
+            </li>
+          </ul>
+        </nav>
+      </template>
+      <div v-if="results.length === 0">
+        No results.
+      </div>
+    </template>
   </div>
 </template>
 
 <script lang="ts">
-import { Component, Prop, Provide, Vue } from 'vue-property-decorator';
-import { EnduroCollectionClient } from '../client';
+import { Component, Vue } from 'vue-property-decorator';
+import { namespace } from 'vuex-class';
+import { api, EnduroCollectionClient } from '../client';
 import CollectionStatusBadge from '@/components/CollectionStatusBadge.vue';
-import { CollectionListRequest, CollectionListResponseBody, EnduroStoredCollectionResponseBodyCollection } from '../client/src';
+import * as CollectionStore from '../store/collection';
+
+const collectionStoreNs = namespace('collection');
 
 @Component({
   components: {
@@ -48,36 +75,85 @@ import { CollectionListRequest, CollectionListResponseBody, EnduroStoredCollecti
 })
 export default class CollectionList extends Vue {
 
-  private interval: number = 0;
-  private collections: EnduroStoredCollectionResponseBodyCollection = [];
-  private nextCursor?: string = '';
+  @collectionStoreNs.Getter(CollectionStore.GET_SEARCH_ERROR)
+  private error?: boolean;
+
+  @collectionStoreNs.Getter(CollectionStore.GET_SEARCH_RESULTS)
+  private results: any;
+
+  @collectionStoreNs.Getter(CollectionStore.GET_SEARCH_NEXT_CURSOR)
+  private nextCursor: any;
+
+  @collectionStoreNs.Action(CollectionStore.SEARCH_COLLECTIONS)
+  private search: any;
+
+  private query: string | null = null;
 
   private created() {
-    this.next();
+    this.search();
   }
 
-  private load(cursor?: string) {
-    const request: CollectionListRequest = {};
-    if (cursor) {
-      request.cursor = cursor;
-    }
-    return EnduroCollectionClient.collectionList(request);
+  /**
+   * Performs search action.
+   *
+   * @remarks
+   * Search method for CollectionList. By default, it uses the cursor member of
+   * the class.
+   *
+   * @param cursor - Optional cursor. Set to null to reset the cursor.
+   */
+  private doSearch(cursor?: string | null) {
+    const attrs: any = {
+      query: this.query,
+      cursor: typeof(cursor) === 'undefined' ? this.nextCursor : cursor,
+    };
+    this.search(attrs);
   }
 
-  private next(cursor?: string) {
-    this.load(cursor).then((response: CollectionListResponseBody) => {
-      this.collections = response.items;
-      this.nextCursor = response.nextCursor;
-    });
+  /**
+   * Perform same search re-using all existing state.
+   */
+  private retryButtonClicked() {
+    this.doSearch();
   }
 
-  private view(id: string) {
-    this.$router.push({
-      name: 'collection',
-      params: {id},
-    });
+  /**
+   * Perform search with the cursor reset.
+   */
+  private reloadButtonClicked() {
+    this.doSearch(null);
   }
 
+  /*/
+   * Perform search with a new cursor.
+   */
+  private nextButtonClicked(cursor: string) {
+    this.doSearch(cursor);
+  }
+
+  /**
+   * Perform search with the cursor reset.
+   */
+  private onSubmit(event: Event) {
+    event.preventDefault();
+    this.doSearch(null);
+  }
+
+  /**
+   * Perform search with both the query and cursor reset.
+   */
+  private onReset(event: Event) {
+    event.preventDefault();
+    this.query = null;
+    this.doSearch(null);
+  }
+
+  /**
+   * Forward user to the collection route.
+   */
+  private rowClicked(id: string) {
+    this.$router.push({ name: 'collection', params: {id} });
+  }
 }
 </script>
 

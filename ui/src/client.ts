@@ -1,5 +1,4 @@
-import * as client from './client/src';
-
+import * as api from './openapi-generator';
 
 declare global {
   interface Window {
@@ -20,9 +19,9 @@ function apiPath(): string {
   return path.replace(/\/$/, '');
 }
 
-export let EnduroCollectionClient: client.CollectionApi;
+let EnduroCollectionClient: api.CollectionApi;
 
-export function setUpEnduroClient() {
+function setUpEnduroClient() {
   let path = apiPath();
 
   // path seems to be wrong when Enduro is deployed behind FortiNet SSLVPN.
@@ -32,8 +31,8 @@ export function setUpEnduroClient() {
     path = window.fgt_sslvpn.url_rewrite(path);
   }
 
-  const config: client.Configuration = new client.Configuration({basePath: path});
-  EnduroCollectionClient = new client.CollectionApi(config);
+  const config: api.Configuration = new api.Configuration({basePath: path});
+  EnduroCollectionClient = new api.CollectionApi(config);
 
   // tslint:disable-next-line:no-console
   console.log('Enduro client created', path);
@@ -44,4 +43,10 @@ window.enduro = {
   reload: () => {
     setUpEnduroClient();
   },
+};
+
+export {
+  EnduroCollectionClient,
+  setUpEnduroClient,
+  api,
 };
