@@ -37,17 +37,37 @@ func DecodeListRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.De
 	return func(r *http.Request) (interface{}, error) {
 		var (
 			originalID *string
+			transferID *string
+			aipID      *string
+			pipelineID *string
+			query      *string
 			cursor     *string
 		)
 		originalIDRaw := r.URL.Query().Get("original_id")
 		if originalIDRaw != "" {
 			originalID = &originalIDRaw
 		}
+		transferIDRaw := r.URL.Query().Get("transfer_id")
+		if transferIDRaw != "" {
+			transferID = &transferIDRaw
+		}
+		aipIDRaw := r.URL.Query().Get("aip_id")
+		if aipIDRaw != "" {
+			aipID = &aipIDRaw
+		}
+		pipelineIDRaw := r.URL.Query().Get("pipeline_id")
+		if pipelineIDRaw != "" {
+			pipelineID = &pipelineIDRaw
+		}
+		queryRaw := r.URL.Query().Get("query")
+		if queryRaw != "" {
+			query = &queryRaw
+		}
 		cursorRaw := r.URL.Query().Get("cursor")
 		if cursorRaw != "" {
 			cursor = &cursorRaw
 		}
-		payload := NewListPayload(originalID, cursor)
+		payload := NewListPayload(originalID, transferID, aipID, pipelineID, query, cursor)
 
 		return payload, nil
 	}

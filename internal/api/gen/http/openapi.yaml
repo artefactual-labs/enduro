@@ -22,7 +22,23 @@ paths:
       parameters:
       - name: original_id
         in: query
-        description: ID of the original dataset
+        required: false
+        type: string
+      - name: transfer_id
+        in: query
+        required: false
+        type: string
+      - name: aip_id
+        in: query
+        required: false
+        type: string
+      - name: pipeline_id
+        in: query
+        required: false
+        type: string
+      - name: query
+        in: query
+        description: Match all fields
         required: false
         type: string
       - name: cursor
@@ -195,16 +211,16 @@ definitions:
       id:
         type: integer
         description: Identifier of missing collection
-        example: 11053071550819203011
+        example: 4925887654812537685
         format: int64
       message:
         type: string
         description: Message of error
-        example: Unde nulla veritatis consequatur.
+        example: Ut nam non ipsa dolores.
     description: Collection not found
     example:
-      id: 9456871970891484049
-      message: Nisi quo et.
+      id: 18309297163572093418
+      message: Laboriosam aliquid.
     required:
     - message
     - id
@@ -233,18 +249,18 @@ definitions:
       temporary:
         type: boolean
         description: Is the error temporary?
-        example: false
+        example: true
       timeout:
         type: boolean
         description: Is the error a timeout?
-        example: true
+        example: false
     description: cancel_not_running_response_body result type (default view)
     example:
       fault: true
       id: 123abc
       message: parameter 'p' must be an integer
       name: bad_request
-      temporary: true
+      temporary: false
       timeout: true
     required:
     - name
@@ -260,16 +276,16 @@ definitions:
       id:
         type: integer
         description: Identifier of missing collection
-        example: 4492556174608023697
+        example: 17821440116882449182
         format: int64
       message:
         type: string
         description: Message of error
-        example: Nemo numquam.
+        example: Nulla veritatis consequatur repellat veniam nisi.
     description: Collection not found
     example:
-      id: 3985581898859316957
-      message: Dolore dolorum.
+      id: 5598853050942793384
+      message: Odit quo.
     required:
     - message
     - id
@@ -281,43 +297,32 @@ definitions:
         $ref: '#/definitions/EnduroStoredCollectionResponseBodyCollection'
       next_cursor:
         type: string
-        example: Beatae amet unde consequatur.
+        example: Ut illo.
     example:
       items:
       - aip_id: 5E3B665E-1239-9C12-9643-FFC1E6C04697
-        completed_at: "2008-10-01T08:36:33Z"
-        created_at: "2012-05-18T16:30:45Z"
-        id: 4972687347057507517
-        name: Est recusandae dolorum porro nam.
-        original_id: Minima tempora nihil maiores.
+        completed_at: "1984-04-20T02:01:41Z"
+        created_at: "1993-12-29T12:50:10Z"
+        id: 8347017933697019414
+        name: Labore magni recusandae.
+        original_id: Inventore cupiditate.
         pipeline_id: 1265498D-5A84-134A-1C7A-ED5B4B92788E
         run_id: 2C91774A-6D4A-67B6-DC43-6AED849DACC1
-        status: unknown
+        status: error
         transfer_id: 773F4E7F-A748-DF6D-4355-233071D2534A
         workflow_id: FB1E8AC6-4FA4-C883-ED5A-54960E88F5FE
       - aip_id: 5E3B665E-1239-9C12-9643-FFC1E6C04697
-        completed_at: "2008-10-01T08:36:33Z"
-        created_at: "2012-05-18T16:30:45Z"
-        id: 4972687347057507517
-        name: Est recusandae dolorum porro nam.
-        original_id: Minima tempora nihil maiores.
+        completed_at: "1984-04-20T02:01:41Z"
+        created_at: "1993-12-29T12:50:10Z"
+        id: 8347017933697019414
+        name: Labore magni recusandae.
+        original_id: Inventore cupiditate.
         pipeline_id: 1265498D-5A84-134A-1C7A-ED5B4B92788E
         run_id: 2C91774A-6D4A-67B6-DC43-6AED849DACC1
-        status: unknown
+        status: error
         transfer_id: 773F4E7F-A748-DF6D-4355-233071D2534A
         workflow_id: FB1E8AC6-4FA4-C883-ED5A-54960E88F5FE
-      - aip_id: 5E3B665E-1239-9C12-9643-FFC1E6C04697
-        completed_at: "2008-10-01T08:36:33Z"
-        created_at: "2012-05-18T16:30:45Z"
-        id: 4972687347057507517
-        name: Est recusandae dolorum porro nam.
-        original_id: Minima tempora nihil maiores.
-        pipeline_id: 1265498D-5A84-134A-1C7A-ED5B4B92788E
-        run_id: 2C91774A-6D4A-67B6-DC43-6AED849DACC1
-        status: unknown
-        transfer_id: 773F4E7F-A748-DF6D-4355-233071D2534A
-        workflow_id: FB1E8AC6-4FA4-C883-ED5A-54960E88F5FE
-      next_cursor: Unde saepe.
+      next_cursor: Aut in laudantium quae.
     required:
     - items
   CollectionRetryNotFoundResponseBody:
@@ -327,16 +332,16 @@ definitions:
       id:
         type: integer
         description: Identifier of missing collection
-        example: 12488188321524280627
+        example: 15124337547309879621
         format: int64
       message:
         type: string
         description: Message of error
-        example: Dolores et cum.
+        example: Quis quia voluptas ut.
     description: Collection not found
     example:
-      id: 16006782166098403501
-      message: Dolorem mollitia.
+      id: 15126750309902953258
+      message: Sit quia nemo.
     required:
     - message
     - id
@@ -365,18 +370,18 @@ definitions:
       temporary:
         type: boolean
         description: Is the error temporary?
-        example: true
+        example: false
       timeout:
         type: boolean
         description: Is the error a timeout?
-        example: false
+        example: true
     description: retry_not_running_response_body result type (default view)
     example:
-      fault: false
+      fault: true
       id: 123abc
       message: parameter 'p' must be an integer
       name: bad_request
-      temporary: true
+      temporary: false
       timeout: false
     required:
     - name
@@ -392,16 +397,16 @@ definitions:
       id:
         type: integer
         description: Identifier of missing collection
-        example: 337443371092383775
+        example: 4324513005193848123
         format: int64
       message:
         type: string
         description: Message of error
-        example: Totam ipsa minus voluptatem.
+        example: Eum in quas beatae ex voluptatum cum.
     description: Collection not found
     example:
-      id: 7147619916748956226
-      message: Voluptatem eum in quas beatae ex voluptatum.
+      id: 12648432261214657860
+      message: Numquam enim est dolore dolorum rem.
     required:
     - message
     - id
@@ -417,26 +422,26 @@ definitions:
       completed_at:
         type: string
         description: Completion datetime
-        example: "2013-10-13T15:52:34Z"
+        example: "1973-01-27T13:17:38Z"
         format: date-time
       created_at:
         type: string
         description: Creation datetime
-        example: "1987-03-16T04:45:41Z"
+        example: "1981-11-04T08:46:43Z"
         format: date-time
       id:
         type: integer
         description: Identifier of collection
-        example: 4879830351564699578
+        example: 3295699772001882969
         format: int64
       name:
         type: string
         description: Name of the collection
-        example: Labore aut nemo est quia ut voluptatibus.
+        example: Necessitatibus numquam ab eius est necessitatibus natus.
       original_id:
         type: string
         description: Identifier provided by the client
-        example: Nihil quisquam consequatur est blanditiis est.
+        example: Nemo dolores.
       pipeline_id:
         type: string
         description: Identifier of Archivematica pipeline
@@ -451,7 +456,7 @@ definitions:
         type: string
         description: Status of the collection
         default: new
-        example: unknown
+        example: new
         enum:
         - new
         - in progress
@@ -471,14 +476,14 @@ definitions:
     description: ShowResponseBody result type (default view)
     example:
       aip_id: 2E7D48F1-CD94-6874-B6D8-717D4A8FD873
-      completed_at: "1999-10-25T11:17:15Z"
-      created_at: "1980-01-08T08:03:28Z"
-      id: 1709539436102823855
-      name: Quas corrupti illum cumque qui facilis omnis.
-      original_id: Nisi quis atque expedita animi.
+      completed_at: "1989-02-25T13:28:01Z"
+      created_at: "1977-07-30T15:36:24Z"
+      id: 8913534382337074831
+      name: Cum nihil quis.
+      original_id: Facilis id praesentium sequi.
       pipeline_id: 86EDFB6E-94F4-2B51-2B7E-E4683F848FD6
       run_id: BD3BFBE7-02F2-99D7-D026-8BD77E75C122
-      status: done
+      status: new
       transfer_id: 45442A02-3FD6-C827-BA11-864B7D92257A
       workflow_id: 3E620E27-EED0-3E38-87CD-C7C87D512815
     required:
@@ -492,16 +497,16 @@ definitions:
       id:
         type: integer
         description: Identifier of missing collection
-        example: 11384854509020276519
+        example: 15629530526234293161
         format: int64
       message:
         type: string
         description: Message of error
-        example: Excepturi labore quae eveniet.
+        example: Totam praesentium voluptates dolor odio atque harum.
     description: Collection not found
     example:
-      id: 1970129607494422967
-      message: Iure blanditiis sed ipsum expedita molestiae.
+      id: 10806965214106418598
+      message: Commodi ut error numquam rerum et.
     required:
     - message
     - id
@@ -514,17 +519,23 @@ definitions:
         $ref: '#/definitions/EnduroCollectionWorkflowHistoryResponseBodyCollection'
       status:
         type: string
-        example: Voluptas ut.
+        example: Enim omnis laboriosam.
     description: WorkflowResponseBody result type (default view)
     example:
       history:
-      - details: Quasi vel quisquam natus.
-        id: 13462604462592777565
-        type: Commodi sint architecto sed.
-      - details: Quasi vel quisquam natus.
-        id: 13462604462592777565
-        type: Commodi sint architecto sed.
-      status: Facere dolore voluptas eos et hic.
+      - details: Enim iure blanditiis.
+        id: 2622098980323504129
+        type: Excepturi labore quae eveniet.
+      - details: Enim iure blanditiis.
+        id: 2622098980323504129
+        type: Excepturi labore quae eveniet.
+      - details: Enim iure blanditiis.
+        id: 2622098980323504129
+        type: Excepturi labore quae eveniet.
+      - details: Enim iure blanditiis.
+        id: 2622098980323504129
+        type: Excepturi labore quae eveniet.
+      status: Ipsum expedita molestiae a.
   EnduroCollectionWorkflowHistoryResponseBody:
     title: 'Mediatype identifier: application/vnd.enduro.collection-workflow-history;
       view=default'
@@ -532,22 +543,22 @@ definitions:
     properties:
       details:
         description: Contents of the event
-        example: Dolorum recusandae magni.
+        example: Sint architecto sed voluptas quasi.
       id:
         type: integer
         description: Identifier of collection
-        example: 15124337547309879621
+        example: 6576757723881193412
         format: int64
       type:
         type: string
         description: Type of the event
-        example: Sit quia nemo.
+        example: Ad nostrum neque aperiam et repellat.
     description: WorkflowHistoryEvent describes a history event in Cadence. (default
       view)
     example:
-      details: Omnis laboriosam nam est ad nostrum neque.
-      id: 14759340439820216209
-      type: Ut qui.
+      details: Eos et.
+      id: 12562254437171046919
+      type: Natus voluptatum facere dolore.
   EnduroCollectionWorkflowHistoryResponseBodyCollection:
     title: 'Mediatype identifier: application/vnd.enduro.collection-workflow-history;
       type=collection; view=default'
@@ -558,12 +569,12 @@ definitions:
       type for an array of EnduroCollection-Workflow-HistoryResponseBody (default
       view)
     example:
-    - details: Quasi vel quisquam natus.
-      id: 13462604462592777565
-      type: Commodi sint architecto sed.
-    - details: Quasi vel quisquam natus.
-      id: 13462604462592777565
-      type: Commodi sint architecto sed.
+    - details: Enim iure blanditiis.
+      id: 2622098980323504129
+      type: Excepturi labore quae eveniet.
+    - details: Enim iure blanditiis.
+      id: 2622098980323504129
+      type: Excepturi labore quae eveniet.
   EnduroStoredCollectionResponseBody:
     title: 'Mediatype identifier: application/vnd.enduro.stored-collection; view=default'
     type: object
@@ -576,26 +587,26 @@ definitions:
       completed_at:
         type: string
         description: Completion datetime
-        example: "1970-12-04T08:01:19Z"
+        example: "2014-12-02T10:14:19Z"
         format: date-time
       created_at:
         type: string
         description: Creation datetime
-        example: "1986-09-21T00:01:46Z"
+        example: "2011-08-21T12:46:58Z"
         format: date-time
       id:
         type: integer
         description: Identifier of collection
-        example: 3137840339253060870
+        example: 16514185453553661929
         format: int64
       name:
         type: string
         description: Name of the collection
-        example: Quibusdam ea fugit odio quia autem.
+        example: Voluptatum quas.
       original_id:
         type: string
         description: Identifier provided by the client
-        example: Consequatur voluptatem pariatur cumque error autem dolore.
+        example: Minus velit magnam recusandae modi dignissimos.
       pipeline_id:
         type: string
         description: Identifier of Archivematica pipeline
@@ -631,14 +642,14 @@ definitions:
       view)
     example:
       aip_id: AC2E8D12-84E7-ADAA-5045-93C4FF40145F
-      completed_at: "2000-10-04T09:57:15Z"
-      created_at: "2014-07-31T20:44:18Z"
-      id: 11558794572644673838
-      name: Aut sit in sunt.
-      original_id: Aut nihil eius fugit natus.
+      completed_at: "1988-01-12T06:19:43Z"
+      created_at: "1981-07-28T23:06:57Z"
+      id: 15997902451745212908
+      name: Ad consequuntur sequi nesciunt.
+      original_id: Vitae sint culpa voluptas magnam.
       pipeline_id: 35814117-F834-9FAB-0A03-DB6E91CE1F7F
       run_id: 43632E4F-A034-6412-7CEA-7CD0E1AED81D
-      status: new
+      status: in progress
       transfer_id: 76150F6F-C16D-33A6-B049-F5AE2D7C6385
       workflow_id: 9A05BD8A-CA8D-335E-C26E-14DB8FEBAB04
     required:
@@ -655,24 +666,24 @@ definitions:
       for an array of EnduroStored-CollectionResponseBody (default view)
     example:
     - aip_id: A1E767AB-DA97-F23F-D106-18BF8653EB6C
-      completed_at: "1974-03-17T17:27:27Z"
-      created_at: "2001-08-20T02:34:09Z"
-      id: 14538689340423025853
-      name: Aut voluptatem labore expedita odio praesentium et.
-      original_id: Consequatur porro.
+      completed_at: "1998-09-04T12:31:41Z"
+      created_at: "2009-09-14T10:23:56Z"
+      id: 9832962691897089619
+      name: Asperiores at velit quod et maxime.
+      original_id: Nostrum assumenda voluptas.
       pipeline_id: 799C598D-49D1-F53A-0ED6-818482028C45
       run_id: 6E989AEF-9C11-4862-D8B1-5CFC4F6414E0
-      status: error
+      status: in progress
       transfer_id: 8B791A71-1C43-AB9B-4366-12192353E1A2
       workflow_id: 6BD40BD6-7AF6-FB4E-C1C1-23700A0E68DE
     - aip_id: A1E767AB-DA97-F23F-D106-18BF8653EB6C
-      completed_at: "1974-03-17T17:27:27Z"
-      created_at: "2001-08-20T02:34:09Z"
-      id: 14538689340423025853
-      name: Aut voluptatem labore expedita odio praesentium et.
-      original_id: Consequatur porro.
+      completed_at: "1998-09-04T12:31:41Z"
+      created_at: "2009-09-14T10:23:56Z"
+      id: 9832962691897089619
+      name: Asperiores at velit quod et maxime.
+      original_id: Nostrum assumenda voluptas.
       pipeline_id: 799C598D-49D1-F53A-0ED6-818482028C45
       run_id: 6E989AEF-9C11-4862-D8B1-5CFC4F6414E0
-      status: error
+      status: in progress
       transfer_id: 8B791A71-1C43-AB9B-4366-12192353E1A2
       workflow_id: 6BD40BD6-7AF6-FB4E-C1C1-23700A0E68DE

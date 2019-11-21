@@ -17,11 +17,35 @@ import (
 
 // BuildListPayload builds the payload for the collection list endpoint from
 // CLI flags.
-func BuildListPayload(collectionListOriginalID string, collectionListCursor string) (*collection.ListPayload, error) {
+func BuildListPayload(collectionListOriginalID string, collectionListTransferID string, collectionListAipID string, collectionListPipelineID string, collectionListQuery string, collectionListCursor string) (*collection.ListPayload, error) {
 	var originalID *string
 	{
 		if collectionListOriginalID != "" {
 			originalID = &collectionListOriginalID
+		}
+	}
+	var transferID *string
+	{
+		if collectionListTransferID != "" {
+			transferID = &collectionListTransferID
+		}
+	}
+	var aipID *string
+	{
+		if collectionListAipID != "" {
+			aipID = &collectionListAipID
+		}
+	}
+	var pipelineID *string
+	{
+		if collectionListPipelineID != "" {
+			pipelineID = &collectionListPipelineID
+		}
+	}
+	var query *string
+	{
+		if collectionListQuery != "" {
+			query = &collectionListQuery
 		}
 	}
 	var cursor *string
@@ -32,6 +56,10 @@ func BuildListPayload(collectionListOriginalID string, collectionListCursor stri
 	}
 	payload := &collection.ListPayload{
 		OriginalID: originalID,
+		TransferID: transferID,
+		AipID:      aipID,
+		PipelineID: pipelineID,
+		Query:      query,
 		Cursor:     cursor,
 	}
 	return payload, nil

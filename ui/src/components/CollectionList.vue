@@ -18,6 +18,7 @@
               <b-button type="reset">Reset</b-button>
             </b-input-group-append>
           </b-input-group>
+          <small class="form-text text-muted">It matches multiple identifiers: Original, Transfer, SIP and Pipeline.</small>
         </b-form>
       </div>
       <template v-if="results.length > 0">

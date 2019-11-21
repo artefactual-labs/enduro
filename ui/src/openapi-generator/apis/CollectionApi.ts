@@ -57,6 +57,10 @@ export interface CollectionDeleteRequest {
 
 export interface CollectionListRequest {
     originalId?: string;
+    transferId?: string;
+    aipId?: string;
+    pipelineId?: string;
+    query?: string;
     cursor?: string;
 }
 
@@ -148,6 +152,22 @@ export class CollectionApi extends runtime.BaseAPI {
 
         if (requestParameters.originalId !== undefined) {
             queryParameters['original_id'] = requestParameters.originalId;
+        }
+
+        if (requestParameters.transferId !== undefined) {
+            queryParameters['transfer_id'] = requestParameters.transferId;
+        }
+
+        if (requestParameters.aipId !== undefined) {
+            queryParameters['aip_id'] = requestParameters.aipId;
+        }
+
+        if (requestParameters.pipelineId !== undefined) {
+            queryParameters['pipeline_id'] = requestParameters.pipelineId;
+        }
+
+        if (requestParameters.query !== undefined) {
+            queryParameters['query'] = requestParameters.query;
         }
 
         if (requestParameters.cursor !== undefined) {

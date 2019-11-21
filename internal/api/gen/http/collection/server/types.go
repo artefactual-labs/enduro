@@ -310,9 +310,13 @@ func NewWorkflowNotFoundResponseBody(res *collection.NotFound) *WorkflowNotFound
 }
 
 // NewListPayload builds a collection service list endpoint payload.
-func NewListPayload(originalID *string, cursor *string) *collection.ListPayload {
+func NewListPayload(originalID *string, transferID *string, aipID *string, pipelineID *string, query *string, cursor *string) *collection.ListPayload {
 	return &collection.ListPayload{
 		OriginalID: originalID,
+		TransferID: transferID,
+		AipID:      aipID,
+		PipelineID: pipelineID,
+		Query:      query,
 		Cursor:     cursor,
 	}
 }

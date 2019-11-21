@@ -31,9 +31,33 @@ func (w *goaWrapper) List(ctx context.Context, payload *goacollection.ListPayloa
 	const limit = 20
 
 	var conds = [][2]string{}
-	if payload.OriginalID != nil {
-		args = append(args, payload.OriginalID)
-		conds = append(conds, [2]string{"", "original_id = (?)"})
+
+	// We either support a query string or filters on individual columns.
+	if payload.Query != nil {
+		args = append(args, []interface{}{payload.Query, payload.Query, payload.Query, payload.Query}...)
+		conds = append(conds, [2]string{"AND", `
+			original_id = (?)
+			OR transfer_id = (?)
+			OR aip_id = (?)
+			OR pipeline_id = (?)
+		`})
+	} else {
+		if payload.OriginalID != nil {
+			args = append(args, payload.OriginalID)
+			conds = append(conds, [2]string{"AND", "original_id = (?)"})
+		}
+		if payload.TransferID != nil {
+			args = append(args, payload.TransferID)
+			conds = append(conds, [2]string{"AND", "transfer_id = (?)"})
+		}
+		if payload.AipID != nil {
+			args = append(args, payload.AipID)
+			conds = append(conds, [2]string{"AND", "aip_id = (?)"})
+		}
+		if payload.PipelineID != nil {
+			args = append(args, payload.PipelineID)
+			conds = append(conds, [2]string{"AND", "pipeline_id = (?)"})
+		}
 	}
 	if payload.Cursor != nil {
 		args = append(args, *payload.Cursor)

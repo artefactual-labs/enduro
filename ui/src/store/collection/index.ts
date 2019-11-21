@@ -51,7 +51,7 @@ const actions: ActionTree<State, RootState> = {
   [SEARCH_COLLECTIONS]({ commit }, params): any {
     const request: api.CollectionListRequest = {
       ...(params && params.cursor ? { cursor: params.cursor } : {}),
-      ...(params && params.query ? { originalId: params.query } : {}),
+      ...(params && params.query ? { query: params.query } : {}),
     };
     EnduroCollectionClient.collectionList(request).then((response: api.CollectionListResponseBody) => {
       // collectionList does not transform the objects as collectionShow does.

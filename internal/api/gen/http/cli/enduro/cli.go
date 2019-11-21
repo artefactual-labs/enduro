@@ -30,7 +30,7 @@ func UsageCommands() string {
 
 // UsageExamples produces an example of a valid invocation of the CLI tool.
 func UsageExamples() string {
-	return os.Args[0] + ` collection list --original-id "Alias corporis et blanditiis quia voluptatibus minus." --cursor "Quia maiores nisi similique nihil et."` + "\n" +
+	return os.Args[0] + ` collection list --original-id "Est recusandae dolorum porro nam." --transfer-id "Voluptatum qui nam et molestiae." --aip-id "Maiores minus debitis et accusantium." --pipeline-id "Eveniet dolores omnis omnis." --query "Repellendus voluptatem optio et asperiores aut." --cursor "Alias ex vel nulla."` + "\n" +
 		""
 }
 
@@ -48,6 +48,10 @@ func ParseEndpoint(
 
 		collectionListFlags          = flag.NewFlagSet("list", flag.ExitOnError)
 		collectionListOriginalIDFlag = collectionListFlags.String("original-id", "", "")
+		collectionListTransferIDFlag = collectionListFlags.String("transfer-id", "", "")
+		collectionListAipIDFlag      = collectionListFlags.String("aip-id", "", "")
+		collectionListPipelineIDFlag = collectionListFlags.String("pipeline-id", "", "")
+		collectionListQueryFlag      = collectionListFlags.String("query", "", "")
 		collectionListCursorFlag     = collectionListFlags.String("cursor", "", "")
 
 		collectionShowFlags  = flag.NewFlagSet("show", flag.ExitOnError)
@@ -152,7 +156,7 @@ func ParseEndpoint(
 			switch epn {
 			case "list":
 				endpoint = c.List()
-				data, err = collectionc.BuildListPayload(*collectionListOriginalIDFlag, *collectionListCursorFlag)
+				data, err = collectionc.BuildListPayload(*collectionListOriginalIDFlag, *collectionListTransferIDFlag, *collectionListAipIDFlag, *collectionListPipelineIDFlag, *collectionListQueryFlag, *collectionListCursorFlag)
 			case "show":
 				endpoint = c.Show()
 				data, err = collectionc.BuildShowPayload(*collectionShowIDFlag)
@@ -198,14 +202,18 @@ Additional help:
 `, os.Args[0], os.Args[0])
 }
 func collectionListUsage() {
-	fmt.Fprintf(os.Stderr, `%s [flags] collection list -original-id STRING -cursor STRING
+	fmt.Fprintf(os.Stderr, `%s [flags] collection list -original-id STRING -transfer-id STRING -aip-id STRING -pipeline-id STRING -query STRING -cursor STRING
 
 List all stored collections
     -original-id STRING: 
+    -transfer-id STRING: 
+    -aip-id STRING: 
+    -pipeline-id STRING: 
+    -query STRING: 
     -cursor STRING: 
 
 Example:
-    `+os.Args[0]+` collection list --original-id "Alias corporis et blanditiis quia voluptatibus minus." --cursor "Quia maiores nisi similique nihil et."
+    `+os.Args[0]+` collection list --original-id "Est recusandae dolorum porro nam." --transfer-id "Voluptatum qui nam et molestiae." --aip-id "Maiores minus debitis et accusantium." --pipeline-id "Eveniet dolores omnis omnis." --query "Repellendus voluptatem optio et asperiores aut." --cursor "Alias ex vel nulla."
 `, os.Args[0])
 }
 
@@ -216,7 +224,7 @@ Show collection by ID
     -id UINT: Identifier of collection to show
 
 Example:
-    `+os.Args[0]+` collection show --id 1991805230268900537
+    `+os.Args[0]+` collection show --id 7262811908532712622
 `, os.Args[0])
 }
 
@@ -227,7 +235,7 @@ Delete collection by ID
     -id UINT: Identifier of collection to delete
 
 Example:
-    `+os.Args[0]+` collection delete --id 9980333725558204391
+    `+os.Args[0]+` collection delete --id 7686560774918400757
 `, os.Args[0])
 }
 
@@ -238,7 +246,7 @@ Cancel collection processing by ID
     -id UINT: Identifier of collection to remove
 
 Example:
-    `+os.Args[0]+` collection cancel --id 17568713957929916447
+    `+os.Args[0]+` collection cancel --id 11533904348193230542
 `, os.Args[0])
 }
 
@@ -249,7 +257,7 @@ Retry collection processing by ID
     -id UINT: Identifier of collection to retry
 
 Example:
-    `+os.Args[0]+` collection retry --id 2832045513460262792
+    `+os.Args[0]+` collection retry --id 2998639704067115621
 `, os.Args[0])
 }
 
@@ -260,6 +268,6 @@ Retrieve workflow status by ID
     -id UINT: Identifier of collection to look up
 
 Example:
-    `+os.Args[0]+` collection workflow --id 11533904348193230542
+    `+os.Args[0]+` collection workflow --id 17765174268271371906
 `, os.Args[0])
 }

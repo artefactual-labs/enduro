@@ -26,7 +26,11 @@ var _ = Service("collection", func() {
 	Method("list", func() {
 		Description("List all stored collections")
 		Payload(func() {
-			Attribute("original_id", String, "ID of the original dataset")
+			Attribute("original_id", String)
+			Attribute("transfer_id", String)
+			Attribute("aip_id", String)
+			Attribute("pipeline_id", String)
+			Attribute("query", String, "Match all fields")
 			Attribute("cursor", String, "Pagination cursor")
 		})
 		Result(PaginatedCollectionOf(StoredCollection))
@@ -35,6 +39,10 @@ var _ = Service("collection", func() {
 			Response(StatusOK)
 			Params(func() {
 				Param("original_id")
+				Param("transfer_id")
+				Param("aip_id")
+				Param("pipeline_id")
+				Param("query")
 				Param("cursor")
 			})
 		})

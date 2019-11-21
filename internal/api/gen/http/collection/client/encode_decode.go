@@ -47,6 +47,18 @@ func EncodeListRequest(encoder func(*http.Request) goahttp.Encoder) func(*http.R
 		if p.OriginalID != nil {
 			values.Add("original_id", *p.OriginalID)
 		}
+		if p.TransferID != nil {
+			values.Add("transfer_id", *p.TransferID)
+		}
+		if p.AipID != nil {
+			values.Add("aip_id", *p.AipID)
+		}
+		if p.PipelineID != nil {
+			values.Add("pipeline_id", *p.PipelineID)
+		}
+		if p.Query != nil {
+			values.Add("query", *p.Query)
+		}
 		if p.Cursor != nil {
 			values.Add("cursor", *p.Cursor)
 		}
