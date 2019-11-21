@@ -1,5 +1,5 @@
 <template>
-  <CollectionDetail></CollectionDetail>
+  <en-collection-detail/>
 </template>
 
 <script lang="ts">
@@ -8,7 +8,7 @@ import CollectionDetail from '@/components/CollectionDetail.vue';
 
 @Component({
   components: {
-    CollectionDetail,
+    'en-collection-detail': CollectionDetail,
   },
 })
 export default class Collection extends Vue {}

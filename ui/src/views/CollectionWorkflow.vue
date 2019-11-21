@@ -26,7 +26,7 @@
                 <td scope="row">{{ item.name }}</td>
                 <td>{{ item.started | formatEpoch }}</td>
                 <td>{{ item.duration }}</td>
-                <td><CollectionStatusBadge :status="item.status"/></td>
+                <td><en-collection-status-badge :status="item.status"/></td>
               </tr>
             </tbody>
           </table>
@@ -64,7 +64,7 @@ import { api, EnduroCollectionClient } from '../client';
 
 @Component({
   components: {
-    CollectionStatusBadge,
+    'en-collection-status-badge': CollectionStatusBadge,
   },
 })
 export default class CollectionWorkflow extends Vue {

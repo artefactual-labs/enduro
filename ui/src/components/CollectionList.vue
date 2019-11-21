@@ -37,7 +37,7 @@
               <td class="collection-name">{{ item.name }}</td>
               <td>{{ item.createdAt | formatDateTime }}</td>
               <td>{{ item.completedAt | formatDateTime }}</td>
-              <td><CollectionStatusBadge :status="item.status"/></td>
+              <td><en-collection-status-badge :status="item.status"/></td>
             </tr>
           </tbody>
         </table>
@@ -70,7 +70,7 @@ const collectionStoreNs = namespace('collection');
 
 @Component({
   components: {
-    CollectionStatusBadge,
+    'en-collection-status-badge': CollectionStatusBadge,
   },
 })
 export default class CollectionList extends Vue {

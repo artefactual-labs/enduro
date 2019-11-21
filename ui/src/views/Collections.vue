@@ -1,6 +1,6 @@
 <template>
   <div class="collections">
-    <CollectionList></CollectionList>
+    <en-collection-list/>
   </div>
 </template>
 
@@ -10,7 +10,7 @@ import CollectionList from '@/components/CollectionList.vue';
 
 @Component({
   components: {
-    CollectionList,
+    'en-collection-list': CollectionList,
   },
 })
 

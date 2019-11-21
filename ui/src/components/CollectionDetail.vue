@@ -13,7 +13,7 @@
           <dl>
             <dt>Status</dt>
             <dd>
-              <CollectionStatusBadge :status="collection.status"/>
+              <en-collection-status-badge :status="collection.status"/>
             </dd>
             <template v-if="collection.originalId">
               <dt>OriginalID</dt>
@@ -88,7 +88,7 @@ import moment from 'moment';
 
 @Component({
   components: {
-    CollectionStatusBadge,
+    'en-collection-status-badge': CollectionStatusBadge,
   },
 })
 export default class CollectionDetail extends Vue {
