@@ -41,13 +41,18 @@
   margin-bottom: 10px;
   .nav-link.router-link-exact-active {
     color: white;
-    background-color: #0002;
+    background-color: #fff2;
+    @extend .rounded-sm;
   }
 }
 
 .breadcrumb {
   background-color: #fff;
   padding: 0.2rem 1rem;
+}
+
+.bg-dark {
+  background-color: #5e2750 !important;
 }
 
 </style>
