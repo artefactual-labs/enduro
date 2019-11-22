@@ -31,8 +31,8 @@ export default new Router({
       component: CollectionWorkflow,
     },
     {
-      path: "*",
+      path: '*',
       redirect: '/collections',
-    }
+    },
   ],
 });

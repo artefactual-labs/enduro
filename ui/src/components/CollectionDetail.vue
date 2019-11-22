@@ -43,7 +43,14 @@
             </template>
           </dl>
           <hr />
-          <b-button size="sm" variant="light" v-if="!isRunning()" v-on:click="onDelete()">Delete</b-button>
+          <b-button size="sm" variant="light" v-if="!isRunning()" v-b-modal="'delete-modal'">Delete</b-button>
+          <b-modal id="delete-modal" @ok="onDeleteConfirmed()" centered title="Are you sure?">
+            Once completed, this operation cannot be reversed.
+            <template v-slot:modal-footer="{ ok, cancel, hide }">
+              <b-button size="sm" variant="danger" @click="ok()">Delete</b-button>
+              <b-button size="sm" variant="light" @click="cancel()">Cancel</b-button>
+            </template>
+          </b-modal>
         </div>
 
         <!-- Sidebar -->
@@ -143,6 +150,10 @@ export default class CollectionDetail extends Vue {
     this.delete(this.collection.id).then(() => {
       this.$router.push({name: 'collections'});
     });
+  }
+
+  private onDeleteConfirmed() {
+    this.onDelete();
   }
 }
 </script>
