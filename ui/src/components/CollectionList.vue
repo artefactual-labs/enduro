@@ -12,7 +12,7 @@
       <div>
         <b-form inline @submit="onSubmit" @reset="onReset" class="py-3">
           <b-input-group size="sm" class="w-100">
-            <b-form-input autofocus v-model="query" type="text" placeholder="Search all collections"></b-form-input>
+            <b-form-input autofocus @keydown.esc="onReset" v-model="query" type="text" placeholder="Search all collections"></b-form-input>
             <b-input-group-append>
               <b-button type="submit" variant="info">Search</b-button>
               <b-button type="reset">Reset</b-button>
