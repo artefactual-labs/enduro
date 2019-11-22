@@ -1,6 +1,5 @@
 import Vue from 'vue';
 import Router from 'vue-router';
-import Home from './views/Home.vue';
 import Collections from './views/Collections.vue';
 import Collection from './views/Collection.vue';
 import CollectionWorkflow from './views/CollectionWorkflow.vue';
@@ -14,7 +13,7 @@ export default new Router({
     {
       path: '/',
       name: 'home',
-      component: Home,
+      redirect: '/collections',
     },
     {
       path: '/collections',
