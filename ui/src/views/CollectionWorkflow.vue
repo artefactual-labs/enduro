@@ -9,49 +9,32 @@
       <div class="container-fluid">
         <a class="reload" href="#" v-on:click="reload()">Reload</a>
         <dl>
+
           <dt>Status</dt>
           <dd><b-badge>{{ history.status }}</b-badge></dd>
+
           <dt>Activity summary</dt>
           <dd>
-            <table class="table table-bordered table-hover table-sm">
-              <thead class="thead">
-                <tr>
-                  <th scope="col">Name</th>
-                  <th scope="col">Started</th>
-                  <th scope="col">Duration (seconds)</th>
-                  <th scope="col">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(item, index) in activities" v-bind:key="index">
-                  <td scope="row">{{ item.name }}</td>
-                  <td>{{ item.started | formatEpoch }}</td>
-                  <td>{{ item.duration }}</td>
-                  <td><en-collection-status-badge :status="item.status"/></td>
-                </tr>
-              </tbody>
-            </table>
+            <b-list-group id="activity-summary">
+              <b-list-group-item v-for="(item, index) in activities" v-bind:key="index">
+                <en-collection-status-badge class="float-right" :status="item.status"/>
+                <strong>{{ item.name }}</strong><br />
+                <span class="date">{{ item.started | formatEpoch }}</span>
+                <span class="float-right duration">{{ item.duration }}s</span>
+              </b-list-group-item>
+            </b-list-group>
           </dd>
+
           <dt>History</dt>
           <dd>
-            <table class="table table-bordered table-hover table-sm">
-              <thead class="thead">
-                <tr>
-                  <th scope="col">ID</th>
-                  <th scope="col">Type</th>
-                  <th scope="col">Timestamp</th>
-                  <th scope="col">Details</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="item in history.history.slice().reverse()" v-bind:key="item.id">
-                  <td scope="row">{{ item.id }}</td>
-                  <td>{{ item.type }}</td>
-                  <td>{{ item.details.timestamp | formatEpoch }}</td>
-                  <td>{{ renderDetails(item) }}</td>
-                </tr>
-              </tbody>
-            </table>
+            <b-list-group id="activity-summary">
+              <b-list-group-item v-for="item in history.history.slice().reverse()" v-bind:key="item.id">
+                <span class="float-right identifier">#{{ item.id }}</span>
+                <strong>{{ item.type }}</strong><br />
+                <span class="date">{{ item.details.timestamp | formatEpoch }}</span>
+                <div v-html="renderDetails(item)"></div>
+              </b-list-group-item>
+            </b-list-group>
           </dd>
         </dl>
       </div>
@@ -171,16 +154,46 @@ export default class CollectionWorkflow extends Vue {
       ret = 'Attempts: ' + attempt;
     }
 
+    if (ret.length) {
+      ret = '<pre>' + ret + '</pre>';
+    }
+
     return ret;
   }
 
 }
 </script>
 
-<style scoped lang="scss">
+<style lang="scss">
 
-.reload {
-  float: right;
+.collection-detail {
+
+  .reload {
+    float: right;
+  }
+
+  dd {
+    margin-bottom: 1.5rem;
+  }
+
+  #activity-summary {
+    font-size: .8rem;
+    .list-group-item {
+      padding: 0.50rem 0.75rem;
+    }
+    .date, .duration {
+      color: #999;
+    }
+    .identifier {
+      color: #999;
+    }
+  }
+
+  pre {
+    margin: 3px 0 0 0 !important;
+    overflow: auto !important;
+  }
+
 }
 
 </style>
