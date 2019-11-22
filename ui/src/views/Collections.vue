@@ -1,7 +1,9 @@
 <template>
-  <div class="collections">
-    <en-collection-list/>
-  </div>
+  <b-container>
+    <div class="collections">
+      <en-collection-list/>
+    </div>
+  </b-container>
 </template>
 
 <script lang="ts">

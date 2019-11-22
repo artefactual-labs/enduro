@@ -1,5 +1,7 @@
 <template>
-  <en-collection-detail/>
+  <b-container>
+    <en-collection-detail/>
+  </b-container>
 </template>
 
 <script lang="ts">

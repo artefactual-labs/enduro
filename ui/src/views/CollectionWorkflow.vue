@@ -1,60 +1,62 @@
 <template>
-  <div class="collection-detail">
-    <b-breadcrumb>
-      <b-breadcrumb-item :to="{ name: 'collections' }">Collections</b-breadcrumb-item>
-      <b-breadcrumb-item :to="{ name: 'collection', params: {id: this.$route.params.id} }">{{ name }}</b-breadcrumb-item>
-      <b-breadcrumb-item>Workflow</b-breadcrumb-item>
-    </b-breadcrumb>
-    <div class="container-fluid">
-      <a class="reload" href="#" v-on:click="reload()">Reload</a>
-      <dl>
-        <dt>Status</dt>
-        <dd><b-badge>{{ history.status }}</b-badge></dd>
-        <dt>Activity summary</dt>
-        <dd>
-          <table class="table table-bordered table-hover table-sm">
-            <thead class="thead">
-              <tr>
-                <th scope="col">Name</th>
-                <th scope="col">Started</th>
-                <th scope="col">Duration (seconds)</th>
-                <th scope="col">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(item, index) in activities" v-bind:key="index">
-                <td scope="row">{{ item.name }}</td>
-                <td>{{ item.started | formatEpoch }}</td>
-                <td>{{ item.duration }}</td>
-                <td><en-collection-status-badge :status="item.status"/></td>
-              </tr>
-            </tbody>
-          </table>
-        </dd>
-        <dt>History</dt>
-        <dd>
-          <table class="table table-bordered table-hover table-sm">
-            <thead class="thead">
-              <tr>
-                <th scope="col">ID</th>
-                <th scope="col">Type</th>
-                <th scope="col">Timestamp</th>
-                <th scope="col">Details</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="item in history.history.slice().reverse()" v-bind:key="item.id">
-                <td scope="row">{{ item.id }}</td>
-                <td>{{ item.type }}</td>
-                <td>{{ item.details.timestamp | formatEpoch }}</td>
-                <td>{{ renderDetails(item) }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </dd>
-      </dl>
+  <b-container>
+    <div class="collection-detail">
+      <b-breadcrumb>
+        <b-breadcrumb-item :to="{ name: 'collections' }">Collections</b-breadcrumb-item>
+        <b-breadcrumb-item :to="{ name: 'collection', params: {id: this.$route.params.id} }">{{ name }}</b-breadcrumb-item>
+        <b-breadcrumb-item>Workflow</b-breadcrumb-item>
+      </b-breadcrumb>
+      <div class="container-fluid">
+        <a class="reload" href="#" v-on:click="reload()">Reload</a>
+        <dl>
+          <dt>Status</dt>
+          <dd><b-badge>{{ history.status }}</b-badge></dd>
+          <dt>Activity summary</dt>
+          <dd>
+            <table class="table table-bordered table-hover table-sm">
+              <thead class="thead">
+                <tr>
+                  <th scope="col">Name</th>
+                  <th scope="col">Started</th>
+                  <th scope="col">Duration (seconds)</th>
+                  <th scope="col">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(item, index) in activities" v-bind:key="index">
+                  <td scope="row">{{ item.name }}</td>
+                  <td>{{ item.started | formatEpoch }}</td>
+                  <td>{{ item.duration }}</td>
+                  <td><en-collection-status-badge :status="item.status"/></td>
+                </tr>
+              </tbody>
+            </table>
+          </dd>
+          <dt>History</dt>
+          <dd>
+            <table class="table table-bordered table-hover table-sm">
+              <thead class="thead">
+                <tr>
+                  <th scope="col">ID</th>
+                  <th scope="col">Type</th>
+                  <th scope="col">Timestamp</th>
+                  <th scope="col">Details</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="item in history.history.slice().reverse()" v-bind:key="item.id">
+                  <td scope="row">{{ item.id }}</td>
+                  <td>{{ item.type }}</td>
+                  <td>{{ item.details.timestamp | formatEpoch }}</td>
+                  <td>{{ renderDetails(item) }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </dd>
+        </dl>
+      </div>
     </div>
-  </div>
+  </b-container>
 </template>
 
 <script lang="ts">

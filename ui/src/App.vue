@@ -21,9 +21,7 @@
       </b-container>
     </header>
 
-    <b-container>
-      <router-view/>
-    </b-container>
+    <router-view/>
 
     <footer>
       <b-container navbar>
