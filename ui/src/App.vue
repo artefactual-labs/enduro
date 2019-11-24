@@ -2,30 +2,29 @@
   <div id="app">
 
     <header>
-      <b-container fluid class="px-0">
-        <div id="nav">
-          <b-navbar toggleable="md" type="dark" variant="dark">
-            <b-navbar-brand to="/">Enduro</b-navbar-brand>
-            <b-navbar-toggle target="nav-collapse"></b-navbar-toggle>
-            <b-collapse id="nav-collapse" is-nav>
-              <b-navbar-nav>
-                <b-nav-item :to="{ name: 'collections' }">Collections</b-nav-item>
-              </b-navbar-nav>
-              <b-navbar-nav class="ml-auto">
-                <b-nav-item href="https://enduroproject.netlify.com">Docs</b-nav-item>
-                <b-nav-item href="https://github.com/artefactual-labs/enduro">GitHub</b-nav-item>
-              </b-navbar-nav>
-            </b-collapse>
-          </b-navbar>
-        </div>
+      <b-container fluid class="px-0" id="nav">
+        <b-navbar toggleable="sm" type="dark">
+          <b-navbar-brand :to="{ name: 'home' }">Enduro</b-navbar-brand>
+          <b-navbar-toggle target="nav-collapse"></b-navbar-toggle>
+          <b-collapse id="nav-collapse" is-nav>
+            <b-navbar-nav>
+              <b-nav-item :to="{ name: 'collections' }">Collections</b-nav-item>
+            </b-navbar-nav>
+            <b-navbar-nav class="ml-auto">
+              <b-nav-item href="https://enduroproject.netlify.com">Docs</b-nav-item>
+              <b-nav-item href="https://github.com/artefactual-labs/enduro">GitHub</b-nav-item>
+            </b-navbar-nav>
+          </b-collapse>
+        </b-navbar>
       </b-container>
     </header>
 
     <router-view/>
 
-    <footer>
-      <b-container navbar>
-        Enduro is licensed under Apache License 2.0.
+    <footer class="mt-5">
+      <b-container class="py-4">
+        Enduro is licensed under Apache License 2.0.<br />
+        © {{ new Date().getFullYear() }} Artefactual Systems, Inc.
       </b-container>
     </footer>
 
@@ -45,29 +44,25 @@
 }
 
 #nav {
-  margin-bottom: 10px;
-  .nav-link.router-link-exact-active {
-    color: white;
-    background-color: #fff2;
+  nav {
+    background-color: $enduro-c1 !important;
+  }
+  @media (min-width: 576px) {
+    .nav-link.router-link-active {
+      color: white;
+      background-color: #fff2;
+    }
+  }
+  .nav-link.router-link-active {
     @extend .rounded-sm;
   }
 }
 
-.breadcrumb {
-  background-color: #fff;
-  padding: 0.2rem 1rem;
-}
-
-.bg-dark {
-  background-color: #5e2750 !important;
-}
-
 footer {
-  margin-top: 40px;
+  font-size: .8rem;
   .container {
-    padding: 40px;
     text-align: center;
-    border-top: 1px solid #eaecef;
+    border-top: 1px solid $enduro-bolight;
     color: #999;
   }
 }

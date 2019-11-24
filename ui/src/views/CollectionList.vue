@@ -1,5 +1,8 @@
 <template>
-  <div class="collection-list">
+
+  <b-container>
+
+    <!-- Alert shown when the API client failed. -->
     <template v-if="error">
       <b-alert show dismissible variant="warning">
         <h4 class="alert-heading">Search error</h4>
@@ -8,6 +11,8 @@
         <b-button @click="retryButtonClicked" class="m-1">Retry</b-button>
       </b-alert>
     </template>
+
+    <!-- Search form and results. -->
     <template v-else>
       <div>
         <b-form inline @submit="onSubmit" @reset="onReset" class="py-3">
@@ -57,13 +62,15 @@
         No results.
       </div>
     </template>
-  </div>
+
+  </b-container>
+
 </template>
 
 <script lang="ts">
+
 import { Component, Vue } from 'vue-property-decorator';
 import { namespace } from 'vuex-class';
-import { api, EnduroCollectionClient } from '../client';
 import CollectionStatusBadge from '@/components/CollectionStatusBadge.vue';
 import * as CollectionStore from '../store/collection';
 
@@ -186,3 +193,4 @@ export default class CollectionList extends Vue {
 }
 
 </style>
+

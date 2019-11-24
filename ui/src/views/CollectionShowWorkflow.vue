@@ -1,45 +1,44 @@
 <template>
-  <b-container>
-    <div class="collection-detail">
-      <b-breadcrumb>
-        <b-breadcrumb-item :to="{ name: 'collections' }">Collections</b-breadcrumb-item>
-        <b-breadcrumb-item :to="{ name: 'collection', params: {id: this.$route.params.id} }">{{ name }}</b-breadcrumb-item>
-        <b-breadcrumb-item>Workflow</b-breadcrumb-item>
-      </b-breadcrumb>
-      <div class="container-fluid">
-        <a class="reload" href="#" v-on:click="reload()">Reload</a>
-        <dl>
+  <div class="collection-detail">
 
-          <dt>Status</dt>
-          <dd><b-badge>{{ history.status }}</b-badge></dd>
+    <template v-if="error">
+      <p>The workflow history is not available.</p>
+    </template>
 
-          <dt>Activity summary</dt>
-          <dd>
-            <b-list-group id="activity-summary">
-              <b-list-group-item v-for="(item, index) in activities" v-bind:key="index">
-                <en-collection-status-badge class="float-right" :status="item.status"/>
-                <strong>{{ item.name }}</strong><br />
-                <span class="date">{{ item.started | formatEpoch }}</span>
-                <span class="float-right duration">{{ item.duration }}s</span>
-              </b-list-group-item>
-            </b-list-group>
-          </dd>
+    <template v-else>
+      <b-link class="reload" v-on:click="reload()">Reload</b-link>
+      <dl>
+        <dt>Status</dt>
+        <dd><b-badge>{{ history.status }}</b-badge></dd>
 
-          <dt>History</dt>
-          <dd>
-            <b-list-group id="activity-summary">
-              <b-list-group-item v-for="item in history.history.slice().reverse()" v-bind:key="item.id">
-                <span class="float-right identifier">#{{ item.id }}</span>
-                <strong>{{ item.type }}</strong><br />
-                <span class="date">{{ item.details.timestamp | formatEpoch }}</span>
-                <div v-html="renderDetails(item)"></div>
-              </b-list-group-item>
-            </b-list-group>
-          </dd>
-        </dl>
-      </div>
-    </div>
-  </b-container>
+        <dt>Activity summary</dt>
+        <dd>
+          <b-list-group id="activity-summary">
+            <b-list-group-item v-for="(item, index) in activities" v-bind:key="index">
+              <en-collection-status-badge class="float-right" :status="item.status"/>
+              <strong>{{ item.name }}</strong><br />
+              <span class="date">{{ item.started | formatEpoch }}</span>
+              <span class="float-right duration">{{ item.duration }}s</span>
+            </b-list-group-item>
+          </b-list-group>
+        </dd>
+
+        <dt>History</dt>
+        <dd>
+          <b-list-group id="activity-summary">
+            <b-list-group-item v-for="item in history.history.slice().reverse()" v-bind:key="item.id">
+              <span class="float-right identifier">#{{ item.id }}</span>
+              <strong>{{ item.type }}</strong><br />
+              <span class="date">{{ item.details.timestamp | formatEpoch }}</span>
+              <div v-html="renderDetails(item)"></div>
+            </b-list-group-item>
+          </b-list-group>
+        </dd>
+
+      </dl>
+    </template>
+
+  </div>
 </template>
 
 <script lang="ts">
@@ -52,15 +51,15 @@ import { api, EnduroCollectionClient } from '../client';
     'en-collection-status-badge': CollectionStatusBadge,
   },
 })
-export default class CollectionWorkflow extends Vue {
+export default class CollectionShowWorkflow extends Vue {
 
   private collection: any = {};
   private history: any = {history: []};
   private activities: any = {};
   private name: string = '';
+  private error: boolean = false;
 
-  private mounted() {
-    this.loadCollection();
+  private created() {
     this.loadHistory();
   }
 
@@ -68,26 +67,13 @@ export default class CollectionWorkflow extends Vue {
     this.loadHistory();
   }
 
-  private getName(body: api.CollectionShowResponseBody): string {
-    if (body.name) {
-      return body.name;
-    }
-
-    return body.id.toString();
-  }
-
-  private loadCollection() {
-    EnduroCollectionClient.collectionShow({id: +this.$route.params.id}).then((response: api.CollectionShowResponseBody) => {
-      this.collection = response;
-      this.name = this.getName(response);
-    });
-  }
-
   private loadHistory() {
     return EnduroCollectionClient.collectionWorkflow({id: +this.$route.params.id}).then((response: api.CollectionWorkflowResponseBody) => {
       this.history = response;
       this.processHistory();
-    });
+    }).catch((response) => {
+      this.error = true;
+    })
   }
 
   private processHistory() {

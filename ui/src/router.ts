@@ -1,8 +1,10 @@
 import Vue from 'vue';
 import Router from 'vue-router';
 import Collections from './views/Collections.vue';
+import CollectionList from './views/CollectionList.vue';
 import Collection from './views/Collection.vue';
-import CollectionWorkflow from './views/CollectionWorkflow.vue';
+import CollectionShow from './views/CollectionShow.vue';
+import CollectionShowWorkflow from './views/CollectionShowWorkflow.vue';
 
 Vue.use(Router);
 
@@ -11,28 +13,40 @@ export default new Router({
   base: process.env.BASE_URL,
   routes: [
     {
+      path: '*',
+      redirect: '/',
+    },
+    {
       path: '/',
       name: 'home',
       redirect: '/collections',
     },
     {
       path: '/collections',
-      name: 'collections',
       component: Collections,
-    },
-    {
-      path: '/collections/:id',
-      name: 'collection',
-      component: Collection,
-    },
-    {
-      path: '/collections/:id/workflow',
-      name: 'collection-workflow',
-      component: CollectionWorkflow,
-    },
-    {
-      path: '*',
-      redirect: '/collections',
+      children: [
+        {
+          path: '',
+          name: 'collections',
+          component: CollectionList,
+        },
+        {
+          path: '/collections/:id',
+          component: Collection,
+          children: [
+            {
+              path: '/collections/:id',
+              name: 'collection',
+              component: CollectionShow,
+            },
+            {
+              path: '/collections/:id/workflow',
+              name: 'collection-workflow',
+              component: CollectionShowWorkflow,
+            },
+          ],
+        },
+      ],
     },
   ],
 });
