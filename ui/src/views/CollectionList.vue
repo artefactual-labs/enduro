@@ -40,7 +40,7 @@
           <tbody>
             <tr v-for="item in results" v-bind:key="item.id" @click="rowClicked(item.id)">
               <th scope="row">{{ item.id }}</th>
-              <td class="collection-name">{{ item.name }}</td>
+              <td class="collection-name">{{ item.name || 'N/A' }}</td>
               <td>{{ item.createdAt | formatDateTime }}</td>
               <td>{{ item.completedAt | formatDateTime }}</td>
               <td><en-collection-status-badge :status="item.status"/></td>

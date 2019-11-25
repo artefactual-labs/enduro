@@ -8,7 +8,7 @@
       <b-container>
         <b-breadcrumb class="py-3 px-0 mb-0">
           <b-breadcrumb-item :to="{ name: 'collections' }">Collections</b-breadcrumb-item>
-          <b-breadcrumb-item :to="{ name: 'collection', params: {id: $route.params.id} }">{{ result.name || 'Unknown' }}</b-breadcrumb-item>
+          <b-breadcrumb-item :to="{ name: 'collection', params: {id: $route.params.id} }">{{ result.name || 'N/A' }}</b-breadcrumb-item>
         </b-breadcrumb>
       </b-container>
 
