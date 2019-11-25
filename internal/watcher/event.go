@@ -57,7 +57,7 @@ func (e BlobEvent) String() string {
 	return fmt.Sprintf("%q:%q", e.WatcherName, key)
 }
 
-var uuid4regex = regexp.MustCompile(`[a-z0-9]{8}-[a-z0-9]{4}-[1-5][a-z0-9]{3}-[a-z0-9]{4}-[a-z0-9]{12}`)
+var uuid4regex = regexp.MustCompile(`[a-zA-Z0-9]{8}-[a-zA-Z0-9]{4}-[1-5][a-zA-Z0-9]{3}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{12}`)
 
 func (e BlobEvent) NameUUID() string {
 	s := uuid4regex.FindString(e.Key)

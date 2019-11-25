@@ -132,7 +132,7 @@ func (a *BundleActivity) Bundle(ctx context.Context, unar archiver.Unarchiver, t
 	return tempDir, nil
 }
 
-var regex = regexp.MustCompile(`^(?P<kind>.*)[-_](?P<uuid>[a-z0-9]{8}-[a-z0-9]{4}-[1-5][a-z0-9]{3}-[a-z0-9]{4}-[a-z0-9]{12})(?P<fileext>\..*)?$`)
+var regex = regexp.MustCompile(`^(?P<kind>.*)[-_](?P<uuid>[a-zA-Z0-9]{8}-[a-zA-Z0-9]{4}-[1-5][a-zA-Z0-9]{3}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{12})(?P<fileext>\..*)?$`)
 
 // Name the transfer.
 func (a *BundleActivity) NameKind(key string) (name, kind string) {
