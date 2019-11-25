@@ -4,7 +4,7 @@
 
     <!-- Alert shown when the API client failed. -->
     <template v-if="error">
-      <b-alert show dismissible variant="warning">
+      <b-alert show dismissible variant="warning" class="my-3">
         <h4 class="alert-heading">Search error</h4>
         We couldn't connect to the API server. You may want to try again in a few seconds.
         <hr />
@@ -14,8 +14,8 @@
 
     <!-- Search form and results. -->
     <template v-else>
-      <div>
-        <b-form inline @submit="onSubmit" @reset="onReset" class="py-3">
+      <div class="my-3">
+        <b-form inline @submit="onSubmit" @reset="onReset">
           <b-input-group size="sm" class="w-100">
             <b-form-input autofocus @keydown.esc="onReset" v-model="query" type="text" placeholder="Search all collections"></b-form-input>
             <b-input-group-append>
