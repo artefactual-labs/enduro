@@ -14,11 +14,13 @@
         <dt>Activity summary</dt>
         <dd>
           <b-list-group id="activity-summary">
-            <b-list-group-item v-for="(item, index) in activities" v-bind:key="index">
+            <b-list-group-item v-for="(item, index) in activities" v-bind:key="index" :class="{ failed: item.status === 'error' }">
               <en-collection-status-badge class="float-right" :status="item.status"/>
               <strong>{{ item.name }}</strong><br />
               <span class="date">{{ item.started | formatEpoch }}</span>
               <span class="float-right duration">{{ item.duration }}s</span>
+              <span class="attempts ml-1" v-if="item.attempts > 1">({{ item.attempts }} attempts)</span>
+              <span class="details" v-if="item.details">{{ item.details }}</span>
             </b-list-group-item>
           </b-list-group>
         </dd>
@@ -73,7 +75,7 @@ export default class CollectionShowWorkflow extends Vue {
       this.processHistory();
     }).catch((response) => {
       this.error = true;
-    })
+    });
   }
 
   private processHistory() {
@@ -106,6 +108,7 @@ export default class CollectionShowWorkflow extends Vue {
         if (attrs.scheduledEventId in this.activities) {
           const item = this.activities[attrs.scheduledEventId];
           item.status = 'error';
+          item.details = window.atob(attrs.details);
           item.completed = details.timestamp;
           item.duration = (item.completed - item.started) / 1000000000;
           item.duration = item.duration.toFixed(2);
@@ -166,6 +169,16 @@ export default class CollectionShowWorkflow extends Vue {
     font-size: .8rem;
     .list-group-item {
       padding: 0.50rem 0.75rem;
+    }
+    .failed {
+      background-color: #ff000011;
+    }
+    .details {
+      border-top: 2px solid #ff4545;
+      display: block;
+      color: #666;
+      margin-top: .5rem;
+      padding: 0.5rem 0;
     }
     .date, .duration {
       color: #999;

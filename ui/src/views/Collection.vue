@@ -58,7 +58,7 @@ export default class Collection extends Vue {
     this.reset();
     await this.search(+this.$route.params.id);
     if (this.error) {
-      this.$router.push({'name': 'collections'});
+      this.$router.push({name: 'collections'});
     }
   }
 
