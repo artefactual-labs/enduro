@@ -29,36 +29,43 @@ func (w *goaWrapper) List(ctx context.Context, payload *goacollection.ListPayloa
 
 	// We extract one extra item so we can tell the next cursor.
 	const limit = 20
+	const limitSQL = "21"
 
 	var conds = [][2]string{}
 
-	// We either support a query string or filters on individual columns.
-	if payload.Query != nil {
-		args = append(args, []interface{}{payload.Query, payload.Query, payload.Query, payload.Query}...)
-		conds = append(conds, [2]string{"AND", `
-			original_id = (?)
-			OR transfer_id = (?)
-			OR aip_id = (?)
-			OR pipeline_id = (?)
-		`})
-	} else {
-		if payload.OriginalID != nil {
-			args = append(args, payload.OriginalID)
-			conds = append(conds, [2]string{"AND", "original_id = (?)"})
-		}
-		if payload.TransferID != nil {
-			args = append(args, payload.TransferID)
-			conds = append(conds, [2]string{"AND", "transfer_id = (?)"})
-		}
-		if payload.AipID != nil {
-			args = append(args, payload.AipID)
-			conds = append(conds, [2]string{"AND", "aip_id = (?)"})
-		}
-		if payload.PipelineID != nil {
-			args = append(args, payload.PipelineID)
-			conds = append(conds, [2]string{"AND", "pipeline_id = (?)"})
-		}
+	if payload.Name != nil {
+		args = append(args, payload.Name)
+		conds = append(conds, [2]string{"AND", "name LIKE `(?)%`"})
 	}
+	if payload.OriginalID != nil {
+		args = append(args, payload.OriginalID)
+		conds = append(conds, [2]string{"AND", "original_id = (?)"})
+	}
+	if payload.TransferID != nil {
+		args = append(args, payload.TransferID)
+		conds = append(conds, [2]string{"AND", "transfer_id = (?)"})
+	}
+	if payload.AipID != nil {
+		args = append(args, payload.AipID)
+		conds = append(conds, [2]string{"AND", "aip_id = (?)"})
+	}
+	if payload.PipelineID != nil {
+		args = append(args, payload.PipelineID)
+		conds = append(conds, [2]string{"AND", "pipeline_id = (?)"})
+	}
+	if payload.Status != nil {
+		args = append(args, NewStatus(*payload.Status))
+		conds = append(conds, [2]string{"AND", "status = (?)"})
+	}
+	if payload.EarliestCreatedTime != nil {
+		args = append(args, payload.EarliestCreatedTime)
+		conds = append(conds, [2]string{"AND", "created_at >= (?)"})
+	}
+	if payload.LatestCreatedTime != nil {
+		args = append(args, payload.LatestCreatedTime)
+		conds = append(conds, [2]string{"AND", "created_at <= (?)"})
+	}
+
 	if payload.Cursor != nil {
 		args = append(args, *payload.Cursor)
 		conds = append(conds, [2]string{"AND", "id <= (?)"})
@@ -73,7 +80,7 @@ func (w *goaWrapper) List(ctx context.Context, payload *goacollection.ListPayloa
 		where += fmt.Sprintf(" %s %s", cond[0], cond[1])
 	}
 
-	query += where + " ORDER BY id DESC LIMIT " + strconv.Itoa(limit+1)
+	query += where + " ORDER BY id DESC LIMIT " + limitSQL
 
 	rows, err := w.db.QueryxContext(ctx, query, args...)
 	if err != nil {

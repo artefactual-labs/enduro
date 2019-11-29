@@ -43,12 +43,14 @@ var MethodNames = [6]string{"list", "show", "delete", "cancel", "retry", "workfl
 
 // ListPayload is the payload type of the collection service list method.
 type ListPayload struct {
-	OriginalID *string
-	TransferID *string
-	AipID      *string
-	PipelineID *string
-	// Match all fields
-	Query *string
+	Name                *string
+	OriginalID          *string
+	TransferID          *string
+	AipID               *string
+	PipelineID          *string
+	EarliestCreatedTime *string
+	LatestCreatedTime   *string
+	Status              *string
 	// Pagination cursor
 	Cursor *string
 }

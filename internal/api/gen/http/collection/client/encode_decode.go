@@ -44,6 +44,9 @@ func EncodeListRequest(encoder func(*http.Request) goahttp.Encoder) func(*http.R
 			return goahttp.ErrInvalidType("collection", "list", "*collection.ListPayload", v)
 		}
 		values := req.URL.Query()
+		if p.Name != nil {
+			values.Add("name", *p.Name)
+		}
 		if p.OriginalID != nil {
 			values.Add("original_id", *p.OriginalID)
 		}
@@ -56,8 +59,14 @@ func EncodeListRequest(encoder func(*http.Request) goahttp.Encoder) func(*http.R
 		if p.PipelineID != nil {
 			values.Add("pipeline_id", *p.PipelineID)
 		}
-		if p.Query != nil {
-			values.Add("query", *p.Query)
+		if p.EarliestCreatedTime != nil {
+			values.Add("earliest_created_time", *p.EarliestCreatedTime)
+		}
+		if p.LatestCreatedTime != nil {
+			values.Add("latest_created_time", *p.LatestCreatedTime)
+		}
+		if p.Status != nil {
+			values.Add("status", *p.Status)
 		}
 		if p.Cursor != nil {
 			values.Add("cursor", *p.Cursor)

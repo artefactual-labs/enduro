@@ -30,7 +30,7 @@ func UsageCommands() string {
 
 // UsageExamples produces an example of a valid invocation of the CLI tool.
 func UsageExamples() string {
-	return os.Args[0] + ` collection list --original-id "Est recusandae dolorum porro nam." --transfer-id "Voluptatum qui nam et molestiae." --aip-id "Maiores minus debitis et accusantium." --pipeline-id "Eveniet dolores omnis omnis." --query "Repellendus voluptatem optio et asperiores aut." --cursor "Alias ex vel nulla."` + "\n" +
+	return os.Args[0] + ` collection list --name "Quia voluptas inventore cupiditate." --original-id "Minus dolorem ut sunt incidunt at dolor." --transfer-id "7D80331A-7620-D09D-7CCB-2EF87B797732" --aip-id "76FB876C-96AC-91E7-BD21-B0C2988DDF65" --pipeline-id "A45D83CF-F038-77BB-220E-D79EFC31D198" --earliest-created-time "1992-03-21T02:13:10Z" --latest-created-time "1986-04-12T07:15:46Z" --status "new" --cursor "Officiis adipisci nulla ut."` + "\n" +
 		""
 }
 
@@ -46,13 +46,16 @@ func ParseEndpoint(
 	var (
 		collectionFlags = flag.NewFlagSet("collection", flag.ContinueOnError)
 
-		collectionListFlags          = flag.NewFlagSet("list", flag.ExitOnError)
-		collectionListOriginalIDFlag = collectionListFlags.String("original-id", "", "")
-		collectionListTransferIDFlag = collectionListFlags.String("transfer-id", "", "")
-		collectionListAipIDFlag      = collectionListFlags.String("aip-id", "", "")
-		collectionListPipelineIDFlag = collectionListFlags.String("pipeline-id", "", "")
-		collectionListQueryFlag      = collectionListFlags.String("query", "", "")
-		collectionListCursorFlag     = collectionListFlags.String("cursor", "", "")
+		collectionListFlags                   = flag.NewFlagSet("list", flag.ExitOnError)
+		collectionListNameFlag                = collectionListFlags.String("name", "", "")
+		collectionListOriginalIDFlag          = collectionListFlags.String("original-id", "", "")
+		collectionListTransferIDFlag          = collectionListFlags.String("transfer-id", "", "")
+		collectionListAipIDFlag               = collectionListFlags.String("aip-id", "", "")
+		collectionListPipelineIDFlag          = collectionListFlags.String("pipeline-id", "", "")
+		collectionListEarliestCreatedTimeFlag = collectionListFlags.String("earliest-created-time", "", "")
+		collectionListLatestCreatedTimeFlag   = collectionListFlags.String("latest-created-time", "", "")
+		collectionListStatusFlag              = collectionListFlags.String("status", "", "")
+		collectionListCursorFlag              = collectionListFlags.String("cursor", "", "")
 
 		collectionShowFlags  = flag.NewFlagSet("show", flag.ExitOnError)
 		collectionShowIDFlag = collectionShowFlags.String("id", "REQUIRED", "Identifier of collection to show")
@@ -156,7 +159,7 @@ func ParseEndpoint(
 			switch epn {
 			case "list":
 				endpoint = c.List()
-				data, err = collectionc.BuildListPayload(*collectionListOriginalIDFlag, *collectionListTransferIDFlag, *collectionListAipIDFlag, *collectionListPipelineIDFlag, *collectionListQueryFlag, *collectionListCursorFlag)
+				data, err = collectionc.BuildListPayload(*collectionListNameFlag, *collectionListOriginalIDFlag, *collectionListTransferIDFlag, *collectionListAipIDFlag, *collectionListPipelineIDFlag, *collectionListEarliestCreatedTimeFlag, *collectionListLatestCreatedTimeFlag, *collectionListStatusFlag, *collectionListCursorFlag)
 			case "show":
 				endpoint = c.Show()
 				data, err = collectionc.BuildShowPayload(*collectionShowIDFlag)
@@ -202,18 +205,21 @@ Additional help:
 `, os.Args[0], os.Args[0])
 }
 func collectionListUsage() {
-	fmt.Fprintf(os.Stderr, `%s [flags] collection list -original-id STRING -transfer-id STRING -aip-id STRING -pipeline-id STRING -query STRING -cursor STRING
+	fmt.Fprintf(os.Stderr, `%s [flags] collection list -name STRING -original-id STRING -transfer-id STRING -aip-id STRING -pipeline-id STRING -earliest-created-time STRING -latest-created-time STRING -status STRING -cursor STRING
 
 List all stored collections
+    -name STRING: 
     -original-id STRING: 
     -transfer-id STRING: 
     -aip-id STRING: 
     -pipeline-id STRING: 
-    -query STRING: 
+    -earliest-created-time STRING: 
+    -latest-created-time STRING: 
+    -status STRING: 
     -cursor STRING: 
 
 Example:
-    `+os.Args[0]+` collection list --original-id "Est recusandae dolorum porro nam." --transfer-id "Voluptatum qui nam et molestiae." --aip-id "Maiores minus debitis et accusantium." --pipeline-id "Eveniet dolores omnis omnis." --query "Repellendus voluptatem optio et asperiores aut." --cursor "Alias ex vel nulla."
+    `+os.Args[0]+` collection list --name "Quia voluptas inventore cupiditate." --original-id "Minus dolorem ut sunt incidunt at dolor." --transfer-id "7D80331A-7620-D09D-7CCB-2EF87B797732" --aip-id "76FB876C-96AC-91E7-BD21-B0C2988DDF65" --pipeline-id "A45D83CF-F038-77BB-220E-D79EFC31D198" --earliest-created-time "1992-03-21T02:13:10Z" --latest-created-time "1986-04-12T07:15:46Z" --status "new" --cursor "Officiis adipisci nulla ut."
 `, os.Args[0])
 }
 
@@ -224,7 +230,7 @@ Show collection by ID
     -id UINT: Identifier of collection to show
 
 Example:
-    `+os.Args[0]+` collection show --id 7262811908532712622
+    `+os.Args[0]+` collection show --id 11908616757649634420
 `, os.Args[0])
 }
 
@@ -235,7 +241,7 @@ Delete collection by ID
     -id UINT: Identifier of collection to delete
 
 Example:
-    `+os.Args[0]+` collection delete --id 7686560774918400757
+    `+os.Args[0]+` collection delete --id 13021491677892670568
 `, os.Args[0])
 }
 
@@ -246,7 +252,7 @@ Cancel collection processing by ID
     -id UINT: Identifier of collection to remove
 
 Example:
-    `+os.Args[0]+` collection cancel --id 11533904348193230542
+    `+os.Args[0]+` collection cancel --id 17375991868335668132
 `, os.Args[0])
 }
 
@@ -257,7 +263,7 @@ Retry collection processing by ID
     -id UINT: Identifier of collection to retry
 
 Example:
-    `+os.Args[0]+` collection retry --id 2998639704067115621
+    `+os.Args[0]+` collection retry --id 1127672566392860727
 `, os.Args[0])
 }
 
@@ -268,6 +274,6 @@ Retrieve workflow status by ID
     -id UINT: Identifier of collection to look up
 
 Example:
-    `+os.Args[0]+` collection workflow --id 17765174268271371906
+    `+os.Args[0]+` collection workflow --id 1953244155936728262
 `, os.Args[0])
 }

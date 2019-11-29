@@ -56,11 +56,14 @@ export interface CollectionDeleteRequest {
 }
 
 export interface CollectionListRequest {
+    name?: string;
     originalId?: string;
     transferId?: string;
     aipId?: string;
     pipelineId?: string;
-    query?: string;
+    earliestCreatedTime?: Date;
+    latestCreatedTime?: Date;
+    status?: CollectionListStatusEnum;
     cursor?: string;
 }
 
@@ -150,6 +153,10 @@ export class CollectionApi extends runtime.BaseAPI {
     async collectionListRaw(requestParameters: CollectionListRequest): Promise<runtime.ApiResponse<CollectionListResponseBody>> {
         const queryParameters: runtime.HTTPQuery = {};
 
+        if (requestParameters.name !== undefined) {
+            queryParameters['name'] = requestParameters.name;
+        }
+
         if (requestParameters.originalId !== undefined) {
             queryParameters['original_id'] = requestParameters.originalId;
         }
@@ -166,8 +173,16 @@ export class CollectionApi extends runtime.BaseAPI {
             queryParameters['pipeline_id'] = requestParameters.pipelineId;
         }
 
-        if (requestParameters.query !== undefined) {
-            queryParameters['query'] = requestParameters.query;
+        if (requestParameters.earliestCreatedTime !== undefined) {
+            queryParameters['earliest_created_time'] = (requestParameters.earliestCreatedTime as any).toISOString();
+        }
+
+        if (requestParameters.latestCreatedTime !== undefined) {
+            queryParameters['latest_created_time'] = (requestParameters.latestCreatedTime as any).toISOString();
+        }
+
+        if (requestParameters.status !== undefined) {
+            queryParameters['status'] = requestParameters.status;
         }
 
         if (requestParameters.cursor !== undefined) {
@@ -290,4 +305,16 @@ export class CollectionApi extends runtime.BaseAPI {
         return await response.value();
     }
 
+}
+
+/**
+    * @export
+    * @enum {string}
+    */
+export enum CollectionListStatusEnum {
+    New = 'new',
+    InProgress = 'in progress',
+    Done = 'done',
+    Error = 'error',
+    Unknown = 'unknown'
 }

@@ -26,11 +26,26 @@ var _ = Service("collection", func() {
 	Method("list", func() {
 		Description("List all stored collections")
 		Payload(func() {
+			Attribute("name", String)
 			Attribute("original_id", String)
-			Attribute("transfer_id", String)
-			Attribute("aip_id", String)
-			Attribute("pipeline_id", String)
-			Attribute("query", String, "Match all fields")
+			Attribute("transfer_id", String, func() {
+				Format(FormatUUID)
+			})
+			Attribute("aip_id", String, func() {
+				Format(FormatUUID)
+			})
+			Attribute("pipeline_id", String, func() {
+				Format(FormatUUID)
+			})
+			Attribute("earliest_created_time", String, func() {
+				Format(FormatDateTime)
+			})
+			Attribute("latest_created_time", String, func() {
+				Format(FormatDateTime)
+			})
+			Attribute("status", String, func() {
+				EnumCollectionStatus()
+			})
 			Attribute("cursor", String, "Pagination cursor")
 		})
 		Result(PaginatedCollectionOf(StoredCollection))
@@ -38,11 +53,14 @@ var _ = Service("collection", func() {
 			GET("/")
 			Response(StatusOK)
 			Params(func() {
+				Param("name")
 				Param("original_id")
 				Param("transfer_id")
 				Param("aip_id")
 				Param("pipeline_id")
-				Param("query")
+				Param("earliest_created_time")
+				Param("latest_created_time")
+				Param("status")
 				Param("cursor")
 			})
 		})
@@ -130,11 +148,15 @@ var _ = Service("swagger", func() {
 	})
 })
 
+var EnumCollectionStatus = func() {
+	Enum("new", "in progress", "done", "error", "unknown")
+}
+
 var Collection = Type("Collection", func() {
 	Description("Collection describes a collection to be stored.")
 	Attribute("name", String, "Name of the collection")
 	Attribute("status", String, "Status of the collection", func() {
-		Enum("new", "in progress", "done", "error", "unknown")
+		EnumCollectionStatus()
 		Default("new")
 	})
 	Attribute("workflow_id", String, "Identifier of processing workflow", func() {

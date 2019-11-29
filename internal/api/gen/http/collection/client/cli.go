@@ -17,7 +17,13 @@ import (
 
 // BuildListPayload builds the payload for the collection list endpoint from
 // CLI flags.
-func BuildListPayload(collectionListOriginalID string, collectionListTransferID string, collectionListAipID string, collectionListPipelineID string, collectionListQuery string, collectionListCursor string) (*collection.ListPayload, error) {
+func BuildListPayload(collectionListName string, collectionListOriginalID string, collectionListTransferID string, collectionListAipID string, collectionListPipelineID string, collectionListEarliestCreatedTime string, collectionListLatestCreatedTime string, collectionListStatus string, collectionListCursor string) (*collection.ListPayload, error) {
+	var name *string
+	{
+		if collectionListName != "" {
+			name = &collectionListName
+		}
+	}
 	var originalID *string
 	{
 		if collectionListOriginalID != "" {
@@ -42,10 +48,22 @@ func BuildListPayload(collectionListOriginalID string, collectionListTransferID 
 			pipelineID = &collectionListPipelineID
 		}
 	}
-	var query *string
+	var earliestCreatedTime *string
 	{
-		if collectionListQuery != "" {
-			query = &collectionListQuery
+		if collectionListEarliestCreatedTime != "" {
+			earliestCreatedTime = &collectionListEarliestCreatedTime
+		}
+	}
+	var latestCreatedTime *string
+	{
+		if collectionListLatestCreatedTime != "" {
+			latestCreatedTime = &collectionListLatestCreatedTime
+		}
+	}
+	var status *string
+	{
+		if collectionListStatus != "" {
+			status = &collectionListStatus
 		}
 	}
 	var cursor *string
@@ -55,12 +73,15 @@ func BuildListPayload(collectionListOriginalID string, collectionListTransferID 
 		}
 	}
 	payload := &collection.ListPayload{
-		OriginalID: originalID,
-		TransferID: transferID,
-		AipID:      aipID,
-		PipelineID: pipelineID,
-		Query:      query,
-		Cursor:     cursor,
+		Name:                name,
+		OriginalID:          originalID,
+		TransferID:          transferID,
+		AipID:               aipID,
+		PipelineID:          pipelineID,
+		EarliestCreatedTime: earliestCreatedTime,
+		LatestCreatedTime:   latestCreatedTime,
+		Status:              status,
+		Cursor:              cursor,
 	}
 	return payload, nil
 }

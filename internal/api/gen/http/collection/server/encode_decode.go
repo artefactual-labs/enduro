@@ -36,13 +36,21 @@ func EncodeListResponse(encoder func(context.Context, http.ResponseWriter) goaht
 func DecodeListRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (interface{}, error) {
 	return func(r *http.Request) (interface{}, error) {
 		var (
-			originalID *string
-			transferID *string
-			aipID      *string
-			pipelineID *string
-			query      *string
-			cursor     *string
+			name                *string
+			originalID          *string
+			transferID          *string
+			aipID               *string
+			pipelineID          *string
+			earliestCreatedTime *string
+			latestCreatedTime   *string
+			status              *string
+			cursor              *string
+			err                 error
 		)
+		nameRaw := r.URL.Query().Get("name")
+		if nameRaw != "" {
+			name = &nameRaw
+		}
 		originalIDRaw := r.URL.Query().Get("original_id")
 		if originalIDRaw != "" {
 			originalID = &originalIDRaw
@@ -51,23 +59,54 @@ func DecodeListRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.De
 		if transferIDRaw != "" {
 			transferID = &transferIDRaw
 		}
+		if transferID != nil {
+			err = goa.MergeErrors(err, goa.ValidateFormat("transferID", *transferID, goa.FormatUUID))
+		}
 		aipIDRaw := r.URL.Query().Get("aip_id")
 		if aipIDRaw != "" {
 			aipID = &aipIDRaw
+		}
+		if aipID != nil {
+			err = goa.MergeErrors(err, goa.ValidateFormat("aipID", *aipID, goa.FormatUUID))
 		}
 		pipelineIDRaw := r.URL.Query().Get("pipeline_id")
 		if pipelineIDRaw != "" {
 			pipelineID = &pipelineIDRaw
 		}
-		queryRaw := r.URL.Query().Get("query")
-		if queryRaw != "" {
-			query = &queryRaw
+		if pipelineID != nil {
+			err = goa.MergeErrors(err, goa.ValidateFormat("pipelineID", *pipelineID, goa.FormatUUID))
+		}
+		earliestCreatedTimeRaw := r.URL.Query().Get("earliest_created_time")
+		if earliestCreatedTimeRaw != "" {
+			earliestCreatedTime = &earliestCreatedTimeRaw
+		}
+		if earliestCreatedTime != nil {
+			err = goa.MergeErrors(err, goa.ValidateFormat("earliestCreatedTime", *earliestCreatedTime, goa.FormatDateTime))
+		}
+		latestCreatedTimeRaw := r.URL.Query().Get("latest_created_time")
+		if latestCreatedTimeRaw != "" {
+			latestCreatedTime = &latestCreatedTimeRaw
+		}
+		if latestCreatedTime != nil {
+			err = goa.MergeErrors(err, goa.ValidateFormat("latestCreatedTime", *latestCreatedTime, goa.FormatDateTime))
+		}
+		statusRaw := r.URL.Query().Get("status")
+		if statusRaw != "" {
+			status = &statusRaw
+		}
+		if status != nil {
+			if !(*status == "new" || *status == "in progress" || *status == "done" || *status == "error" || *status == "unknown") {
+				err = goa.MergeErrors(err, goa.InvalidEnumValueError("status", *status, []interface{}{"new", "in progress", "done", "error", "unknown"}))
+			}
 		}
 		cursorRaw := r.URL.Query().Get("cursor")
 		if cursorRaw != "" {
 			cursor = &cursorRaw
 		}
-		payload := NewListPayload(originalID, transferID, aipID, pipelineID, query, cursor)
+		if err != nil {
+			return nil, err
+		}
+		payload := NewListPayload(name, originalID, transferID, aipID, pipelineID, earliestCreatedTime, latestCreatedTime, status, cursor)
 
 		return payload, nil
 	}
