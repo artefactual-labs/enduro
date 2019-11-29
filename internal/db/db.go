@@ -22,6 +22,7 @@ func Connect(ds string) (db *sql.DB, err error) {
 	config.Collation = "utf8mb4_unicode_ci"
 	config.Loc = time.UTC
 	config.ParseTime = true
+	config.MultiStatements = true
 	config.Params = map[string]string{
 		"time_zone": "UTC",
 	}
