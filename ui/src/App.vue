@@ -4,7 +4,7 @@
     <header>
       <b-container fluid class="px-0" id="nav">
         <b-navbar toggleable="sm" type="dark">
-          <b-navbar-brand :to="{ name: 'home' }">Enduro</b-navbar-brand>
+          <b-navbar-brand>Enduro</b-navbar-brand>
           <b-navbar-toggle target="nav-collapse"></b-navbar-toggle>
           <b-collapse id="nav-collapse" is-nav>
             <b-navbar-nav>
@@ -44,6 +44,9 @@
 }
 
 #nav {
+  .navbar-brand {
+    user-select: none;
+  }
   nav {
     background-color: $enduro-c1 !important;
   }
