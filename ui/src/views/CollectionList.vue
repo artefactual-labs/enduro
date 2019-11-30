@@ -96,7 +96,10 @@
         </nav>
       </template>
       <div v-if="results.length === 0">
-        No results.
+        <b-alert show variant="info" class="my-3">
+          <h4 class="alert-heading">No results</h4>
+          We couldn’t find any collections matching your search criteria.
+        </b-alert>
       </div>
 
     </template>
