@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 
 	goacollection "github.com/artefactual-labs/enduro/internal/api/gen/collection"
 	"github.com/artefactual-labs/enduro/internal/cadence"
@@ -22,6 +23,11 @@ type goaWrapper struct {
 
 var _ goacollection.Service = (*goaWrapper)(nil)
 
+var patternMatchingCharReplacer = strings.NewReplacer(
+	"%", "\\%",
+	"_", "\\_",
+)
+
 // List all stored collections. It implements goacollection.Service.
 func (w *goaWrapper) List(ctx context.Context, payload *goacollection.ListPayload) (*goacollection.ListResult, error) {
 	var query = "SELECT id, name, workflow_id, run_id, transfer_id, aip_id, original_id, pipeline_id, status, CONVERT_TZ(created_at, @@session.time_zone, '+00:00') AS created_at, CONVERT_TZ(completed_at, @@session.time_zone, '+00:00') AS completed_at FROM collection"
@@ -34,8 +40,9 @@ func (w *goaWrapper) List(ctx context.Context, payload *goacollection.ListPayloa
 	var conds = [][2]string{}
 
 	if payload.Name != nil {
-		args = append(args, payload.Name)
-		conds = append(conds, [2]string{"AND", "name LIKE `(?)%`"})
+		name := patternMatchingCharReplacer.Replace(*payload.Name) + "%"
+		args = append(args, name)
+		conds = append(conds, [2]string{"AND", "name LIKE (?)"})
 	}
 	if payload.OriginalID != nil {
 		args = append(args, payload.OriginalID)
@@ -82,6 +89,7 @@ func (w *goaWrapper) List(ctx context.Context, payload *goacollection.ListPayloa
 
 	query += where + " ORDER BY id DESC LIMIT " + limitSQL
 
+	query = w.db.Rebind(query)
 	rows, err := w.db.QueryxContext(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("error querying the database: %w", err)
