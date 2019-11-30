@@ -13,6 +13,7 @@ const store: StoreOptions<RootState> = {
   modules: {
     collection,
   },
+  strict: true,
 };
 
 export default new Vuex.Store<RootState>(store);

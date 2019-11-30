@@ -4,7 +4,7 @@
 
     <!-- Alert shown when the API client failed. -->
     <template v-if="error">
-      <b-alert show dismissible variant="warning" class="my-3">
+      <b-alert show variant="warning" class="my-3">
         <h4 class="alert-heading">Search error</h4>
         We couldn't connect to the API server. You may want to try again in a few seconds.
         <hr />
@@ -19,7 +19,7 @@
         <b-form @submit="onSubmit" @reset="onReset">
           <div class="form-row">
             <div class="form-group col-12 col-sm-6 col-md-2">
-              <b-form-select size="sm">
+              <b-form-select size="sm" v-model="status">
                 <option :value="null">Status</option>
                 <option value="error">Error</option>
                 <option value="done">Done</option>
@@ -27,25 +27,24 @@
               </b-form-select>
             </div>
             <div class="form-group col-12 col-sm-6 col-md-2">
-              <b-form-select size="sm">
+              <b-form-select size="sm" v-model="date">
                 <option :value="null">Creation date</option>
                 <option value="3h">Last 3 hours</option>
                 <option value="6h">Last 6 hours</option>
                 <option value="24h">Last 24 hours</option>
                 <option value="3d">Last 3 days</option>
-                <option value="7d">Last 7 days</option>
+                <option value="14d">Last 14 days</option>
+                <option value="30d">Last 30 days</option>
               </b-form-select>
             </div>
             <div class="form-group col-12 col-md-5 col-lg-6">
               <b-input-group size="sm">
-                <b-form-input autofocus @keydown.esc="onReset" v-model="query" type="text" placeholder="Search"/>
-                <b-form-select size="sm" class="collection-field-select">
+                <b-form-input autofocus :state="$store.state.collection.validQuery" @keydown.esc="onReset" v-model="query" type="text" placeholder="Search"/>
+                <b-form-select v-model="field" size="sm" class="collection-field-select">
                   <option value="name">Name</option>
                   <option value="pipeline_id">Pipeline ID</option>
                   <option value="transfer_id">Transfer ID</option>
                   <option value="aip_id">AIP ID</option>
-                  <option value="workflow_id">Workflow ID</option>
-                  <option value="run_id">Run ID</option>
                   <option value="original_id">Original ID</option>
                 </b-form-select>
               </b-input-group>
@@ -131,52 +130,77 @@ export default class CollectionList extends Vue {
   @collectionStoreNs.Getter(CollectionStore.GET_SEARCH_NEXT_CURSOR)
   private nextCursor: any;
 
+  @collectionStoreNs.Mutation(CollectionStore.SET_STATUS_FILTER)
+  private setStatusFilter: any;
+
+  @collectionStoreNs.Mutation(CollectionStore.SET_DATE_FILTER)
+  private setDateFilter: any;
+
+  @collectionStoreNs.Mutation(CollectionStore.SET_FIELD_FILTER)
+  private setFieldFilter: any;
+
+  @collectionStoreNs.Mutation(CollectionStore.SET_QUERY)
+  private setQuery: any;
+
+  @collectionStoreNs.Mutation(CollectionStore.SET_SEARCH_RESET)
+  private reset: any;
+
   @collectionStoreNs.Action(CollectionStore.SEARCH_COLLECTIONS)
   private search: any;
-
-  private query: string | null = null;
-
-  private selected: string | null = null;
 
   private created() {
     this.search();
   }
 
-  /**
-   * Performs search action.
-   *
-   * @remarks
-   * Search method for CollectionList. By default, it uses the cursor member of
-   * the class.
-   *
-   * @param cursor - Optional cursor. Set to null to reset the cursor.
-   */
-  private doSearch(cursor?: string | null) {
-    const attrs: any = {
-      cursor: typeof(cursor) === 'undefined' ? this.nextCursor : cursor,
-    };
-    this.search(attrs);
+  private get status(): string | null {
+    return this.$store.state.collection.query.status;
+  }
+  private set status(status: string | null) {
+    this.setStatusFilter(status);
+    this.search();
+  }
+
+  private get date(): string | null {
+    return this.$store.state.collection.date;
+  }
+  private set date(date: string | null) {
+    this.setDateFilter(date);
+    this.search();
+  }
+
+  private get query(): string {
+    return this.$store.state.collection.query.query;
+  }
+  private set query(query: string) {
+    this.setQuery(query);
+  }
+
+  private get field(): string {
+    return this.$store.state.collection.query.field;
+  }
+  private set field(field: string) {
+    this.setFieldFilter(field);
   }
 
   /**
    * Perform same search re-using all existing state.
    */
   private retryButtonClicked() {
-    this.doSearch();
+    this.search();
   }
 
   /**
    * Perform search with the cursor reset.
    */
   private reloadButtonClicked() {
-    this.doSearch(null);
+    this.search();
   }
 
   /*/
    * Perform search with a new cursor.
    */
   private nextButtonClicked(cursor: string) {
-    this.doSearch(cursor);
+    this.search({cursor});
   }
 
   /**
@@ -184,7 +208,7 @@ export default class CollectionList extends Vue {
    */
   private onSubmit(event: Event) {
     event.preventDefault();
-    this.doSearch(null);
+    this.search();
   }
 
   /**
@@ -192,8 +216,8 @@ export default class CollectionList extends Vue {
    */
   private onReset(event: Event) {
     event.preventDefault();
-    this.query = null;
-    this.doSearch(null);
+    this.reset();
+    this.search();
   }
 
   /**
