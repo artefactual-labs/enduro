@@ -15,7 +15,7 @@
     <!-- Search form and results. -->
     <template v-else>
 
-      <div class="my-3">
+      <div class="mt-3 mb-1">
         <b-form @submit="onSubmit" @reset="onReset">
           <div class="form-row">
             <div class="form-group col-12 col-sm-6 col-md-2">
@@ -48,6 +48,7 @@
                   <option value="original_id">Original ID</option>
                 </b-form-select>
               </b-input-group>
+              <small class="form-text text-muted" v-if="queryHelp">{{ queryHelp }}</small>
             </div>
             <div class="form-group col-12 col-md-3 col-lg-2">
               <b-input-group size="sm">
@@ -153,6 +154,18 @@ export default class CollectionList extends Vue {
 
   private created() {
     this.search();
+  }
+
+  private get queryHelp(): string | null {
+    switch (this.$store.state.collection.query.field) {
+      case 'name':
+        return 'Prefix and case-insensitive name matching, e.g.: "DPJ-SIP-97".';
+      case 'original_id':
+        return 'Exact matching.';
+      default:
+        return 'Exact matching, use UUID identifiers.';
+    }
+    return null;
   }
 
   private get status(): string | null {
