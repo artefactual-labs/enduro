@@ -68,19 +68,19 @@
         <table class="table table-bordered table-hover table-sm">
           <thead class="thead">
             <tr>
-              <th scope="col">ID</th>
+              <th scope="col" class="hiding">ID</th>
               <th scope="col">Name</th>
               <th scope="col">Created</th>
-              <th scope="col">Completed</th>
+              <th scope="col" class="hiding">Completed</th>
               <th scope="col">Status</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="item in results" v-bind:key="item.id" @click="rowClicked(item.id)">
-              <th scope="row">{{ item.id }}</th>
+              <th scope="row" class="hiding">{{ item.id }}</th>
               <td class="collection-name">{{ item.name || 'N/A' }}</td>
               <td>{{ item.createdAt | formatDateTime }}</td>
-              <td>{{ item.completedAt | formatDateTime }}</td>
+              <td class="hiding">{{ item.completedAt | formatDateTime }}</td>
               <td><en-collection-status-badge :status="item.status"/></td>
             </tr>
           </tbody>
@@ -266,6 +266,12 @@ export default class CollectionList extends Vue {
 
 .table-hover tbody tr:hover {
   background-color: lighten($enduro-c1, 70%);
+}
+
+.hiding {
+  @media (max-width: 991px) {
+    display: none;
+  }
 }
 
 .collection-name {
