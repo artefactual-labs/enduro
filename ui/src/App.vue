@@ -65,4 +65,9 @@ footer {
   }
 }
 
+::selection {
+  color: white;
+  background-color: #dd00aa;
+}
+
 </style>
