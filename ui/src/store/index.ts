@@ -13,7 +13,7 @@ const store: StoreOptions<RootState> = {
   modules: {
     collection,
   },
-  strict: true,
+  strict: process.env.NODE_ENV !== 'production',
 };
 
 export default new Vuex.Store<RootState>(store);
