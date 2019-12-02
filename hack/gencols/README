@@ -1,0 +1,6 @@
+gencols is a random generator for collections in the dev environment.
+
+load.sh does the following:
+
+* Generate a CSV with all the entries.
+* Load the CSV into MySQL using `LOAD DATA LOCAL INFILE`.
