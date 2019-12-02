@@ -75,8 +75,8 @@ func (a UpdateHARIActivity) url() (string, error) {
 }
 
 func (a UpdateHARIActivity) sendRequest(ctx context.Context, apiURL string, tinfo *TransferInfo) error {
-	// Location of AVLXML, e.g.: // e.g. `/transfer-path/<uuid>/DPJ/journal/<uuid>.xml`.
-	var path = filepath.Join(tinfo.Bundle.FullPath, tinfo.OriginalID, "DPJ", "journal", tinfo.OriginalID+".xml")
+	// Location of AVLXML, e.g.: // e.g. `/transfer-path/<uuid>/<kind>/journal/<uuid>.xml`.
+	var path = filepath.Join(tinfo.Bundle.FullPath, tinfo.OriginalID, tinfo.Bundle.Kind, "journal", tinfo.OriginalID+".xml")
 
 	// Is there a better way to do this? We need to build the JSON document but
 	// maybe this can be done with a buffer?
