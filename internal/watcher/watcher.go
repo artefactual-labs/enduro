@@ -25,13 +25,16 @@ type Watcher interface {
 
 	RetentionPeriod() *time.Duration
 
+	StripTopLevelDir() bool
+
 	fmt.Stringer // It should return the name of the watcher.
 }
 
 type commonWatcherImpl struct {
-	name            string
-	pipeline        string
-	retentionPeriod *time.Duration
+	name             string
+	pipeline         string
+	retentionPeriod  *time.Duration
+	stripTopLevelDir bool
 }
 
 func (w *commonWatcherImpl) String() string {
@@ -44,6 +47,10 @@ func (w *commonWatcherImpl) Pipeline() string {
 
 func (w *commonWatcherImpl) RetentionPeriod() *time.Duration {
 	return w.retentionPeriod
+}
+
+func (w *commonWatcherImpl) StripTopLevelDir() bool {
+	return w.stripTopLevelDir
 }
 
 type Service interface {

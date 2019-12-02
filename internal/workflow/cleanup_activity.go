@@ -6,6 +6,7 @@ import (
 	"os"
 )
 
+// CleanUpActivity removes the contents that we've created in the TS location.
 type CleanUpActivity struct {
 	manager *Manager
 }

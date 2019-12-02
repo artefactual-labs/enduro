@@ -215,7 +215,7 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 	// This is the last activity that depends on the session.
 	activityOpts = withActivityOptsForRequest(sessCtx)
 	_ = workflow.ExecuteActivity(activityOpts, CleanUpActivityName, &CleanUpActivityParams{
-		FullPath: tinfo.Bundle.FullPath,
+		FullPath: tinfo.Bundle.FullPathBeforeStrip,
 	}).Get(activityOpts, nil)
 
 	workflow.CompleteSession(sessCtx)
@@ -260,9 +260,10 @@ func (w *ProcessingWorkflow) SessionHandler(ctx workflow.Context, sessCtx workfl
 	// Bundle.
 	activityOpts = withActivityOptsForLongLivedRequest(sessCtx)
 	err = workflow.ExecuteActivity(activityOpts, BundleActivityName, &BundleActivityParams{
-		TransferDir: tinfo.PipelineConfig.TransferDir,
-		Key:         tinfo.Event.Key,
-		TempFile:    tinfo.TempFile,
+		TransferDir:      tinfo.PipelineConfig.TransferDir,
+		Key:              tinfo.Event.Key,
+		TempFile:         tinfo.TempFile,
+		StripTopLevelDir: tinfo.Event.StripTopLevelDir,
 	}).Get(activityOpts, &tinfo.Bundle)
 	if err != nil {
 		return err

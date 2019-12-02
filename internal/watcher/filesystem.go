@@ -56,9 +56,10 @@ func NewFilesystemWatcher(ctx context.Context, config *FilesystemConfig) (*files
 		ch:   make(chan *fsnotify.Event, 100),
 		path: abspath,
 		commonWatcherImpl: &commonWatcherImpl{
-			name:            config.Name,
-			pipeline:        config.Pipeline,
-			retentionPeriod: config.RetentionPeriod,
+			name:             config.Name,
+			pipeline:         config.Pipeline,
+			retentionPeriod:  config.RetentionPeriod,
+			stripTopLevelDir: config.StripTopLevelDir,
 		},
 	}
 

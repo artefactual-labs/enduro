@@ -25,6 +25,9 @@ type BlobEvent struct {
 	// Retention period for this blob.
 	RetentionPeriod *time.Duration
 
+	// Whether the top-level directory is meant to be stripped.
+	StripTopLevelDir bool
+
 	// Key of the blob.
 	Key string
 
@@ -34,10 +37,11 @@ type BlobEvent struct {
 
 func NewBlobEvent(w Watcher, key string) *BlobEvent {
 	return &BlobEvent{
-		WatcherName:     w.String(),
-		PipelineName:    w.Pipeline(),
-		RetentionPeriod: w.RetentionPeriod(),
-		Key:             key,
+		WatcherName:      w.String(),
+		PipelineName:     w.Pipeline(),
+		RetentionPeriod:  w.RetentionPeriod(),
+		StripTopLevelDir: w.StripTopLevelDir(),
+		Key:              key,
 	}
 }
 

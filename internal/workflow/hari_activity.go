@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -35,10 +34,6 @@ func NewUpdateHARIActivity(m *Manager) *UpdateHARIActivity {
 }
 
 func (a UpdateHARIActivity) Execute(ctx context.Context, tinfo *TransferInfo) error {
-	if tinfo.OriginalID == "" {
-		return nonRetryableError(errors.New("unknown originalID"))
-	}
-
 	apiURL, err := a.url()
 	if err != nil {
 		return nonRetryableError(fmt.Errorf("error in URL construction: %w", err))
@@ -51,13 +46,21 @@ func (a UpdateHARIActivity) Execute(ctx context.Context, tinfo *TransferInfo) er
 		apiURL = ts.URL
 	}
 
-	if err := a.sendRequest(ctx, apiURL, tinfo); err != nil {
+	// Location of AVLXML, e.g.: `/transfer-path/<kind>/journal/avlxml.xml`.
+	var path = filepath.Join(tinfo.Bundle.FullPath, tinfo.Bundle.Kind, "journal/avlxml.xml")
+	blob, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nonRetryableError(fmt.Errorf("error reading AVLXML file: %w (fullpath: %q)", err, path))
+	}
+
+	if err := a.sendRequest(ctx, blob, apiURL, tinfo); err != nil {
 		return fmt.Errorf("error sending request: %w", err)
 	}
 
 	return nil
 }
 
+// url returns the HARI URL of the API endpoint for AVLXML submission.
 func (a UpdateHARIActivity) url() (string, error) {
 	p, _ := url.Parse("/v1/hari/avlxml")
 
@@ -74,17 +77,7 @@ func (a UpdateHARIActivity) url() (string, error) {
 	return bu.ResolveReference(p).String(), nil
 }
 
-func (a UpdateHARIActivity) sendRequest(ctx context.Context, apiURL string, tinfo *TransferInfo) error {
-	// Location of AVLXML, e.g.: // e.g. `/transfer-path/<uuid>/<kind>/journal/avlxml.xml`.
-	var path = filepath.Join(tinfo.Bundle.FullPath, tinfo.OriginalID, tinfo.Bundle.Kind, "journal/avlxml.xml")
-
-	// Is there a better way to do this? We need to build the JSON document but
-	// maybe this can be done with a buffer?
-	blob, err := ioutil.ReadFile(path)
-	if err != nil {
-		return fmt.Errorf("error reading AVLXML file: %w (fullpath: %q)", err, path)
-	}
-
+func (a UpdateHARIActivity) sendRequest(ctx context.Context, blob []byte, apiURL string, tinfo *TransferInfo) error {
 	payload := &avlRequest{
 		XML:       blob,
 		Message:   "AVLXML was processed by DPJ Archivematica pipeline",

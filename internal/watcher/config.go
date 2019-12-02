@@ -13,8 +13,9 @@ type FilesystemConfig struct {
 	Path    string
 	Inotify bool
 
-	Pipeline        string
-	RetentionPeriod *time.Duration
+	Pipeline         string
+	RetentionPeriod  *time.Duration
+	StripTopLevelDir bool
 }
 
 // See minio.go for more.
@@ -30,6 +31,7 @@ type MinioConfig struct {
 	Secret       string
 	Token        string
 
-	Pipeline        string
-	RetentionPeriod *time.Duration
+	Pipeline         string
+	RetentionPeriod  *time.Duration
+	StripTopLevelDir bool
 }
