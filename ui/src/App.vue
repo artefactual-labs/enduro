@@ -21,12 +21,7 @@
 
     <router-view/>
 
-    <footer class="mt-5">
-      <b-container class="py-4">
-        Enduro is licensed under Apache License 2.0.<br />
-        © {{ new Date().getFullYear() }} Artefactual Systems, Inc.
-      </b-container>
-    </footer>
+    <en-footer/>
 
   </div>
 </template>

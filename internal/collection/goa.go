@@ -128,7 +128,7 @@ func (w *goaWrapper) Show(ctx context.Context, payload *goacollection.ShowPayloa
 	query = w.db.Rebind(query)
 	if err := w.db.GetContext(ctx, &c, query, payload.ID); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, &goacollection.NotFound{ID: payload.ID}
+			return nil, &goacollection.NotFound{ID: payload.ID, Message: "not_found"}
 		} else {
 			return nil, err
 		}
@@ -153,7 +153,7 @@ func (w *goaWrapper) Delete(ctx context.Context, payload *goacollection.DeletePa
 		return err
 	}
 	if n != 1 {
-		return &goacollection.NotFound{ID: payload.ID}
+		return &goacollection.NotFound{ID: payload.ID, Message: "not_found"}
 	}
 
 	return nil
