@@ -144,7 +144,7 @@ func (a *BundleActivity) Bundle(ctx context.Context, unar archiver.Unarchiver, t
 			return "", "", fmt.Errorf("%s: unexpected number of items were found in the archive", errPrefix)
 		}
 		if !fis[0].IsDir() {
-			return "", "", fmt.Errorf("%s: top-level item is not a directory: errPrefix, %s")
+			return "", "", fmt.Errorf("%s: top-level item is not a directory", errPrefix)
 		}
 		tempDir = filepath.Join(tempDir, fis[0].Name())
 	}
