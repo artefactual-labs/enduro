@@ -14,11 +14,7 @@ import { Component, Vue } from 'vue-property-decorator';
 import { Action } from 'vuex-class';
 import store, { LOOK_UP_VERSION } from '../store';
 
-@Component({
-  props: {
-    status: String,
-  },
-})
+@Component({})
 export default class Footer extends Vue {
 
   @Action(LOOK_UP_VERSION)
@@ -35,6 +31,7 @@ export default class Footer extends Vue {
   private created() {
     this.lookUp();
   }
+
 }
 
 </script>

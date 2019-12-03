@@ -1,13 +1,10 @@
 import Vue from 'vue';
-import Vuex, { GetterTree, ActionTree, MutationTree, StoreOptions, Action } from 'vuex';
+import Vuex, { ActionTree, MutationTree, StoreOptions, Action } from 'vuex';
 
 import { collection } from './collection';
 import { EnduroCollectionClient, api } from '@/client';
 
 Vue.use(Vuex);
-
-// Getters.
-export const GET_VERSION = 'GET_VERSION';
 
 // Actions.
 export const LOOK_UP_VERSION = 'LOOK_UP_VERSION';
