@@ -27,7 +27,7 @@ content-creation:
 	@rsync --exclude=".gitkeep" -aq $(CURDIR)/contents/ $(TMPDIR)/$(UUID)/
 	@if [ "$(FIXITY_ERR)" = "yes" ]; then \
 		mkdir -p $(TMPDIR)/metadata; \
-		echo "2eb15cb1834214b05d0083c691f9545f  $(UUID)/DPJ-SIP/journal/avlxml.xml" > $(TMPDIR)/metadata/checksum.md5; \
+		echo "2eb15cb1834214b05d0083c691f9545f  $(UUID)/DPJ-SIP/Journal/avlxml.xml" > $(TMPDIR)/metadata/checksum.md5; \
     fi
 
 err: FIXITY_ERR = yes

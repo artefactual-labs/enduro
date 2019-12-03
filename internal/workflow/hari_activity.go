@@ -46,8 +46,9 @@ func (a UpdateHARIActivity) Execute(ctx context.Context, tinfo *TransferInfo) er
 		apiURL = ts.URL
 	}
 
-	// Location of AVLXML, e.g.: `/transfer-path/<kind>/journal/avlxml.xml`.
-	var path = filepath.Join(tinfo.Bundle.FullPath, tinfo.Bundle.Kind, "journal/avlxml.xml")
+	// Location of AVLXML, e.g.: `/transfer-path/<kind>/Journal/avlxml.xml`.
+	var kind = strings.TrimSuffix(tinfo.Bundle.Kind, "-SIP")
+	var path = filepath.Join(tinfo.Bundle.FullPath, kind, "Journal/avlxml.xml")
 	blob, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nonRetryableError(fmt.Errorf("error reading AVLXML file: %w (fullpath: %q)", err, path))
