@@ -29,14 +29,7 @@ jobs:
     - name: Set RELEASE_VERSION
       run: echo ::set-env name=RELEASE_VERSION::$(echo ${GITHUB_REF:11})
     - name: Send notification to Jenkins
-      run:
-        curl -Ls -X GET -G https://jenkins-ci.archivematica.org/job/am-packbuild/job/rpm-jenkinsci/buildWithParameters \
-          -d "token=$JENKINS_TOKEN" \
-          -d "PACKAGE=enduro" \
-          -d "VERSION=$RELEASE_VERSION" \
-          -d "RELEASE=1" \
-          -d "PACKBUILD_BRANCH=dev/enduro-package" \
-          -d "REPOSITORY=nha"
+      run: curl -Ls -X GET -G https://jenkins-ci.archivematica.org/job/am-packbuild/job/rpm-jenkinsci/buildWithParameters -d "token=$JENKINS_TOKEN" -d "PACKAGE=enduro" -d "VERSION=$RELEASE_VERSION" -d "RELEASE=1" -d "PACKBUILD_BRANCH=dev/enduro-package" -d "REPOSITORY=nha"
       env:
         JENKINS_TOKEN: "${{ secrets.JENKINS_TOKEN }}"
         RELEASE_VERSION: "${{ env.RELEASE_VERSION }}"
