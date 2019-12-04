@@ -10,24 +10,31 @@ import { EnduroCollectionClient, api } from '@/client';
 export const GET_SEARCH_ERROR = 'GET_SEARCH_ERROR';
 export const GET_SEARCH_RESULT = 'GET_SEARCH_RESULT';
 export const GET_SEARCH_RESULTS = 'GET_SEARCH_RESULTS';
-export const GET_SEARCH_NEXT_CURSOR = 'GET_SEARCH_NEXT_CURSOR';
+export const SHOW_PREV_LINK = 'SHOW_PREV_LINK';
+export const SHOW_NEXT_LINK = 'SHOW_NEXT_LINK';
 
 // Mutation types.
 export const SET_SEARCH_RESULT = 'SET_SEARCH_RESULT';
 export const SET_SEARCH_RESULTS = 'SET_SEARCH_RESULTS';
 export const SET_SEARCH_ERROR = 'SET_SEARCH_ERROR';
-export const SET_SEARCH_NEXT_CURSOR = 'SET_SEARCH_NEXT_CURSOR';
 export const SET_STATUS_FILTER = 'SET_STATUS_FILTER';
 export const SET_DATE_FILTER = 'SET_DATE_FILTER';
 export const SET_FIELD_FILTER = 'SET_FIELD_FILTER';
 export const SET_QUERY = 'SET_QUERY';
 export const SET_SEARCH_RESET = 'SET_SEARCH_RESET';
 export const SET_SEARCH_VALID = 'SET_SEARCH_VALID';
+export const SET_SEARCH_HOME_PAGE = 'SET_SEARCH_HOME_PAGE';
+export const SET_SEARCH_PREV_PAGE = 'SET_SEARCH_PREV_PAGE';
+export const SET_SEARCH_NEXT_PAGE = 'SET_SEARCH_NEXT_PAGE';
+export const SET_SEARCH_NEXT_CURSOR = 'SET_SEARCH_NEXT_CURSOR';
 
 // Action types.
 export const SEARCH_COLLECTION = 'SEARCH_COLLECTION';
 export const SEARCH_COLLECTION_RESET = 'SEARCH_COLLECTION_RESET';
 export const SEARCH_COLLECTIONS = 'SEARCH_COLLECTIONS';
+export const SEARCH_COLLECTIONS_HOME_PAGE = 'SEARCH_COLLECTIONS_HOME_PAGE';
+export const SEARCH_COLLECTIONS_PREV_PAGE = 'SEARCH_COLLECTIONS_PREV_PAGE';
+export const SEARCH_COLLECTIONS_NEXT_PAGE = 'SEARCH_COLLECTIONS_NEXT_PAGE';
 
 const namespaced: boolean = true;
 
@@ -46,7 +53,18 @@ interface State {
   validQuery: boolean | null;
   result: any;
   results: any;
-  nextCursor: string;
+
+  seenCursors: Array<string | null>;
+  currCursor: string | null;
+  prevCursor: string | null;
+  nextCursor: string | null;
+}
+
+function resetCursors(state: State) {
+  state.seenCursors = [];
+  state.currCursor = '';
+  state.prevCursor = null;
+  state.nextCursor = null;
 }
 
 const getters: GetterTree<State, RootState> = {
@@ -63,15 +81,34 @@ const getters: GetterTree<State, RootState> = {
     return state.results;
   },
 
-  [GET_SEARCH_NEXT_CURSOR](state): string {
-    return state.nextCursor;
+  [SHOW_PREV_LINK](state): boolean {
+    return state.prevCursor !== null;
+  },
+
+  [SHOW_NEXT_LINK](state): boolean {
+    return state.nextCursor !== null;
   },
 
 };
 
 const actions: ActionTree<State, RootState> = {
 
-  [SEARCH_COLLECTIONS]({ commit, state }, params): any {
+  [SEARCH_COLLECTION]({ commit }, id): any {
+    const request: api.CollectionShowRequest = { id: +id };
+    return EnduroCollectionClient.collectionShow(request).then((response: api.CollectionShowResponseBody) => {
+      commit(SET_SEARCH_RESULT, response);
+      commit(SET_SEARCH_ERROR, false);
+    }).catch(() => {
+      commit(SET_SEARCH_ERROR, true);
+    });
+  },
+
+  [SEARCH_COLLECTION_RESET]({ commit }) {
+    commit(SET_SEARCH_RESULT, {});
+    commit(SET_SEARCH_ERROR, false);
+  },
+
+  [SEARCH_COLLECTIONS]({ commit, state }): any {
     // Perform validation.
     if (
       state.query.field
@@ -84,7 +121,7 @@ const actions: ActionTree<State, RootState> = {
     commit(SET_SEARCH_VALID, null);
 
     const request: api.CollectionListRequest = {
-      ...(params && params.cursor ? { cursor: params.cursor } : {}),
+      ...(state.currCursor && state.currCursor ? { cursor: state.currCursor } : {}),
       ...(state.query.earliestCreatedTime ? { earliestCreatedTime: state.query.earliestCreatedTime } : {}),
       ...(state.query.latestCreatedTime ? { latestCreatedTime: state.query.latestCreatedTime } : {}),
     };
@@ -136,29 +173,29 @@ const actions: ActionTree<State, RootState> = {
         (item: api.EnduroStoredCollectionResponseBody): api.EnduroStoredCollectionResponseBody =>
           api.EnduroStoredCollectionResponseBodyFromJSON(item),
       );
+
       commit(SET_SEARCH_RESULTS, response.items);
+      commit(SET_SEARCH_ERROR, false);
       commit(SET_SEARCH_NEXT_CURSOR, response.nextCursor);
-      commit(SET_SEARCH_ERROR, false);
     }).catch(() => {
       commit(SET_SEARCH_ERROR, true);
     });
   },
 
-  [SEARCH_COLLECTION]({ commit }, id): any {
-    const request: api.CollectionShowRequest = { id: +id };
-    return EnduroCollectionClient.collectionShow(request).then((response: api.CollectionShowResponseBody) => {
-      commit(SET_SEARCH_RESULT, response);
-      commit(SET_SEARCH_ERROR, false);
-    }).catch(() => {
-      commit(SET_SEARCH_ERROR, true);
-    });
+  [SEARCH_COLLECTIONS_HOME_PAGE]({ commit, dispatch }): any {
+    commit(SET_SEARCH_HOME_PAGE);
+    dispatch(SEARCH_COLLECTIONS);
   },
 
-  [SEARCH_COLLECTION_RESET]({ commit }) {
-    commit(SET_SEARCH_RESULT, {});
-    commit(SET_SEARCH_ERROR, false);
+  [SEARCH_COLLECTIONS_PREV_PAGE]({ commit, dispatch }): any {
+    commit(SET_SEARCH_PREV_PAGE);
+    dispatch(SEARCH_COLLECTIONS);
   },
 
+  [SEARCH_COLLECTIONS_NEXT_PAGE]({ commit, dispatch }): any {
+    commit(SET_SEARCH_NEXT_PAGE);
+    dispatch(SEARCH_COLLECTIONS);
+  },
 };
 
 const mutations: MutationTree<State> = {
@@ -175,12 +212,9 @@ const mutations: MutationTree<State> = {
     state.results = results;
   },
 
-  [SET_SEARCH_NEXT_CURSOR](state, nextCursor: string) {
-    state.nextCursor = nextCursor;
-  },
-
   [SET_STATUS_FILTER](state, status: string | null) {
     state.query.status = status;
+    resetCursors(state);
   },
 
   [SET_DATE_FILTER](state, date: string | null) {
@@ -207,14 +241,18 @@ const mutations: MutationTree<State> = {
           state.date = date;
         }
     }
+
+    resetCursors(state);
   },
 
   [SET_FIELD_FILTER](state, field: string | null) {
     state.query.field = field;
+    resetCursors(state);
   },
 
   [SET_QUERY](state, query: string) {
     state.query.query = query;
+    resetCursors(state);
   },
 
   [SET_SEARCH_RESET](state) {
@@ -223,6 +261,30 @@ const mutations: MutationTree<State> = {
 
   [SET_SEARCH_VALID](state, valid: boolean) {
     state.validQuery = valid;
+  },
+
+  [SET_SEARCH_HOME_PAGE](state) {
+    resetCursors(state);
+  },
+
+  [SET_SEARCH_PREV_PAGE](state) {
+    const tail = state.seenCursors.pop();
+    if (typeof(tail) === 'undefined') {
+      return;
+    }
+    state.currCursor = tail;
+    state.prevCursor = state.seenCursors.length ? state.seenCursors[state.seenCursors.length - 1] : null;
+    state.nextCursor = null;
+  },
+
+  [SET_SEARCH_NEXT_PAGE](state) {
+    state.seenCursors.push(state.currCursor);
+    state.prevCursor = state.currCursor;
+    state.currCursor = state.nextCursor;
+  },
+
+  [SET_SEARCH_NEXT_CURSOR](state, cursor: string | undefined) {
+    state.nextCursor = cursor ? cursor : null;
   },
 
 };
@@ -241,7 +303,12 @@ const getDefaultState = (): State => {
     validQuery: null,
     result: {},
     results: [],
-    nextCursor: '',
+
+    // Cursor-based pagination.
+    seenCursors: [],
+    currCursor: '',
+    prevCursor: null,
+    nextCursor: null,
   };
 };
 

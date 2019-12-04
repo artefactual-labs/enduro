@@ -5,6 +5,8 @@
 @import '~bootstrap-vue/src/utilities.scss';
 
 $enduro-c1: #5e2750;
+$enduro-c2: lighten(#5e2750, 10%);
+$enduro-c3: lighten(#5e2750, 15%);
 
 /* Very light backgrounds over white. */
 $enduro-bglight: #f5f5f5;

@@ -1,3 +1,6 @@
+@import '~bootstrap/scss/bootstrap';
+@import '~bootstrap-vue/src/index.scss';
+
 #app {
   font-family: 'Avenir', Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -6,8 +9,11 @@
 }
 
 #nav {
+  .navbar-brand {
+    user-select: none;
+  }
   nav {
-    background-color: #5e2750 !important;
+    background-color: $enduro-c1 !important;
   }
   @media (min-width: 576px) {
     .nav-link.router-link-active {
@@ -21,12 +27,15 @@
 }
 
 footer {
-  margin-top: 40px;
   font-size: .8rem;
   .container {
-    padding: 40px;
     text-align: center;
-    border-top: 1px solid #eaecef;
+    border-top: 1px solid $enduro-bolight;
     color: #999;
   }
+}
+
+::selection {
+  color: white;
+  background-color: #dd00aa;
 }

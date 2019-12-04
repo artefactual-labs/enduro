@@ -85,16 +85,13 @@
             </tr>
           </tbody>
         </table>
-        <nav>
-          <ul class="pagination">
-            <li class="page-item">
-              <button class="page-link" @click="reloadButtonClicked">Reload</button>
-            </li>
-            <li class="page-item" v-if="nextCursor">
-              <button class="page-link" @click="nextButtonClicked(nextCursor)">Next</button>
-            </li>
-          </ul>
-        </nav>
+        <b-nav inline>
+          <b-button-group size="sm">
+            <b-button class="page-link" :disabled="!showPrev" @click="goHome()">🏠</b-button>
+            <b-button class="page-link" :disabled="!showPrev" @click="goPrev()">&laquo; Previous</b-button>
+            <b-button class="page-link" :disabled="!showNext" @click="goNext()">Next &raquo;</b-button>
+          </b-button-group>
+        </b-nav>
       </template>
       <div v-if="results.length === 0">
         <b-alert show variant="info" class="my-3">
@@ -131,8 +128,11 @@ export default class CollectionList extends Vue {
   @collectionStoreNs.Getter(CollectionStore.GET_SEARCH_RESULTS)
   private results: any;
 
-  @collectionStoreNs.Getter(CollectionStore.GET_SEARCH_NEXT_CURSOR)
-  private nextCursor: any;
+  @collectionStoreNs.Getter(CollectionStore.SHOW_PREV_LINK)
+  private showPrev?: boolean;
+
+  @collectionStoreNs.Getter(CollectionStore.SHOW_NEXT_LINK)
+  private showNext?: boolean;
 
   @collectionStoreNs.Mutation(CollectionStore.SET_STATUS_FILTER)
   private setStatusFilter: any;
@@ -152,8 +152,25 @@ export default class CollectionList extends Vue {
   @collectionStoreNs.Action(CollectionStore.SEARCH_COLLECTIONS)
   private search: any;
 
+  @collectionStoreNs.Action(CollectionStore.SEARCH_COLLECTIONS_HOME_PAGE)
+  private goHome: any;
+
+  @collectionStoreNs.Action(CollectionStore.SEARCH_COLLECTIONS_PREV_PAGE)
+  private goPrev: any;
+
+  @collectionStoreNs.Action(CollectionStore.SEARCH_COLLECTIONS_NEXT_PAGE)
+  private goNext: any;
+
   private created() {
     this.search();
+
+    this.$store.subscribeAction((action, state) => {
+      if (action.type === 'collection/' + CollectionStore.SEARCH_COLLECTIONS) {
+        this.$nextTick(() => {
+          window.scrollTo(0, 0);
+        });
+      }
+    });
   }
 
   private get queryHelp(): string | null {
@@ -203,20 +220,6 @@ export default class CollectionList extends Vue {
    */
   private retryButtonClicked() {
     this.search();
-  }
-
-  /**
-   * Perform search with the cursor reset.
-   */
-  private reloadButtonClicked() {
-    this.search();
-  }
-
-  /*/
-   * Perform search with a new cursor.
-   */
-  private nextButtonClicked(cursor: string) {
-    this.search({cursor});
   }
 
   /**
