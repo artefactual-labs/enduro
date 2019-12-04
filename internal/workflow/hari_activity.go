@@ -51,7 +51,7 @@ func (a UpdateHARIActivity) Execute(ctx context.Context, tinfo *TransferInfo) er
 	var path = filepath.Join(tinfo.Bundle.FullPath, kind, "Journal/avlxml.xml")
 	blob, err := ioutil.ReadFile(path)
 	if err != nil {
-		return nonRetryableError(fmt.Errorf("error reading AVLXML file: %w (fullpath: %q)", err, path))
+		return nonRetryableError(fmt.Errorf("error reading AVLXML file: %v", err))
 	}
 
 	if err := a.sendRequest(ctx, blob, apiURL, tinfo); err != nil {
