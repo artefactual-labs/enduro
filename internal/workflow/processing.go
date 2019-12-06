@@ -7,6 +7,7 @@ package workflow
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -170,7 +171,7 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 	// Update package status.
 	var disconnectedCtx, _ = workflow.NewDisconnectedContext(ctx)
 	activityOpts = withLocalActivityOpts(disconnectedCtx)
-	_ = workflow.ExecuteLocalActivity(activityOpts, updatePackageStatusLocalActivity, w.manager.Collection, tinfo).Get(activityOpts, nil)
+	_ = workflow.ExecuteLocalActivity(activityOpts, updatePackageStatusLocalActivity, w.manager.Collection, tinfo, tinfo.Status).Get(activityOpts, nil)
 
 	// One of the activities within the session has failed. There's not much we
 	// can do if the worker died at this point, since what we aim to do next
@@ -190,6 +191,7 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 	// result. E.g. receipts, clean-ups, etc...
 	// Passing the activity lets the activity determine if the process failed.
 	var futures []workflow.Future
+	var receiptsFailed bool
 	activityOpts = withActivityOptsForRequest(sessCtx)
 	if disabled, _ := hookAttrBool(tinfo.Hooks, "hari", "disabled"); !disabled {
 		futures = append(futures, workflow.ExecuteActivity(activityOpts, UpdateHARIActivityName, tinfo))
@@ -198,7 +200,19 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 		futures = append(futures, workflow.ExecuteActivity(activityOpts, UpdateProductionSystemActivityName, tinfo))
 	}
 	for _, f := range futures {
-		_ = f.Get(activityOpts, nil)
+		if err := f.Get(activityOpts, nil); err != nil {
+			receiptsFailed = true
+		}
+	}
+	// This causes the workflow to fail when hooks are errorful. In the future,
+	// we'd prefer to give the user to decide what to do next, e.g. start over,
+	// retry hooks individually, etc...
+	if receiptsFailed {
+		var disconnectedCtx, _ = workflow.NewDisconnectedContext(ctx)
+		activityOpts = withLocalActivityOpts(disconnectedCtx)
+		_ = workflow.ExecuteLocalActivity(activityOpts, updatePackageStatusLocalActivity, w.manager.Collection, tinfo, collection.StatusError).Get(activityOpts, nil)
+
+		return errors.New("at least one hook/receipt activity failed")
 	}
 
 	// Hide packages from Archivematica Dashboard.
@@ -288,7 +302,7 @@ func (w *ProcessingWorkflow) SessionHandler(ctx workflow.Context, sessCtx workfl
 
 	// Update status of collection.
 	activityOpts = withLocalActivityOpts(ctx)
-	_ = workflow.ExecuteLocalActivity(activityOpts, updatePackageStatusLocalActivity, w.manager.Collection, tinfo).Get(activityOpts, nil)
+	_ = workflow.ExecuteLocalActivity(activityOpts, updatePackageStatusLocalActivity, w.manager.Collection, tinfo, tinfo.Status).Get(activityOpts, nil)
 
 	// Poll transfer.
 	activityOpts = withActivityOptsForHeartbeatedRequest(sessCtx, time.Minute)
@@ -319,7 +333,7 @@ func createPackageLocalActivity(ctx context.Context, colsvc collection.Service, 
 	info := activity.GetInfo(ctx)
 
 	if tinfo.CollectionID > 0 {
-		err := updatePackageStatusLocalActivity(ctx, colsvc, tinfo)
+		err := updatePackageStatusLocalActivity(ctx, colsvc, tinfo, tinfo.Status)
 		return tinfo, err
 	}
 
@@ -339,13 +353,13 @@ func createPackageLocalActivity(ctx context.Context, colsvc collection.Service, 
 	return tinfo, nil
 }
 
-func updatePackageStatusLocalActivity(ctx context.Context, colsvc collection.Service, tinfo *TransferInfo) error {
+func updatePackageStatusLocalActivity(ctx context.Context, colsvc collection.Service, tinfo *TransferInfo, status collection.Status) error {
 	info := activity.GetInfo(ctx)
 
 	return colsvc.UpdateWorkflowStatus(
 		ctx, tinfo.CollectionID, tinfo.Bundle.Name, info.WorkflowExecution.ID,
 		info.WorkflowExecution.RunID, tinfo.TransferID, tinfo.SIPID, tinfo.PipelineID,
-		tinfo.Status, tinfo.StoredAt,
+		status, tinfo.StoredAt,
 	)
 }
 
