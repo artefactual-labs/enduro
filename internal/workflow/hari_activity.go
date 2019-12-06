@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -46,9 +47,12 @@ func (a UpdateHARIActivity) Execute(ctx context.Context, tinfo *TransferInfo) er
 		apiURL = ts.URL
 	}
 
-	// Location of AVLXML, e.g.: `/transfer-path/<kind>/Journal/avlxml.xml`.
 	var kind = strings.TrimSuffix(tinfo.Bundle.Kind, "-SIP")
-	var path = filepath.Join(tinfo.Bundle.FullPath, kind, "Journal/avlxml.xml")
+	var path = a.avlxml(filepath.Join(tinfo.Bundle.FullPath, kind))
+	if path == "" {
+		return nonRetryableError(fmt.Errorf("error reading AVLXML file: cannot be found"))
+	}
+
 	blob, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nonRetryableError(fmt.Errorf("error reading AVLXML file: %v", err))
@@ -59,6 +63,18 @@ func (a UpdateHARIActivity) Execute(ctx context.Context, tinfo *TransferInfo) er
 	}
 
 	return nil
+}
+
+// avlxml attempts to find the AVLXML document in multiple known locations.
+func (a UpdateHARIActivity) avlxml(prefix string) string {
+	locs := []string{"journal/avlxml.xml", "Journal/avlxml.xml"}
+	for _, loc := range locs {
+		path := filepath.Join(prefix, loc)
+		if stat, err := os.Stat(path); err == nil && !stat.IsDir() {
+			return path
+		}
+	}
+	return ""
 }
 
 // url returns the HARI URL of the API endpoint for AVLXML submission.
