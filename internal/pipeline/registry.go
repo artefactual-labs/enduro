@@ -16,7 +16,7 @@ type Registry struct {
 func NewPipelineRegistry(configs []Config) *Registry {
 	pipelines := map[string]*Pipeline{}
 	for _, config := range configs {
-		pipelines[config.Name] = NewPipeline(&config)
+		pipelines[config.Name] = NewPipeline(config)
 	}
 	return &Registry{
 		pipelines: pipelines,

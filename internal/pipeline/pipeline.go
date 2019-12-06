@@ -29,12 +29,12 @@ type Pipeline struct {
 	client *http.Client
 }
 
-func NewPipeline(config *Config) *Pipeline {
+func NewPipeline(config Config) *Pipeline {
 	config.TransferDir = expandPath(config.TransferDir)
 	config.ProcessingDir = expandPath(config.ProcessingDir)
 
 	return &Pipeline{
-		config: config,
+		config: &config,
 		client: httpClient(),
 	}
 }
