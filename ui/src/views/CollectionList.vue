@@ -85,7 +85,7 @@
             </tr>
           </tbody>
         </table>
-        <b-nav inline>
+        <b-nav inline v-if="showPager">
           <b-button-group size="sm">
             <b-button class="page-link" :disabled="!showPrev" @click="goHome()">🏠</b-button>
             <b-button class="page-link" :disabled="!showPrev" @click="goPrev()">&laquo; Previous</b-button>
@@ -171,6 +171,13 @@ export default class CollectionList extends Vue {
         });
       }
     });
+  }
+
+  private get showPager(): boolean {
+    if (typeof(this.showPrev) === 'undefined' || typeof(this.showNext) === 'undefined') {
+      return false;
+    }
+    return this.showPrev || this.showNext;
   }
 
   private get queryHelp(): string | null {
