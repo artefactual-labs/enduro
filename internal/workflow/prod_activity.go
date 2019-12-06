@@ -30,6 +30,10 @@ func (a *UpdateProductionSystemActivity) Execute(ctx context.Context, tinfo *Tra
 		return nonRetryableError(errors.New("unknown originalID"))
 	}
 
+	if err := validateKind(tinfo.Bundle.Kind); err != nil {
+		return nonRetryableError(fmt.Errorf("error validating kind attribute: %v", err))
+	}
+
 	// We expect tinfo.StoredAt to have the zero value when the ingestion
 	// has failed. Here we set a new value as it is a required field.
 	if tinfo.StoredAt.IsZero() {

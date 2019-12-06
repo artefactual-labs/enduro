@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -35,9 +36,13 @@ func NewUpdateHARIActivity(m *Manager) *UpdateHARIActivity {
 }
 
 func (a UpdateHARIActivity) Execute(ctx context.Context, tinfo *TransferInfo) error {
+	if err := validateKind(tinfo.Bundle.Kind); err != nil {
+		return nonRetryableError(fmt.Errorf("error validating kind attribute: %v", err))
+	}
+
 	apiURL, err := a.url()
 	if err != nil {
-		return nonRetryableError(fmt.Errorf("error in URL construction: %w", err))
+		return nonRetryableError(fmt.Errorf("error in URL construction: %v", err))
 	}
 
 	mock, _ := hookAttrBool(a.manager.Hooks, "hari", "mock")
@@ -148,4 +153,33 @@ type avlRequest struct {
 	Type      string    `json:"type"`      // Lowercase. E.g.: "dpj", "epj", "other" or "avlxml".
 	Timestamp time.Time `json:"timestamp"` // RFC3339. E.g. "2006-01-02T15:04:05Z07:00".
 	AIPID     string    `json:"aip_id"`
+}
+
+var knownKinds = []string{
+	"DPJ", "EPJ", "AVLXML", "OTHER",
+}
+
+func validateKind(kind string) error {
+	if kind == "" {
+		return errors.New("empty")
+	}
+
+	const suffix = "-SIP"
+	if !strings.HasSuffix(kind, suffix) {
+		return fmt.Errorf("attribute (%s) does not containt suffix (\"-SIP\")", kind)
+	}
+	kind = strings.TrimSuffix(kind, "-SIP")
+
+	var known bool
+	for _, k := range knownKinds {
+		if k == kind {
+			known = true
+			break
+		}
+	}
+	if !known {
+		return fmt.Errorf("attribute (%s) is unexpected/unknown", kind)
+	}
+
+	return nil
 }
