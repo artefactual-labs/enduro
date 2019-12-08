@@ -8,6 +8,12 @@
   color: #2c3e50;
 }
 
+@media (min-width: 1200px) {
+  .container {
+    max-width: 1012px;
+  }
+}
+
 #nav {
   .navbar-brand {
     user-select: none;
