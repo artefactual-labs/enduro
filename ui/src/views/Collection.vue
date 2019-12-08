@@ -78,7 +78,9 @@ export default class Collection extends Vue {
     border-bottom: 0;
   }
   .nav-link {
-    border-top: 3px solid transparent;
+    &, &:hover {
+      border-top: 3px solid transparent;
+    }
     &.active {
       border-top: 3px solid $enduro-c1 !important;
       border-left-color: #dee2e6 !important;
