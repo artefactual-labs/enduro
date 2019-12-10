@@ -36,7 +36,7 @@ type TransferActivityResponse struct {
 }
 
 func (a *TransferActivity) Execute(ctx context.Context, params *TransferActivityParams) (*TransferActivityResponse, error) {
-	p, err := a.manager.Pipelines.Pipeline(params.PipelineName)
+	p, err := a.manager.Pipelines.ByName(params.PipelineName)
 	if err != nil {
 		return nil, nonRetryableError(err)
 	}

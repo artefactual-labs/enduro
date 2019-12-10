@@ -4,9 +4,13 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"net/http"
 	"time"
 
 	goacollection "github.com/artefactual-labs/enduro/internal/api/gen/collection"
+	"github.com/artefactual-labs/enduro/internal/pipeline"
+	"github.com/go-logr/logr"
+	goahttp "goa.design/goa/v3/http"
 
 	"github.com/jmoiron/sqlx"
 	cadenceclient "go.uber.org/cadence/client"
@@ -16,17 +20,34 @@ type Service interface {
 	Goa() goacollection.Service
 	Create(context.Context, *Collection) error
 	UpdateWorkflowStatus(ctx context.Context, ID uint, name string, workflowID, runID, transferID, aipID, pipelineID string, status Status, storedAt time.Time) error
+
+	// HTTPDownload returns a HTTP handler that serves the package over HTTP.
+	//
+	// TODO: this service is meant to be agnostic to protocols. But I haven't
+	// found a way in goagen to have my service write directly to the HTTP
+	// response writer. Ideally, our goacollection.Service would have a new
+	// method that takes a io.Writer (e.g. http.ResponseWriter).
+	HTTPDownload(mux goahttp.Muxer, dec func(r *http.Request) goahttp.Decoder) http.HandlerFunc
 }
 
 type collectionImpl struct {
-	db *sqlx.DB
-	cc cadenceclient.Client
+	logger logr.Logger
+	db     *sqlx.DB
+	cc     cadenceclient.Client
+
+	registry *pipeline.Registry
+
+	// downloadProxy generates a reverse proxy on each download.
+	downloadProxy *downloadReverseProxy
 }
 
-func NewService(db *sql.DB, cc cadenceclient.Client) *collectionImpl {
+func NewService(logger logr.Logger, db *sql.DB, cc cadenceclient.Client, registry *pipeline.Registry) *collectionImpl {
 	return &collectionImpl{
-		db: sqlx.NewDb(db, "mysql"),
-		cc: cc,
+		logger:        logger,
+		db:            sqlx.NewDb(db, "mysql"),
+		cc:            cc,
+		registry:      registry,
+		downloadProxy: newDownloadReverseProxy(logger),
 	}
 }
 

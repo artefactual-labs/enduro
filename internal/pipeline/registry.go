@@ -3,6 +3,8 @@ package pipeline
 import (
 	"errors"
 	"sync"
+
+	"github.com/go-logr/logr"
 )
 
 var ErrUnknownPipeline = errors.New("unknown pipeline")
@@ -13,17 +15,21 @@ type Registry struct {
 	mu        sync.Mutex
 }
 
-func NewPipelineRegistry(configs []Config) *Registry {
+func NewPipelineRegistry(logger logr.Logger, configs []Config) (*Registry, error) {
+	var err error
 	pipelines := map[string]*Pipeline{}
 	for _, config := range configs {
-		pipelines[config.Name] = NewPipeline(config)
+		pipelines[config.Name], err = NewPipeline(config)
+		if err != nil {
+			logger.Info("Error loading pipeline", "name", config.Name, "msg", err)
+		}
 	}
 	return &Registry{
 		pipelines: pipelines,
-	}
+	}, nil
 }
 
-func (r *Registry) Pipeline(name string) (*Pipeline, error) {
+func (r *Registry) ByName(name string) (*Pipeline, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -33,4 +39,14 @@ func (r *Registry) Pipeline(name string) (*Pipeline, error) {
 	}
 
 	return pipeline, nil
+}
+
+func (r *Registry) ByID(id string) (*Pipeline, error) {
+	for _, p := range r.pipelines {
+		if p.ID == id {
+			return p, nil
+		}
+	}
+
+	return nil, ErrUnknownPipeline
 }

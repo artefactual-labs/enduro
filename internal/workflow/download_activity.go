@@ -21,7 +21,7 @@ func (a *DownloadActivity) Execute(ctx context.Context, event *watcher.BlobEvent
 	if event == nil {
 		return "", nonRetryableError(errors.New("error reading parameters"))
 	}
-	p, err := a.manager.Pipelines.Pipeline(event.PipelineName)
+	p, err := a.manager.Pipelines.ByName(event.PipelineName)
 	if err != nil {
 		return "", nonRetryableError(err)
 	}

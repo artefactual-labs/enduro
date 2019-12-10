@@ -119,10 +119,17 @@ func main() {
 		}
 	}
 
+	// Set up the pipeline registry.
+	pipelineRegistry, err := pipeline.NewPipelineRegistry(logger.WithName("registry"), config.Pipeline)
+	if err != nil {
+		logger.Error(err, "Pipeline registry cannot be initialized.")
+		os.Exit(1)
+	}
+
 	// Set up the collection service.
 	var colsvc collection.Service
 	{
-		colsvc = collection.NewService(database, workflowClient)
+		colsvc = collection.NewService(logger.WithName("collection"), database, workflowClient, pipelineRegistry)
 	}
 
 	// Set up the watcher service.
@@ -143,7 +150,7 @@ func main() {
 
 		g.Add(
 			func() error {
-				srv = api.HTTPServer(logger, &config.API, colsvc.Goa())
+				srv = api.HTTPServer(logger, &config.API, colsvc)
 				return srv.ListenAndServe()
 			},
 			func(err error) {
@@ -194,7 +201,7 @@ func main() {
 		// TODO: this is a temporary workaround for dependency injection until we
 		// figure out what's the depdencency tree is going to look like after POC.
 		// The share-everything pattern should be avoided.
-		m := workflow.NewManager(logger, colsvc, wsvc, pipeline.NewPipelineRegistry(config.Pipeline), config.Hooks)
+		m := workflow.NewManager(logger, colsvc, wsvc, pipelineRegistry, config.Hooks)
 
 		cadence.RegisterWorkflow(workflow.NewProcessingWorkflow(m).Execute, collection.ProcessingWorkflowName)
 		cadence.RegisterActivity(workflow.NewDownloadActivity(m).Execute, workflow.DownloadActivityName)

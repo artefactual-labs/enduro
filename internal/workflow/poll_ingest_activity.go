@@ -24,7 +24,7 @@ type PollIngestActivityParams struct {
 }
 
 func (a *PollIngestActivity) Execute(ctx context.Context, params *PollIngestActivityParams) (time.Time, error) {
-	p, err := a.manager.Pipelines.Pipeline(params.PipelineName)
+	p, err := a.manager.Pipelines.ByName(params.PipelineName)
 	if err != nil {
 		return time.Time{}, nonRetryableError(err)
 	}

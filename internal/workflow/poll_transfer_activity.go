@@ -24,7 +24,7 @@ type PollTransferActivityParams struct {
 }
 
 func (a *PollTransferActivity) Execute(ctx context.Context, params *PollTransferActivityParams) (string, error) {
-	p, err := a.manager.Pipelines.Pipeline(params.PipelineName)
+	p, err := a.manager.Pipelines.ByName(params.PipelineName)
 	if err != nil {
 		return "", err
 	}

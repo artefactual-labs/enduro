@@ -364,7 +364,7 @@ func updatePackageStatusLocalActivity(ctx context.Context, colsvc collection.Ser
 }
 
 func loadConfigLocalActivity(ctx context.Context, m *Manager, pipeline string, tinfo *TransferInfo) (*TransferInfo, error) {
-	p, err := m.Pipelines.Pipeline(pipeline)
+	p, err := m.Pipelines.ByName(pipeline)
 	if err != nil {
 		return nil, err
 	}

@@ -14,7 +14,7 @@ func NewHidePackageActivity(m *Manager) *HidePackageActivity {
 }
 
 func (a *HidePackageActivity) Execute(ctx context.Context, unitID, unitType, pipelineName string) error {
-	p, err := a.manager.Pipelines.Pipeline(pipelineName)
+	p, err := a.manager.Pipelines.ByName(pipelineName)
 	if err != nil {
 		return nonRetryableError(err)
 	}
