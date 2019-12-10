@@ -37,6 +37,10 @@ type Client struct {
 	// endpoint.
 	WorkflowDoer goahttp.Doer
 
+	// Download Doer is the HTTP client used to make requests to the download
+	// endpoint.
+	DownloadDoer goahttp.Doer
+
 	// CORS Doer is the HTTP client used to make requests to the  endpoint.
 	CORSDoer goahttp.Doer
 
@@ -66,6 +70,7 @@ func NewClient(
 		CancelDoer:          doer,
 		RetryDoer:           doer,
 		WorkflowDoer:        doer,
+		DownloadDoer:        doer,
 		CORSDoer:            doer,
 		RestoreResponseBody: restoreBody,
 		scheme:              scheme,
@@ -195,6 +200,26 @@ func (c *Client) Workflow() goa.Endpoint {
 
 		if err != nil {
 			return nil, goahttp.ErrRequestError("collection", "workflow", err)
+		}
+		return decodeResponse(resp)
+	}
+}
+
+// Download returns an endpoint that makes HTTP requests to the collection
+// service download server.
+func (c *Client) Download() goa.Endpoint {
+	var (
+		decodeResponse = DecodeDownloadResponse(c.decoder, c.RestoreResponseBody)
+	)
+	return func(ctx context.Context, v interface{}) (interface{}, error) {
+		req, err := c.BuildDownloadRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.DownloadDoer.Do(req)
+
+		if err != nil {
+			return nil, goahttp.ErrRequestError("collection", "download", err)
 		}
 		return decodeResponse(resp)
 	}

@@ -29,6 +29,8 @@ type Service interface {
 	Retry(context.Context, *RetryPayload) (err error)
 	// Retrieve workflow status by ID
 	Workflow(context.Context, *WorkflowPayload) (res *EnduroCollectionWorkflowStatus, err error)
+	// Download collection by ID
+	Download(context.Context, *DownloadPayload) (res []byte, err error)
 }
 
 // ServiceName is the name of the service as defined in the design. This is the
@@ -39,7 +41,7 @@ const ServiceName = "collection"
 // MethodNames lists the service method names as defined in the design. These
 // are the same values that are set in the endpoint request contexts under the
 // MethodKey key.
-var MethodNames = [6]string{"list", "show", "delete", "cancel", "retry", "workflow"}
+var MethodNames = [7]string{"list", "show", "delete", "cancel", "retry", "workflow", "download"}
 
 // ListPayload is the payload type of the collection service list method.
 type ListPayload struct {
@@ -124,6 +126,13 @@ type WorkflowPayload struct {
 type EnduroCollectionWorkflowStatus struct {
 	Status  *string
 	History EnduroCollectionWorkflowHistoryCollection
+}
+
+// DownloadPayload is the payload type of the collection service download
+// method.
+type DownloadPayload struct {
+	// Identifier of collection to look up
+	ID uint
 }
 
 type EnduroStoredCollectionCollection []*EnduroStoredCollection

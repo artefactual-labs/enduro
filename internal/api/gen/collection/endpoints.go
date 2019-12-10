@@ -22,6 +22,7 @@ type Endpoints struct {
 	Cancel   goa.Endpoint
 	Retry    goa.Endpoint
 	Workflow goa.Endpoint
+	Download goa.Endpoint
 }
 
 // NewEndpoints wraps the methods of the "collection" service with endpoints.
@@ -33,6 +34,7 @@ func NewEndpoints(s Service) *Endpoints {
 		Cancel:   NewCancelEndpoint(s),
 		Retry:    NewRetryEndpoint(s),
 		Workflow: NewWorkflowEndpoint(s),
+		Download: NewDownloadEndpoint(s),
 	}
 }
 
@@ -44,6 +46,7 @@ func (e *Endpoints) Use(m func(goa.Endpoint) goa.Endpoint) {
 	e.Cancel = m(e.Cancel)
 	e.Retry = m(e.Retry)
 	e.Workflow = m(e.Workflow)
+	e.Download = m(e.Download)
 }
 
 // NewListEndpoint returns an endpoint function that calls the method "list" of
@@ -107,5 +110,14 @@ func NewWorkflowEndpoint(s Service) goa.Endpoint {
 		}
 		vres := NewViewedEnduroCollectionWorkflowStatus(res, "default")
 		return vres, nil
+	}
+}
+
+// NewDownloadEndpoint returns an endpoint function that calls the method
+// "download" of service "collection".
+func NewDownloadEndpoint(s Service) goa.Endpoint {
+	return func(ctx context.Context, req interface{}) (interface{}, error) {
+		p := req.(*DownloadPayload)
+		return s.Download(ctx, p)
 	}
 }

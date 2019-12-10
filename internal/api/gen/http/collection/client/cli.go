@@ -180,3 +180,22 @@ func BuildWorkflowPayload(collectionWorkflowID string) (*collection.WorkflowPayl
 	}
 	return payload, nil
 }
+
+// BuildDownloadPayload builds the payload for the collection download endpoint
+// from CLI flags.
+func BuildDownloadPayload(collectionDownloadID string) (*collection.DownloadPayload, error) {
+	var err error
+	var id uint
+	{
+		var v uint64
+		v, err = strconv.ParseUint(collectionDownloadID, 10, 64)
+		id = uint(v)
+		if err != nil {
+			return nil, fmt.Errorf("invalid value for id, must be UINT")
+		}
+	}
+	payload := &collection.DownloadPayload{
+		ID: id,
+	}
+	return payload, nil
+}

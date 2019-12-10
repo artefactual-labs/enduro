@@ -136,6 +136,15 @@ type WorkflowNotFoundResponseBody struct {
 	ID uint `form:"id" json:"id" xml:"id"`
 }
 
+// DownloadNotFoundResponseBody is the type of the "collection" service
+// "download" endpoint HTTP response body for the "not_found" error.
+type DownloadNotFoundResponseBody struct {
+	// Message of error
+	Message string `form:"message" json:"message" xml:"message"`
+	// Identifier of missing collection
+	ID uint `form:"id" json:"id" xml:"id"`
+}
+
 // EnduroStoredCollectionCollectionResponseBody is used to define fields on
 // response body types.
 type EnduroStoredCollectionCollectionResponseBody []*EnduroStoredCollectionResponseBody
@@ -309,6 +318,16 @@ func NewWorkflowNotFoundResponseBody(res *collection.NotFound) *WorkflowNotFound
 	return body
 }
 
+// NewDownloadNotFoundResponseBody builds the HTTP response body from the
+// result of the "download" endpoint of the "collection" service.
+func NewDownloadNotFoundResponseBody(res *collection.NotFound) *DownloadNotFoundResponseBody {
+	body := &DownloadNotFoundResponseBody{
+		Message: res.Message,
+		ID:      res.ID,
+	}
+	return body
+}
+
 // NewListPayload builds a collection service list endpoint payload.
 func NewListPayload(name *string, originalID *string, transferID *string, aipID *string, pipelineID *string, earliestCreatedTime *string, latestCreatedTime *string, status *string, cursor *string) *collection.ListPayload {
 	return &collection.ListPayload{
@@ -355,6 +374,13 @@ func NewRetryPayload(id uint) *collection.RetryPayload {
 // NewWorkflowPayload builds a collection service workflow endpoint payload.
 func NewWorkflowPayload(id uint) *collection.WorkflowPayload {
 	return &collection.WorkflowPayload{
+		ID: id,
+	}
+}
+
+// NewDownloadPayload builds a collection service download endpoint payload.
+func NewDownloadPayload(id uint) *collection.DownloadPayload {
+	return &collection.DownloadPayload{
 		ID: id,
 	}
 }

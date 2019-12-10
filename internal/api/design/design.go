@@ -136,6 +136,20 @@ var _ = Service("collection", func() {
 			Response("not_found", StatusNotFound)
 		})
 	})
+	Method("download", func() {
+		Description("Download collection by ID")
+		Payload(func() {
+			Attribute("id", UInt, "Identifier of collection to look up")
+			Required("id")
+		})
+		Result(Bytes)
+		Error("not_found", NotFound, "Collection not found")
+		HTTP(func() {
+			GET("/{id}/download")
+			Response(StatusOK)
+			Response("not_found", StatusNotFound)
+		})
+	})
 })
 
 var _ = Service("swagger", func() {

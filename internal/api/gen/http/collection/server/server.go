@@ -27,6 +27,7 @@ type Server struct {
 	Cancel   http.Handler
 	Retry    http.Handler
 	Workflow http.Handler
+	Download http.Handler
 	CORS     http.Handler
 }
 
@@ -63,11 +64,13 @@ func New(
 			{"Cancel", "POST", "/collection/{id}/cancel"},
 			{"Retry", "POST", "/collection/{id}/retry"},
 			{"Workflow", "GET", "/collection/{id}/workflow"},
+			{"Download", "GET", "/collection/{id}/download"},
 			{"CORS", "OPTIONS", "/collection"},
 			{"CORS", "OPTIONS", "/collection/{id}"},
 			{"CORS", "OPTIONS", "/collection/{id}/cancel"},
 			{"CORS", "OPTIONS", "/collection/{id}/retry"},
 			{"CORS", "OPTIONS", "/collection/{id}/workflow"},
+			{"CORS", "OPTIONS", "/collection/{id}/download"},
 		},
 		List:     NewListHandler(e.List, mux, dec, enc, eh),
 		Show:     NewShowHandler(e.Show, mux, dec, enc, eh),
@@ -75,6 +78,7 @@ func New(
 		Cancel:   NewCancelHandler(e.Cancel, mux, dec, enc, eh),
 		Retry:    NewRetryHandler(e.Retry, mux, dec, enc, eh),
 		Workflow: NewWorkflowHandler(e.Workflow, mux, dec, enc, eh),
+		Download: NewDownloadHandler(e.Download, mux, dec, enc, eh),
 		CORS:     NewCORSHandler(),
 	}
 }
@@ -90,6 +94,7 @@ func (s *Server) Use(m func(http.Handler) http.Handler) {
 	s.Cancel = m(s.Cancel)
 	s.Retry = m(s.Retry)
 	s.Workflow = m(s.Workflow)
+	s.Download = m(s.Download)
 	s.CORS = m(s.CORS)
 }
 
@@ -101,6 +106,7 @@ func Mount(mux goahttp.Muxer, h *Server) {
 	MountCancelHandler(mux, h.Cancel)
 	MountRetryHandler(mux, h.Retry)
 	MountWorkflowHandler(mux, h.Workflow)
+	MountDownloadHandler(mux, h.Download)
 	MountCORSHandler(mux, h.CORS)
 }
 
@@ -416,6 +422,58 @@ func NewWorkflowHandler(
 	})
 }
 
+// MountDownloadHandler configures the mux to serve the "collection" service
+// "download" endpoint.
+func MountDownloadHandler(mux goahttp.Muxer, h http.Handler) {
+	f, ok := handleCollectionOrigin(h).(http.HandlerFunc)
+	if !ok {
+		f = func(w http.ResponseWriter, r *http.Request) {
+			h.ServeHTTP(w, r)
+		}
+	}
+	mux.Handle("GET", "/collection/{id}/download", f)
+}
+
+// NewDownloadHandler creates a HTTP handler which loads the HTTP request and
+// calls the "collection" service "download" endpoint.
+func NewDownloadHandler(
+	endpoint goa.Endpoint,
+	mux goahttp.Muxer,
+	dec func(*http.Request) goahttp.Decoder,
+	enc func(context.Context, http.ResponseWriter) goahttp.Encoder,
+	eh func(context.Context, http.ResponseWriter, error),
+) http.Handler {
+	var (
+		decodeRequest  = DecodeDownloadRequest(mux, dec)
+		encodeResponse = EncodeDownloadResponse(enc)
+		encodeError    = EncodeDownloadError(enc)
+	)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
+		ctx = context.WithValue(ctx, goa.MethodKey, "download")
+		ctx = context.WithValue(ctx, goa.ServiceKey, "collection")
+		payload, err := decodeRequest(r)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil {
+				eh(ctx, w, err)
+			}
+			return
+		}
+
+		res, err := endpoint(ctx, payload)
+
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil {
+				eh(ctx, w, err)
+			}
+			return
+		}
+		if err := encodeResponse(ctx, w, res); err != nil {
+			eh(ctx, w, err)
+		}
+	})
+}
+
 // MountCORSHandler configures the mux to serve the CORS endpoints for the
 // service collection.
 func MountCORSHandler(mux goahttp.Muxer, h http.Handler) {
@@ -431,6 +489,7 @@ func MountCORSHandler(mux goahttp.Muxer, h http.Handler) {
 	mux.Handle("OPTIONS", "/collection/{id}/cancel", f)
 	mux.Handle("OPTIONS", "/collection/{id}/retry", f)
 	mux.Handle("OPTIONS", "/collection/{id}/workflow", f)
+	mux.Handle("OPTIONS", "/collection/{id}/download", f)
 }
 
 // NewCORSHandler creates a HTTP handler which returns a simple 200 response.

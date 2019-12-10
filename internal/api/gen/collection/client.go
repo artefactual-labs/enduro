@@ -22,10 +22,11 @@ type Client struct {
 	CancelEndpoint   goa.Endpoint
 	RetryEndpoint    goa.Endpoint
 	WorkflowEndpoint goa.Endpoint
+	DownloadEndpoint goa.Endpoint
 }
 
 // NewClient initializes a "collection" service client given the endpoints.
-func NewClient(list, show, delete_, cancel, retry, workflow goa.Endpoint) *Client {
+func NewClient(list, show, delete_, cancel, retry, workflow, download goa.Endpoint) *Client {
 	return &Client{
 		ListEndpoint:     list,
 		ShowEndpoint:     show,
@@ -33,6 +34,7 @@ func NewClient(list, show, delete_, cancel, retry, workflow goa.Endpoint) *Clien
 		CancelEndpoint:   cancel,
 		RetryEndpoint:    retry,
 		WorkflowEndpoint: workflow,
+		DownloadEndpoint: download,
 	}
 }
 
@@ -99,4 +101,17 @@ func (c *Client) Workflow(ctx context.Context, p *WorkflowPayload) (res *EnduroC
 		return
 	}
 	return ires.(*EnduroCollectionWorkflowStatus), nil
+}
+
+// Download calls the "download" endpoint of the "collection" service.
+// Download may return the following errors:
+//	- "not_found" (type *NotFound): Collection not found
+//	- error: internal error
+func (c *Client) Download(ctx context.Context, p *DownloadPayload) (res []byte, err error) {
+	var ires interface{}
+	ires, err = c.DownloadEndpoint(ctx, p)
+	if err != nil {
+		return
+	}
+	return ires.([]byte), nil
 }

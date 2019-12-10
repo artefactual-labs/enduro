@@ -41,3 +41,8 @@ func RetryCollectionPath(id uint) string {
 func WorkflowCollectionPath(id uint) string {
 	return fmt.Sprintf("/collection/%v/workflow", id)
 }
+
+// DownloadCollectionPath returns the URL path to the collection service download HTTP endpoint.
+func DownloadCollectionPath(id uint) string {
+	return fmt.Sprintf("/collection/%v/download", id)
+}

@@ -24,13 +24,13 @@ import (
 //    command (subcommand1|subcommand2|...)
 //
 func UsageCommands() string {
-	return `collection (list|show|delete|cancel|retry|workflow)
+	return `collection (list|show|delete|cancel|retry|workflow|download)
 `
 }
 
 // UsageExamples produces an example of a valid invocation of the CLI tool.
 func UsageExamples() string {
-	return os.Args[0] + ` collection list --name "Quia voluptas inventore cupiditate." --original-id "Minus dolorem ut sunt incidunt at dolor." --transfer-id "7D80331A-7620-D09D-7CCB-2EF87B797732" --aip-id "76FB876C-96AC-91E7-BD21-B0C2988DDF65" --pipeline-id "A45D83CF-F038-77BB-220E-D79EFC31D198" --earliest-created-time "1992-03-21T02:13:10Z" --latest-created-time "1986-04-12T07:15:46Z" --status "new" --cursor "Officiis adipisci nulla ut."` + "\n" +
+	return os.Args[0] + ` collection list --name "Ut sunt incidunt." --original-id "Dolor deleniti voluptatem qui." --transfer-id "7D80331A-7620-D09D-7CCB-2EF87B797732" --aip-id "76FB876C-96AC-91E7-BD21-B0C2988DDF65" --pipeline-id "A45D83CF-F038-77BB-220E-D79EFC31D198" --earliest-created-time "1976-02-14T02:11:18Z" --latest-created-time "2006-02-27T19:05:22Z" --status "in progress" --cursor "Ut ullam."` + "\n" +
 		""
 }
 
@@ -71,6 +71,9 @@ func ParseEndpoint(
 
 		collectionWorkflowFlags  = flag.NewFlagSet("workflow", flag.ExitOnError)
 		collectionWorkflowIDFlag = collectionWorkflowFlags.String("id", "REQUIRED", "Identifier of collection to look up")
+
+		collectionDownloadFlags  = flag.NewFlagSet("download", flag.ExitOnError)
+		collectionDownloadIDFlag = collectionDownloadFlags.String("id", "REQUIRED", "Identifier of collection to look up")
 	)
 	collectionFlags.Usage = collectionUsage
 	collectionListFlags.Usage = collectionListUsage
@@ -79,6 +82,7 @@ func ParseEndpoint(
 	collectionCancelFlags.Usage = collectionCancelUsage
 	collectionRetryFlags.Usage = collectionRetryUsage
 	collectionWorkflowFlags.Usage = collectionWorkflowUsage
+	collectionDownloadFlags.Usage = collectionDownloadUsage
 
 	if err := flag.CommandLine.Parse(os.Args[1:]); err != nil {
 		return nil, nil, err
@@ -132,6 +136,9 @@ func ParseEndpoint(
 			case "workflow":
 				epf = collectionWorkflowFlags
 
+			case "download":
+				epf = collectionDownloadFlags
+
 			}
 
 		}
@@ -175,6 +182,9 @@ func ParseEndpoint(
 			case "workflow":
 				endpoint = c.Workflow()
 				data, err = collectionc.BuildWorkflowPayload(*collectionWorkflowIDFlag)
+			case "download":
+				endpoint = c.Download()
+				data, err = collectionc.BuildDownloadPayload(*collectionDownloadIDFlag)
 			}
 		}
 	}
@@ -199,6 +209,7 @@ COMMAND:
     cancel: Cancel collection processing by ID
     retry: Retry collection processing by ID
     workflow: Retrieve workflow status by ID
+    download: Download collection by ID
 
 Additional help:
     %s collection COMMAND --help
@@ -219,7 +230,7 @@ List all stored collections
     -cursor STRING: 
 
 Example:
-    `+os.Args[0]+` collection list --name "Quia voluptas inventore cupiditate." --original-id "Minus dolorem ut sunt incidunt at dolor." --transfer-id "7D80331A-7620-D09D-7CCB-2EF87B797732" --aip-id "76FB876C-96AC-91E7-BD21-B0C2988DDF65" --pipeline-id "A45D83CF-F038-77BB-220E-D79EFC31D198" --earliest-created-time "1992-03-21T02:13:10Z" --latest-created-time "1986-04-12T07:15:46Z" --status "new" --cursor "Officiis adipisci nulla ut."
+    `+os.Args[0]+` collection list --name "Ut sunt incidunt." --original-id "Dolor deleniti voluptatem qui." --transfer-id "7D80331A-7620-D09D-7CCB-2EF87B797732" --aip-id "76FB876C-96AC-91E7-BD21-B0C2988DDF65" --pipeline-id "A45D83CF-F038-77BB-220E-D79EFC31D198" --earliest-created-time "1976-02-14T02:11:18Z" --latest-created-time "2006-02-27T19:05:22Z" --status "in progress" --cursor "Ut ullam."
 `, os.Args[0])
 }
 
@@ -275,5 +286,16 @@ Retrieve workflow status by ID
 
 Example:
     `+os.Args[0]+` collection workflow --id 1953244155936728262
+`, os.Args[0])
+}
+
+func collectionDownloadUsage() {
+	fmt.Fprintf(os.Stderr, `%s [flags] collection download -id UINT
+
+Download collection by ID
+    -id UINT: Identifier of collection to look up
+
+Example:
+    `+os.Args[0]+` collection download --id 3488603430297288186
 `, os.Args[0])
 }

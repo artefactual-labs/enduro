@@ -9,6 +9,7 @@ import (
 	"github.com/artefactual-labs/enduro/internal/api/gen/collection"
 	collectionsvr "github.com/artefactual-labs/enduro/internal/api/gen/http/collection/server"
 	swaggersvr "github.com/artefactual-labs/enduro/internal/api/gen/http/swagger/server"
+	intcol "github.com/artefactual-labs/enduro/internal/collection"
 	"github.com/artefactual-labs/enduro/ui"
 
 	"github.com/go-logr/logr"
@@ -17,16 +18,18 @@ import (
 	goahttpmwr "goa.design/goa/v3/http/middleware"
 )
 
-func HTTPServer(logger logr.Logger, config *Config, colsvc collection.Service) *http.Server {
+func HTTPServer(logger logr.Logger, config *Config, colsvc intcol.Service) *http.Server {
 	var dec = goahttp.RequestDecoder
 	var enc = goahttp.ResponseEncoder
 	var mux goahttp.Muxer = goahttp.NewMuxer()
 
 	// Collection service.
-	var collectionService collection.Service = colsvc
+	var collectionService collection.Service = colsvc.Goa()
 	var collectionEndpoints *collection.Endpoints = collection.NewEndpoints(collectionService)
 	var collectionErrorHandler = errorHandler(logger, "Collection error.")
 	var collectionServer *collectionsvr.Server = collectionsvr.New(collectionEndpoints, mux, dec, enc, collectionErrorHandler)
+	// Intercept request in Download endpoint so we can serve the file directly.
+	collectionServer.Download = colsvc.HTTPDownload(mux, dec)
 	collectionsvr.Mount(mux, collectionServer)
 
 	// Swagger service.
