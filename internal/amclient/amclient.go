@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	userAgent     = "rdss-archivematica-channel-adapter"
+	userAgent     = "Enduro (amclient)"
 	mediaTypeForm = "application/x-www-form-urlencoded"
 	mediaTypeJSON = "application/json"
 )
