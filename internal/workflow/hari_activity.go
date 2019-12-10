@@ -164,6 +164,9 @@ func validateKind(kind string) error {
 		return errors.New("empty")
 	}
 
+	// Convert into capital letters, e.g. epj-sip => EPJ-SIP.
+	kind = strings.ToUpper(kind)
+
 	const suffix = "-SIP"
 	if !strings.HasSuffix(kind, suffix) {
 		return fmt.Errorf("attribute (%s) does not containt suffix (\"-SIP\")", kind)
