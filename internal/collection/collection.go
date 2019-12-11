@@ -16,6 +16,8 @@ import (
 	cadenceclient "go.uber.org/cadence/client"
 )
 
+//go:generate mockgen  -destination=./fake/mock_collection.go -package=fake github.com/artefactual-labs/enduro/internal/collection Service
+
 type Service interface {
 	Goa() goacollection.Service
 	Create(context.Context, *Collection) error

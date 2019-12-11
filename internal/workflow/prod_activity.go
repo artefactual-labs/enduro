@@ -25,19 +25,29 @@ func NewUpdateProductionSystemActivity(m *Manager) *UpdateProductionSystemActivi
 	return &UpdateProductionSystemActivity{manager: m}
 }
 
-func (a *UpdateProductionSystemActivity) Execute(ctx context.Context, tinfo *TransferInfo) error {
-	if tinfo.OriginalID == "" {
+type UpdateProductionSystemActivityParams struct {
+	OriginalID   string
+	Kind         string
+	StoredAt     time.Time
+	PipelineName string
+	Status       collection.Status
+}
+
+func (a *UpdateProductionSystemActivity) Execute(ctx context.Context, params *UpdateProductionSystemActivityParams) error {
+	if params.OriginalID == "" {
 		return nonRetryableError(errors.New("unknown originalID"))
 	}
 
-	if err := validateKind(tinfo.Bundle.Kind); err != nil {
+	var err error
+	params.Kind, err = convertKind(params.Kind)
+	if err != nil {
 		return nonRetryableError(fmt.Errorf("error validating kind attribute: %v", err))
 	}
 
 	// We expect tinfo.StoredAt to have the zero value when the ingestion
 	// has failed. Here we set a new value as it is a required field.
-	if tinfo.StoredAt.IsZero() {
-		tinfo.StoredAt = time.Now().UTC()
+	if params.StoredAt.IsZero() {
+		params.StoredAt = time.Now().UTC()
 	}
 
 	receiptPath, err := hookAttrString(a.manager.Hooks, "prod", "receiptPath")
@@ -45,7 +55,7 @@ func (a *UpdateProductionSystemActivity) Execute(ctx context.Context, tinfo *Tra
 		return fmt.Errorf("error looking up receiptPath configuration attribute: %w", err)
 	}
 
-	var filename = fmt.Sprintf("Receipt_%s_%s.json", tinfo.OriginalID, tinfo.StoredAt.Format(rfc3339forFilename))
+	var filename = fmt.Sprintf("Receipt_%s_%s.json", params.OriginalID, params.StoredAt.Format(rfc3339forFilename))
 	receiptPath = path.Join(receiptPath, filename)
 
 	file, err := os.OpenFile(receiptPath, os.O_WRONLY|os.O_CREATE, os.FileMode(0o644))
@@ -53,31 +63,31 @@ func (a *UpdateProductionSystemActivity) Execute(ctx context.Context, tinfo *Tra
 		return nonRetryableError(fmt.Errorf("Error creating receipt file %s: %w", receiptPath, err))
 	}
 
-	if err := a.generateReceipt(tinfo, file); err != nil {
+	if err := a.generateReceipt(params, file); err != nil {
 		return nonRetryableError(fmt.Errorf("Error writing receipt file %s: %w", receiptPath, err))
 	}
 
 	return nil
 }
 
-func (a UpdateProductionSystemActivity) generateReceipt(tinfo *TransferInfo, writer io.Writer) error {
+func (a UpdateProductionSystemActivity) generateReceipt(params *UpdateProductionSystemActivityParams, writer io.Writer) error {
 	var accepted bool
 	var message string
 
-	if tinfo.Status == collection.StatusDone {
+	if params.Status == collection.StatusDone {
 		accepted = true
-		message = fmt.Sprintf("Package was processed by %s Archivematica pipeline", tinfo.Event.PipelineName)
+		message = fmt.Sprintf("Package was processed by Archivematica pipeline %s", params.PipelineName)
 	} else {
 		accepted = false
 		message = fmt.Sprintf("Package was not processed successfully")
 	}
 
 	receipt := prodSystemReceipt{
-		Identifier: tinfo.OriginalID,
-		Type:       strings.ToLower(tinfo.Bundle.Kind),
+		Identifier: params.OriginalID,
+		Type:       strings.ToLower(params.Kind),
 		Accepted:   accepted,
 		Message:    message,
-		Timestamp:  tinfo.StoredAt,
+		Timestamp:  params.StoredAt,
 	}
 
 	enc := json.NewEncoder(writer)

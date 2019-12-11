@@ -34,10 +34,10 @@ goagen:
 tools:
 	env GO111MODULE=off go get -u github.com/myitcv/gobin
 	gobin \
-		golang.org/x/tools/gopls \
 		github.com/minio/mc \
 		github.com/golangci/golangci-lint/cmd/golangci-lint \
-		github.com/GeertJohan/go.rice/rice
+		github.com/GeertJohan/go.rice/rice \
+		github.com/golang/mock/mockgen
 
 clean:
 	rm -rf ./build ./dist

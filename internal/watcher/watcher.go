@@ -53,6 +53,8 @@ func (w *commonWatcherImpl) StripTopLevelDir() bool {
 	return w.stripTopLevelDir
 }
 
+//go:generate mockgen  -destination=./fake/mock_watcher.go -package=fake github.com/artefactual-labs/enduro/internal/watcher Service
+
 type Service interface {
 	// Watchers return all known watchers.
 	Watchers() []Watcher

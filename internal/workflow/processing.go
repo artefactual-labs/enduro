@@ -194,10 +194,22 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 	var receiptsFailed bool
 	activityOpts = withActivityOptsForRequest(sessCtx)
 	if disabled, _ := hookAttrBool(tinfo.Hooks, "hari", "disabled"); !disabled {
-		futures = append(futures, workflow.ExecuteActivity(activityOpts, UpdateHARIActivityName, tinfo))
+		futures = append(futures, workflow.ExecuteActivity(activityOpts, UpdateHARIActivityName, &UpdateHARIActivityParams{
+			SIPID:        tinfo.SIPID,
+			Kind:         tinfo.Bundle.Kind,
+			StoredAt:     tinfo.StoredAt,
+			FullPath:     tinfo.Bundle.FullPath,
+			PipelineName: tinfo.Event.PipelineName,
+		}))
 	}
 	if disabled, _ := hookAttrBool(tinfo.Hooks, "prod", "disabled"); !disabled {
-		futures = append(futures, workflow.ExecuteActivity(activityOpts, UpdateProductionSystemActivityName, tinfo))
+		futures = append(futures, workflow.ExecuteActivity(activityOpts, UpdateProductionSystemActivityName, &UpdateProductionSystemActivityParams{
+			OriginalID:   tinfo.OriginalID,
+			Kind:         tinfo.Bundle.Kind,
+			StoredAt:     tinfo.StoredAt,
+			PipelineName: tinfo.Event.PipelineName,
+			Status:       tinfo.Status,
+		}))
 	}
 	for _, f := range futures {
 		if err := f.Get(activityOpts, nil); err != nil {

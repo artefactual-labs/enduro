@@ -35,9 +35,23 @@ func NewUpdateHARIActivity(m *Manager) *UpdateHARIActivity {
 	return &UpdateHARIActivity{manager: m}
 }
 
-func (a UpdateHARIActivity) Execute(ctx context.Context, tinfo *TransferInfo) error {
-	if err := validateKind(tinfo.Bundle.Kind); err != nil {
+type UpdateHARIActivityParams struct {
+	SIPID        string
+	Kind         string
+	StoredAt     time.Time
+	FullPath     string
+	PipelineName string
+}
+
+func (a UpdateHARIActivity) Execute(ctx context.Context, params *UpdateHARIActivityParams) error {
+	var err error
+	params.Kind, err = convertKind(params.Kind)
+	if err != nil {
 		return nonRetryableError(fmt.Errorf("error validating kind attribute: %v", err))
+	}
+
+	if params.PipelineName == "" {
+		params.PipelineName = "<unnamed>"
 	}
 
 	apiURL, err := a.url()
@@ -52,10 +66,9 @@ func (a UpdateHARIActivity) Execute(ctx context.Context, tinfo *TransferInfo) er
 		apiURL = ts.URL
 	}
 
-	var kind = strings.TrimSuffix(tinfo.Bundle.Kind, "-SIP")
-	var path = a.avlxml(filepath.Join(tinfo.Bundle.FullPath, kind))
+	var path = a.avlxml(filepath.Join(params.FullPath, params.Kind))
 	if path == "" {
-		return nonRetryableError(fmt.Errorf("error reading AVLXML file: cannot be found"))
+		return nonRetryableError(fmt.Errorf("error reading AVLXML file: not found"))
 	}
 
 	blob, err := ioutil.ReadFile(path)
@@ -63,8 +76,8 @@ func (a UpdateHARIActivity) Execute(ctx context.Context, tinfo *TransferInfo) er
 		return nonRetryableError(fmt.Errorf("error reading AVLXML file: %v", err))
 	}
 
-	if err := a.sendRequest(ctx, blob, apiURL, tinfo); err != nil {
-		return fmt.Errorf("error sending request: %w", err)
+	if err := a.sendRequest(ctx, blob, apiURL, params); err != nil {
+		return fmt.Errorf("error sending request: %v", err)
 	}
 
 	return nil
@@ -88,29 +101,29 @@ func (a UpdateHARIActivity) url() (string, error) {
 
 	b, err := hookAttrString(a.manager.Hooks, "hari", "baseURL")
 	if err != nil {
-		return "", fmt.Errorf("error looking up baseURL configuration attribute: %w", err)
+		return "", fmt.Errorf("error looking up baseURL configuration attribute: %v", err)
 	}
 
 	bu, err := url.Parse(b)
 	if err != nil {
-		return "", fmt.Errorf("error looking up baseURL configuration attribute: %w", err)
+		return "", fmt.Errorf("error looking up baseURL configuration attribute: %v", err)
 	}
 
 	return bu.ResolveReference(p).String(), nil
 }
 
-func (a UpdateHARIActivity) sendRequest(ctx context.Context, blob []byte, apiURL string, tinfo *TransferInfo) error {
+func (a UpdateHARIActivity) sendRequest(ctx context.Context, blob []byte, apiURL string, params *UpdateHARIActivityParams) error {
 	payload := &avlRequest{
 		XML:       blob,
-		Message:   "AVLXML was processed by DPJ Archivematica pipeline",
-		Type:      strings.ToLower(tinfo.Bundle.Kind),
-		Timestamp: tinfo.StoredAt,
-		AIPID:     tinfo.SIPID,
+		Message:   fmt.Sprintf("AVLXML was processed by Archivematica pipeline %s", params.PipelineName),
+		Type:      strings.ToLower(params.Kind),
+		Timestamp: params.StoredAt,
+		AIPID:     params.SIPID,
 	}
 
 	var buffer bytes.Buffer
 	if err := json.NewEncoder(&buffer).Encode(payload); err != nil {
-		return fmt.Errorf("error encoding payload: %w", err)
+		return fmt.Errorf("error encoding payload: %v", err)
 	}
 
 	req, err := http.NewRequestWithContext(ctx, "POST", apiURL, &buffer)
@@ -119,6 +132,7 @@ func (a UpdateHARIActivity) sendRequest(ctx context.Context, blob []byte, apiURL
 	}
 
 	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("User-Agent", "Enduro")
 
 	resp, err := hariClient.Do(req)
 	if err != nil {
@@ -126,10 +140,10 @@ func (a UpdateHARIActivity) sendRequest(ctx context.Context, blob []byte, apiURL
 	}
 
 	switch {
-	case resp.StatusCode >= 200 || resp.StatusCode <= 299:
+	case resp.StatusCode >= 200 && resp.StatusCode <= 299:
 		err = nil
 	default:
-		err = fmt.Errorf("unexpected status code: %s (%d)", resp.Status, resp.StatusCode)
+		err = fmt.Errorf("unexpected response status: %s", resp.Status)
 	}
 
 	return err
@@ -143,7 +157,9 @@ func (a UpdateHARIActivity) buildMock() *httptest.Server {
 			"method", r.Method,
 			"path", r.URL.Path,
 		)
-		fmt.Fprintln(w, "Hello!")
+
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprintln(w, `{"message": "ok"}`)
 	}))
 }
 
@@ -159,9 +175,9 @@ var knownKinds = []string{
 	"DPJ", "EPJ", "AVLXML", "OTHER",
 }
 
-func validateKind(kind string) error {
+func convertKind(kind string) (string, error) {
 	if kind == "" {
-		return errors.New("empty")
+		return "", errors.New("empty")
 	}
 
 	// Convert into capital letters, e.g. epj-sip => EPJ-SIP.
@@ -169,7 +185,7 @@ func validateKind(kind string) error {
 
 	const suffix = "-SIP"
 	if !strings.HasSuffix(kind, suffix) {
-		return fmt.Errorf("attribute (%s) does not containt suffix (\"-SIP\")", kind)
+		return "", fmt.Errorf("attribute (%s) does not containt suffix (\"-SIP\")", kind)
 	}
 	kind = strings.TrimSuffix(kind, "-SIP")
 
@@ -181,8 +197,8 @@ func validateKind(kind string) error {
 		}
 	}
 	if !known {
-		return fmt.Errorf("attribute (%s) is unexpected/unknown", kind)
+		return "", fmt.Errorf("attribute (%s) is unexpected/unknown", kind)
 	}
 
-	return nil
+	return kind, nil
 }
