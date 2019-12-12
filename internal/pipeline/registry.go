@@ -21,7 +21,7 @@ func NewPipelineRegistry(logger logr.Logger, configs []Config) (*Registry, error
 	for _, config := range configs {
 		pipelines[config.Name], err = NewPipeline(config)
 		if err != nil {
-			logger.Info("Error loading pipeline", "name", config.Name, "msg", err)
+			logger.Error(err, "Error connecting to pipeline", "name", config.Name)
 		}
 	}
 	return &Registry{

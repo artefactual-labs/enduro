@@ -52,8 +52,10 @@ func NewPipeline(config Config) (*Pipeline, error) {
 		p.ID = config.ID
 	}
 
+	// init() enriches our record by retrieving the UUID but we still return
+	// the the object in case of errors.
 	if err := p.init(); err != nil {
-		return nil, err
+		return p, err
 	}
 
 	return p, nil
