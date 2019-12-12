@@ -3,7 +3,7 @@ project_name: enduro
 before:
   hooks:
   - apk add --no-cache make
-  - make generate ui-gen
+  - make tools generate ui-gen
 
 changelog:
   sort: asc
