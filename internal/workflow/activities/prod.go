@@ -1,4 +1,4 @@
-package workflow
+package activities
 
 import (
 	"context"
@@ -12,16 +12,18 @@ import (
 	"time"
 
 	"github.com/artefactual-labs/enduro/internal/collection"
+	wferrors "github.com/artefactual-labs/enduro/internal/workflow/errors"
+	"github.com/artefactual-labs/enduro/internal/workflow/manager"
 )
 
 // Similar to time.RFC3339 with dashes and colons removed.
 const rfc3339forFilename = "20060102.150405.999999999"
 
 type UpdateProductionSystemActivity struct {
-	manager *Manager
+	manager *manager.Manager
 }
 
-func NewUpdateProductionSystemActivity(m *Manager) *UpdateProductionSystemActivity {
+func NewUpdateProductionSystemActivity(m *manager.Manager) *UpdateProductionSystemActivity {
 	return &UpdateProductionSystemActivity{manager: m}
 }
 
@@ -35,13 +37,13 @@ type UpdateProductionSystemActivityParams struct {
 
 func (a *UpdateProductionSystemActivity) Execute(ctx context.Context, params *UpdateProductionSystemActivityParams) error {
 	if params.OriginalID == "" {
-		return nonRetryableError(errors.New("unknown originalID"))
+		return wferrors.NonRetryableError(errors.New("unknown originalID"))
 	}
 
 	var err error
 	params.Kind, err = convertKind(params.Kind)
 	if err != nil {
-		return nonRetryableError(fmt.Errorf("error validating kind attribute: %v", err))
+		return wferrors.NonRetryableError(fmt.Errorf("error validating kind attribute: %v", err))
 	}
 
 	// We expect tinfo.StoredAt to have the zero value when the ingestion
@@ -50,7 +52,7 @@ func (a *UpdateProductionSystemActivity) Execute(ctx context.Context, params *Up
 		params.StoredAt = time.Now().UTC()
 	}
 
-	receiptPath, err := hookAttrString(a.manager.Hooks, "prod", "receiptPath")
+	receiptPath, err := manager.HookAttrString(a.manager.Hooks, "prod", "receiptPath")
 	if err != nil {
 		return fmt.Errorf("error looking up receiptPath configuration attribute: %w", err)
 	}
@@ -60,11 +62,11 @@ func (a *UpdateProductionSystemActivity) Execute(ctx context.Context, params *Up
 
 	file, err := os.OpenFile(receiptPath, os.O_WRONLY|os.O_CREATE, os.FileMode(0o644))
 	if err != nil {
-		return nonRetryableError(fmt.Errorf("Error creating receipt file %s: %w", receiptPath, err))
+		return wferrors.NonRetryableError(fmt.Errorf("Error creating receipt file %s: %w", receiptPath, err))
 	}
 
 	if err := a.generateReceipt(params, file); err != nil {
-		return nonRetryableError(fmt.Errorf("Error writing receipt file %s: %w", receiptPath, err))
+		return wferrors.NonRetryableError(fmt.Errorf("Error writing receipt file %s: %w", receiptPath, err))
 	}
 
 	return nil

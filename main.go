@@ -20,6 +20,8 @@ import (
 	"github.com/artefactual-labs/enduro/internal/pipeline"
 	"github.com/artefactual-labs/enduro/internal/watcher"
 	"github.com/artefactual-labs/enduro/internal/workflow"
+	"github.com/artefactual-labs/enduro/internal/workflow/activities"
+	"github.com/artefactual-labs/enduro/internal/workflow/manager"
 
 	"github.com/go-logr/logr"
 	"github.com/go-logr/zapr"
@@ -201,19 +203,19 @@ func main() {
 		// TODO: this is a temporary workaround for dependency injection until we
 		// figure out what's the depdencency tree is going to look like after POC.
 		// The share-everything pattern should be avoided.
-		m := workflow.NewManager(logger, colsvc, wsvc, pipelineRegistry, config.Hooks)
+		m := manager.NewManager(logger, colsvc, wsvc, pipelineRegistry, config.Hooks)
 
 		cadence.RegisterWorkflow(workflow.NewProcessingWorkflow(m).Execute, collection.ProcessingWorkflowName)
-		cadence.RegisterActivity(workflow.NewDownloadActivity(m).Execute, workflow.DownloadActivityName)
-		cadence.RegisterActivity(workflow.NewBundleActivity().Execute, workflow.BundleActivityName)
-		cadence.RegisterActivity(workflow.NewTransferActivity(m).Execute, workflow.TransferActivityName)
-		cadence.RegisterActivity(workflow.NewPollTransferActivity(m).Execute, workflow.PollTransferActivityName)
-		cadence.RegisterActivity(workflow.NewPollIngestActivity(m).Execute, workflow.PollIngestActivityName)
-		cadence.RegisterActivity(workflow.NewUpdateHARIActivity(m).Execute, workflow.UpdateHARIActivityName)
-		cadence.RegisterActivity(workflow.NewUpdateProductionSystemActivity(m).Execute, workflow.UpdateProductionSystemActivityName)
-		cadence.RegisterActivity(workflow.NewCleanUpActivity(m).Execute, workflow.CleanUpActivityName)
-		cadence.RegisterActivity(workflow.NewHidePackageActivity(m).Execute, workflow.HidePackageActivityName)
-		cadence.RegisterActivity(workflow.NewDeleteOriginalActivity(m).Execute, workflow.DeleteOriginalActivityName)
+		cadence.RegisterActivity(activities.NewDownloadActivity(m).Execute, activities.DownloadActivityName)
+		cadence.RegisterActivity(activities.NewBundleActivity().Execute, activities.BundleActivityName)
+		cadence.RegisterActivity(activities.NewTransferActivity(m).Execute, activities.TransferActivityName)
+		cadence.RegisterActivity(activities.NewPollTransferActivity(m).Execute, activities.PollTransferActivityName)
+		cadence.RegisterActivity(activities.NewPollIngestActivity(m).Execute, activities.PollIngestActivityName)
+		cadence.RegisterActivity(activities.NewUpdateHARIActivity(m).Execute, activities.UpdateHARIActivityName)
+		cadence.RegisterActivity(activities.NewUpdateProductionSystemActivity(m).Execute, activities.UpdateProductionSystemActivityName)
+		cadence.RegisterActivity(activities.NewCleanUpActivity(m).Execute, activities.CleanUpActivityName)
+		cadence.RegisterActivity(activities.NewHidePackageActivity(m).Execute, activities.HidePackageActivityName)
+		cadence.RegisterActivity(activities.NewDeleteOriginalActivity(m).Execute, activities.DeleteOriginalActivityName)
 
 		done := make(chan struct{})
 		w, err := cadence.NewWorker(zlogger.Named("cadence-worker"), appName, config.Cadence)

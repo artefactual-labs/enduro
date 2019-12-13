@@ -5,6 +5,8 @@ import (
 
 	"go.uber.org/cadence"
 	"go.uber.org/cadence/workflow"
+
+	wferrors "github.com/artefactual-labs/enduro/internal/workflow/errors"
 )
 
 // withActivityOptsForLongLivedRequest returns a workflow context with activity
@@ -19,7 +21,7 @@ func withActivityOptsForLongLivedRequest(ctx workflow.Context) workflow.Context 
 			MaximumInterval:          time.Minute * 10,
 			ExpirationInterval:       time.Minute * 10,
 			MaximumAttempts:          5,
-			NonRetriableErrorReasons: []string{NRE},
+			NonRetriableErrorReasons: []string{wferrors.NRE},
 		},
 	})
 }
@@ -43,7 +45,7 @@ func withActivityOptsForHeartbeatedRequest(ctx workflow.Context, heartbeatTimeou
 			BackoffCoefficient:       2,
 			MaximumInterval:          time.Second * 10,
 			ExpirationInterval:       forever,
-			NonRetriableErrorReasons: []string{NRE},
+			NonRetriableErrorReasons: []string{wferrors.NRE},
 		},
 	})
 }
@@ -60,7 +62,7 @@ func withActivityOptsForRequest(ctx workflow.Context) workflow.Context {
 			MaximumInterval:          time.Minute * 10,
 			ExpirationInterval:       time.Minute * 10,
 			MaximumAttempts:          20,
-			NonRetriableErrorReasons: []string{NRE},
+			NonRetriableErrorReasons: []string{wferrors.NRE},
 		},
 	})
 }
@@ -85,7 +87,7 @@ func withLocalActivityOpts(ctx workflow.Context) workflow.Context {
 			BackoffCoefficient:       2,
 			MaximumInterval:          time.Minute,
 			MaximumAttempts:          3,
-			NonRetriableErrorReasons: []string{NRE},
+			NonRetriableErrorReasons: []string{wferrors.NRE},
 		},
 	})
 }

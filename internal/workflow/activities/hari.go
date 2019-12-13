@@ -1,4 +1,4 @@
-package workflow
+package activities
 
 import (
 	"bytes"
@@ -15,6 +15,9 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	wferrors "github.com/artefactual-labs/enduro/internal/workflow/errors"
+	"github.com/artefactual-labs/enduro/internal/workflow/manager"
 )
 
 var hariClient = &http.Client{
@@ -28,10 +31,10 @@ var hariClient = &http.Client{
 }
 
 type UpdateHARIActivity struct {
-	manager *Manager
+	manager *manager.Manager
 }
 
-func NewUpdateHARIActivity(m *Manager) *UpdateHARIActivity {
+func NewUpdateHARIActivity(m *manager.Manager) *UpdateHARIActivity {
 	return &UpdateHARIActivity{manager: m}
 }
 
@@ -47,7 +50,7 @@ func (a UpdateHARIActivity) Execute(ctx context.Context, params *UpdateHARIActiv
 	var err error
 	params.Kind, err = convertKind(params.Kind)
 	if err != nil {
-		return nonRetryableError(fmt.Errorf("error validating kind attribute: %v", err))
+		return wferrors.NonRetryableError(fmt.Errorf("error validating kind attribute: %v", err))
 	}
 
 	if params.PipelineName == "" {
@@ -56,10 +59,10 @@ func (a UpdateHARIActivity) Execute(ctx context.Context, params *UpdateHARIActiv
 
 	apiURL, err := a.url()
 	if err != nil {
-		return nonRetryableError(fmt.Errorf("error in URL construction: %v", err))
+		return wferrors.NonRetryableError(fmt.Errorf("error in URL construction: %v", err))
 	}
 
-	mock, _ := hookAttrBool(a.manager.Hooks, "hari", "mock")
+	mock, _ := manager.HookAttrBool(a.manager.Hooks, "hari", "mock")
 	if mock {
 		ts := a.buildMock()
 		defer ts.Close()
@@ -68,12 +71,12 @@ func (a UpdateHARIActivity) Execute(ctx context.Context, params *UpdateHARIActiv
 
 	var path = a.avlxml(filepath.Join(params.FullPath, params.Kind))
 	if path == "" {
-		return nonRetryableError(fmt.Errorf("error reading AVLXML file: not found"))
+		return wferrors.NonRetryableError(fmt.Errorf("error reading AVLXML file: not found"))
 	}
 
 	blob, err := ioutil.ReadFile(path)
 	if err != nil {
-		return nonRetryableError(fmt.Errorf("error reading AVLXML file: %v", err))
+		return wferrors.NonRetryableError(fmt.Errorf("error reading AVLXML file: %v", err))
 	}
 
 	if err := a.sendRequest(ctx, blob, apiURL, params); err != nil {
@@ -99,7 +102,7 @@ func (a UpdateHARIActivity) avlxml(prefix string) string {
 func (a UpdateHARIActivity) url() (string, error) {
 	p, _ := url.Parse("/v1/hari/avlxml")
 
-	b, err := hookAttrString(a.manager.Hooks, "hari", "baseURL")
+	b, err := manager.HookAttrString(a.manager.Hooks, "hari", "baseURL")
 	if err != nil {
 		return "", fmt.Errorf("error looking up baseURL configuration attribute: %v", err)
 	}

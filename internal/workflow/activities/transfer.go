@@ -1,4 +1,4 @@
-package workflow
+package activities
 
 import (
 	"context"
@@ -6,6 +6,8 @@ import (
 	"net/http"
 
 	"github.com/artefactual-labs/enduro/internal/amclient"
+	wferrors "github.com/artefactual-labs/enduro/internal/workflow/errors"
+	"github.com/artefactual-labs/enduro/internal/workflow/manager"
 )
 
 // TransferActivity submits the transfer to Archivematica and returns its ID.
@@ -13,10 +15,10 @@ import (
 // This is our first interaction with Archivematica. The workflow ends here
 // after authentication errors.
 type TransferActivity struct {
-	manager *Manager
+	manager *manager.Manager
 }
 
-func NewTransferActivity(m *Manager) *TransferActivity {
+func NewTransferActivity(m *manager.Manager) *TransferActivity {
 	return &TransferActivity{manager: m}
 }
 
@@ -38,7 +40,7 @@ type TransferActivityResponse struct {
 func (a *TransferActivity) Execute(ctx context.Context, params *TransferActivityParams) (*TransferActivityResponse, error) {
 	p, err := a.manager.Pipelines.ByName(params.PipelineName)
 	if err != nil {
-		return nil, nonRetryableError(err)
+		return nil, wferrors.NonRetryableError(err)
 	}
 	amc := p.Client()
 
@@ -58,7 +60,7 @@ func (a *TransferActivity) Execute(ctx context.Context, params *TransferActivity
 		if httpResp != nil {
 			switch {
 			case httpResp.StatusCode == http.StatusForbidden:
-				return nil, nonRetryableError(fmt.Errorf("authentication error: %v", err))
+				return nil, wferrors.NonRetryableError(fmt.Errorf("authentication error: %v", err))
 			}
 		}
 		return nil, err

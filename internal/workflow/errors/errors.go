@@ -1,13 +1,18 @@
-package workflow
+package errors
 
 import (
-	"errors"
-
 	"go.uber.org/cadence"
 	"go.uber.org/cadence/.gen/go/shared"
 	"go.uber.org/cadence/workflow"
 )
 
+const NRE = "non retryable error"
+
+func NonRetryableError(err error) error {
+	return cadence.NewCustomError(NRE, err.Error())
+}
+
+// HeartbeatTimeoutError determines if a given error is a heartbeat error.
 func HeartbeatTimeoutError(err error, details interface{}) bool {
 	timeoutErr, ok := err.(*workflow.TimeoutError)
 	if !ok {
@@ -24,11 +29,3 @@ func HeartbeatTimeoutError(err error, details interface{}) bool {
 
 	return true
 }
-
-const NRE = "non retryable error"
-
-func nonRetryableError(err error) error {
-	return cadence.NewCustomError(NRE, err.Error())
-}
-
-var errMissingParameters = errors.New("missing parameters")

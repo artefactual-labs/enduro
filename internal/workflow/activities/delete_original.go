@@ -1,16 +1,17 @@
-package workflow
+package activities
 
 import (
 	"context"
 
 	"github.com/artefactual-labs/enduro/internal/watcher"
+	"github.com/artefactual-labs/enduro/internal/workflow/manager"
 )
 
 type DeleteOriginalActivity struct {
-	manager *Manager
+	manager *manager.Manager
 }
 
-func NewDeleteOriginalActivity(m *Manager) *DeleteOriginalActivity {
+func NewDeleteOriginalActivity(m *manager.Manager) *DeleteOriginalActivity {
 	return &DeleteOriginalActivity{manager: m}
 }
 

@@ -1,4 +1,4 @@
-package workflow
+package activities
 
 import (
 	"context"
@@ -13,12 +13,14 @@ import (
 	logrt "github.com/go-logr/logr/testing"
 	"github.com/golang/mock/gomock"
 	"go.uber.org/cadence"
-	"gotest.tools/assert"
-	"gotest.tools/fs"
+	"gotest.tools/v3/assert"
+	"gotest.tools/v3/fs"
 
 	collectionfake "github.com/artefactual-labs/enduro/internal/collection/fake"
 	"github.com/artefactual-labs/enduro/internal/pipeline"
 	watcherfake "github.com/artefactual-labs/enduro/internal/watcher/fake"
+	wferrors "github.com/artefactual-labs/enduro/internal/workflow/errors"
+	"github.com/artefactual-labs/enduro/internal/workflow/manager"
 )
 
 type serverResponse struct {
@@ -195,7 +197,7 @@ func TestTable(t *testing.T) {
 				SIPID:    "1db240cc-3cea-4e55-903c-6280562e1866",
 				Kind:     "",
 			},
-			err: []string{NRE, "error validating kind attribute: empty"},
+			err: []string{wferrors.NRE, "error validating kind attribute: empty"},
 		},
 		"Unsuffixed kind is rejected": {
 			params: UpdateHARIActivityParams{
@@ -203,7 +205,7 @@ func TestTable(t *testing.T) {
 				SIPID:    "1db240cc-3cea-4e55-903c-6280562e1866",
 				Kind:     "DPJ",
 			},
-			err: []string{NRE, "error validating kind attribute: attribute (DPJ) does not containt suffix (\"-SIP\")"},
+			err: []string{wferrors.NRE, "error validating kind attribute: attribute (DPJ) does not containt suffix (\"-SIP\")"},
 		},
 		"Unknown kind is rejected": {
 			params: UpdateHARIActivityParams{
@@ -211,7 +213,7 @@ func TestTable(t *testing.T) {
 				SIPID:    "1db240cc-3cea-4e55-903c-6280562e1866",
 				Kind:     "FOOBAR-SIP",
 			},
-			err: []string{NRE, "error validating kind attribute: attribute (FOOBAR) is unexpected/unknown"},
+			err: []string{wferrors.NRE, "error validating kind attribute: attribute (FOOBAR) is unexpected/unknown"},
 		},
 		"Unexisten AVLXML file causes error": {
 			params: UpdateHARIActivityParams{
@@ -221,7 +223,7 @@ func TestTable(t *testing.T) {
 			},
 			hariConfig: map[string]interface{}{"baseURL": "http://192.168.1.50:12345"},
 			dirOpts:    []fs.PathOp{fs.WithDir("DPJ/journal"), fs.WithFile("DPJ/journal/_____other_name_____.xml", "<xml/>")},
-			err:        []string{NRE, "error reading AVLXML file: not found"},
+			err:        []string{wferrors.NRE, "error reading AVLXML file: not found"},
 		},
 		"Unparseable baseURL is rejected": {
 			params: UpdateHARIActivityParams{
@@ -231,7 +233,7 @@ func TestTable(t *testing.T) {
 			},
 			hariConfig: map[string]interface{}{"baseURL": string([]byte{0x7f})},
 			dirOpts:    []fs.PathOp{fs.WithDir("DPJ/journal"), fs.WithFile("DPJ/journal/avlxml.xml", "<xml/>")},
-			err:        []string{NRE, "error in URL construction: error looking up baseURL configuration attribute: parse : net/url: invalid control character in URL"},
+			err:        []string{wferrors.NRE, "error in URL construction: error looking up baseURL configuration attribute: parse : net/url: invalid control character in URL"},
 		},
 	}
 
@@ -274,7 +276,7 @@ func TestTable(t *testing.T) {
 				}
 			}
 
-			act := createActivity(t, tc.hariConfig)
+			act := createHariActivity(t, tc.hariConfig)
 
 			if tc.dirOpts != nil {
 				tmpdir := fs.NewDir(t, "enduro", tc.dirOpts...)
@@ -288,7 +290,7 @@ func TestTable(t *testing.T) {
 			err := act.Execute(context.Background(), &tc.params)
 
 			switch {
-			case tc.err != nil && len(tc.err) > 0 && tc.err[0] == NRE:
+			case tc.err != nil && len(tc.err) > 0 && tc.err[0] == wferrors.NRE:
 				assertCustomError(t, err, tc.err[0], tc.err[1])
 			case tc.err != nil:
 				assert.Error(t, err, tc.err[0])
@@ -299,7 +301,7 @@ func TestTable(t *testing.T) {
 	}
 }
 
-func createActivity(t *testing.T, hariConfig map[string]interface{}) *UpdateHARIActivity {
+func createHariActivity(t *testing.T, hariConfig map[string]interface{}) *UpdateHARIActivity {
 	t.Helper()
 
 	ctrl := gomock.NewController(t)
@@ -308,7 +310,7 @@ func createActivity(t *testing.T, hariConfig map[string]interface{}) *UpdateHARI
 		"hari": hariConfig,
 	}
 
-	manager := NewManager(
+	manager := manager.NewManager(
 		logrt.NullLogger{},
 		collectionfake.NewMockService(ctrl),
 		watcherfake.NewMockService(ctrl),

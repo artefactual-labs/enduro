@@ -73,7 +73,7 @@ require (
 	google.golang.org/genproto v0.0.0-20191028173616-919d9bdd9fe6 // indirect
 	google.golang.org/grpc v1.25.0 // indirect
 	gopkg.in/yaml.v2 v2.2.7 // indirect
-	gotest.tools v2.2.0+incompatible
+	gotest.tools/v3 v3.0.0
 )
 
 // "go.uber.org/cadence" requires it but "go mod" selects "v0.12.0".

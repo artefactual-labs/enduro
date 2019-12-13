@@ -1,4 +1,4 @@
-package workflow
+package manager
 
 import (
 	"fmt"
@@ -30,7 +30,7 @@ func NewManager(logger logr.Logger, colsvc collection.Service, wsvc watcher.Serv
 	}
 }
 
-func hookAttr(hooks map[string]map[string]interface{}, hook string, attr string) (interface{}, error) {
+func HookAttr(hooks map[string]map[string]interface{}, hook string, attr string) (interface{}, error) {
 	configMap, ok := hooks[hook]
 	if !ok {
 		return "", fmt.Errorf("hook %q not found", hook)
@@ -44,10 +44,10 @@ func hookAttr(hooks map[string]map[string]interface{}, hook string, attr string)
 	return value, nil
 }
 
-func hookAttrString(hooks map[string]map[string]interface{}, hook string, attr string) (string, error) {
+func HookAttrString(hooks map[string]map[string]interface{}, hook string, attr string) (string, error) {
 	var accessor = fmt.Sprintf("%s:%s", hook, attr)
 
-	value, err := hookAttr(hooks, hook, attr)
+	value, err := HookAttr(hooks, hook, attr)
 	if err != nil {
 		return "", fmt.Errorf("error accessing %q", accessor)
 	}
@@ -60,10 +60,10 @@ func hookAttrString(hooks map[string]map[string]interface{}, hook string, attr s
 	return v, nil
 }
 
-func hookAttrBool(hooks map[string]map[string]interface{}, hook string, attr string) (bool, error) {
+func HookAttrBool(hooks map[string]map[string]interface{}, hook string, attr string) (bool, error) {
 	var accessor = fmt.Sprintf("%s:%s", hook, attr)
 
-	value, err := hookAttr(hooks, hook, attr)
+	value, err := HookAttr(hooks, hook, attr)
 	if err != nil {
 		return false, fmt.Errorf("error accessing %q", accessor)
 	}

@@ -1,4 +1,4 @@
-package workflow
+package activities
 
 import (
 	"context"
@@ -9,6 +9,8 @@ import (
 	"regexp"
 
 	"github.com/artefactual-labs/enduro/internal/amclient/bundler"
+	wferrors "github.com/artefactual-labs/enduro/internal/workflow/errors"
+
 	"github.com/mholt/archiver"
 )
 
@@ -41,7 +43,7 @@ func (a *BundleActivity) Execute(ctx context.Context, params *BundleActivityPara
 
 	defer func() {
 		if err != nil {
-			err = nonRetryableError(err)
+			err = wferrors.NonRetryableError(err)
 		}
 	}()
 
@@ -53,7 +55,7 @@ func (a *BundleActivity) Execute(ctx context.Context, params *BundleActivityPara
 		res.FullPath, res.FullPathBeforeStrip, err = a.Bundle(ctx, unar, params.TransferDir, params.Key, params.TempFile, params.StripTopLevelDir)
 	}
 	if err != nil {
-		return nil, nonRetryableError(err)
+		return nil, wferrors.NonRetryableError(err)
 	}
 
 	res.RelPath, err = filepath.Rel(params.TransferDir, res.FullPath)

@@ -1,27 +1,30 @@
-package workflow
+package activities
 
 import (
 	"context"
 	"fmt"
+
+	wferrors "github.com/artefactual-labs/enduro/internal/workflow/errors"
+	"github.com/artefactual-labs/enduro/internal/workflow/manager"
 )
 
 type HidePackageActivity struct {
-	manager *Manager
+	manager *manager.Manager
 }
 
-func NewHidePackageActivity(m *Manager) *HidePackageActivity {
+func NewHidePackageActivity(m *manager.Manager) *HidePackageActivity {
 	return &HidePackageActivity{manager: m}
 }
 
 func (a *HidePackageActivity) Execute(ctx context.Context, unitID, unitType, pipelineName string) error {
 	p, err := a.manager.Pipelines.ByName(pipelineName)
 	if err != nil {
-		return nonRetryableError(err)
+		return wferrors.NonRetryableError(err)
 	}
 	amc := p.Client()
 
 	if unitType != "transfer" && unitType != "ingest" {
-		return nonRetryableError(fmt.Errorf("unexpected unit type: %s", unitType))
+		return wferrors.NonRetryableError(fmt.Errorf("unexpected unit type: %s", unitType))
 	}
 
 	if unitType == "transfer" {

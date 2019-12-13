@@ -1,4 +1,4 @@
-package workflow
+package activities
 
 import (
 	"context"
@@ -6,15 +6,18 @@ import (
 	"time"
 
 	"github.com/artefactual-labs/enduro/internal/pipeline"
+	wferrors "github.com/artefactual-labs/enduro/internal/workflow/errors"
+	"github.com/artefactual-labs/enduro/internal/workflow/manager"
+
 	"github.com/cenkalti/backoff/v3"
 	"go.uber.org/cadence/activity"
 )
 
 type PollTransferActivity struct {
-	manager *Manager
+	manager *manager.Manager
 }
 
-func NewPollTransferActivity(m *Manager) *PollTransferActivity {
+func NewPollTransferActivity(m *manager.Manager) *PollTransferActivity {
 	return &PollTransferActivity{manager: m}
 }
 
@@ -40,7 +43,7 @@ func (a *PollTransferActivity) Execute(ctx context.Context, params *PollTransfer
 
 			sipID, err = pipeline.TransferStatus(ctx, amc, params.TransferID)
 			if errors.Is(err, pipeline.ErrStatusNonRetryable) {
-				return backoff.Permanent(nonRetryableError(err))
+				return backoff.Permanent(wferrors.NonRetryableError(err))
 			}
 
 			return err
