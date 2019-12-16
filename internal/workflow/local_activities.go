@@ -36,7 +36,7 @@ func updatePackageStatusLocalActivity(ctx context.Context, colsvc collection.Ser
 	info := activity.GetInfo(ctx)
 
 	return colsvc.UpdateWorkflowStatus(
-		ctx, tinfo.CollectionID, tinfo.Bundle.Name, info.WorkflowExecution.ID,
+		ctx, tinfo.CollectionID, tinfo.Event.Key, info.WorkflowExecution.ID,
 		info.WorkflowExecution.RunID, tinfo.TransferID, tinfo.SIPID, tinfo.PipelineID,
 		status, tinfo.StoredAt,
 	)

@@ -31,8 +31,8 @@ func NewUpdateProductionSystemActivity(m *manager.Manager) *UpdateProductionSyst
 }
 
 type UpdateProductionSystemActivityParams struct {
+	Name         string
 	OriginalID   string
-	Kind         string
 	StoredAt     time.Time
 	PipelineName string
 	Status       collection.Status
@@ -43,10 +43,9 @@ func (a *UpdateProductionSystemActivity) Execute(ctx context.Context, params *Up
 		return wferrors.NonRetryableError(errors.New("OriginalID is missing or empty"))
 	}
 
-	var err error
-	params.Kind, err = convertKind(params.Kind)
+	kind, err := extractKind(params.Name)
 	if err != nil {
-		return wferrors.NonRetryableError(fmt.Errorf("error validating kind attribute: %v", err))
+		return wferrors.NonRetryableError(fmt.Errorf("error extracting kind attribute: %v", err))
 	}
 
 	// We expect tinfo.StoredAt to have the zero value when the ingestion
@@ -69,7 +68,7 @@ func (a *UpdateProductionSystemActivity) Execute(ctx context.Context, params *Up
 	}
 
 	// Write receipt contents.
-	if err := a.generateReceipt(params, file); err != nil {
+	if err := a.generateReceipt(params, file, kind); err != nil {
 		return wferrors.NonRetryableError(fmt.Errorf("error writing receipt file: %v", err))
 	}
 
@@ -93,7 +92,7 @@ func (a *UpdateProductionSystemActivity) Execute(ctx context.Context, params *Up
 	return nil
 }
 
-func (a UpdateProductionSystemActivity) generateReceipt(params *UpdateProductionSystemActivityParams, file *os.File) error {
+func (a UpdateProductionSystemActivity) generateReceipt(params *UpdateProductionSystemActivityParams, file *os.File, kind string) error {
 	var accepted bool
 	var message string
 
@@ -107,7 +106,7 @@ func (a UpdateProductionSystemActivity) generateReceipt(params *UpdateProduction
 
 	receipt := prodSystemReceipt{
 		Identifier: params.OriginalID,
-		Type:       strings.ToLower(params.Kind),
+		Type:       strings.ToLower(kind),
 		Accepted:   accepted,
 		Message:    message,
 		Timestamp:  params.StoredAt,

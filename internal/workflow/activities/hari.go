@@ -13,6 +13,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
@@ -39,18 +40,21 @@ func NewUpdateHARIActivity(m *manager.Manager) *UpdateHARIActivity {
 }
 
 type UpdateHARIActivityParams struct {
+	Name         string
 	SIPID        string
-	Kind         string
 	StoredAt     time.Time
 	FullPath     string
 	PipelineName string
 }
 
 func (a UpdateHARIActivity) Execute(ctx context.Context, params *UpdateHARIActivityParams) error {
-	var err error
-	params.Kind, err = convertKind(params.Kind)
+	if params.Name == "" {
+		return wferrors.NonRetryableError(errors.New("Name is missing or empty"))
+	}
+
+	kind, err := extractKind(params.Name)
 	if err != nil {
-		return wferrors.NonRetryableError(fmt.Errorf("error validating kind attribute: %v", err))
+		return wferrors.NonRetryableError(fmt.Errorf("error extracting kind attribute: %v", err))
 	}
 
 	if params.PipelineName == "" {
@@ -69,7 +73,7 @@ func (a UpdateHARIActivity) Execute(ctx context.Context, params *UpdateHARIActiv
 		apiURL = ts.URL
 	}
 
-	var path = a.avlxml(filepath.Join(params.FullPath, params.Kind))
+	var path = a.avlxml(filepath.Join(params.FullPath, kind))
 	if path == "" {
 		return wferrors.NonRetryableError(fmt.Errorf("error reading AVLXML file: not found"))
 	}
@@ -79,7 +83,7 @@ func (a UpdateHARIActivity) Execute(ctx context.Context, params *UpdateHARIActiv
 		return wferrors.NonRetryableError(fmt.Errorf("error reading AVLXML file: %v", err))
 	}
 
-	if err := a.sendRequest(ctx, blob, apiURL, params); err != nil {
+	if err := a.sendRequest(ctx, blob, apiURL, kind, params); err != nil {
 		return fmt.Errorf("error sending request: %v", err)
 	}
 
@@ -115,11 +119,11 @@ func (a UpdateHARIActivity) url() (string, error) {
 	return bu.ResolveReference(p).String(), nil
 }
 
-func (a UpdateHARIActivity) sendRequest(ctx context.Context, blob []byte, apiURL string, params *UpdateHARIActivityParams) error {
+func (a UpdateHARIActivity) sendRequest(ctx context.Context, blob []byte, apiURL string, kind string, params *UpdateHARIActivityParams) error {
 	payload := &avlRequest{
 		XML:       blob,
 		Message:   fmt.Sprintf("AVLXML was processed by Archivematica pipeline %s", params.PipelineName),
-		Type:      strings.ToLower(params.Kind),
+		Type:      strings.ToLower(kind),
 		Timestamp: params.StoredAt,
 		AIPID:     params.SIPID,
 	}
@@ -178,10 +182,20 @@ var knownKinds = []string{
 	"DPJ", "EPJ", "AVLXML", "OTHER",
 }
 
-func convertKind(kind string) (string, error) {
-	if kind == "" {
-		return "", errors.New("empty")
+var regex = regexp.MustCompile(`^(?P<kind>.*)[-_](?P<uuid>[a-zA-Z0-9]{8}-[a-zA-Z0-9]{4}-[1-5][a-zA-Z0-9]{3}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{12})(?P<fileext>\..*)?$`)
+
+func extractKind(name string) (string, error) {
+	matches := regex.FindStringSubmatch(name)
+	if len(matches) != 4 {
+		return "", errors.New("unexpected format")
 	}
+
+	kind := matches[1]
+	if kind == "" {
+		return "", fmt.Errorf("unexpected format")
+	}
+
+	// name = fmt.Sprintf("%s-%s", matches[1], matches[2][0:13])
 
 	// Convert into capital letters, e.g. epj-sip => EPJ-SIP.
 	kind = strings.ToUpper(kind)

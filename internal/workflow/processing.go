@@ -111,7 +111,7 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 	tinfo := &TransferInfo{
 		CollectionID: req.CollectionID,
 		Event:        req.Event,
-		OriginalID:   req.Event.NameUUID(),
+		OriginalID:   req.Event.NamedUUID(),
 		Status:       collection.StatusInProgress,
 	}
 
@@ -182,8 +182,8 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 	activityOpts = withActivityOptsForRequest(sessCtx)
 	if disabled, _ := manager.HookAttrBool(tinfo.Hooks, "hari", "disabled"); !disabled {
 		futures = append(futures, workflow.ExecuteActivity(activityOpts, activities.UpdateHARIActivityName, &activities.UpdateHARIActivityParams{
+			Name:         tinfo.Event.Key,
 			SIPID:        tinfo.SIPID,
-			Kind:         tinfo.Bundle.Kind,
 			StoredAt:     tinfo.StoredAt,
 			FullPath:     tinfo.Bundle.FullPath,
 			PipelineName: tinfo.Event.PipelineName,
@@ -191,8 +191,8 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 	}
 	if disabled, _ := manager.HookAttrBool(tinfo.Hooks, "prod", "disabled"); !disabled {
 		futures = append(futures, workflow.ExecuteActivity(activityOpts, activities.UpdateProductionSystemActivityName, &activities.UpdateProductionSystemActivityParams{
+			Name:         tinfo.Event.Key,
 			OriginalID:   tinfo.OriginalID,
-			Kind:         tinfo.Bundle.Kind,
 			StoredAt:     tinfo.StoredAt,
 			PipelineName: tinfo.Event.PipelineName,
 			Status:       tinfo.Status,
@@ -289,7 +289,7 @@ func (w *ProcessingWorkflow) SessionHandler(ctx workflow.Context, sessCtx workfl
 		PipelineName:       tinfo.Event.PipelineName,
 		TransferLocationID: tinfo.PipelineConfig.TransferLocationID,
 		RelPath:            tinfo.Bundle.RelPath,
-		Name:               tinfo.Bundle.Name,
+		Name:               tinfo.Event.Key,
 		ProcessingConfig:   tinfo.PipelineConfig.ProcessingConfig,
 		AutoApprove:        true,
 	}).Get(activityOpts, &transferResponse)

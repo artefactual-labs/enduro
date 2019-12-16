@@ -32,7 +32,7 @@ func TestProdActivity(t *testing.T) {
 		"Receipt is generated successfully with status 'done'": {
 			params: UpdateProductionSystemActivityParams{
 				OriginalID:   "aa1df25d-1477-4085-8be3-a17fed20f843",
-				Kind:         "DPJ-SIP",
+				Name:         "DPJ-SIP-049d6a44-07d6-4aa9-9607-9347ec4d0b23",
 				StoredAt:     time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
 				PipelineName: "foo-bar-001",
 				Status:       collection.StatusDone,
@@ -50,7 +50,7 @@ func TestProdActivity(t *testing.T) {
 		"Receipt is generated successfully with status 'error'": {
 			params: UpdateProductionSystemActivityParams{
 				OriginalID:   "aa1df25d-1477-4085-8be3-a17fed20f843",
-				Kind:         "DPJ-SIP",
+				Name:         "DPJ-SIP-049d6a44-07d6-4aa9-9607-9347ec4d0b23",
 				StoredAt:     time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
 				PipelineName: "foo-bar-002",
 				Status:       collection.StatusError,
@@ -68,7 +68,7 @@ func TestProdActivity(t *testing.T) {
 		"Empty OriginalID is rejected": {
 			params: UpdateProductionSystemActivityParams{
 				OriginalID:   "",
-				Kind:         "DPJ-SIP",
+				Name:         "DPJ-SIP-049d6a44-07d6-4aa9-9607-9347ec4d0b23",
 				StoredAt:     time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
 				PipelineName: "foo-bar-002",
 				Status:       collection.StatusError,
@@ -81,33 +81,33 @@ func TestProdActivity(t *testing.T) {
 		"Unknown kind is rejected": {
 			params: UpdateProductionSystemActivityParams{
 				OriginalID:   "aa1df25d-1477-4085-8be3-a17fed20f843",
-				Kind:         "FOO-SIP",
+				Name:         "FOOBAR-SIP-049d6a44-07d6-4aa9-9607-9347ec4d0b23",
 				StoredAt:     time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
 				PipelineName: "foo-bar-002",
 				Status:       collection.StatusError,
 			},
 			wantErr: activityError{
-				Message: "error validating kind attribute: attribute (FOO) is unexpected/unknown",
+				Message: "error extracting kind attribute: attribute (FOOBAR) is unexpected/unknown",
 				NRE:     true,
 			},
 		},
 		"Malformed kind is rejected": {
 			params: UpdateProductionSystemActivityParams{
 				OriginalID:   "aa1df25d-1477-4085-8be3-a17fed20f843",
-				Kind:         "DPJ",
+				Name:         "DPJ-049d6a44-07d6-4aa9-9607-9347ec4d0b23",
 				StoredAt:     time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
 				PipelineName: "foo-bar-002",
 				Status:       collection.StatusError,
 			},
 			wantErr: activityError{
-				Message: "error validating kind attribute: attribute (DPJ) does not containt suffix (\"-SIP\")",
+				Message: "error extracting kind attribute: attribute (DPJ) does not containt suffix (\"-SIP\")",
 				NRE:     true,
 			},
 		},
 		"Missing receiptPath is rejected": {
 			params: UpdateProductionSystemActivityParams{
 				OriginalID:   "aa1df25d-1477-4085-8be3-a17fed20f843",
-				Kind:         "DPJ-SIP",
+				Name:         "DPJ-SIP-049d6a44-07d6-4aa9-9607-9347ec4d0b23",
 				StoredAt:     time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
 				PipelineName: "foo-bar-001",
 				Status:       collection.StatusDone,
@@ -121,7 +121,7 @@ func TestProdActivity(t *testing.T) {
 		"Unexistent receiptPath is rejected": {
 			params: UpdateProductionSystemActivityParams{
 				OriginalID:   "aa1df25d-1477-4085-8be3-a17fed20f843",
-				Kind:         "DPJ-SIP",
+				Name:         "DPJ-SIP-049d6a44-07d6-4aa9-9607-9347ec4d0b23",
 				StoredAt:     time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
 				PipelineName: "foo-bar-001",
 				Status:       collection.StatusDone,

@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"regexp"
 
 	"github.com/artefactual-labs/enduro/internal/amclient/bundler"
 	wferrors "github.com/artefactual-labs/enduro/internal/workflow/errors"
@@ -28,8 +27,6 @@ type BundleActivityParams struct {
 }
 
 type BundleActivityResult struct {
-	Name                string // Name of the transfer.
-	Kind                string // Client specific, obtained from name, e.g. "DPJ-SIP".
 	RelPath             string // Path of the transfer relative to the transfer directory.
 	FullPath            string // Full path to the transfer in the worker running the session.
 	FullPathBeforeStrip string // Same as FullPath but includes the top-level dir even when stripped.
@@ -62,8 +59,6 @@ func (a *BundleActivity) Execute(ctx context.Context, params *BundleActivityPara
 	if err != nil {
 		return nil, fmt.Errorf("error calculating relative path to transfer (base=%q, target=%q): %v", params.TransferDir, res.FullPath, err)
 	}
-
-	res.Name, res.Kind = a.NameKind(params.Key)
 
 	return res, err
 }
@@ -155,20 +150,4 @@ func (a *BundleActivity) Bundle(ctx context.Context, unar archiver.Unarchiver, t
 	_ = os.Remove(tempFile)
 
 	return tempDir, tempDirBeforeStrip, nil
-}
-
-var regex = regexp.MustCompile(`^(?P<kind>.*)[-_](?P<uuid>[a-zA-Z0-9]{8}-[a-zA-Z0-9]{4}-[1-5][a-zA-Z0-9]{3}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{12})(?P<fileext>\..*)?$`)
-
-// Name the transfer.
-func (a *BundleActivity) NameKind(key string) (name, kind string) {
-	matches := regex.FindStringSubmatch(key)
-
-	if len := len(matches); len == 0 {
-		name = key
-	} else if len == 4 {
-		name = fmt.Sprintf("%s-%s", matches[1], matches[2][0:13])
-		kind = matches[1]
-	}
-
-	return name, kind
 }

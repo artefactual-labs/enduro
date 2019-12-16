@@ -63,7 +63,8 @@ func (e BlobEvent) String() string {
 
 var uuid4regex = regexp.MustCompile(`[a-zA-Z0-9]{8}-[a-zA-Z0-9]{4}-[1-5][a-zA-Z0-9]{3}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{12}`)
 
-func (e BlobEvent) NameUUID() string {
+// NamedUUID finds the leftmost UUID match in the name of the event.
+func (e BlobEvent) NamedUUID() string {
 	s := uuid4regex.FindString(e.Key)
 
 	_, err := uuid.Parse(s)

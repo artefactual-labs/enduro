@@ -57,7 +57,7 @@ func TestTable(t *testing.T) {
 			params: UpdateHARIActivityParams{
 				StoredAt:     time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
 				SIPID:        "1db240cc-3cea-4e55-903c-6280562e1866",
-				Kind:         "DPJ-SIP",
+				Name:         "DPJ-SIP-049d6a44-07d6-4aa9-9607-9347ec4d0b23",
 				PipelineName: "zr-fig-pipe-001",
 			},
 			hariConfig: map[string]interface{}{},
@@ -74,7 +74,7 @@ func TestTable(t *testing.T) {
 			params: UpdateHARIActivityParams{
 				StoredAt:     time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
 				SIPID:        "1db240cc-3cea-4e55-903c-6280562e1866",
-				Kind:         "EPJ-SIP",
+				Name:         "EPJ-SIP-049d6a44-07d6-4aa9-9607-9347ec4d0b23",
 				PipelineName: "zr-fig-pipe-001",
 			},
 			hariConfig: map[string]interface{}{},
@@ -91,7 +91,7 @@ func TestTable(t *testing.T) {
 			params: UpdateHARIActivityParams{
 				StoredAt:     time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
 				SIPID:        "1db240cc-3cea-4e55-903c-6280562e1866",
-				Kind:         "AVLXML-SIP",
+				Name:         "AVLXML-SIP-049d6a44-07d6-4aa9-9607-9347ec4d0b23",
 				PipelineName: "zr-fig-pipe-001",
 			},
 			hariConfig: map[string]interface{}{},
@@ -108,7 +108,7 @@ func TestTable(t *testing.T) {
 			params: UpdateHARIActivityParams{
 				StoredAt:     time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
 				SIPID:        "1db240cc-3cea-4e55-903c-6280562e1866",
-				Kind:         "OTHER-SIP",
+				Name:         "OTHER-SIP-049d6a44-07d6-4aa9-9607-9347ec4d0b23",
 				PipelineName: "zr-fig-pipe-001",
 			},
 			hariConfig: map[string]interface{}{},
@@ -125,7 +125,7 @@ func TestTable(t *testing.T) {
 			params: UpdateHARIActivityParams{
 				StoredAt:     time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
 				SIPID:        "1db240cc-3cea-4e55-903c-6280562e1866",
-				Kind:         "DPJ-SIP",
+				Name:         "DPJ-SIP-049d6a44-07d6-4aa9-9607-9347ec4d0b23",
 				PipelineName: "zr-fig-pipe-001",
 			},
 			hariConfig: map[string]interface{}{},
@@ -142,7 +142,7 @@ func TestTable(t *testing.T) {
 			params: UpdateHARIActivityParams{
 				StoredAt:     time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
 				SIPID:        "1db240cc-3cea-4e55-903c-6280562e1866",
-				Kind:         "dpj-sip",
+				Name:         "dpj-sip-049d6a44-07d6-4aa9-9607-9347ec4d0b23",
 				PipelineName: "zr-fig-pipe-001",
 			},
 			hariConfig: map[string]interface{}{},
@@ -159,7 +159,7 @@ func TestTable(t *testing.T) {
 			params: UpdateHARIActivityParams{
 				StoredAt:     time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
 				SIPID:        "1db240cc-3cea-4e55-903c-6280562e1866",
-				Kind:         "DPJ-SIP",
+				Name:         "DPJ-SIP-049d6a44-07d6-4aa9-9607-9347ec4d0b23",
 				PipelineName: "zr-fig-pipe-001",
 			},
 			hariConfig: map[string]interface{}{"mock": true},
@@ -169,7 +169,7 @@ func TestTable(t *testing.T) {
 			params: UpdateHARIActivityParams{
 				StoredAt:     time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
 				SIPID:        "1db240cc-3cea-4e55-903c-6280562e1866",
-				Kind:         "dpj-sip",
+				Name:         "DPJ-SIP-049d6a44-07d6-4aa9-9607-9347ec4d0b23",
 				PipelineName: "zr-fig-pipe-001",
 			},
 			hariConfig:   map[string]interface{}{},
@@ -191,10 +191,10 @@ func TestTable(t *testing.T) {
 			params: UpdateHARIActivityParams{
 				StoredAt: time.Now(),
 				SIPID:    "1db240cc-3cea-4e55-903c-6280562e1866",
-				Kind:     "",
+				Name:     "",
 			},
 			wantErr: activityError{
-				Message: "error validating kind attribute: empty",
+				Message: "Name is missing or empty",
 				NRE:     true,
 			},
 		},
@@ -202,10 +202,10 @@ func TestTable(t *testing.T) {
 			params: UpdateHARIActivityParams{
 				StoredAt: time.Now(),
 				SIPID:    "1db240cc-3cea-4e55-903c-6280562e1866",
-				Kind:     "DPJ",
+				Name:     "DPJ-049d6a44-07d6-4aa9-9607-9347ec4d0b23",
 			},
 			wantErr: activityError{
-				Message: "error validating kind attribute: attribute (DPJ) does not containt suffix (\"-SIP\")",
+				Message: "error extracting kind attribute: attribute (DPJ) does not containt suffix (\"-SIP\")",
 				NRE:     true,
 			},
 		},
@@ -213,10 +213,10 @@ func TestTable(t *testing.T) {
 			params: UpdateHARIActivityParams{
 				StoredAt: time.Now(),
 				SIPID:    "1db240cc-3cea-4e55-903c-6280562e1866",
-				Kind:     "FOOBAR-SIP",
+				Name:     "FOOBAR-SIP-049d6a44-07d6-4aa9-9607-9347ec4d0b23",
 			},
 			wantErr: activityError{
-				Message: "error validating kind attribute: attribute (FOOBAR) is unexpected/unknown",
+				Message: "error extracting kind attribute: attribute (FOOBAR) is unexpected/unknown",
 				NRE:     true,
 			},
 		},
@@ -224,7 +224,7 @@ func TestTable(t *testing.T) {
 			params: UpdateHARIActivityParams{
 				StoredAt: time.Now(),
 				SIPID:    "1db240cc-3cea-4e55-903c-6280562e1866",
-				Kind:     "DPJ-SIP",
+				Name:     "DPJ-SIP-049d6a44-07d6-4aa9-9607-9347ec4d0b23",
 			},
 			hariConfig: map[string]interface{}{"baseURL": "http://192.168.1.50:12345"},
 			dirOpts:    []fs.PathOp{fs.WithDir("DPJ/journal"), fs.WithFile("DPJ/journal/_____other_name_____.xml", "<xml/>")},
@@ -237,7 +237,7 @@ func TestTable(t *testing.T) {
 			params: UpdateHARIActivityParams{
 				StoredAt: time.Now(),
 				SIPID:    "1db240cc-3cea-4e55-903c-6280562e1866",
-				Kind:     "DPJ-SIP",
+				Name:     "DPJ-SIP-049d6a44-07d6-4aa9-9607-9347ec4d0b23",
 			},
 			hariConfig: map[string]interface{}{"baseURL": string([]byte{0x7f})},
 			dirOpts:    []fs.PathOp{fs.WithDir("DPJ/journal"), fs.WithFile("DPJ/journal/avlxml.xml", "<xml/>")},
@@ -301,17 +301,6 @@ func TestTable(t *testing.T) {
 			err := act.Execute(context.Background(), &tc.params)
 
 			tc.wantErr.Assert(t, err)
-
-			/*
-				switch {
-				case tc.wantErr != nil && len(tc.wantErr) > 0 && tc.wantErr[0] == wferrors.NRE:
-					assertCustomError(t, err, tc.wantErr[0], tc.wantErr[1])
-				case tc.wantErr != nil:
-					assert.Error(t, err, tc.wantErr[0])
-				case tc.wantErr == nil:
-					assert.NilError(t, err, customErrorDetails(err))
-				}
-			*/
 		})
 	}
 }
@@ -334,4 +323,93 @@ func createHariActivity(t *testing.T, hariConfig map[string]interface{}) *Update
 	)
 
 	return NewUpdateHARIActivity(manager)
+}
+
+func TestExtractKind(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		key            string
+		wantKind       string
+		wantErr        bool
+		wantErrMessage string
+	}{
+		{
+			key:            "",
+			wantKind:       "",
+			wantErr:        true,
+			wantErrMessage: "unexpected format",
+		},
+		{
+			key:            "foobar.jpg",
+			wantKind:       "",
+			wantErr:        true,
+			wantErrMessage: "unexpected format",
+		},
+		{
+			key:            "c5ecddb0-7a61-4234-80a9-fa7993e97867.tar",
+			wantKind:       "",
+			wantErr:        true,
+			wantErrMessage: "unexpected format",
+		},
+		{
+			key:            "dpj-sip-12345",
+			wantKind:       "",
+			wantErr:        true,
+			wantErrMessage: "unexpected format",
+		},
+		{
+			key:            "dpj-c5ecddb0-7a61-4234-80a9-fa7993e97867",
+			wantKind:       "",
+			wantErr:        true,
+			wantErrMessage: "attribute (DPJ) does not containt suffix (\"-SIP\")",
+		},
+		{
+			key:            "unknown-sip-c5ecddb0-7a61-4234-80a9-fa7993e97867.tar",
+			wantKind:       "",
+			wantErr:        true,
+			wantErrMessage: "attribute (UNKNOWN) is unexpected/unknown",
+		},
+		{
+			key:      "dpj-sip_c5ecddb0-7a61-4234-80a9-fa7993e97867.tar",
+			wantKind: "DPJ",
+			wantErr:  false,
+		},
+		{
+			key:      "dpj-sip-c5ecddb0-7a61-4234-80a9-fa7993e97867.tar",
+			wantKind: "DPJ",
+			wantErr:  false,
+		},
+		{
+			key:      "dpj-sip-c5ecddb0-7a61-4234-80a9-fa7993e97867.tar",
+			wantKind: "DPJ",
+			wantErr:  false,
+		},
+		{
+			key:      "epj-sip-c5ecddb0-7a61-4234-80a9-fa7993e97867.tar",
+			wantKind: "EPJ",
+			wantErr:  false,
+		},
+		{
+			key:      "avlxml-sip-c5ecddb0-7a61-4234-80a9-fa7993e97867.tar",
+			wantKind: "AVLXML",
+			wantErr:  false,
+		},
+		{
+			key:      "other-sip-c5ecddb0-7a61-4234-80a9-fa7993e97867.tar",
+			wantKind: "OTHER",
+			wantErr:  false,
+		},
+	}
+	for _, tc := range tests {
+		kind, err := extractKind(tc.key)
+
+		assert.Equal(t, kind, tc.wantKind)
+
+		if tc.wantErr {
+			assert.Error(t, err, tc.wantErrMessage)
+		} else {
+			assert.NilError(t, err)
+		}
+	}
 }
