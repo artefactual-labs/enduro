@@ -123,11 +123,15 @@ func (a UpdateHARIActivity) avlxml(path, kind string) string {
 
 // url returns the HARI URL of the API endpoint for AVLXML submission.
 func (a UpdateHARIActivity) url() (string, error) {
-	p, _ := url.Parse("/v1/hari/avlxml")
+	p, _ := url.Parse("v1/hari/avlxml")
 
 	b, err := manager.HookAttrString(a.manager.Hooks, "hari", "baseURL")
 	if err != nil {
 		return "", fmt.Errorf("error looking up baseURL configuration attribute: %v", err)
+	}
+
+	if !strings.HasSuffix(b, "/") {
+		b = b + "/"
 	}
 
 	bu, err := url.Parse(b)

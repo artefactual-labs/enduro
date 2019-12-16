@@ -259,7 +259,7 @@ func TestHARIActivity(t *testing.T) {
 			hariConfig: map[string]interface{}{"baseURL": string([]byte{0x7f})},
 			dirOpts:    []fs.PathOp{fs.WithDir("DPJ/journal"), fs.WithFile("DPJ/journal/avlxml.xml", "<xml/>")},
 			wantErr: activityError{
-				Message: "error in URL construction: error looking up baseURL configuration attribute: parse : net/url: invalid control character in URL",
+				Message: fmt.Sprintf("error in URL construction: error looking up baseURL configuration attribute: parse %s/: net/url: invalid control character in URL", string(0x7f)),
 				NRE:     true,
 			},
 		},
@@ -428,5 +428,36 @@ func TestExtractKind(t *testing.T) {
 		} else {
 			assert.NilError(t, err)
 		}
+	}
+}
+
+func TestHARIURL(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		baseURL string
+		wantURL string
+	}{
+		{
+			baseURL: "http://domain.tld/api/",
+			wantURL: "http://domain.tld/api/v1/hari/avlxml",
+		},
+		{
+			baseURL: "http://domain.tld/foobar/api/",
+			wantURL: "http://domain.tld/foobar/api/v1/hari/avlxml",
+		},
+		{
+			baseURL: "https://domain.tld:12345/api",
+			wantURL: "https://domain.tld:12345/api/v1/hari/avlxml",
+		},
+	}
+	for _, tc := range tests {
+		act := createHariActivity(t, map[string]interface{}{
+			"baseURL": tc.baseURL,
+		})
+
+		have, err := act.url()
+		assert.NilError(t, err)
+		assert.Equal(t, have, tc.wantURL)
 	}
 }
