@@ -23,10 +23,11 @@ func TestProdActivity(t *testing.T) {
 	t.Parallel()
 
 	tests := map[string]struct {
-		params      UpdateProductionSystemActivityParams
-		hookConfig  *map[string]interface{}
-		wantContent string
-		wantErr     activityError
+		params       UpdateProductionSystemActivityParams
+		hookConfig   *map[string]interface{}
+		wantContent  string
+		wantChecksum string
+		wantErr      activityError
 	}{
 		"Receipt is generated successfully with status 'done'": {
 			params: UpdateProductionSystemActivityParams{
@@ -44,6 +45,7 @@ func TestProdActivity(t *testing.T) {
   "timestamp": "2009-11-10T23:00:00Z"
 }
 `,
+			wantChecksum: "eed2dd4ee8a1dcf637b0708e616a4767",
 		},
 		"Receipt is generated successfully with status 'error'": {
 			params: UpdateProductionSystemActivityParams{
@@ -61,6 +63,7 @@ func TestProdActivity(t *testing.T) {
   "timestamp": "2009-11-10T23:00:00Z"
 }
 `,
+			wantChecksum: "210995b572d4e87fed73ca4312d59557",
 		},
 		"Empty OriginalID is rejected": {
 			params: UpdateProductionSystemActivityParams{
@@ -160,8 +163,12 @@ func TestProdActivity(t *testing.T) {
 				tmpdir.Path(),
 				fs.Expected(t,
 					fs.WithFile(
-						fmt.Sprintf("Receipt_%s_%s.json", tc.params.OriginalID, tc.params.StoredAt.Format(rfc3339forFilename)),
+						fmt.Sprintf("Receipt_%s_%s.mft", tc.params.OriginalID, tc.params.StoredAt.Format(rfc3339forFilename)),
 						tc.wantContent,
+						fs.WithMode(os.FileMode(0o644))),
+					fs.WithFile(
+						fmt.Sprintf("Receipt_%s_%s.md5", tc.params.OriginalID, tc.params.StoredAt.Format(rfc3339forFilename)),
+						tc.wantChecksum,
 						fs.WithMode(os.FileMode(0o644))),
 				)))
 		})

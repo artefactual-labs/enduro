@@ -2,12 +2,13 @@ package activities
 
 import (
 	"context"
+	"crypto/md5"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"os"
-	"path"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -19,6 +20,8 @@ import (
 // Similar to time.RFC3339 with dashes and colons removed.
 const rfc3339forFilename = "20060102.150405.999999999"
 
+// UpdateProductionSystemActivity sends a receipt to the production system
+// using their filesystem interface using GoAnywhere.
 type UpdateProductionSystemActivity struct {
 	manager *manager.Manager
 }
@@ -57,22 +60,40 @@ func (a *UpdateProductionSystemActivity) Execute(ctx context.Context, params *Up
 		return wferrors.NonRetryableError(fmt.Errorf("error looking up receiptPath configuration attribute: %v", err))
 	}
 
-	var filename = fmt.Sprintf("Receipt_%s_%s.json", params.OriginalID, params.StoredAt.Format(rfc3339forFilename))
-	receiptPath = path.Join(receiptPath, filename)
+	var basename = filepath.Join(receiptPath, fmt.Sprintf("Receipt_%s_%s", params.OriginalID, params.StoredAt.Format(rfc3339forFilename)))
 
-	file, err := os.OpenFile(receiptPath, os.O_WRONLY|os.O_CREATE, os.FileMode(0o644))
+	// Create and open receipt file.
+	file, err := os.OpenFile(basename+".json", os.O_RDWR|os.O_CREATE, os.FileMode(0o644))
 	if err != nil {
 		return wferrors.NonRetryableError(fmt.Errorf("error creating receipt file: %v", err))
 	}
 
+	// Write receipt contents.
 	if err := a.generateReceipt(params, file); err != nil {
-		return wferrors.NonRetryableError(fmt.Errorf("error writing receipt file %s: %v", receiptPath, err))
+		return wferrors.NonRetryableError(fmt.Errorf("error writing receipt file: %v", err))
+	}
+
+	// Seek to the beginning of the file.
+	if _, err = file.Seek(0, io.SeekStart); err != nil {
+		return wferrors.NonRetryableError(fmt.Errorf("error resetting receipt file cursor: %v", err))
+	}
+
+	// Create checksum file with ".md5" extension instead of ".json" extension.
+	if err := a.generateChecksum(file, basename+".md5"); err != nil {
+		return wferrors.NonRetryableError(fmt.Errorf("error writing checksum file: %v", err))
+	}
+
+	_ = file.Close()
+
+	// Final rename.
+	if err := os.Rename(basename+".json", basename+".mft"); err != nil {
+		return wferrors.NonRetryableError(fmt.Errorf("error renaming receipt (json » mft): %v", err))
 	}
 
 	return nil
 }
 
-func (a UpdateProductionSystemActivity) generateReceipt(params *UpdateProductionSystemActivityParams, writer io.Writer) error {
+func (a UpdateProductionSystemActivity) generateReceipt(params *UpdateProductionSystemActivityParams, file *os.File) error {
 	var accepted bool
 	var message string
 
@@ -92,10 +113,40 @@ func (a UpdateProductionSystemActivity) generateReceipt(params *UpdateProduction
 		Timestamp:  params.StoredAt,
 	}
 
-	enc := json.NewEncoder(writer)
+	enc := json.NewEncoder(file)
 	enc.SetIndent("", "  ")
+	if err := enc.Encode(receipt); err != nil {
+		return fmt.Errorf("encoding failed: %v", err)
+	}
 
-	return enc.Encode(receipt)
+	if err := file.Sync(); err != nil {
+		return fmt.Errorf("sync failed: %v", err)
+	}
+
+	return nil
+}
+
+func (a UpdateProductionSystemActivity) generateChecksum(r io.Reader, path string) error {
+	hasher := md5.New()
+	if _, err := io.Copy(hasher, r); err != nil {
+		return err
+	}
+
+	file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE, os.FileMode(0o644))
+	if err != nil {
+		return fmt.Errorf("open failed: %v", err)
+	}
+	defer file.Close()
+
+	if _, err := fmt.Fprintf(file, "%x", hasher.Sum(nil)); err != nil {
+		return fmt.Errorf("write failed: %v", err)
+	}
+
+	if err := file.Sync(); err != nil {
+		return fmt.Errorf("sync failed: %v", err)
+	}
+
+	return nil
 }
 
 type prodSystemReceipt struct {
