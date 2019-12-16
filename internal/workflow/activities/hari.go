@@ -73,7 +73,7 @@ func (a UpdateHARIActivity) Execute(ctx context.Context, params *UpdateHARIActiv
 		apiURL = ts.URL
 	}
 
-	var path = a.avlxml(filepath.Join(params.FullPath, kind))
+	var path = a.avlxml(params.FullPath, kind)
 	if path == "" {
 		return wferrors.NonRetryableError(fmt.Errorf("error reading AVLXML file: not found"))
 	}
@@ -91,15 +91,34 @@ func (a UpdateHARIActivity) Execute(ctx context.Context, params *UpdateHARIActiv
 }
 
 // avlxml attempts to find the AVLXML document in multiple known locations.
-func (a UpdateHARIActivity) avlxml(prefix string) string {
-	locs := []string{"journal/avlxml.xml", "Journal/avlxml.xml"}
-	for _, loc := range locs {
-		path := filepath.Join(prefix, loc)
-		if stat, err := os.Stat(path); err == nil && !stat.IsDir() {
-			return path
+func (a UpdateHARIActivity) avlxml(path, kind string) string {
+	firstMatch := func(locs []string) string {
+		for _, loc := range locs {
+			if stat, err := os.Stat(loc); err == nil && !stat.IsDir() {
+				return loc
+			}
 		}
+		return ""
 	}
-	return ""
+
+	if kind == "AVLXML" {
+		const objekter = "objekter"
+		matches, err := filepath.Glob(filepath.Join(path, kind, objekter, "avlxml-*.xml"))
+		if err != nil {
+			panic(err)
+		}
+		if len(matches) > 0 {
+			return matches[0]
+		}
+		return firstMatch([]string{
+			filepath.Join(path, kind, objekter, "avlxml.xml"),
+		})
+	}
+
+	return firstMatch([]string{
+		filepath.Join(path, kind, "journal/avlxml.xml"),
+		filepath.Join(path, kind, "Journal/avlxml.xml"),
+	})
 }
 
 // url returns the HARI URL of the API endpoint for AVLXML submission.

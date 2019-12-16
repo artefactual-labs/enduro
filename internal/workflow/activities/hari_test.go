@@ -95,7 +95,24 @@ func TestTable(t *testing.T) {
 				PipelineName: "zr-fig-pipe-001",
 			},
 			hariConfig: map[string]interface{}{},
-			dirOpts:    []fs.PathOp{fs.WithDir("AVLXML/journal"), fs.WithFile("AVLXML/journal/avlxml.xml", "<xml/>")},
+			dirOpts:    []fs.PathOp{fs.WithDir("AVLXML/objekter"), fs.WithFile("AVLXML/objekter/avlxml-2.16.578.1.39.100.11.9876.4-20191104.xml", "<xml/>")},
+			wantReceipt: &avlRequest{
+				Message:   "AVLXML was processed by Archivematica pipeline zr-fig-pipe-001",
+				Type:      "avlxml",
+				Timestamp: time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
+				AIPID:     "1db240cc-3cea-4e55-903c-6280562e1866",
+				XML:       []byte(`<xml/>`),
+			},
+		},
+		"Receipt is delivered successfully (AVLXML alt.)": {
+			params: UpdateHARIActivityParams{
+				StoredAt:     time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
+				SIPID:        "1db240cc-3cea-4e55-903c-6280562e1866",
+				Name:         "AVLXML-SIP-049d6a44-07d6-4aa9-9607-9347ec4d0b23",
+				PipelineName: "zr-fig-pipe-001",
+			},
+			hariConfig: map[string]interface{}{},
+			dirOpts:    []fs.PathOp{fs.WithDir("AVLXML/objekter"), fs.WithFile("AVLXML/objekter/avlxml.xml", "<xml/>")},
 			wantReceipt: &avlRequest{
 				Message:   "AVLXML was processed by Archivematica pipeline zr-fig-pipe-001",
 				Type:      "avlxml",
