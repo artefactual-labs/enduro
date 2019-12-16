@@ -26,7 +26,7 @@ type serverResponse struct {
 	status string
 }
 
-func TestTable(t *testing.T) {
+func TestHARIActivity(t *testing.T) {
 	t.Parallel()
 
 	// Tweak the client so we don't have to wait for too long.

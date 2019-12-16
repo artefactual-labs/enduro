@@ -2,6 +2,7 @@ package activities
 
 import (
 	"fmt"
+	"runtime"
 	"testing"
 
 	wferrors "github.com/artefactual-labs/enduro/internal/workflow/errors"
@@ -12,8 +13,9 @@ import (
 // activityError describes an error assertion, where its zero value is a
 // non-error. Its Assert method is used to assert against a given error value.
 type activityError struct {
-	Message string // Text message.
-	NRE     bool   // Process as a NRE error.
+	Message        string // Text message.
+	MessageWindows string // Test message specific to the Windows platform.
+	NRE            bool   // Process as a NRE error.
 }
 
 func (ae activityError) IsZero() bool {
@@ -36,7 +38,17 @@ func (ae activityError) Assert(t *testing.T, err error) {
 	}
 
 	// Test for a regular error.
-	assert.Error(t, err, ae.Message)
+	assert.Error(t, err, ae.message())
+}
+
+func (ae activityError) message() string {
+	var message = ae.Message
+
+	if runtime.GOOS == "windows" && ae.MessageWindows != "" {
+		message = ae.MessageWindows
+	}
+
+	return message
 }
 
 func (ae activityError) AssertNilError(t *testing.T, err error) {
@@ -73,5 +85,5 @@ func (ae activityError) assertNonRetryableError(t *testing.T, err error) {
 	var result string
 	perr := err.(*cadence.CustomError)
 	assert.NilError(t, perr.Details(&result))
-	assert.Equal(t, result, ae.Message)
+	assert.Equal(t, result, ae.message())
 }

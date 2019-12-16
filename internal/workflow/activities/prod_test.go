@@ -3,7 +3,9 @@ package activities
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -21,6 +23,10 @@ import (
 
 func TestProdActivity(t *testing.T) {
 	t.Parallel()
+
+	tmpdir, err := ioutil.TempDir("", "")
+	assert.NilError(t, err)
+	defer os.RemoveAll(tmpdir)
 
 	tests := map[string]struct {
 		params       UpdateProductionSystemActivityParams
@@ -127,11 +133,12 @@ func TestProdActivity(t *testing.T) {
 				Status:       collection.StatusDone,
 			},
 			hookConfig: &map[string]interface{}{
-				"receiptPath": "/tmp/1/2/3/4/5",
+				"receiptPath": tmpdir,
 			},
 			wantErr: activityError{
-				Message: "error creating receipt file: open /tmp/1/2/3/4/5/Receipt_aa1df25d-1477-4085-8be3-a17fed20f843_20091110.230000.json: no such file or directory",
-				NRE:     true,
+				Message:        fmt.Sprintf("error creating receipt file: open %s: no such file or directory", filepath.Join(tmpdir, "Receipt_aa1df25d-1477-4085-8be3-a17fed20f843_20091110.230000.json")),
+				MessageWindows: fmt.Sprintf("error creating receipt file: open %s: The system cannot find the path specified.", filepath.Join(tmpdir, "Receipt_aa1df25d-1477-4085-8be3-a17fed20f843_20091110.230000.json")),
+				NRE:            true,
 			},
 		},
 	}
