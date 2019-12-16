@@ -14,11 +14,13 @@
         <dt>Activity summary</dt>
         <dd>
           <b-list-group id="activity-summary">
-            <b-list-group-item v-for="(item, index) in activities" v-bind:key="index" :class="{ failed: item.status === 'error' }">
+            <b-list-group-item v-for="(item, index) in activities" v-bind:key="index" :class="{ failed: item.status === 'error', local: item.local }">
               <en-collection-status-badge class="float-right" :status="item.status"/>
-              <strong>{{ item.name }}</strong><br />
-              <span class="date">{{ item.started | formatEpoch }}</span>
-              <span class="float-right duration">{{ item.duration }}s</span>
+              <span class="name" v-if="!item.local">{{ item.name }}</span>
+              <span class="name" v-else>{{ item.name }} (local activity)</span>
+              <span class="date" v-if="item.started">{{ item.started | formatEpoch }}</span>
+              <span class="date" v-if="item.replayed">{{ item.replayed | formatDateTimeString }}</span>
+              <span class="duration float-right" v-if="item.duration">{{ item.duration }}s</span>
               <span class="attempts ml-1" v-if="item.attempts > 1">({{ item.attempts }} attempts)</span>
               <span class="details" v-if="item.details">{{ item.details }}</span>
             </b-list-group-item>
@@ -85,13 +87,28 @@ export default class CollectionShowWorkflow extends Vue {
     ];
     for (const event of this.history.history) {
       const details = event.details;
-      if (event.type === 'ActivityTaskScheduled') {
+      if (event.type === 'MarkerRecorded') {
+        const attrs = details.markerRecordedEventAttributes;
+        if (attrs.markerName === 'LocalActivity') {
+          const innerDetails = JSON.parse(window.atob(attrs.details));
+          this.activities[event.id] = {
+            local: true,
+            name: innerDetails.activityType,
+            attempts: 0,
+            replayed: innerDetails.replayTime,
+          };
+          if (innerDetails.hasOwnProperty('resultJson')) {
+            // JSON.parse(innerDetails.resultJson);
+          }
+        }
+      } else if (event.type === 'ActivityTaskScheduled') {
         const attrs = details.activityTaskScheduledEventAttributes;
         const name = attrs.activityType.name;
         if (ignoredActivities.includes(name)) {
           continue;
         }
         this.activities[event.id] = {
+          local: false,
           name,
           status: 'in progress',
           attempts: 0,
@@ -169,6 +186,22 @@ export default class CollectionShowWorkflow extends Vue {
     font-size: .8rem;
     .list-group-item {
       padding: 0.50rem 0.75rem;
+      &.local {
+        background: rgb(238,238,238);
+        background: linear-gradient(90deg, rgba(255, 255, 255, 1) 75%, rgba(238, 238, 238, 1) 100%);
+        font-size: 0.75rem;
+        padding: 0.25rem 0.75rem;
+        .name {
+          font-weight: normal;
+        }
+        .date {
+          display: none;
+        }
+      }
+    }
+    .name {
+      display: block;
+      font-weight: bold;
     }
     .failed {
       background-color: #ff000011;

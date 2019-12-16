@@ -1,6 +1,11 @@
 import Vue from 'vue';
 
-Vue.filter('formatDateTime', (value: string) => {
+Vue.filter('formatDateTimeString', (value: string) => {
+  const date = new Date(value);
+  return date.toLocaleString();
+});
+
+Vue.filter('formatDateTime', (value: Date) => {
   if (!value) {
     return '';
   }
