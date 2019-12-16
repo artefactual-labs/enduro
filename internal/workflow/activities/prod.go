@@ -37,7 +37,7 @@ type UpdateProductionSystemActivityParams struct {
 
 func (a *UpdateProductionSystemActivity) Execute(ctx context.Context, params *UpdateProductionSystemActivityParams) error {
 	if params.OriginalID == "" {
-		return wferrors.NonRetryableError(errors.New("unknown originalID"))
+		return wferrors.NonRetryableError(errors.New("OriginalID is missing or empty"))
 	}
 
 	var err error
@@ -54,7 +54,7 @@ func (a *UpdateProductionSystemActivity) Execute(ctx context.Context, params *Up
 
 	receiptPath, err := manager.HookAttrString(a.manager.Hooks, "prod", "receiptPath")
 	if err != nil {
-		return fmt.Errorf("error looking up receiptPath configuration attribute: %w", err)
+		return wferrors.NonRetryableError(fmt.Errorf("error looking up receiptPath configuration attribute: %v", err))
 	}
 
 	var filename = fmt.Sprintf("Receipt_%s_%s.json", params.OriginalID, params.StoredAt.Format(rfc3339forFilename))
@@ -62,11 +62,11 @@ func (a *UpdateProductionSystemActivity) Execute(ctx context.Context, params *Up
 
 	file, err := os.OpenFile(receiptPath, os.O_WRONLY|os.O_CREATE, os.FileMode(0o644))
 	if err != nil {
-		return wferrors.NonRetryableError(fmt.Errorf("Error creating receipt file %s: %w", receiptPath, err))
+		return wferrors.NonRetryableError(fmt.Errorf("error creating receipt file: %v", err))
 	}
 
 	if err := a.generateReceipt(params, file); err != nil {
-		return wferrors.NonRetryableError(fmt.Errorf("Error writing receipt file %s: %w", receiptPath, err))
+		return wferrors.NonRetryableError(fmt.Errorf("error writing receipt file %s: %v", receiptPath, err))
 	}
 
 	return nil
@@ -102,6 +102,6 @@ type prodSystemReceipt struct {
 	Identifier string    `json:"identifier"` // Original identifier.
 	Type       string    `json:"type"`       // Lowercase. E.g. "dpj", "epj", "other" or "avlxml".
 	Accepted   bool      `json:"accepted"`   // Whether we have an error during processing.
-	Message    string    `json:"message"`    // E.g. "Package was processed by DPJ Archivematica pipeline" or any other error message.
+	Message    string    `json:"message"`    // E.g. "Package was processed by Archivematica pipeline am" or any other error message.
 	Timestamp  time.Time `json:"timestamp"`  // RFC3339, e.g. "2006-01-02T15:04:05Z07:00"
 }

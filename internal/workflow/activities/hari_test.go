@@ -12,14 +12,12 @@ import (
 
 	logrt "github.com/go-logr/logr/testing"
 	"github.com/golang/mock/gomock"
-	"go.uber.org/cadence"
 	"gotest.tools/v3/assert"
 	"gotest.tools/v3/fs"
 
 	collectionfake "github.com/artefactual-labs/enduro/internal/collection/fake"
 	"github.com/artefactual-labs/enduro/internal/pipeline"
 	watcherfake "github.com/artefactual-labs/enduro/internal/watcher/fake"
-	wferrors "github.com/artefactual-labs/enduro/internal/workflow/errors"
 	"github.com/artefactual-labs/enduro/internal/workflow/manager"
 )
 
@@ -45,20 +43,15 @@ func TestTable(t *testing.T) {
 		// Temporary directory options. Optional.
 		dirOpts []fs.PathOp
 
-		// Payload of the receipt that is expected by this test. Optional.
-		receipt *avlRequest
+		// Payload of the wantReceipt that is expected by this test. Optional.
+		wantReceipt *avlRequest
 
 		// If non-nil, this will be the status code and status returned by the
 		// handler of the fake HTTP server.
-		response *serverResponse
+		wantResponse *serverResponse
 
-		// Expected error: reason + details. Optional.
-		//
-		// If reason == NRE (non retryable error), we're confirming that the
-		// workflow gives up right away (as long as the retry policy attached
-		// is set up properly). details are only compared when NRE is used as
-		// it's a parameter specific to cadence.CustomError.
-		err []string
+		// Expected error: see activityError for more.
+		wantErr activityError
 	}{
 		"Receipt is delivered successfully (DPJ)": {
 			params: UpdateHARIActivityParams{
@@ -69,7 +62,7 @@ func TestTable(t *testing.T) {
 			},
 			hariConfig: map[string]interface{}{},
 			dirOpts:    []fs.PathOp{fs.WithDir("DPJ/journal"), fs.WithFile("DPJ/journal/avlxml.xml", "<xml/>")},
-			receipt: &avlRequest{
+			wantReceipt: &avlRequest{
 				Message:   "AVLXML was processed by Archivematica pipeline zr-fig-pipe-001",
 				Type:      "dpj",
 				Timestamp: time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
@@ -86,7 +79,7 @@ func TestTable(t *testing.T) {
 			},
 			hariConfig: map[string]interface{}{},
 			dirOpts:    []fs.PathOp{fs.WithDir("EPJ/journal"), fs.WithFile("EPJ/journal/avlxml.xml", "<xml/>")},
-			receipt: &avlRequest{
+			wantReceipt: &avlRequest{
 				Message:   "AVLXML was processed by Archivematica pipeline zr-fig-pipe-001",
 				Type:      "epj",
 				Timestamp: time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
@@ -103,7 +96,7 @@ func TestTable(t *testing.T) {
 			},
 			hariConfig: map[string]interface{}{},
 			dirOpts:    []fs.PathOp{fs.WithDir("AVLXML/journal"), fs.WithFile("AVLXML/journal/avlxml.xml", "<xml/>")},
-			receipt: &avlRequest{
+			wantReceipt: &avlRequest{
 				Message:   "AVLXML was processed by Archivematica pipeline zr-fig-pipe-001",
 				Type:      "avlxml",
 				Timestamp: time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
@@ -120,7 +113,7 @@ func TestTable(t *testing.T) {
 			},
 			hariConfig: map[string]interface{}{},
 			dirOpts:    []fs.PathOp{fs.WithDir("OTHER/journal"), fs.WithFile("OTHER/journal/avlxml.xml", "<xml/>")},
-			receipt: &avlRequest{
+			wantReceipt: &avlRequest{
 				Message:   "AVLXML was processed by Archivematica pipeline zr-fig-pipe-001",
 				Type:      "other",
 				Timestamp: time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
@@ -137,7 +130,7 @@ func TestTable(t *testing.T) {
 			},
 			hariConfig: map[string]interface{}{},
 			dirOpts:    []fs.PathOp{fs.WithDir("DPJ/Journal"), fs.WithFile("DPJ/Journal/avlxml.xml", "<xml/>")},
-			receipt: &avlRequest{
+			wantReceipt: &avlRequest{
 				Message:   "AVLXML was processed by Archivematica pipeline zr-fig-pipe-001",
 				Type:      "dpj",
 				Timestamp: time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
@@ -154,7 +147,7 @@ func TestTable(t *testing.T) {
 			},
 			hariConfig: map[string]interface{}{},
 			dirOpts:    []fs.PathOp{fs.WithDir("DPJ/journal"), fs.WithFile("DPJ/journal/avlxml.xml", "<xml/>")},
-			receipt: &avlRequest{
+			wantReceipt: &avlRequest{
 				Message:   "AVLXML was processed by Archivematica pipeline zr-fig-pipe-001",
 				Type:      "dpj",
 				Timestamp: time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
@@ -179,17 +172,20 @@ func TestTable(t *testing.T) {
 				Kind:         "dpj-sip",
 				PipelineName: "zr-fig-pipe-001",
 			},
-			hariConfig: map[string]interface{}{},
-			dirOpts:    []fs.PathOp{fs.WithDir("DPJ/journal"), fs.WithFile("DPJ/journal/avlxml.xml", "<xml/>")},
-			response:   &serverResponse{code: 500, status: "Backend server not available, try again later."},
-			receipt: &avlRequest{
+			hariConfig:   map[string]interface{}{},
+			dirOpts:      []fs.PathOp{fs.WithDir("DPJ/journal"), fs.WithFile("DPJ/journal/avlxml.xml", "<xml/>")},
+			wantResponse: &serverResponse{code: 500, status: "Backend server not available, try again later."},
+			wantReceipt: &avlRequest{
 				Message:   "AVLXML was processed by Archivematica pipeline zr-fig-pipe-001",
 				Type:      "dpj",
 				Timestamp: time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
 				AIPID:     "1db240cc-3cea-4e55-903c-6280562e1866",
 				XML:       []byte(`<xml/>`),
 			},
-			err: []string{"error sending request: unexpected response status: 500 Internal Server Error"},
+			wantErr: activityError{
+				Message: "error sending request: unexpected response status: 500 Internal Server Error",
+				NRE:     false,
+			},
 		},
 		"Empty kind is rejected": {
 			params: UpdateHARIActivityParams{
@@ -197,7 +193,10 @@ func TestTable(t *testing.T) {
 				SIPID:    "1db240cc-3cea-4e55-903c-6280562e1866",
 				Kind:     "",
 			},
-			err: []string{wferrors.NRE, "error validating kind attribute: empty"},
+			wantErr: activityError{
+				Message: "error validating kind attribute: empty",
+				NRE:     true,
+			},
 		},
 		"Unsuffixed kind is rejected": {
 			params: UpdateHARIActivityParams{
@@ -205,7 +204,10 @@ func TestTable(t *testing.T) {
 				SIPID:    "1db240cc-3cea-4e55-903c-6280562e1866",
 				Kind:     "DPJ",
 			},
-			err: []string{wferrors.NRE, "error validating kind attribute: attribute (DPJ) does not containt suffix (\"-SIP\")"},
+			wantErr: activityError{
+				Message: "error validating kind attribute: attribute (DPJ) does not containt suffix (\"-SIP\")",
+				NRE:     true,
+			},
 		},
 		"Unknown kind is rejected": {
 			params: UpdateHARIActivityParams{
@@ -213,7 +215,10 @@ func TestTable(t *testing.T) {
 				SIPID:    "1db240cc-3cea-4e55-903c-6280562e1866",
 				Kind:     "FOOBAR-SIP",
 			},
-			err: []string{wferrors.NRE, "error validating kind attribute: attribute (FOOBAR) is unexpected/unknown"},
+			wantErr: activityError{
+				Message: "error validating kind attribute: attribute (FOOBAR) is unexpected/unknown",
+				NRE:     true,
+			},
 		},
 		"Unexisten AVLXML file causes error": {
 			params: UpdateHARIActivityParams{
@@ -223,7 +228,10 @@ func TestTable(t *testing.T) {
 			},
 			hariConfig: map[string]interface{}{"baseURL": "http://192.168.1.50:12345"},
 			dirOpts:    []fs.PathOp{fs.WithDir("DPJ/journal"), fs.WithFile("DPJ/journal/_____other_name_____.xml", "<xml/>")},
-			err:        []string{wferrors.NRE, "error reading AVLXML file: not found"},
+			wantErr: activityError{
+				Message: "error reading AVLXML file: not found",
+				NRE:     true,
+			},
 		},
 		"Unparseable baseURL is rejected": {
 			params: UpdateHARIActivityParams{
@@ -233,7 +241,10 @@ func TestTable(t *testing.T) {
 			},
 			hariConfig: map[string]interface{}{"baseURL": string([]byte{0x7f})},
 			dirOpts:    []fs.PathOp{fs.WithDir("DPJ/journal"), fs.WithFile("DPJ/journal/avlxml.xml", "<xml/>")},
-			err:        []string{wferrors.NRE, "error in URL construction: error looking up baseURL configuration attribute: parse : net/url: invalid control character in URL"},
+			wantErr: activityError{
+				Message: "error in URL construction: error looking up baseURL configuration attribute: parse : net/url: invalid control character in URL",
+				NRE:     true,
+			},
 		},
 	}
 
@@ -249,19 +260,19 @@ func TestTable(t *testing.T) {
 				assert.Equal(t, r.Header.Get("Content-Type"), "application/json")
 				assert.Equal(t, r.Header.Get("User-Agent"), "Enduro")
 
-				if tc.receipt != nil {
+				if tc.wantReceipt != nil {
 					blob, err := ioutil.ReadAll(r.Body)
 					assert.NilError(t, err)
 					defer r.Body.Close()
 
-					want, have := tc.receipt, &avlRequest{}
+					want, have := tc.wantReceipt, &avlRequest{}
 					assert.NilError(t, json.Unmarshal(blob, have))
 					assert.DeepEqual(t, want, have)
 				}
 
-				if tc.response != nil {
-					w.WriteHeader(tc.response.code)
-					w.Write([]byte(tc.response.status))
+				if tc.wantResponse != nil {
+					w.WriteHeader(tc.wantResponse.code)
+					w.Write([]byte(tc.wantResponse.status))
 					return
 				}
 
@@ -289,14 +300,18 @@ func TestTable(t *testing.T) {
 
 			err := act.Execute(context.Background(), &tc.params)
 
-			switch {
-			case tc.err != nil && len(tc.err) > 0 && tc.err[0] == wferrors.NRE:
-				assertCustomError(t, err, tc.err[0], tc.err[1])
-			case tc.err != nil:
-				assert.Error(t, err, tc.err[0])
-			case tc.err == nil:
-				assert.NilError(t, err, customErrorDetails(err))
-			}
+			tc.wantErr.Assert(t, err)
+
+			/*
+				switch {
+				case tc.wantErr != nil && len(tc.wantErr) > 0 && tc.wantErr[0] == wferrors.NRE:
+					assertCustomError(t, err, tc.wantErr[0], tc.wantErr[1])
+				case tc.wantErr != nil:
+					assert.Error(t, err, tc.wantErr[0])
+				case tc.wantErr == nil:
+					assert.NilError(t, err, customErrorDetails(err))
+				}
+			*/
 		})
 	}
 }
@@ -319,32 +334,4 @@ func createHariActivity(t *testing.T, hariConfig map[string]interface{}) *Update
 	)
 
 	return NewUpdateHARIActivity(manager)
-}
-
-// assertCustomError verifies the properties of a cadence.CustomError.
-func assertCustomError(t *testing.T, err error, reason string, details string) {
-	t.Helper()
-
-	assert.ErrorType(t, err, &cadence.CustomError{})
-	assert.ErrorContains(t, err, reason)
-
-	var result string
-	perr := err.(*cadence.CustomError)
-	assert.NilError(t, perr.Details(&result))
-	assert.Equal(t, result, details)
-}
-
-// customErrorDetails extracts the details of a cadence.CustomError when possible.
-func customErrorDetails(err error) string {
-	var result string
-	perr, ok := err.(*cadence.CustomError)
-	if !ok {
-		return ""
-	}
-
-	if err := perr.Details(&result); err != nil {
-		return ""
-	}
-
-	return result
 }
