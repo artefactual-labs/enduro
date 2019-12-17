@@ -222,8 +222,14 @@ func (t avlRequestTime) MarshalJSON() ([]byte, error) {
 	return []byte(s), nil
 }
 
-var knownKinds = []string{
-	"DPJ", "EPJ", "AVLXML", "OTHER",
+var knownKinds = map[string]string{
+	"DPJ":       "DPJ",
+	"EPJ":       "EPJ",
+	"OTHER":     "OTHER",
+	"AVL-DPJ":   "AVLXML",
+	"AVL-EPJ":   "AVLXML",
+	"AVL-OTHER": "AVLXML",
+	"AVLXML":    "AVLXML",
 }
 
 var regex = regexp.MustCompile(`^(?P<kind>.*)[-_](?P<uuid>[a-zA-Z0-9]{8}-[a-zA-Z0-9]{4}-[1-5][a-zA-Z0-9]{3}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{12})(?P<fileext>\..*)?$`)
@@ -250,16 +256,10 @@ func extractKind(name string) (string, error) {
 	}
 	kind = strings.TrimSuffix(kind, "-SIP")
 
-	var known bool
-	for _, k := range knownKinds {
-		if k == kind {
-			known = true
-			break
-		}
-	}
-	if !known {
+	subtype, ok := knownKinds[kind]
+	if !ok {
 		return "", fmt.Errorf("attribute (%s) is unexpected/unknown", kind)
 	}
 
-	return kind, nil
+	return subtype, nil
 }

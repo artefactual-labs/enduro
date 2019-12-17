@@ -200,7 +200,7 @@ func TestHARIActivity(t *testing.T) {
 				XML:       []byte(`<xml/>`),
 			},
 			wantErr: activityError{
-				Message: "error sending request: (unexpected response status: 500 Internal Server Error) - Backend server not available, try again later.",
+				Message: "error sending request: (unexpected response status: 500 Internal Server Error) - Backend server not available, try again later.\n",
 				NRE:     false,
 			},
 		},
@@ -288,8 +288,7 @@ func TestHARIActivity(t *testing.T) {
 				}
 
 				if tc.wantResponse != nil {
-					w.WriteHeader(tc.wantResponse.code)
-					w.Write([]byte(tc.wantResponse.status))
+					http.Error(w, tc.wantResponse.status, tc.wantResponse.code)
 					return
 				}
 
@@ -415,6 +414,11 @@ func TestExtractKind(t *testing.T) {
 		{
 			key:      "other-sip-c5ecddb0-7a61-4234-80a9-fa7993e97867.tar",
 			wantKind: "OTHER",
+			wantErr:  false,
+		},
+		{
+			key:      "AVL-DPJ-SIP-c5ecddb0-7a61-4234-80a9-fa7993e97867.tar",
+			wantKind: "AVLXML",
 			wantErr:  false,
 		},
 	}
