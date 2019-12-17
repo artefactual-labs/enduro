@@ -147,7 +147,7 @@ func (a UpdateHARIActivity) sendRequest(ctx context.Context, blob []byte, apiURL
 		XML:       blob,
 		Message:   fmt.Sprintf("AVLXML was processed by Archivematica pipeline %s", params.PipelineName),
 		Type:      strings.ToLower(kind),
-		Timestamp: params.StoredAt,
+		Timestamp: avlRequestTime{params.StoredAt},
 		AIPID:     params.SIPID,
 	}
 
@@ -174,6 +174,13 @@ func (a UpdateHARIActivity) sendRequest(ctx context.Context, blob []byte, apiURL
 		err = nil
 	default:
 		err = fmt.Errorf("unexpected response status: %s", resp.Status)
+
+		// Enrich error message with the payload returned when available.
+		payload, rerr := ioutil.ReadAll(resp.Body)
+		if rerr == nil && len(payload) > 0 {
+			err = fmt.Errorf("(%v) - %s", err, payload)
+		}
+		defer resp.Body.Close()
 	}
 
 	return err
@@ -194,11 +201,25 @@ func (a UpdateHARIActivity) buildMock() *httptest.Server {
 }
 
 type avlRequest struct {
-	XML       []byte    `json:"xml"`       // AVLXML document encoded using base64.
-	Message   string    `json:"message"`   // E.g.: "AVLXML was processed by DPJ Archivematica pipeline"
-	Type      string    `json:"type"`      // Lowercase. E.g.: "dpj", "epj", "other" or "avlxml".
-	Timestamp time.Time `json:"timestamp"` // RFC3339. E.g. "2006-01-02T15:04:05Z07:00".
-	AIPID     string    `json:"aip_id"`
+	XML       []byte         `json:"xml"`       // AVLXML document encoded using base64.
+	Message   string         `json:"message"`   // E.g.: "AVLXML was processed by DPJ Archivematica pipeline"
+	Type      string         `json:"type"`      // Lowercase. E.g.: "dpj", "epj", "other" or "avlxml".
+	Timestamp avlRequestTime `json:"timestamp"` // E.g.: "2018-11-12T20:20:39+00:00".
+	AIPID     string         `json:"aip_id"`
+}
+
+// avlRequestTime encodes time in JSON using the format expected by HARI.
+//
+// * HARI wants   => "2018-11-12T20:20:39+00:00"
+// * time.RFC3339 => "2006-01-02T15:04:05Z07:00"
+type avlRequestTime struct {
+	time.Time
+}
+
+func (t avlRequestTime) MarshalJSON() ([]byte, error) {
+	const format = "2006-01-02T15:04:05-07:00"
+	var s = fmt.Sprintf("\"%s\"", t.Time.Format(format))
+	return []byte(s), nil
 }
 
 var knownKinds = []string{

@@ -65,7 +65,7 @@ func TestHARIActivity(t *testing.T) {
 			wantReceipt: &avlRequest{
 				Message:   "AVLXML was processed by Archivematica pipeline zr-fig-pipe-001",
 				Type:      "dpj",
-				Timestamp: time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
+				Timestamp: avlRequestTime{time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)},
 				AIPID:     "1db240cc-3cea-4e55-903c-6280562e1866",
 				XML:       []byte(`<xml/>`),
 			},
@@ -82,7 +82,7 @@ func TestHARIActivity(t *testing.T) {
 			wantReceipt: &avlRequest{
 				Message:   "AVLXML was processed by Archivematica pipeline zr-fig-pipe-001",
 				Type:      "epj",
-				Timestamp: time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
+				Timestamp: avlRequestTime{time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)},
 				AIPID:     "1db240cc-3cea-4e55-903c-6280562e1866",
 				XML:       []byte(`<xml/>`),
 			},
@@ -99,7 +99,7 @@ func TestHARIActivity(t *testing.T) {
 			wantReceipt: &avlRequest{
 				Message:   "AVLXML was processed by Archivematica pipeline zr-fig-pipe-001",
 				Type:      "avlxml",
-				Timestamp: time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
+				Timestamp: avlRequestTime{time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)},
 				AIPID:     "1db240cc-3cea-4e55-903c-6280562e1866",
 				XML:       []byte(`<xml/>`),
 			},
@@ -116,7 +116,7 @@ func TestHARIActivity(t *testing.T) {
 			wantReceipt: &avlRequest{
 				Message:   "AVLXML was processed by Archivematica pipeline zr-fig-pipe-001",
 				Type:      "avlxml",
-				Timestamp: time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
+				Timestamp: avlRequestTime{time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)},
 				AIPID:     "1db240cc-3cea-4e55-903c-6280562e1866",
 				XML:       []byte(`<xml/>`),
 			},
@@ -133,7 +133,7 @@ func TestHARIActivity(t *testing.T) {
 			wantReceipt: &avlRequest{
 				Message:   "AVLXML was processed by Archivematica pipeline zr-fig-pipe-001",
 				Type:      "other",
-				Timestamp: time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
+				Timestamp: avlRequestTime{time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)},
 				AIPID:     "1db240cc-3cea-4e55-903c-6280562e1866",
 				XML:       []byte(`<xml/>`),
 			},
@@ -150,7 +150,7 @@ func TestHARIActivity(t *testing.T) {
 			wantReceipt: &avlRequest{
 				Message:   "AVLXML was processed by Archivematica pipeline zr-fig-pipe-001",
 				Type:      "dpj",
-				Timestamp: time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
+				Timestamp: avlRequestTime{time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)},
 				AIPID:     "1db240cc-3cea-4e55-903c-6280562e1866",
 				XML:       []byte(`<xml/>`),
 			},
@@ -167,7 +167,7 @@ func TestHARIActivity(t *testing.T) {
 			wantReceipt: &avlRequest{
 				Message:   "AVLXML was processed by Archivematica pipeline zr-fig-pipe-001",
 				Type:      "dpj",
-				Timestamp: time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
+				Timestamp: avlRequestTime{time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)},
 				AIPID:     "1db240cc-3cea-4e55-903c-6280562e1866",
 				XML:       []byte(`<xml/>`),
 			},
@@ -195,12 +195,12 @@ func TestHARIActivity(t *testing.T) {
 			wantReceipt: &avlRequest{
 				Message:   "AVLXML was processed by Archivematica pipeline zr-fig-pipe-001",
 				Type:      "dpj",
-				Timestamp: time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
+				Timestamp: avlRequestTime{time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)},
 				AIPID:     "1db240cc-3cea-4e55-903c-6280562e1866",
 				XML:       []byte(`<xml/>`),
 			},
 			wantErr: activityError{
-				Message: "error sending request: unexpected response status: 500 Internal Server Error",
+				Message: "error sending request: (unexpected response status: 500 Internal Server Error) - Backend server not available, try again later.",
 				NRE:     false,
 			},
 		},
