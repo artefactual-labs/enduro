@@ -166,16 +166,17 @@ func TestProdActivity(t *testing.T) {
 				return
 			}
 
+			var base = fmt.Sprintf("Receipt_%s_%s", tc.params.OriginalID, tc.params.StoredAt.Format(rfc3339forFilename))
 			assert.Assert(t, fs.Equal(
 				tmpdir.Path(),
 				fs.Expected(t,
 					fs.WithFile(
-						fmt.Sprintf("Receipt_%s_%s.mft", tc.params.OriginalID, tc.params.StoredAt.Format(rfc3339forFilename)),
+						base+".mft",
 						tc.wantContent,
 						fs.WithMode(os.FileMode(0o644))),
 					fs.WithFile(
-						fmt.Sprintf("Receipt_%s_%s.md5", tc.params.OriginalID, tc.params.StoredAt.Format(rfc3339forFilename)),
-						tc.wantChecksum,
+						base+".md5",
+						fmt.Sprintf("%s  %s", tc.wantChecksum, filepath.Join(tmpdir.Path(), base+".mft")),
 						fs.WithMode(os.FileMode(0o644))),
 				)))
 		})

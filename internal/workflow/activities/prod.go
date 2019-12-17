@@ -60,9 +60,12 @@ func (a *UpdateProductionSystemActivity) Execute(ctx context.Context, params *Up
 	}
 
 	var basename = filepath.Join(receiptPath, fmt.Sprintf("Receipt_%s_%s", params.OriginalID, params.StoredAt.Format(rfc3339forFilename)))
+	var jsonPath = basename + ".json"
+	var md5Path = basename + ".md5"
+	var mftPath = basename + ".mft"
 
 	// Create and open receipt file.
-	file, err := os.OpenFile(basename+".json", os.O_RDWR|os.O_CREATE, os.FileMode(0o644))
+	file, err := os.OpenFile(jsonPath, os.O_RDWR|os.O_CREATE, os.FileMode(0o644))
 	if err != nil {
 		return wferrors.NonRetryableError(fmt.Errorf("error creating receipt file: %v", err))
 	}
@@ -78,14 +81,14 @@ func (a *UpdateProductionSystemActivity) Execute(ctx context.Context, params *Up
 	}
 
 	// Create checksum file with ".md5" extension instead of ".json" extension.
-	if err := a.generateChecksum(file, basename+".md5"); err != nil {
+	if err := a.generateChecksum(file, mftPath, md5Path); err != nil {
 		return wferrors.NonRetryableError(fmt.Errorf("error writing checksum file: %v", err))
 	}
 
 	_ = file.Close()
 
 	// Final rename.
-	if err := os.Rename(basename+".json", basename+".mft"); err != nil {
+	if err := os.Rename(jsonPath, mftPath); err != nil {
 		return wferrors.NonRetryableError(fmt.Errorf("error renaming receipt (json » mft): %v", err))
 	}
 
@@ -125,19 +128,19 @@ func (a UpdateProductionSystemActivity) generateReceipt(params *UpdateProduction
 	return nil
 }
 
-func (a UpdateProductionSystemActivity) generateChecksum(r io.Reader, path string) error {
+func (a UpdateProductionSystemActivity) generateChecksum(r io.Reader, mftPath, md5Path string) error {
 	hasher := md5.New()
 	if _, err := io.Copy(hasher, r); err != nil {
 		return err
 	}
 
-	file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE, os.FileMode(0o644))
+	file, err := os.OpenFile(md5Path, os.O_WRONLY|os.O_CREATE, os.FileMode(0o644))
 	if err != nil {
 		return fmt.Errorf("open failed: %v", err)
 	}
 	defer file.Close()
 
-	if _, err := fmt.Fprintf(file, "%x", hasher.Sum(nil)); err != nil {
+	if _, err := fmt.Fprintf(file, "%x  %s", hasher.Sum(nil), mftPath); err != nil {
 		return fmt.Errorf("write failed: %v", err)
 	}
 
