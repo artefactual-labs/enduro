@@ -1,11 +1,17 @@
 package nha
 
 import (
+	"strings"
 	"testing"
 	"time"
 
 	"gotest.tools/v3/assert"
 )
+
+func TestTransferTypeUnknown(t *testing.T) {
+	var unknown TransferType
+	assert.Equal(t, "", unknown.String())
+}
 
 func TestParse(t *testing.T) {
 	t.Parallel()
@@ -147,6 +153,7 @@ func TestParse(t *testing.T) {
 			assert.NilError(t, err, tc.input)
 			assert.DeepEqual(t, *res, tc.wantResult)
 			assert.Equal(t, res.Value, tc.wantResult.String())
+			assert.Equal(t, strings.ToLower(res.Type.String()), tc.wantResult.Type.Lower())
 		})
 	}
 }
