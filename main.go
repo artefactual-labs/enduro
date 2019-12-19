@@ -17,6 +17,7 @@ import (
 	"github.com/artefactual-labs/enduro/internal/cadence"
 	"github.com/artefactual-labs/enduro/internal/collection"
 	"github.com/artefactual-labs/enduro/internal/db"
+	nha_activities "github.com/artefactual-labs/enduro/internal/nha/activities"
 	"github.com/artefactual-labs/enduro/internal/pipeline"
 	"github.com/artefactual-labs/enduro/internal/watcher"
 	"github.com/artefactual-labs/enduro/internal/workflow"
@@ -206,16 +207,18 @@ func main() {
 		m := manager.NewManager(logger, colsvc, wsvc, pipelineRegistry, config.Hooks)
 
 		cadence.RegisterWorkflow(workflow.NewProcessingWorkflow(m).Execute, collection.ProcessingWorkflowName)
+
 		cadence.RegisterActivity(activities.NewDownloadActivity(m).Execute, activities.DownloadActivityName)
 		cadence.RegisterActivity(activities.NewBundleActivity().Execute, activities.BundleActivityName)
 		cadence.RegisterActivity(activities.NewTransferActivity(m).Execute, activities.TransferActivityName)
 		cadence.RegisterActivity(activities.NewPollTransferActivity(m).Execute, activities.PollTransferActivityName)
 		cadence.RegisterActivity(activities.NewPollIngestActivity(m).Execute, activities.PollIngestActivityName)
-		cadence.RegisterActivity(activities.NewUpdateHARIActivity(m).Execute, activities.UpdateHARIActivityName)
-		cadence.RegisterActivity(activities.NewUpdateProductionSystemActivity(m).Execute, activities.UpdateProductionSystemActivityName)
 		cadence.RegisterActivity(activities.NewCleanUpActivity(m).Execute, activities.CleanUpActivityName)
 		cadence.RegisterActivity(activities.NewHidePackageActivity(m).Execute, activities.HidePackageActivityName)
 		cadence.RegisterActivity(activities.NewDeleteOriginalActivity(m).Execute, activities.DeleteOriginalActivityName)
+
+		cadence.RegisterActivity(nha_activities.NewUpdateHARIActivity(m).Execute, nha_activities.UpdateHARIActivityName)
+		cadence.RegisterActivity(nha_activities.NewUpdateProductionSystemActivity(m).Execute, nha_activities.UpdateProductionSystemActivityName)
 
 		done := make(chan struct{})
 		w, err := cadence.NewWorker(zlogger.Named("cadence-worker"), appName, config.Cadence)

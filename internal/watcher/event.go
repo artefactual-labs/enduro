@@ -2,10 +2,7 @@ package watcher
 
 import (
 	"fmt"
-	"regexp"
 	"time"
-
-	"github.com/google/uuid"
 )
 
 // BlobEvent is a serializable event that describes a blob.
@@ -59,18 +56,4 @@ func (e BlobEvent) String() string {
 	}
 
 	return fmt.Sprintf("%q:%q", e.WatcherName, key)
-}
-
-var uuid4regex = regexp.MustCompile(`[a-zA-Z0-9]{8}-[a-zA-Z0-9]{4}-[1-5][a-zA-Z0-9]{3}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{12}`)
-
-// NamedUUID finds the leftmost UUID match in the name of the event.
-func (e BlobEvent) NamedUUID() string {
-	s := uuid4regex.FindString(e.Key)
-
-	_, err := uuid.Parse(s)
-	if err != nil {
-		return ""
-	}
-
-	return s
 }

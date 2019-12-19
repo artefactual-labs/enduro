@@ -11,7 +11,9 @@ import (
 
 	"github.com/artefactual-labs/enduro/internal/collection"
 	collectionfake "github.com/artefactual-labs/enduro/internal/collection/fake"
+	"github.com/artefactual-labs/enduro/internal/nha"
 	"github.com/artefactual-labs/enduro/internal/pipeline"
+	"github.com/artefactual-labs/enduro/internal/testutil"
 	watcherfake "github.com/artefactual-labs/enduro/internal/watcher/fake"
 	"github.com/artefactual-labs/enduro/internal/workflow/manager"
 	"gotest.tools/v3/assert"
@@ -33,15 +35,17 @@ func TestProdActivity(t *testing.T) {
 		hookConfig   *map[string]interface{}
 		wantContent  string
 		wantChecksum string
-		wantErr      activityError
+		wantErr      testutil.ActivityError
 	}{
 		"Receipt is generated successfully with status 'done'": {
 			params: UpdateProductionSystemActivityParams{
-				OriginalID:   "aa1df25d-1477-4085-8be3-a17fed20f843",
-				Name:         "DPJ-SIP-049d6a44-07d6-4aa9-9607-9347ec4d0b23",
 				StoredAt:     time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
 				PipelineName: "foo-bar-001",
 				Status:       collection.StatusDone,
+				NameInfo: nha.NameInfo{
+					Identifier: "aa1df25d-1477-4085-8be3-a17fed20f843",
+					Type:       nha.TransferTypeDPJ,
+				},
 			},
 			wantContent: `{
   "identifier": "aa1df25d-1477-4085-8be3-a17fed20f843",
@@ -55,11 +59,13 @@ func TestProdActivity(t *testing.T) {
 		},
 		"Receipt is generated successfully with status 'error'": {
 			params: UpdateProductionSystemActivityParams{
-				OriginalID:   "aa1df25d-1477-4085-8be3-a17fed20f843",
-				Name:         "DPJ-SIP-049d6a44-07d6-4aa9-9607-9347ec4d0b23",
 				StoredAt:     time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
 				PipelineName: "foo-bar-002",
 				Status:       collection.StatusError,
+				NameInfo: nha.NameInfo{
+					Identifier: "aa1df25d-1477-4085-8be3-a17fed20f843",
+					Type:       nha.TransferTypeDPJ,
+				},
 			},
 			wantContent: `{
   "identifier": "aa1df25d-1477-4085-8be3-a17fed20f843",
@@ -71,71 +77,36 @@ func TestProdActivity(t *testing.T) {
 `,
 			wantChecksum: "210995b572d4e87fed73ca4312d59557",
 		},
-		"Empty OriginalID is rejected": {
-			params: UpdateProductionSystemActivityParams{
-				OriginalID:   "",
-				Name:         "DPJ-SIP-049d6a44-07d6-4aa9-9607-9347ec4d0b23",
-				StoredAt:     time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
-				PipelineName: "foo-bar-002",
-				Status:       collection.StatusError,
-			},
-			wantErr: activityError{
-				Message: "OriginalID is missing or empty",
-				NRE:     true,
-			},
-		},
-		"Unknown kind is rejected": {
-			params: UpdateProductionSystemActivityParams{
-				OriginalID:   "aa1df25d-1477-4085-8be3-a17fed20f843",
-				Name:         "FOOBAR-SIP-049d6a44-07d6-4aa9-9607-9347ec4d0b23",
-				StoredAt:     time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
-				PipelineName: "foo-bar-002",
-				Status:       collection.StatusError,
-			},
-			wantErr: activityError{
-				Message: "error extracting kind attribute: attribute (FOOBAR) is unexpected/unknown",
-				NRE:     true,
-			},
-		},
-		"Malformed kind is rejected": {
-			params: UpdateProductionSystemActivityParams{
-				OriginalID:   "aa1df25d-1477-4085-8be3-a17fed20f843",
-				Name:         "DPJ-049d6a44-07d6-4aa9-9607-9347ec4d0b23",
-				StoredAt:     time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
-				PipelineName: "foo-bar-002",
-				Status:       collection.StatusError,
-			},
-			wantErr: activityError{
-				Message: "error extracting kind attribute: attribute (DPJ) does not containt suffix (\"-SIP\")",
-				NRE:     true,
-			},
-		},
 		"Missing receiptPath is rejected": {
 			params: UpdateProductionSystemActivityParams{
-				OriginalID:   "aa1df25d-1477-4085-8be3-a17fed20f843",
-				Name:         "DPJ-SIP-049d6a44-07d6-4aa9-9607-9347ec4d0b23",
 				StoredAt:     time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
 				PipelineName: "foo-bar-001",
 				Status:       collection.StatusDone,
+				NameInfo: nha.NameInfo{
+					Identifier: "aa1df25d-1477-4085-8be3-a17fed20f843",
+					Type:       nha.TransferTypeDPJ,
+				},
 			},
 			hookConfig: &map[string]interface{}{},
-			wantErr: activityError{
+			wantErr: testutil.ActivityError{
 				Message: "error looking up receiptPath configuration attribute: error accessing \"prod:receiptPath\"",
 				NRE:     true,
 			},
 		},
 		"Unexistent receiptPath is rejected": {
 			params: UpdateProductionSystemActivityParams{
-				OriginalID:   "aa1df25d-1477-4085-8be3-a17fed20f843",
-				Name:         "DPJ-SIP-049d6a44-07d6-4aa9-9607-9347ec4d0b23",
 				StoredAt:     time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
 				PipelineName: "foo-bar-001",
 				Status:       collection.StatusDone,
+				NameInfo: nha.NameInfo{
+					Identifier: "aa1df25d-1477-4085-8be3-a17fed20f843",
+					Type:       nha.TransferTypeDPJ,
+				},
 			},
 			hookConfig: &map[string]interface{}{
 				"receiptPath": tmpdir,
 			},
-			wantErr: activityError{
+			wantErr: testutil.ActivityError{
 				Message:        fmt.Sprintf("error creating receipt file: open %s: no such file or directory", filepath.Join(tmpdir, "Receipt_aa1df25d-1477-4085-8be3-a17fed20f843_20091110.230000.json")),
 				MessageWindows: fmt.Sprintf("error creating receipt file: open %s: The system cannot find the path specified.", filepath.Join(tmpdir, "Receipt_aa1df25d-1477-4085-8be3-a17fed20f843_20091110.230000.json")),
 				NRE:            true,
@@ -166,7 +137,7 @@ func TestProdActivity(t *testing.T) {
 				return
 			}
 
-			var base = fmt.Sprintf("Receipt_%s_%s", tc.params.OriginalID, tc.params.StoredAt.Format(rfc3339forFilename))
+			var base = fmt.Sprintf("Receipt_%s_%s", tc.params.NameInfo.Identifier, tc.params.StoredAt.Format(rfc3339forFilename))
 			assert.Assert(t, fs.Equal(
 				tmpdir.Path(),
 				fs.Expected(t,

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -13,10 +12,10 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"time"
 
+	"github.com/artefactual-labs/enduro/internal/nha"
 	wferrors "github.com/artefactual-labs/enduro/internal/workflow/errors"
 	"github.com/artefactual-labs/enduro/internal/workflow/manager"
 )
@@ -40,23 +39,14 @@ func NewUpdateHARIActivity(m *manager.Manager) *UpdateHARIActivity {
 }
 
 type UpdateHARIActivityParams struct {
-	Name         string
 	SIPID        string
 	StoredAt     time.Time
 	FullPath     string
 	PipelineName string
+	NameInfo     nha.NameInfo
 }
 
 func (a UpdateHARIActivity) Execute(ctx context.Context, params *UpdateHARIActivityParams) error {
-	if params.Name == "" {
-		return wferrors.NonRetryableError(errors.New("Name is missing or empty"))
-	}
-
-	kind, err := extractKind(params.Name)
-	if err != nil {
-		return wferrors.NonRetryableError(fmt.Errorf("error extracting kind attribute: %v", err))
-	}
-
 	if params.PipelineName == "" {
 		params.PipelineName = "<unnamed>"
 	}
@@ -73,7 +63,7 @@ func (a UpdateHARIActivity) Execute(ctx context.Context, params *UpdateHARIActiv
 		apiURL = ts.URL
 	}
 
-	var path = a.avlxml(params.FullPath, kind)
+	var path = a.avlxml(params.FullPath, params.NameInfo.Type)
 	if path == "" {
 		return wferrors.NonRetryableError(fmt.Errorf("error reading AVLXML file: not found"))
 	}
@@ -83,7 +73,7 @@ func (a UpdateHARIActivity) Execute(ctx context.Context, params *UpdateHARIActiv
 		return wferrors.NonRetryableError(fmt.Errorf("error reading AVLXML file: %v", err))
 	}
 
-	if err := a.sendRequest(ctx, blob, apiURL, kind, params); err != nil {
+	if err := a.sendRequest(ctx, blob, apiURL, params.NameInfo.Type, params); err != nil {
 		return fmt.Errorf("error sending request: %v", err)
 	}
 
@@ -91,7 +81,7 @@ func (a UpdateHARIActivity) Execute(ctx context.Context, params *UpdateHARIActiv
 }
 
 // avlxml attempts to find the AVLXML document in multiple known locations.
-func (a UpdateHARIActivity) avlxml(path, kind string) string {
+func (a UpdateHARIActivity) avlxml(path string, kind nha.TransferType) string {
 	firstMatch := func(locs []string) string {
 		for _, loc := range locs {
 			if stat, err := os.Stat(loc); err == nil && !stat.IsDir() {
@@ -101,9 +91,9 @@ func (a UpdateHARIActivity) avlxml(path, kind string) string {
 		return ""
 	}
 
-	if kind == "AVLXML" {
+	if kind == nha.TransferTypeAVLXML {
 		const objekter = "objekter"
-		matches, err := filepath.Glob(filepath.Join(path, kind, objekter, "avlxml-*.xml"))
+		matches, err := filepath.Glob(filepath.Join(path, kind.String(), objekter, "avlxml-*.xml"))
 		if err != nil {
 			panic(err)
 		}
@@ -111,13 +101,13 @@ func (a UpdateHARIActivity) avlxml(path, kind string) string {
 			return matches[0]
 		}
 		return firstMatch([]string{
-			filepath.Join(path, kind, objekter, "avlxml.xml"),
+			filepath.Join(path, kind.String(), objekter, "avlxml.xml"),
 		})
 	}
 
 	return firstMatch([]string{
-		filepath.Join(path, kind, "journal/avlxml.xml"),
-		filepath.Join(path, kind, "Journal/avlxml.xml"),
+		filepath.Join(path, kind.String(), "journal/avlxml.xml"),
+		filepath.Join(path, kind.String(), "Journal/avlxml.xml"),
 	})
 }
 
@@ -142,11 +132,11 @@ func (a UpdateHARIActivity) url() (string, error) {
 	return bu.ResolveReference(p).String(), nil
 }
 
-func (a UpdateHARIActivity) sendRequest(ctx context.Context, blob []byte, apiURL string, kind string, params *UpdateHARIActivityParams) error {
+func (a UpdateHARIActivity) sendRequest(ctx context.Context, blob []byte, apiURL string, kind nha.TransferType, params *UpdateHARIActivityParams) error {
 	payload := &avlRequest{
 		XML:       blob,
 		Message:   fmt.Sprintf("AVLXML was processed by Archivematica pipeline %s", params.PipelineName),
-		Type:      strings.ToLower(kind),
+		Type:      kind.Lower(),
 		Timestamp: avlRequestTime{params.StoredAt},
 		AIPID:     params.SIPID,
 	}
@@ -220,46 +210,4 @@ func (t avlRequestTime) MarshalJSON() ([]byte, error) {
 	const format = "2006-01-02T15:04:05-07:00"
 	var s = fmt.Sprintf("\"%s\"", t.Time.Format(format))
 	return []byte(s), nil
-}
-
-var knownKinds = map[string]string{
-	"DPJ":       "DPJ",
-	"EPJ":       "EPJ",
-	"OTHER":     "OTHER",
-	"AVL-DPJ":   "AVLXML",
-	"AVL-EPJ":   "AVLXML",
-	"AVL-OTHER": "AVLXML",
-	"AVLXML":    "AVLXML",
-}
-
-var regex = regexp.MustCompile(`^(?P<kind>.*)[-_](?P<uuid>[a-zA-Z0-9]{8}-[a-zA-Z0-9]{4}-[1-5][a-zA-Z0-9]{3}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{12})(?P<fileext>\..*)?$`)
-
-func extractKind(name string) (string, error) {
-	matches := regex.FindStringSubmatch(name)
-	if len(matches) != 4 {
-		return "", errors.New("unexpected format")
-	}
-
-	kind := matches[1]
-	if kind == "" {
-		return "", fmt.Errorf("unexpected format")
-	}
-
-	// name = fmt.Sprintf("%s-%s", matches[1], matches[2][0:13])
-
-	// Convert into capital letters, e.g. epj-sip => EPJ-SIP.
-	kind = strings.ToUpper(kind)
-
-	const suffix = "-SIP"
-	if !strings.HasSuffix(kind, suffix) {
-		return "", fmt.Errorf("attribute (%s) does not containt suffix (\"-SIP\")", kind)
-	}
-	kind = strings.TrimSuffix(kind, "-SIP")
-
-	subtype, ok := knownKinds[kind]
-	if !ok {
-		return "", fmt.Errorf("attribute (%s) is unexpected/unknown", kind)
-	}
-
-	return subtype, nil
 }

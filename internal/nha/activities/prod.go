@@ -4,15 +4,14 @@ import (
 	"context"
 	"crypto/md5"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/artefactual-labs/enduro/internal/collection"
+	"github.com/artefactual-labs/enduro/internal/nha"
 	wferrors "github.com/artefactual-labs/enduro/internal/workflow/errors"
 	"github.com/artefactual-labs/enduro/internal/workflow/manager"
 )
@@ -31,23 +30,13 @@ func NewUpdateProductionSystemActivity(m *manager.Manager) *UpdateProductionSyst
 }
 
 type UpdateProductionSystemActivityParams struct {
-	Name         string
-	OriginalID   string
 	StoredAt     time.Time
 	PipelineName string
 	Status       collection.Status
+	NameInfo     nha.NameInfo
 }
 
 func (a *UpdateProductionSystemActivity) Execute(ctx context.Context, params *UpdateProductionSystemActivityParams) error {
-	if params.OriginalID == "" {
-		return wferrors.NonRetryableError(errors.New("OriginalID is missing or empty"))
-	}
-
-	kind, err := extractKind(params.Name)
-	if err != nil {
-		return wferrors.NonRetryableError(fmt.Errorf("error extracting kind attribute: %v", err))
-	}
-
 	// We expect tinfo.StoredAt to have the zero value when the ingestion
 	// has failed. Here we set a new value as it is a required field.
 	if params.StoredAt.IsZero() {
@@ -59,7 +48,7 @@ func (a *UpdateProductionSystemActivity) Execute(ctx context.Context, params *Up
 		return wferrors.NonRetryableError(fmt.Errorf("error looking up receiptPath configuration attribute: %v", err))
 	}
 
-	var basename = filepath.Join(receiptPath, fmt.Sprintf("Receipt_%s_%s", params.OriginalID, params.StoredAt.Format(rfc3339forFilename)))
+	var basename = filepath.Join(receiptPath, fmt.Sprintf("Receipt_%s_%s", params.NameInfo.Identifier, params.StoredAt.Format(rfc3339forFilename)))
 	var jsonPath = basename + ".json"
 	var md5Path = basename + ".md5"
 	var mftPath = basename + ".mft"
@@ -71,7 +60,7 @@ func (a *UpdateProductionSystemActivity) Execute(ctx context.Context, params *Up
 	}
 
 	// Write receipt contents.
-	if err := a.generateReceipt(params, file, kind); err != nil {
+	if err := a.generateReceipt(params, file); err != nil {
 		return wferrors.NonRetryableError(fmt.Errorf("error writing receipt file: %v", err))
 	}
 
@@ -95,7 +84,7 @@ func (a *UpdateProductionSystemActivity) Execute(ctx context.Context, params *Up
 	return nil
 }
 
-func (a UpdateProductionSystemActivity) generateReceipt(params *UpdateProductionSystemActivityParams, file *os.File, kind string) error {
+func (a UpdateProductionSystemActivity) generateReceipt(params *UpdateProductionSystemActivityParams, file *os.File) error {
 	var accepted bool
 	var message string
 
@@ -108,8 +97,8 @@ func (a UpdateProductionSystemActivity) generateReceipt(params *UpdateProduction
 	}
 
 	receipt := prodSystemReceipt{
-		Identifier: params.OriginalID,
-		Type:       strings.ToLower(kind),
+		Identifier: params.NameInfo.Identifier,
+		Type:       params.NameInfo.Type.Lower(),
 		Accepted:   accepted,
 		Message:    message,
 		Timestamp:  params.StoredAt,

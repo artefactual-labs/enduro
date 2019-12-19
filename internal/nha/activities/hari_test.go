@@ -16,7 +16,9 @@ import (
 	"gotest.tools/v3/fs"
 
 	collectionfake "github.com/artefactual-labs/enduro/internal/collection/fake"
+	"github.com/artefactual-labs/enduro/internal/nha"
 	"github.com/artefactual-labs/enduro/internal/pipeline"
+	"github.com/artefactual-labs/enduro/internal/testutil"
 	watcherfake "github.com/artefactual-labs/enduro/internal/watcher/fake"
 	"github.com/artefactual-labs/enduro/internal/workflow/manager"
 )
@@ -51,14 +53,17 @@ func TestHARIActivity(t *testing.T) {
 		wantResponse *serverResponse
 
 		// Expected error: see activityError for more.
-		wantErr activityError
+		wantErr testutil.ActivityError
 	}{
 		"Receipt is delivered successfully (DPJ)": {
 			params: UpdateHARIActivityParams{
 				StoredAt:     time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
 				SIPID:        "1db240cc-3cea-4e55-903c-6280562e1866",
-				Name:         "DPJ-SIP-049d6a44-07d6-4aa9-9607-9347ec4d0b23",
 				PipelineName: "zr-fig-pipe-001",
+				NameInfo: nha.NameInfo{
+					Identifier: "049d6a44-07d6-4aa9-9607-9347ec4d0b23",
+					Type:       nha.TransferTypeDPJ,
+				},
 			},
 			hariConfig: map[string]interface{}{},
 			dirOpts:    []fs.PathOp{fs.WithDir("DPJ/journal"), fs.WithFile("DPJ/journal/avlxml.xml", "<xml/>")},
@@ -74,8 +79,11 @@ func TestHARIActivity(t *testing.T) {
 			params: UpdateHARIActivityParams{
 				StoredAt:     time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
 				SIPID:        "1db240cc-3cea-4e55-903c-6280562e1866",
-				Name:         "EPJ-SIP-049d6a44-07d6-4aa9-9607-9347ec4d0b23",
 				PipelineName: "zr-fig-pipe-001",
+				NameInfo: nha.NameInfo{
+					Identifier: "049d6a44-07d6-4aa9-9607-9347ec4d0b23",
+					Type:       nha.TransferTypeEPJ,
+				},
 			},
 			hariConfig: map[string]interface{}{},
 			dirOpts:    []fs.PathOp{fs.WithDir("EPJ/journal"), fs.WithFile("EPJ/journal/avlxml.xml", "<xml/>")},
@@ -91,8 +99,11 @@ func TestHARIActivity(t *testing.T) {
 			params: UpdateHARIActivityParams{
 				StoredAt:     time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
 				SIPID:        "1db240cc-3cea-4e55-903c-6280562e1866",
-				Name:         "AVLXML-SIP-049d6a44-07d6-4aa9-9607-9347ec4d0b23",
 				PipelineName: "zr-fig-pipe-001",
+				NameInfo: nha.NameInfo{
+					Identifier: "2.16.578.1.39.100.11.9876.4",
+					Type:       nha.TransferTypeAVLXML,
+				},
 			},
 			hariConfig: map[string]interface{}{},
 			dirOpts:    []fs.PathOp{fs.WithDir("AVLXML/objekter"), fs.WithFile("AVLXML/objekter/avlxml-2.16.578.1.39.100.11.9876.4-20191104.xml", "<xml/>")},
@@ -108,8 +119,11 @@ func TestHARIActivity(t *testing.T) {
 			params: UpdateHARIActivityParams{
 				StoredAt:     time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
 				SIPID:        "1db240cc-3cea-4e55-903c-6280562e1866",
-				Name:         "AVLXML-SIP-049d6a44-07d6-4aa9-9607-9347ec4d0b23",
 				PipelineName: "zr-fig-pipe-001",
+				NameInfo: nha.NameInfo{
+					Identifier: "049d6a44-07d6-4aa9-9607-9347ec4d0b23",
+					Type:       nha.TransferTypeAVLXML,
+				},
 			},
 			hariConfig: map[string]interface{}{},
 			dirOpts:    []fs.PathOp{fs.WithDir("AVLXML/objekter"), fs.WithFile("AVLXML/objekter/avlxml.xml", "<xml/>")},
@@ -125,8 +139,11 @@ func TestHARIActivity(t *testing.T) {
 			params: UpdateHARIActivityParams{
 				StoredAt:     time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
 				SIPID:        "1db240cc-3cea-4e55-903c-6280562e1866",
-				Name:         "OTHER-SIP-049d6a44-07d6-4aa9-9607-9347ec4d0b23",
 				PipelineName: "zr-fig-pipe-001",
+				NameInfo: nha.NameInfo{
+					Identifier: "049d6a44-07d6-4aa9-9607-9347ec4d0b23",
+					Type:       nha.TransferTypeOther,
+				},
 			},
 			hariConfig: map[string]interface{}{},
 			dirOpts:    []fs.PathOp{fs.WithDir("OTHER/journal"), fs.WithFile("OTHER/journal/avlxml.xml", "<xml/>")},
@@ -142,8 +159,11 @@ func TestHARIActivity(t *testing.T) {
 			params: UpdateHARIActivityParams{
 				StoredAt:     time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
 				SIPID:        "1db240cc-3cea-4e55-903c-6280562e1866",
-				Name:         "DPJ-SIP-049d6a44-07d6-4aa9-9607-9347ec4d0b23",
 				PipelineName: "zr-fig-pipe-001",
+				NameInfo: nha.NameInfo{
+					Identifier: "049d6a44-07d6-4aa9-9607-9347ec4d0b23",
+					Type:       nha.TransferTypeDPJ,
+				},
 			},
 			hariConfig: map[string]interface{}{},
 			dirOpts:    []fs.PathOp{fs.WithDir("DPJ/Journal"), fs.WithFile("DPJ/Journal/avlxml.xml", "<xml/>")},
@@ -159,8 +179,11 @@ func TestHARIActivity(t *testing.T) {
 			params: UpdateHARIActivityParams{
 				StoredAt:     time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
 				SIPID:        "1db240cc-3cea-4e55-903c-6280562e1866",
-				Name:         "dpj-sip-049d6a44-07d6-4aa9-9607-9347ec4d0b23",
 				PipelineName: "zr-fig-pipe-001",
+				NameInfo: nha.NameInfo{
+					Identifier: "049d6a44-07d6-4aa9-9607-9347ec4d0b23",
+					Type:       nha.TransferTypeDPJ,
+				},
 			},
 			hariConfig: map[string]interface{}{},
 			dirOpts:    []fs.PathOp{fs.WithDir("DPJ/journal"), fs.WithFile("DPJ/journal/avlxml.xml", "<xml/>")},
@@ -176,8 +199,11 @@ func TestHARIActivity(t *testing.T) {
 			params: UpdateHARIActivityParams{
 				StoredAt:     time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
 				SIPID:        "1db240cc-3cea-4e55-903c-6280562e1866",
-				Name:         "DPJ-SIP-049d6a44-07d6-4aa9-9607-9347ec4d0b23",
 				PipelineName: "zr-fig-pipe-001",
+				NameInfo: nha.NameInfo{
+					Identifier: "049d6a44-07d6-4aa9-9607-9347ec4d0b23",
+					Type:       nha.TransferTypeDPJ,
+				},
 			},
 			hariConfig: map[string]interface{}{"mock": true},
 			dirOpts:    []fs.PathOp{fs.WithDir("DPJ/journal"), fs.WithFile("DPJ/journal/avlxml.xml", "<xml/>")},
@@ -186,8 +212,11 @@ func TestHARIActivity(t *testing.T) {
 			params: UpdateHARIActivityParams{
 				StoredAt:     time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
 				SIPID:        "1db240cc-3cea-4e55-903c-6280562e1866",
-				Name:         "DPJ-SIP-049d6a44-07d6-4aa9-9607-9347ec4d0b23",
 				PipelineName: "zr-fig-pipe-001",
+				NameInfo: nha.NameInfo{
+					Identifier: "049d6a44-07d6-4aa9-9607-9347ec4d0b23",
+					Type:       nha.TransferTypeDPJ,
+				},
 			},
 			hariConfig:   map[string]interface{}{},
 			dirOpts:      []fs.PathOp{fs.WithDir("DPJ/journal"), fs.WithFile("DPJ/journal/avlxml.xml", "<xml/>")},
@@ -199,53 +228,23 @@ func TestHARIActivity(t *testing.T) {
 				AIPID:     "1db240cc-3cea-4e55-903c-6280562e1866",
 				XML:       []byte(`<xml/>`),
 			},
-			wantErr: activityError{
+			wantErr: testutil.ActivityError{
 				Message: "error sending request: (unexpected response status: 500 Internal Server Error) - Backend server not available, try again later.\n",
 				NRE:     false,
-			},
-		},
-		"Empty kind is rejected": {
-			params: UpdateHARIActivityParams{
-				StoredAt: time.Now(),
-				SIPID:    "1db240cc-3cea-4e55-903c-6280562e1866",
-				Name:     "",
-			},
-			wantErr: activityError{
-				Message: "Name is missing or empty",
-				NRE:     true,
-			},
-		},
-		"Unsuffixed kind is rejected": {
-			params: UpdateHARIActivityParams{
-				StoredAt: time.Now(),
-				SIPID:    "1db240cc-3cea-4e55-903c-6280562e1866",
-				Name:     "DPJ-049d6a44-07d6-4aa9-9607-9347ec4d0b23",
-			},
-			wantErr: activityError{
-				Message: "error extracting kind attribute: attribute (DPJ) does not containt suffix (\"-SIP\")",
-				NRE:     true,
-			},
-		},
-		"Unknown kind is rejected": {
-			params: UpdateHARIActivityParams{
-				StoredAt: time.Now(),
-				SIPID:    "1db240cc-3cea-4e55-903c-6280562e1866",
-				Name:     "FOOBAR-SIP-049d6a44-07d6-4aa9-9607-9347ec4d0b23",
-			},
-			wantErr: activityError{
-				Message: "error extracting kind attribute: attribute (FOOBAR) is unexpected/unknown",
-				NRE:     true,
 			},
 		},
 		"Unexisten AVLXML file causes error": {
 			params: UpdateHARIActivityParams{
 				StoredAt: time.Now(),
 				SIPID:    "1db240cc-3cea-4e55-903c-6280562e1866",
-				Name:     "DPJ-SIP-049d6a44-07d6-4aa9-9607-9347ec4d0b23",
+				NameInfo: nha.NameInfo{
+					Identifier: "049d6a44-07d6-4aa9-9607-9347ec4d0b23",
+					Type:       nha.TransferTypeDPJ,
+				},
 			},
 			hariConfig: map[string]interface{}{"baseURL": "http://192.168.1.50:12345"},
 			dirOpts:    []fs.PathOp{fs.WithDir("DPJ/journal"), fs.WithFile("DPJ/journal/_____other_name_____.xml", "<xml/>")},
-			wantErr: activityError{
+			wantErr: testutil.ActivityError{
 				Message: "error reading AVLXML file: not found",
 				NRE:     true,
 			},
@@ -254,11 +253,14 @@ func TestHARIActivity(t *testing.T) {
 			params: UpdateHARIActivityParams{
 				StoredAt: time.Now(),
 				SIPID:    "1db240cc-3cea-4e55-903c-6280562e1866",
-				Name:     "DPJ-SIP-049d6a44-07d6-4aa9-9607-9347ec4d0b23",
+				NameInfo: nha.NameInfo{
+					Identifier: "049d6a44-07d6-4aa9-9607-9347ec4d0b23",
+					Type:       nha.TransferTypeDPJ,
+				},
 			},
 			hariConfig: map[string]interface{}{"baseURL": string([]byte{0x7f})},
 			dirOpts:    []fs.PathOp{fs.WithDir("DPJ/journal"), fs.WithFile("DPJ/journal/avlxml.xml", "<xml/>")},
-			wantErr: activityError{
+			wantErr: testutil.ActivityError{
 				Message: fmt.Sprintf("error in URL construction: error looking up baseURL configuration attribute: parse %s/: net/url: invalid control character in URL", string(0x7f)),
 				NRE:     true,
 			},
@@ -339,100 +341,6 @@ func createHariActivity(t *testing.T, hariConfig map[string]interface{}) *Update
 	)
 
 	return NewUpdateHARIActivity(manager)
-}
-
-func TestExtractKind(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		key            string
-		wantKind       string
-		wantErr        bool
-		wantErrMessage string
-	}{
-		{
-			key:            "",
-			wantKind:       "",
-			wantErr:        true,
-			wantErrMessage: "unexpected format",
-		},
-		{
-			key:            "foobar.jpg",
-			wantKind:       "",
-			wantErr:        true,
-			wantErrMessage: "unexpected format",
-		},
-		{
-			key:            "c5ecddb0-7a61-4234-80a9-fa7993e97867.tar",
-			wantKind:       "",
-			wantErr:        true,
-			wantErrMessage: "unexpected format",
-		},
-		{
-			key:            "dpj-sip-12345",
-			wantKind:       "",
-			wantErr:        true,
-			wantErrMessage: "unexpected format",
-		},
-		{
-			key:            "dpj-c5ecddb0-7a61-4234-80a9-fa7993e97867",
-			wantKind:       "",
-			wantErr:        true,
-			wantErrMessage: "attribute (DPJ) does not containt suffix (\"-SIP\")",
-		},
-		{
-			key:            "unknown-sip-c5ecddb0-7a61-4234-80a9-fa7993e97867.tar",
-			wantKind:       "",
-			wantErr:        true,
-			wantErrMessage: "attribute (UNKNOWN) is unexpected/unknown",
-		},
-		{
-			key:      "dpj-sip_c5ecddb0-7a61-4234-80a9-fa7993e97867.tar",
-			wantKind: "DPJ",
-			wantErr:  false,
-		},
-		{
-			key:      "dpj-sip-c5ecddb0-7a61-4234-80a9-fa7993e97867.tar",
-			wantKind: "DPJ",
-			wantErr:  false,
-		},
-		{
-			key:      "dpj-sip-c5ecddb0-7a61-4234-80a9-fa7993e97867.tar",
-			wantKind: "DPJ",
-			wantErr:  false,
-		},
-		{
-			key:      "epj-sip-c5ecddb0-7a61-4234-80a9-fa7993e97867.tar",
-			wantKind: "EPJ",
-			wantErr:  false,
-		},
-		{
-			key:      "avlxml-sip-c5ecddb0-7a61-4234-80a9-fa7993e97867.tar",
-			wantKind: "AVLXML",
-			wantErr:  false,
-		},
-		{
-			key:      "other-sip-c5ecddb0-7a61-4234-80a9-fa7993e97867.tar",
-			wantKind: "OTHER",
-			wantErr:  false,
-		},
-		{
-			key:      "AVL-DPJ-SIP-c5ecddb0-7a61-4234-80a9-fa7993e97867.tar",
-			wantKind: "AVLXML",
-			wantErr:  false,
-		},
-	}
-	for _, tc := range tests {
-		kind, err := extractKind(tc.key)
-
-		assert.Equal(t, kind, tc.wantKind)
-
-		if tc.wantErr {
-			assert.Error(t, err, tc.wantErrMessage)
-		} else {
-			assert.NilError(t, err)
-		}
-	}
 }
 
 func TestHARIURL(t *testing.T) {

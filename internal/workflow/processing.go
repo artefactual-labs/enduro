@@ -11,6 +11,8 @@ import (
 	"time"
 
 	"github.com/artefactual-labs/enduro/internal/collection"
+	"github.com/artefactual-labs/enduro/internal/nha"
+	nha_activities "github.com/artefactual-labs/enduro/internal/nha/activities"
 	"github.com/artefactual-labs/enduro/internal/pipeline"
 	"github.com/artefactual-labs/enduro/internal/watcher"
 	"github.com/artefactual-labs/enduro/internal/workflow/activities"
@@ -61,11 +63,6 @@ type TransferInfo struct {
 	// It is populated via the workflow request.
 	Event *watcher.BlobEvent
 
-	// OriginalID is the UUID found in the key of the blob. It can be empty.
-	//
-	// It is populated from the workflow (deterministically).
-	OriginalID string
-
 	// Status of the collection.
 	//
 	// It is populated from the workflow (deterministically)
@@ -94,10 +91,15 @@ type TransferInfo struct {
 	Hooks map[string]map[string]interface{}
 
 	// Information about the bundle (transfer) that we submit to Archivematica.
-	// Full path, relative path, name, kind...
+	// Full path, relative path...
 	//
 	// It is populated by BundleActivity.
 	Bundle activities.BundleActivityResult
+
+	// Aditional attributes inferred from the transfer name.
+	//
+	// It is populated by parseNameLocalActivity.
+	NameInfo nha.NameInfo
 }
 
 // ProcessingWorkflow orchestrates all the activities related to the processing
@@ -111,13 +113,19 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 	tinfo := &TransferInfo{
 		CollectionID: req.CollectionID,
 		Event:        req.Event,
-		OriginalID:   req.Event.NamedUUID(),
 		Status:       collection.StatusInProgress,
 	}
 
-	// Persist collection as early as possible.
+	// Extract details from transfer name.
 	activityOpts := withLocalActivityOpts(ctx)
-	err := workflow.ExecuteLocalActivity(activityOpts, createPackageLocalActivity, w.manager.Collection, tinfo).Get(activityOpts, &tinfo)
+	err := workflow.ExecuteLocalActivity(activityOpts, nha_activities.ParseNameLocalActivity, req.Event.Key).Get(activityOpts, &tinfo.NameInfo)
+	if err != nil {
+		return wferrors.NonRetryableError(fmt.Errorf("error parsing name: %v", err))
+	}
+
+	// Persist collection as early as possible.
+	activityOpts = withLocalActivityOpts(ctx)
+	err = workflow.ExecuteLocalActivity(activityOpts, createPackageLocalActivity, w.manager.Collection, tinfo).Get(activityOpts, &tinfo)
 	if err != nil {
 		return wferrors.NonRetryableError(fmt.Errorf("error persisting collection: %v", err))
 	}
@@ -181,21 +189,20 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 	var receiptsFailed bool
 	activityOpts = withActivityOptsForRequest(sessCtx)
 	if disabled, _ := manager.HookAttrBool(tinfo.Hooks, "hari", "disabled"); !disabled {
-		futures = append(futures, workflow.ExecuteActivity(activityOpts, activities.UpdateHARIActivityName, &activities.UpdateHARIActivityParams{
-			Name:         tinfo.Event.Key,
+		futures = append(futures, workflow.ExecuteActivity(activityOpts, nha_activities.UpdateHARIActivityName, &nha_activities.UpdateHARIActivityParams{
 			SIPID:        tinfo.SIPID,
 			StoredAt:     tinfo.StoredAt,
 			FullPath:     tinfo.Bundle.FullPath,
 			PipelineName: tinfo.Event.PipelineName,
+			NameInfo:     tinfo.NameInfo,
 		}))
 	}
 	if disabled, _ := manager.HookAttrBool(tinfo.Hooks, "prod", "disabled"); !disabled {
-		futures = append(futures, workflow.ExecuteActivity(activityOpts, activities.UpdateProductionSystemActivityName, &activities.UpdateProductionSystemActivityParams{
-			Name:         tinfo.Event.Key,
-			OriginalID:   tinfo.OriginalID,
+		futures = append(futures, workflow.ExecuteActivity(activityOpts, nha_activities.UpdateProductionSystemActivityName, &nha_activities.UpdateProductionSystemActivityParams{
 			StoredAt:     tinfo.StoredAt,
 			PipelineName: tinfo.Event.PipelineName,
 			Status:       tinfo.Status,
+			NameInfo:     tinfo.NameInfo,
 		}))
 	}
 	for _, f := range futures {

@@ -19,7 +19,7 @@ func createPackageLocalActivity(ctx context.Context, colsvc collection.Service, 
 	col := &collection.Collection{
 		WorkflowID: info.WorkflowExecution.ID,
 		RunID:      info.WorkflowExecution.RunID,
-		OriginalID: tinfo.OriginalID,
+		OriginalID: tinfo.NameInfo.Identifier,
 		Status:     tinfo.Status,
 	}
 
