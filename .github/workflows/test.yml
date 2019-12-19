@@ -21,4 +21,9 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v1
     - name: Test
-      run: go test ./...
+      run: go test -race -coverprofile=covreport -covermode=atomic -v ./...
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v1
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        file: covreport
