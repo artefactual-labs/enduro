@@ -8,8 +8,17 @@
     <template v-else>
       <b-link class="reload" v-on:click="reload()">Reload</b-link>
       <dl>
+
+        <dt>ID</dt>
+        <dd>{{ collection.workflowId }}</dd>
+
+        <dt>Instance (RunID)</dt>
+        <dd>{{ collection.runId }}</dd>
+
         <dt>Status</dt>
-        <dd><b-badge>{{ history.status }}</b-badge></dd>
+        <dd>
+          <b-badge>{{ history.status }}</b-badge>
+        </dd>
 
         <dt>Activity summary</dt>
         <dd>
@@ -47,8 +56,12 @@
 
 <script lang="ts">
 import { Component, Prop, Provide, Vue } from 'vue-property-decorator';
+import { namespace } from 'vuex-class';
+import * as CollectionStore from '../store/collection';
 import CollectionStatusBadge from '@/components/CollectionStatusBadge.vue';
 import { api, EnduroCollectionClient } from '../client';
+
+const collectionStoreNs = namespace('collection');
 
 @Component({
   components: {
@@ -57,7 +70,9 @@ import { api, EnduroCollectionClient } from '../client';
 })
 export default class CollectionShowWorkflow extends Vue {
 
-  private collection: any = {};
+  @collectionStoreNs.Getter(CollectionStore.GET_SEARCH_RESULT)
+  private collection: any;
+
   private history: any = {history: []};
   private activities: any = {};
   private name: string = '';
