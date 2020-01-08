@@ -188,14 +188,16 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 	var futures []workflow.Future
 	var receiptsFailed bool
 	activityOpts = withActivityOptsForRequest(sessCtx)
-	if disabled, _ := manager.HookAttrBool(tinfo.Hooks, "hari", "disabled"); !disabled {
-		futures = append(futures, workflow.ExecuteActivity(activityOpts, nha_activities.UpdateHARIActivityName, &nha_activities.UpdateHARIActivityParams{
-			SIPID:        tinfo.SIPID,
-			StoredAt:     tinfo.StoredAt,
-			FullPath:     tinfo.Bundle.FullPath,
-			PipelineName: tinfo.Event.PipelineName,
-			NameInfo:     tinfo.NameInfo,
-		}))
+	if tinfo.Status == collection.StatusDone {
+		if disabled, _ := manager.HookAttrBool(tinfo.Hooks, "hari", "disabled"); !disabled {
+			futures = append(futures, workflow.ExecuteActivity(activityOpts, nha_activities.UpdateHARIActivityName, &nha_activities.UpdateHARIActivityParams{
+				SIPID:        tinfo.SIPID,
+				StoredAt:     tinfo.StoredAt,
+				FullPath:     tinfo.Bundle.FullPath,
+				PipelineName: tinfo.Event.PipelineName,
+				NameInfo:     tinfo.NameInfo,
+			}))
+		}
 	}
 	if disabled, _ := manager.HookAttrBool(tinfo.Hooks, "prod", "disabled"); !disabled {
 		futures = append(futures, workflow.ExecuteActivity(activityOpts, nha_activities.UpdateProductionSystemActivityName, &nha_activities.UpdateProductionSystemActivityParams{
@@ -233,10 +235,12 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 	}
 
 	// This is the last activity that depends on the session.
-	activityOpts = withActivityOptsForRequest(sessCtx)
-	_ = workflow.ExecuteActivity(activityOpts, activities.CleanUpActivityName, &activities.CleanUpActivityParams{
-		FullPath: tinfo.Bundle.FullPathBeforeStrip,
-	}).Get(activityOpts, nil)
+	if tinfo.Bundle.FullPathBeforeStrip != "" {
+		activityOpts = withActivityOptsForRequest(sessCtx)
+		_ = workflow.ExecuteActivity(activityOpts, activities.CleanUpActivityName, &activities.CleanUpActivityParams{
+			FullPath: tinfo.Bundle.FullPathBeforeStrip,
+		}).Get(activityOpts, nil)
+	}
 
 	workflow.CompleteSession(sessCtx)
 
