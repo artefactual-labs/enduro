@@ -8,7 +8,7 @@ import (
 
 const taskBasePath = "api/v2beta/task"
 
-//go:generate mockgen  -destination=./fake/mock_task.go -package=fake github.com/artefactual-labs/enduro/internal/amclient TaskService
+//go:generate mockgen  -destination=./fake/mock_v2_task.go -package=fake github.com/artefactual-labs/enduro/internal/amclient TaskService
 
 type TaskService interface {
 	Read(context.Context, string) (*TaskDetailed, *Response, error)

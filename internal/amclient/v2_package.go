@@ -8,7 +8,7 @@ import (
 
 const packageBasePath = "api/v2beta/package"
 
-//go:generate mockgen  -destination=./fake/mock_package.go -package=fake github.com/artefactual-labs/enduro/internal/amclient PackageService
+//go:generate mockgen  -destination=./fake/mock_v2_package.go -package=fake github.com/artefactual-labs/enduro/internal/amclient PackageService
 
 type PackageService interface {
 	Create(context.Context, *PackageCreateRequest) (*PackageCreateResponse, *Response, error)
