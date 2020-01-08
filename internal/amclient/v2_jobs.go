@@ -9,6 +9,8 @@ import (
 
 const jobsBasePath = "api/v2beta/jobs"
 
+//go:generate mockgen  -destination=./fake/mock_jobs.go -package=fake github.com/artefactual-labs/enduro/internal/amclient JobsService
+
 type JobsService interface {
 	List(context.Context, string, *JobsListRequest) ([]Job, *Response, error)
 }
