@@ -36,7 +36,7 @@ func (a *PollIngestActivity) Execute(ctx context.Context, params *PollIngestActi
 
 	err = backoff.RetryNotify(
 		func() (err error) {
-			ctx, cancel := context.WithTimeout(ctx, time.Second*2)
+			ctx, cancel := context.WithTimeout(ctx, time.Second*10)
 			defer cancel()
 
 			err = pipeline.IngestStatus(ctx, amc, params.SIPID)

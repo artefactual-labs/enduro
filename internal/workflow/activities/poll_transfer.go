@@ -38,7 +38,7 @@ func (a *PollTransferActivity) Execute(ctx context.Context, params *PollTransfer
 
 	err = backoff.RetryNotify(
 		func() (err error) {
-			ctx, cancel := context.WithTimeout(ctx, time.Second*2)
+			ctx, cancel := context.WithTimeout(ctx, time.Second*10)
 			defer cancel()
 
 			sipID, err = pipeline.TransferStatus(ctx, amc, params.TransferID)
