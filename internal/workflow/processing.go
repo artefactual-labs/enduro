@@ -110,6 +110,7 @@ type TransferInfo struct {
 // not have a retry policy in place. The user could trigger a new instance via
 // the API.
 func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.ProcessingWorkflowRequest) error {
+	logger := workflow.GetLogger(ctx)
 	tinfo := &TransferInfo{
 		CollectionID: req.CollectionID,
 		Event:        req.Event,
@@ -130,6 +131,17 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 		return wferrors.NonRetryableError(fmt.Errorf("error persisting collection: %v", err))
 	}
 
+	defer func() {
+		// Update package status, using a workflow-disconnected context to
+		// ensure that it runs even after cancellation.
+		var status = tinfo.Status
+		if status == collection.StatusInProgress {
+			status = collection.StatusError
+		}
+		var dctx, _ = workflow.NewDisconnectedContext(ctx)
+		_ = workflow.ExecuteLocalActivity(withLocalActivityOpts(dctx), updatePackageStatusLocalActivity, w.manager.Collection, tinfo, status).Get(activityOpts, nil)
+	}()
+
 	// Load pipeline configuration and hooks.
 	activityOpts = withLocalActivityOpts(ctx)
 	err = workflow.ExecuteLocalActivity(activityOpts, loadConfigLocalActivity, w.manager, req.Event.PipelineName, tinfo).Get(activityOpts, &tinfo)
@@ -138,7 +150,7 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 	}
 
 	// A session guarantees that activities within it are scheduled on the same
-	// workflow.
+	// worker.
 	var sessCtx workflow.Context
 	var sessErr error
 	{
@@ -163,23 +175,12 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 		tinfo.Status = collection.StatusDone
 	}
 
-	// Update package status.
-	var disconnectedCtx, _ = workflow.NewDisconnectedContext(ctx)
-	activityOpts = withLocalActivityOpts(disconnectedCtx)
-	_ = workflow.ExecuteLocalActivity(activityOpts, updatePackageStatusLocalActivity, w.manager.Collection, tinfo, tinfo.Status).Get(activityOpts, nil)
-
 	// One of the activities within the session has failed. There's not much we
 	// can do if the worker died at this point, since what we aim to do next
 	// depends on resources only available within that worker.
 	if sessErr == workflow.ErrSessionFailed {
 		workflow.CompleteSession(sessCtx)
 		return sessErr
-	}
-
-	// Schedule deletion of the original in the watched data source.
-	var deletionTimer workflow.Future
-	if tinfo.Status == collection.StatusDone && tinfo.Event.RetentionPeriod != nil {
-		deletionTimer = workflow.NewTimer(ctx, *tinfo.Event.RetentionPeriod)
 	}
 
 	// Activities that we want to run within the session regardless the
@@ -216,12 +217,20 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 	// we'd prefer to give the user to decide what to do next, e.g. start over,
 	// retry hooks individually, etc...
 	if receiptsFailed {
-		var disconnectedCtx, _ = workflow.NewDisconnectedContext(ctx)
-		activityOpts = withLocalActivityOpts(disconnectedCtx)
-		_ = workflow.ExecuteLocalActivity(activityOpts, updatePackageStatusLocalActivity, w.manager.Collection, tinfo, collection.StatusError).Get(activityOpts, nil)
-
+		tinfo.Status = collection.StatusError
 		return errors.New("at least one hook/receipt activity failed")
 	}
+
+	// Clean-up is the last activity that depends on the session.
+	// We'll close it as soon as the activity completes.
+	if tinfo.Bundle.FullPathBeforeStrip != "" {
+		activityOpts = withActivityOptsForRequest(sessCtx)
+		_ = workflow.ExecuteActivity(activityOpts, activities.CleanUpActivityName, &activities.CleanUpActivityParams{
+			FullPath: tinfo.Bundle.FullPathBeforeStrip,
+		}).Get(activityOpts, nil)
+	}
+
+	workflow.CompleteSession(sessCtx)
 
 	// Hide packages from Archivematica Dashboard.
 	if tinfo.Status == collection.StatusDone {
@@ -234,21 +243,9 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 		}
 	}
 
-	// This is the last activity that depends on the session.
-	if tinfo.Bundle.FullPathBeforeStrip != "" {
-		activityOpts = withActivityOptsForRequest(sessCtx)
-		_ = workflow.ExecuteActivity(activityOpts, activities.CleanUpActivityName, &activities.CleanUpActivityParams{
-			FullPath: tinfo.Bundle.FullPathBeforeStrip,
-		}).Get(activityOpts, nil)
-	}
-
-	workflow.CompleteSession(sessCtx)
-
-	var logger = workflow.GetLogger(ctx)
-
-	// Delete original once the timer returns.
-	if deletionTimer != nil {
-		err := deletionTimer.Get(ctx, nil)
+	// Schedule deletion of the original in the watched data source.
+	if tinfo.Status == collection.StatusDone && tinfo.Event.RetentionPeriod != nil {
+		err := workflow.NewTimer(ctx, *tinfo.Event.RetentionPeriod).Get(ctx, nil)
 		if err != nil {
 			logger.Warn("Retention policy timer failed", zap.Error(err))
 		} else {

@@ -9,6 +9,10 @@ import (
 	wferrors "github.com/artefactual-labs/enduro/internal/workflow/errors"
 )
 
+// Cadence doesn't seem to have a concept of unlimited duration. We use this
+// constant to represent a long period of time (10 years).
+const forever = time.Hour * 24 * 365 * 10
+
 // withActivityOptsForLongLivedRequest returns a workflow context with activity
 // options suited for long-running activities without heartbeats
 func withActivityOptsForLongLivedRequest(ctx workflow.Context) workflow.Context {
@@ -35,7 +39,6 @@ func withActivityOptsForLongLivedRequest(ctx workflow.Context) workflow.Context 
 // The activity is responsible for returning a NRE error. Otherwise it will be
 // retried "forever".
 func withActivityOptsForHeartbeatedRequest(ctx workflow.Context, heartbeatTimeout time.Duration) workflow.Context {
-	const forever = time.Hour * 24 * 365 * 10
 	return workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
 		ScheduleToStartTimeout: forever,
 		StartToCloseTimeout:    forever, // Real cap is workflow.ExecutionStartToCloseTimeout.
@@ -59,8 +62,8 @@ func withActivityOptsForRequest(ctx workflow.Context) workflow.Context {
 		RetryPolicy: &cadence.RetryPolicy{
 			InitialInterval:          time.Second,
 			BackoffCoefficient:       2,
-			MaximumInterval:          time.Minute * 10,
-			ExpirationInterval:       time.Minute * 10,
+			MaximumInterval:          time.Minute * 5,
+			ExpirationInterval:       time.Minute * 5,
 			MaximumAttempts:          20,
 			NonRetriableErrorReasons: []string{wferrors.NRE},
 		},
