@@ -4,9 +4,22 @@ import (
 	"context"
 
 	"github.com/artefactual-labs/enduro/internal/collection"
+	"github.com/artefactual-labs/enduro/internal/pipeline"
 	"github.com/artefactual-labs/enduro/internal/workflow/manager"
+
 	"go.uber.org/cadence/activity"
 )
+
+func releasePipelineLocalActivity(ctx context.Context, registry *pipeline.Registry, name string) error {
+	p, err := registry.ByName(name)
+	if err != nil {
+		return err
+	}
+
+	p.Release()
+
+	return nil
+}
 
 func createPackageLocalActivity(ctx context.Context, colsvc collection.Service, tinfo *TransferInfo) (*TransferInfo, error) {
 	info := activity.GetInfo(ctx)

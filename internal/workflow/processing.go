@@ -132,14 +132,16 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 	}
 
 	defer func() {
-		// Update package status, using a workflow-disconnected context to
-		// ensure that it runs even after cancellation.
 		var status = tinfo.Status
 		if status == collection.StatusInProgress {
 			status = collection.StatusError
 		}
+
+		// Update package status, using a workflow-disconnected context to
+		// ensure that it runs even after cancellation.
 		var dctx, _ = workflow.NewDisconnectedContext(ctx)
-		_ = workflow.ExecuteLocalActivity(withLocalActivityOpts(dctx), updatePackageStatusLocalActivity, w.manager.Collection, tinfo, status).Get(activityOpts, nil)
+		var activityOpts = withLocalActivityOpts(dctx)
+		_ = workflow.ExecuteLocalActivity(activityOpts, updatePackageStatusLocalActivity, w.manager.Collection, tinfo, status).Get(activityOpts, nil)
 	}()
 
 	// Load pipeline configuration and hooks.
@@ -147,6 +149,13 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 	err = workflow.ExecuteLocalActivity(activityOpts, loadConfigLocalActivity, w.manager, req.Event.PipelineName, tinfo).Get(activityOpts, &tinfo)
 	if err != nil {
 		return wferrors.NonRetryableError(fmt.Errorf("error loading configuration: %v", err))
+	}
+
+	// Acquire pipeline.
+	activityOpts = withActivityOptsForUnlimitedTime(ctx)
+	err = workflow.ExecuteActivity(activityOpts, activities.AcquirePipelineActivityName, req.Event.PipelineName).Get(activityOpts, nil)
+	if err != nil {
+		return wferrors.NonRetryableError(fmt.Errorf("error acquiring pipeline: %v", err))
 	}
 
 	// A session guarantees that activities within it are scheduled on the same
@@ -270,6 +279,12 @@ func (w *ProcessingWorkflow) SessionHandler(ctx workflow.Context, sessCtx workfl
 		activityOpts workflow.Context
 		err          error
 	)
+
+	defer func() {
+		var dctx, _ = workflow.NewDisconnectedContext(ctx)
+		var activityOpts = withLocalActivityOpts(dctx)
+		_ = workflow.ExecuteLocalActivity(activityOpts, releasePipelineLocalActivity, w.manager.Pipelines, tinfo.Event.PipelineName).Get(activityOpts, nil)
+	}()
 
 	// Download.
 	activityOpts = withActivityOptsForLongLivedRequest(sessCtx)

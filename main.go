@@ -208,6 +208,7 @@ func main() {
 
 		cadence.RegisterWorkflow(workflow.NewProcessingWorkflow(m).Execute, collection.ProcessingWorkflowName)
 
+		cadence.RegisterActivity(activities.NewAcquirePipelineActivity(m).Execute, activities.AcquirePipelineActivityName)
 		cadence.RegisterActivity(activities.NewDownloadActivity(m).Execute, activities.DownloadActivityName)
 		cadence.RegisterActivity(activities.NewBundleActivity().Execute, activities.BundleActivityName)
 		cadence.RegisterActivity(activities.NewTransferActivity(m).Execute, activities.TransferActivityName)

@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/artefactual-labs/enduro/internal/amclient"
+	"golang.org/x/sync/semaphore"
 )
 
 type Config struct {
@@ -28,6 +29,7 @@ type Config struct {
 	ProcessingDir      string
 	ProcessingConfig   string
 	StorageServiceURL  string
+	Capacity           uint64
 }
 
 type Pipeline struct {
@@ -35,7 +37,13 @@ type Pipeline struct {
 	// on demand once we have access to the pipeline API.
 	ID string
 
+	// A weighted semaphore to limit concurrent use of this pipeline.
+	sem *semaphore.Weighted
+
+	// Configuration attributes.
 	config *Config
+
+	// The underlying HTTP client used by amclient.
 	client *http.Client
 }
 
@@ -44,6 +52,7 @@ func NewPipeline(config Config) (*Pipeline, error) {
 	config.ProcessingDir = expandPath(config.ProcessingDir)
 
 	p := &Pipeline{
+		sem:    semaphore.NewWeighted(int64(config.Capacity)),
 		config: &config,
 		client: httpClient(),
 	}
@@ -127,6 +136,14 @@ func (p Pipeline) TempFile(pattern string) (*os.File, error) {
 
 func (p Pipeline) Config() *Config {
 	return p.config
+}
+
+func (p *Pipeline) Acquire(ctx context.Context) error {
+	return p.sem.Acquire(ctx, 1)
+}
+
+func (p *Pipeline) Release() {
+	p.sem.Release(1)
 }
 
 func httpClient() *http.Client {

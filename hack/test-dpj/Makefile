@@ -34,6 +34,12 @@ err: FIXITY_ERR = yes
 err: push-tar
 
 TIMES ?= 10
+many-ok:
+	@for run in {1..$(TIMES)}; do \
+        make push-tar; \
+    done;
+
+TIMES ?= 10
 many:
 	@for run in {1..$(TIMES)}; do \
         fail=$$(shuf -e yes no -n 1); \
