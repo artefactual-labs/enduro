@@ -70,7 +70,7 @@ func gen(c int) []string {
 	const doneStatus string = "2"
 	return []string{
 		strconv.Itoa(c),
-		fmt.Sprintf("DPJ-SIP-%s", i[:13]),           // name
+		fmt.Sprintf("DPJ-SIP-%s.tar", i),            // name
 		fmt.Sprintf("processing-workflow-%s", id()), // workflow_id
 		id(),                         // run_id
 		id(),                         // transfer_id
