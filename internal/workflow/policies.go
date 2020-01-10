@@ -30,15 +30,6 @@ func withActivityOptsForLongLivedRequest(ctx workflow.Context) workflow.Context 
 	})
 }
 
-// withActivityOptsForUnlimitedTime returns a workflow context with activity
-// options suited for activities that can take a long time to run.
-func withActivityOptsForUnlimitedTime(ctx workflow.Context) workflow.Context {
-	return workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
-		ScheduleToStartTimeout: time.Hour * 1,
-		StartToCloseTimeout:    forever,
-	})
-}
-
 // withActivityOptsForHeartbeatedRequest returns a workflow context with
 // activity options suited for long-lived activities implementing heartbeats.
 //

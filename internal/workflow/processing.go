@@ -18,6 +18,7 @@ import (
 	"github.com/artefactual-labs/enduro/internal/workflow/activities"
 	wferrors "github.com/artefactual-labs/enduro/internal/workflow/errors"
 	"github.com/artefactual-labs/enduro/internal/workflow/manager"
+	"go.uber.org/cadence"
 	"go.uber.org/cadence/workflow"
 	"go.uber.org/zap"
 )
@@ -152,7 +153,18 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 	}
 
 	// Acquire pipeline.
-	activityOpts = withActivityOptsForUnlimitedTime(ctx)
+	//
+	// We keep retrying until the operation succeeds.
+	activityOpts = workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
+		ScheduleToStartTimeout: forever,
+		StartToCloseTimeout:    time.Second * 2,
+		RetryPolicy: &cadence.RetryPolicy{
+			InitialInterval:    time.Second * 2,
+			BackoffCoefficient: 1,
+			MaximumInterval:    time.Second * 2,
+			ExpirationInterval: forever,
+		},
+	})
 	err = workflow.ExecuteActivity(activityOpts, activities.AcquirePipelineActivityName, req.Event.PipelineName).Get(activityOpts, nil)
 	if err != nil {
 		return wferrors.NonRetryableError(fmt.Errorf("error acquiring pipeline: %v", err))
@@ -283,7 +295,7 @@ func (w *ProcessingWorkflow) SessionHandler(ctx workflow.Context, sessCtx workfl
 	defer func() {
 		var dctx, _ = workflow.NewDisconnectedContext(ctx)
 		var activityOpts = withLocalActivityOpts(dctx)
-		_ = workflow.ExecuteLocalActivity(activityOpts, releasePipelineLocalActivity, w.manager.Pipelines, tinfo.Event.PipelineName).Get(activityOpts, nil)
+		_ = workflow.ExecuteLocalActivity(activityOpts, releasePipelineLocalActivity, w.manager.Logger, w.manager.Pipelines, tinfo.Event.PipelineName).Get(activityOpts, nil)
 	}()
 
 	// Download.

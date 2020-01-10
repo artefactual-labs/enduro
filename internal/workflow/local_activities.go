@@ -6,15 +6,24 @@ import (
 	"github.com/artefactual-labs/enduro/internal/collection"
 	"github.com/artefactual-labs/enduro/internal/pipeline"
 	"github.com/artefactual-labs/enduro/internal/workflow/manager"
+	"github.com/go-logr/logr"
 
 	"go.uber.org/cadence/activity"
 )
 
-func releasePipelineLocalActivity(ctx context.Context, registry *pipeline.Registry, name string) error {
+func releasePipelineLocalActivity(ctx context.Context, logger logr.Logger, registry *pipeline.Registry, name string) error {
 	p, err := registry.ByName(name)
 	if err != nil {
 		return err
 	}
+
+	// It's possible that we're trying to release more than is held by the
+	// semaphore, since the semaphore is volatile and local!
+	defer func() {
+		if err := recover(); err != nil {
+			logger.WithName("releasePipelineLocalActivity").Info("Pipeline lock release failed", "err", err)
+		}
+	}()
 
 	p.Release()
 

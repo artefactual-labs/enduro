@@ -2,6 +2,7 @@ package activities
 
 import (
 	"context"
+	"time"
 
 	"github.com/artefactual-labs/enduro/internal/workflow/manager"
 )
@@ -21,6 +22,9 @@ func (a *AcquirePipelineActivity) Execute(ctx context.Context, name string) erro
 	if err != nil {
 		return err
 	}
+
+	ctx, cancel := context.WithTimeout(ctx, time.Second)
+	defer cancel()
 
 	return p.Acquire(ctx)
 }
