@@ -27,13 +27,13 @@ func HTTPServer(logger logr.Logger, config *Config, colsvc intcol.Service) *http
 	var collectionService collection.Service = colsvc.Goa()
 	var collectionEndpoints *collection.Endpoints = collection.NewEndpoints(collectionService)
 	var collectionErrorHandler = errorHandler(logger, "Collection error.")
-	var collectionServer *collectionsvr.Server = collectionsvr.New(collectionEndpoints, mux, dec, enc, collectionErrorHandler)
+	var collectionServer *collectionsvr.Server = collectionsvr.New(collectionEndpoints, mux, dec, enc, collectionErrorHandler, nil)
 	// Intercept request in Download endpoint so we can serve the file directly.
 	collectionServer.Download = colsvc.HTTPDownload(mux, dec)
 	collectionsvr.Mount(mux, collectionServer)
 
 	// Swagger service.
-	var swaggerService *swaggersvr.Server = swaggersvr.New(nil, nil, nil, nil, nil)
+	var swaggerService *swaggersvr.Server = swaggersvr.New(nil, nil, nil, nil, nil, nil)
 	swaggersvr.Mount(mux, swaggerService)
 
 	// Web handler.
