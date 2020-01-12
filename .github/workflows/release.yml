@@ -10,7 +10,9 @@ jobs:
     #needs: [ test ]
     steps:
     - name: Check out code
-      uses: actions/checkout@master
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
     - name: Install Node.js
       uses: actions/setup-node@v1
       with:
