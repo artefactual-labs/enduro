@@ -14,12 +14,12 @@ jobs:
         - windows-latest
     runs-on: ${{ matrix.platform }}
     steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
     - name: Install Go
       uses: actions/setup-go@v1
       with:
         go-version: ${{ matrix.go-version }}
-    - name: Checkout code
-      uses: actions/checkout@v1
     - name: Test
       run: go test -race -coverprofile=covreport -covermode=atomic -v ./...
     - name: Upload coverage to Codecov
