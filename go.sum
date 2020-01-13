@@ -62,8 +62,6 @@ github.com/aws/aws-sdk-go v1.17.7/go.mod h1:KmX6BPdI08NWTb3/sm4ZGu5ShLoqVDhKgpiN
 github.com/aws/aws-sdk-go v1.19.18/go.mod h1:KmX6BPdI08NWTb3/sm4ZGu5ShLoqVDhKgpiN924inxo=
 github.com/aws/aws-sdk-go v1.19.45 h1:jAxmC8qqa7mW531FDgM8Ahbqlb3zmiHgTpJU6fY3vJ0=
 github.com/aws/aws-sdk-go v1.19.45/go.mod h1:KmX6BPdI08NWTb3/sm4ZGu5ShLoqVDhKgpiN924inxo=
-github.com/aws/aws-sdk-go v1.28.0 h1:NkmnHFVEMTRYTleRLm5xUaL1mHKKkYQl4rCd+jzD58c=
-github.com/aws/aws-sdk-go v1.28.0/go.mod h1:KmX6BPdI08NWTb3/sm4ZGu5ShLoqVDhKgpiN924inxo=
 github.com/aws/aws-sdk-go v1.28.1 h1:aWBD5EJrmGFuHFn9ZdaHqWWZGZYQ5Gzb3j9G0RppLpY=
 github.com/aws/aws-sdk-go v1.28.1/go.mod h1:KmX6BPdI08NWTb3/sm4ZGu5ShLoqVDhKgpiN924inxo=
 github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973/go.mod h1:Dwedo/Wpr24TaqPxmxbtue+5NUziq4I4S80YR8gNf3Q=
@@ -75,8 +73,6 @@ github.com/bkaradzic/go-lz4 v1.0.0/go.mod h1:0YdlkowM3VswSROI7qDxhRvJ3sLhlFrRRwj
 github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869/go.mod h1:Ekp36dRnpXw/yCqJaO+ZrUyxD+3VXMFFr56k5XYrpB4=
 github.com/bmizerany/perks v0.0.0-20141205001514-d9a9656a3a4b h1:AP/Y7sqYicnjGDfD5VcY4CIfh1hRXBUavxrvELjTiOE=
 github.com/bmizerany/perks v0.0.0-20141205001514-d9a9656a3a4b/go.mod h1:ac9efd0D1fsDb3EJvhqgXRbFx7bs2wqZ10HQPeU8U/Q=
-github.com/cenkalti/backoff/v3 v3.2.1 h1:Sn5hAjy0uGtHq/sAp1vBKyS9GCFaQOrrkyFQN0Sk5dM=
-github.com/cenkalti/backoff/v3 v3.2.1/go.mod h1:cIeZDE3IrqwwJl6VUwCN6trj1oXrTS4rc0ij+ULvLYs=
 github.com/cenkalti/backoff/v3 v3.2.2 h1:cfUAAO3yvKMYKPrvhDuHSwQnhZNk/RMHKdZqKTxfm6M=
 github.com/cenkalti/backoff/v3 v3.2.2/go.mod h1:cIeZDE3IrqwwJl6VUwCN6trj1oXrTS4rc0ij+ULvLYs=
 github.com/census-instrumentation/opencensus-proto v0.2.0/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
@@ -129,6 +125,7 @@ github.com/dgrijalva/jwt-go v3.2.0+incompatible/go.mod h1:E3ru+11k8xSBh+hMPgOLZm
 github.com/dgryski/go-sip13 v0.0.0-20181026042036-e10d5fee7954/go.mod h1:vAd38F8PWV+bWy6jNmig1y/TA+kYO4g3RSRF0IAv0no=
 github.com/dhui/dktest v0.3.0 h1:kwX5a7EkLcjo7VpsPQSYJcKGbXBXdjI9FGjuUj1jn6I=
 github.com/dhui/dktest v0.3.0/go.mod h1:cyzIUfGsBEbZ6BT7tnXqAShHSXCZhSNmFl70sZ7c1yc=
+github.com/dhui/dktest v0.3.1 h1:NVUdB50k8tml431Ho1hcQBNeC52Qe8oSDPAjseA67Y8=
 github.com/dhui/dktest v0.3.1/go.mod h1:cyzIUfGsBEbZ6BT7tnXqAShHSXCZhSNmFl70sZ7c1yc=
 github.com/dimchansky/utfbom v1.1.0/go.mod h1:rO41eb7gLfo8SF1jd9F8HplJm1Fewwi4mQvIirEdv+8=
 github.com/dimfeld/httppath v0.0.0-20170720192232-ee938bf73598 h1:MGKhKyiYrvMDZsmLR/+RGffQSXwEkXgfLSA08qDn9AI=
@@ -228,8 +225,6 @@ github.com/gogo/protobuf v1.3.1/go.mod h1:SlYgWuQ5SjCEi6WLHjHCa1yvBfUnHcTbrrZtXP
 github.com/gogo/status v1.1.0 h1:+eIkrewn5q6b30y+g/BJINVVdi2xH7je5MPJ3ZPK3JA=
 github.com/gogo/status v1.1.0/go.mod h1:BFv9nrluPLmrS0EmGVvLaPNmRosr9KapBYd5/hpY1WM=
 github.com/golang-migrate/migrate/v4 v4.3.1/go.mod h1:mJ89KBgbXmM3P49BqOxRL3riNF/ATlg5kMhm17GA0dE=
-github.com/golang-migrate/migrate/v4 v4.7.1 h1:AkKizKQ+gkL1xk47xe6RDBLSZg3GITTXq6LbBt62NJw=
-github.com/golang-migrate/migrate/v4 v4.7.1/go.mod h1:2MAJMy62WLqWFu2X0UaGfqPuvy7iRhx8/QRn75lm1lo=
 github.com/golang-migrate/migrate/v4 v4.8.0 h1:zcamXqBH0W8hHwpaikOGnaFTRrQWU+X8ukBeY1dYucU=
 github.com/golang-migrate/migrate/v4 v4.8.0/go.mod h1:F6bGIGAA7xSb2k17sF1+eHl2gRHa+DWNZpoIKbThPLE=
 github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b h1:VKtxabqXZkF25pY9ekfRL6a582T4P37/31XEstQ5p58=
@@ -424,8 +419,6 @@ github.com/pkg/errors v0.8.0 h1:WdK/asTD0HN+q6hsWO3/vpuAkAr+tw6aNJNDFFf0+qw=
 github.com/pkg/errors v0.8.0/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pkg/errors v0.8.1 h1:iURUrRGxPUNPdy5/HRSm+Yj6okJ6UtLINN0Q9M4+h3I=
 github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
-github.com/pkg/errors v0.9.0 h1:J8lpUdobwIeCI7OiSxHqEwJUKvJwicL5+3v1oe2Yb4k=
-github.com/pkg/errors v0.9.0/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/prashantv/protectmem v0.0.0-20171002184600-e20412882b3a h1:AA9vgIBDjMHPC2McaGPojgV2dcI78ZC0TLNhYCXEKH8=

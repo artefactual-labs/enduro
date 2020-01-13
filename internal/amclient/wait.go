@@ -2,10 +2,11 @@ package amclient
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"time"
 
 	"github.com/cenkalti/backoff/v3"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -44,7 +45,7 @@ func WaitUntilStored(ctx context.Context, c *Client, transferID string) (SIPID s
 		if SIPID == "" {
 			resp, _, err := c.Transfer.Status(ctx, transferID)
 			if err != nil {
-				return errors.Wrap(err, "TransferService.Status request failed")
+				return fmt.Errorf("TransferService.Status request failed: %v", err)
 			}
 			sid, ok := resp.SIP()
 			if !ok {
@@ -58,7 +59,7 @@ func WaitUntilStored(ctx context.Context, c *Client, transferID string) (SIPID s
 			LinkID: workflowLinkStoreAIPID,
 		})
 		if err != nil {
-			return errors.Wrap(err, "JobsService.List request failed")
+			return fmt.Errorf("JobsService.List request failed: %v", err)
 		}
 		var match *Job
 		for _, job := range jobs {

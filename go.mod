@@ -33,7 +33,6 @@ require (
 	github.com/opentracing/opentracing-go v1.1.0 // indirect
 	github.com/pelletier/go-toml v1.6.0 // indirect
 	github.com/pierrec/lz4 v2.4.0+incompatible // indirect
-	github.com/pkg/errors v0.9.0
 	github.com/prometheus/client_golang v1.3.0
 	github.com/radovskyb/watcher v1.0.7
 	github.com/samuel/go-thrift v0.0.0-20191111193933-5165175b40af // indirect
