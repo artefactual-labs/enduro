@@ -32,6 +32,11 @@ generate:
 	find . -name fake -type d | xargs rm -rf
 	$(GOGEN) ./internal/...
 
+migrations:
+	$(GOGEN) ./internal/db
+
+bingen: tools-gen migrations ui
+
 goagen:
 	goa gen github.com/artefactual-labs/enduro/internal/api/design -o internal/api
 
@@ -42,6 +47,10 @@ tools:
 		github.com/golangci/golangci-lint/cmd/golangci-lint \
 		github.com/GeertJohan/go.rice/rice \
 		github.com/golang/mock/mockgen
+
+tools-gen:  # Install gen tools only used during builds (e.g. mockgen not included).
+	cd / && env GO111MODULE=off go get -u github.com/myitcv/gobin
+	gobin github.com/GeertJohan/go.rice/rice
 
 clean:
 	rm -rf ./build ./dist
