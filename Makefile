@@ -3,11 +3,15 @@ BUILD_TIME=$(shell date -u +%Y-%m-%dT%T%z)
 GIT_COMMIT=$(shell git rev-parse --short HEAD)
 LD_FLAGS= '-X "main.buildTime=$(BUILD_TIME)" -X main.gitCommit=$(GIT_COMMIT)'
 GO_FLAGS= -ldflags=$(LD_FLAGS)
+GOPATH=$(shell go env GOPATH)
+GOBIN=$(GOPATH)/bin
 GOCMD=go
 GOBUILD=$(GOCMD) build
 GOINSTALL=$(GOCMD) install
 GOTEST=$(GOCMD) test
 GOGEN=$(GOCMD) generate
+
+export PATH:=$(GOBIN):$(PATH)
 
 run: enduro-dev
 	./build/enduro
@@ -23,7 +27,7 @@ lint:
 	golangci-lint run
 
 generate:
-	env GO111MODULE=off go get -u github.com/myitcv/gobin
+	cd / && env GO111MODULE=off go get -u github.com/myitcv/gobin
 	gobin github.com/GeertJohan/go.rice/rice
 	find . -name fake -type d | xargs rm -rf
 	$(GOGEN) ./internal/...
@@ -32,7 +36,7 @@ goagen:
 	goa gen github.com/artefactual-labs/enduro/internal/api/design -o internal/api
 
 tools:
-	env GO111MODULE=off go get -u github.com/myitcv/gobin
+	cd / && env GO111MODULE=off go get -u github.com/myitcv/gobin
 	gobin \
 		github.com/minio/mc \
 		github.com/golangci/golangci-lint/cmd/golangci-lint \
@@ -62,7 +66,7 @@ ui-dev:
 	yarn --cwd ui serve
 
 ui-gen:
-	env GO111MODULE=off go get -u github.com/myitcv/gobin
+	cd / && env GO111MODULE=off go get -u github.com/myitcv/gobin
 	gobin github.com/GeertJohan/go.rice/rice
 	$(GOGEN) -v ./ui
 
