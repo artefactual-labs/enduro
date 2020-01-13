@@ -7,26 +7,18 @@ jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
-    #needs: [ test ]
     steps:
     - name: Check out code
       uses: actions/checkout@v2
       with:
         fetch-depth: 0
-    - name: Install Node.js
-      uses: actions/setup-node@v1
+    - name: Run GoReleaser
+      uses: goreleaser/goreleaser-action@v1
       with:
-        node-version: '12.x'
-    - name: Install UI dependencies
-      run: yarn --cwd ui install
-    - name: Build UI
-      run: yarn --cwd ui build
-    - name: GoReleaser
-      uses: docker://goreleaser/goreleaser
+        version: latest
+        args: release
       env:
         GITHUB_TOKEN: ${{ secrets.QUBOT_GITHUB_TOKEN }}
-      with:
-        args: release
       if: success()
     - name: Set RELEASE_VERSION
       run: echo ::set-env name=RELEASE_VERSION::$(echo ${GITHUB_REF:11})
