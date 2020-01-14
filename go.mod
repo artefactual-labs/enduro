@@ -7,7 +7,7 @@ require (
 	github.com/apache/thrift v0.13.0 // indirect
 	github.com/atrox/go-migrate-rice v1.0.1
 	github.com/aws/aws-sdk-go v1.28.1
-	github.com/cenkalti/backoff/v3 v3.2.1
+	github.com/cenkalti/backoff/v3 v3.2.2
 	github.com/daaku/go.zipexe v1.0.1 // indirect
 	github.com/dsnet/compress v0.0.1 // indirect
 	github.com/fatih/structtag v1.2.0 // indirect
