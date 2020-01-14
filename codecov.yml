@@ -14,6 +14,7 @@ coverage:
         if_not_found: success
     patch:
       default:
+        threshold: 5%
         if_not_found: success
 
 ignore:
