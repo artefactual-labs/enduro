@@ -1,6 +1,8 @@
 # Validate this file:
 #   curl --data-binary @codecov.yml https://codecov.io/validate
 
+# Threshold should not be as high once all packages are being tracked.
+
 comment: off
 
 coverage:
@@ -10,11 +12,11 @@ coverage:
   status:
     project:
       default:
-        threshold: 5%
+        threshold: 25%
         if_not_found: success
     patch:
       default:
-        threshold: 5%
+        threshold: 25%
         if_not_found: success
 
 ignore:
