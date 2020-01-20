@@ -24,6 +24,7 @@
                 <option value="error">Error</option>
                 <option value="done">Done</option>
                 <option value="in progress">In progress</option>
+                <option value="queued">Queued</option>
               </b-form-select>
             </div>
             <div class="form-group col-12 col-sm-6 col-md-2">

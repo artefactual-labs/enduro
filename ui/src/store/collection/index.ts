@@ -143,6 +143,9 @@ const actions: ActionTree<State, RootState> = {
       case 'unknown':
         request.status = api.CollectionListStatusEnum.Unknown;
         break;
+      case 'queued':
+        request.status = api.CollectionListStatusEnum.Queued;
+        break;
     }
 
     if (state.query.query) {
