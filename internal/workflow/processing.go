@@ -6,7 +6,6 @@
 package workflow
 
 import (
-	"errors"
 	"fmt"
 	"time"
 
@@ -221,43 +220,21 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 		return sessErr
 	}
 
-	// Activities that we want to run within the session regardless the
-	// result. E.g. receipts, clean-ups, etc...
-	// Passing the activity lets the activity determine if the process failed.
-	var futures []workflow.Future
-	var receiptsFailed bool
-	activityOpts := withActivityOptsForRequest(sessCtx)
-	if status == collection.StatusDone {
-		if disabled, _ := manager.HookAttrBool(tinfo.Hooks, "hari", "disabled"); !disabled {
-			futures = append(futures, workflow.ExecuteActivity(activityOpts, nha_activities.UpdateHARIActivityName, &nha_activities.UpdateHARIActivityParams{
-				SIPID:        tinfo.SIPID,
-				StoredAt:     tinfo.StoredAt,
-				FullPath:     tinfo.Bundle.FullPath,
-				PipelineName: tinfo.Event.PipelineName,
-				NameInfo:     nameInfo,
-			}))
-		}
-	}
-	if disabled, _ := manager.HookAttrBool(tinfo.Hooks, "prod", "disabled"); !disabled {
-		futures = append(futures, workflow.ExecuteActivity(activityOpts, nha_activities.UpdateProductionSystemActivityName, &nha_activities.UpdateProductionSystemActivityParams{
+	// Deliver receipts.
+	{
+		err := sendReceipts(sessCtx, tinfo.Hooks, &sendReceiptsParams{
+			SIPID:        tinfo.SIPID,
 			StoredAt:     tinfo.StoredAt,
+			FullPath:     tinfo.Bundle.FullPath,
 			PipelineName: tinfo.Event.PipelineName,
-			Status:       status,
 			NameInfo:     nameInfo,
-		}))
-	}
-	for _, f := range futures {
-		if err := f.Get(activityOpts, nil); err != nil {
-			receiptsFailed = true
+			Status:       status,
+		})
+		if err != nil {
+			status = collection.StatusError
+			workflow.CompleteSession(sessCtx)
+			return fmt.Errorf("error delivering receipt(s): %v", err)
 		}
-	}
-	// This causes the workflow to fail when hooks are errorful. In the future,
-	// we'd prefer to give the user to decide what to do next, e.g. start over,
-	// retry hooks individually, etc...
-	if receiptsFailed {
-		status = collection.StatusError
-		workflow.CompleteSession(sessCtx)
-		return errors.New("at least one hook/receipt activity failed")
 	}
 
 	// Clean-up is the last activity that depends on the session.
@@ -276,8 +253,8 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 	// Hide packages from Archivematica Dashboard.
 	{
 		if status == collection.StatusDone {
-			futures = []workflow.Future{}
-			activityOpts = withActivityOptsForRequest(ctx)
+			futures := []workflow.Future{}
+			activityOpts := withActivityOptsForRequest(ctx)
 			futures = append(futures, workflow.ExecuteActivity(activityOpts, activities.HidePackageActivityName, tinfo.TransferID, "transfer", tinfo.Event.PipelineName))
 			futures = append(futures, workflow.ExecuteActivity(activityOpts, activities.HidePackageActivityName, tinfo.SIPID, "ingest", tinfo.Event.PipelineName))
 			for _, f := range futures {
@@ -293,7 +270,7 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 			if err != nil {
 				logger.Warn("Retention policy timer failed", zap.Error(err))
 			} else {
-				activityOpts = withActivityOptsForRequest(ctx)
+				activityOpts := withActivityOptsForRequest(ctx)
 				_ = workflow.ExecuteActivity(activityOpts, activities.DeleteOriginalActivityName, tinfo.Event).Get(activityOpts, nil)
 			}
 		}
@@ -395,6 +372,52 @@ func (w *ProcessingWorkflow) SessionHandler(ctx workflow.Context, sessCtx workfl
 	}).Get(activityOpts, &tinfo.StoredAt)
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+type sendReceiptsParams struct {
+	SIPID        string
+	StoredAt     time.Time
+	FullPath     string
+	PipelineName string
+	NameInfo     nha.NameInfo
+	Status       collection.Status
+}
+
+func sendReceipts(ctx workflow.Context, hooks map[string]map[string]interface{}, params *sendReceiptsParams) error {
+	if params.Status != collection.StatusDone {
+		return nil
+	}
+
+	ctx = withActivityOptsForRequest(ctx)
+
+	if disabled, _ := manager.HookAttrBool(hooks, "hari", "disabled"); !disabled {
+		err := workflow.ExecuteActivity(ctx, nha_activities.UpdateHARIActivityName, &nha_activities.UpdateHARIActivityParams{
+			SIPID:        params.SIPID,
+			StoredAt:     params.StoredAt,
+			FullPath:     params.FullPath,
+			PipelineName: params.PipelineName,
+			NameInfo:     params.NameInfo,
+		}).Get(ctx, nil)
+
+		if err != nil {
+			return fmt.Errorf("error sending hari receipt: %v", err)
+		}
+	}
+
+	if disabled, _ := manager.HookAttrBool(hooks, "prod", "disabled"); !disabled {
+		err := workflow.ExecuteActivity(ctx, nha_activities.UpdateProductionSystemActivityName, &nha_activities.UpdateProductionSystemActivityParams{
+			StoredAt:     params.StoredAt,
+			PipelineName: params.PipelineName,
+			Status:       params.Status,
+			NameInfo:     params.NameInfo,
+		}).Get(ctx, nil)
+
+		if err != nil {
+			return fmt.Errorf("error sending prod receipt: %v", err)
+		}
 	}
 
 	return nil
