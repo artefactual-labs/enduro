@@ -16,28 +16,28 @@ import { exists, mapValues } from '../runtime';
 /**
  * Collection not found
  * @export
- * @interface CollectionRetryNotFoundResponseBody
+ * @interface CollectionDownloadNotFoundResponseBody
  */
-export interface CollectionRetryNotFoundResponseBody {
+export interface CollectionDownloadNotFoundResponseBody {
     /**
      * Identifier of missing collection
      * @type {number}
-     * @memberof CollectionRetryNotFoundResponseBody
+     * @memberof CollectionDownloadNotFoundResponseBody
      */
     id: number;
     /**
      * Message of error
      * @type {string}
-     * @memberof CollectionRetryNotFoundResponseBody
+     * @memberof CollectionDownloadNotFoundResponseBody
      */
     message: string;
 }
 
-export function CollectionRetryNotFoundResponseBodyFromJSON(json: any): CollectionRetryNotFoundResponseBody {
-    return CollectionRetryNotFoundResponseBodyFromJSONTyped(json, false);
+export function CollectionDownloadNotFoundResponseBodyFromJSON(json: any): CollectionDownloadNotFoundResponseBody {
+    return CollectionDownloadNotFoundResponseBodyFromJSONTyped(json, false);
 }
 
-export function CollectionRetryNotFoundResponseBodyFromJSONTyped(json: any, ignoreDiscriminator: boolean): CollectionRetryNotFoundResponseBody {
+export function CollectionDownloadNotFoundResponseBodyFromJSONTyped(json: any, ignoreDiscriminator: boolean): CollectionDownloadNotFoundResponseBody {
     if ((json === undefined) || (json === null)) {
         return json;
     }
@@ -48,7 +48,7 @@ export function CollectionRetryNotFoundResponseBodyFromJSONTyped(json: any, igno
     };
 }
 
-export function CollectionRetryNotFoundResponseBodyToJSON(value?: CollectionRetryNotFoundResponseBody | null): any {
+export function CollectionDownloadNotFoundResponseBodyToJSON(value?: CollectionDownloadNotFoundResponseBody | null): any {
     if (value === undefined) {
         return undefined;
     }

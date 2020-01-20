@@ -53,6 +53,8 @@ type EnduroStoredCollectionView struct {
 	PipelineID *string
 	// Creation datetime
 	CreatedAt *string
+	// Start datetime
+	StartedAt *string
 	// Completion datetime
 	CompletedAt *string
 }
@@ -94,6 +96,7 @@ var (
 			"original_id",
 			"pipeline_id",
 			"created_at",
+			"started_at",
 			"completed_at",
 		},
 	}
@@ -162,8 +165,8 @@ func ValidateEnduroStoredCollectionView(result *EnduroStoredCollectionView) (err
 		err = goa.MergeErrors(err, goa.MissingFieldError("created_at", "result"))
 	}
 	if result.Status != nil {
-		if !(*result.Status == "new" || *result.Status == "in progress" || *result.Status == "done" || *result.Status == "error" || *result.Status == "unknown") {
-			err = goa.MergeErrors(err, goa.InvalidEnumValueError("result.status", *result.Status, []interface{}{"new", "in progress", "done", "error", "unknown"}))
+		if !(*result.Status == "new" || *result.Status == "in progress" || *result.Status == "done" || *result.Status == "error" || *result.Status == "unknown" || *result.Status == "queued") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("result.status", *result.Status, []interface{}{"new", "in progress", "done", "error", "unknown", "queued"}))
 		}
 	}
 	if result.WorkflowID != nil {
@@ -183,6 +186,9 @@ func ValidateEnduroStoredCollectionView(result *EnduroStoredCollectionView) (err
 	}
 	if result.CreatedAt != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("result.created_at", *result.CreatedAt, goa.FormatDateTime))
+	}
+	if result.StartedAt != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("result.started_at", *result.StartedAt, goa.FormatDateTime))
 	}
 	if result.CompletedAt != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("result.completed_at", *result.CompletedAt, goa.FormatDateTime))

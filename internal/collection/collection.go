@@ -19,9 +19,13 @@ import (
 //go:generate mockgen  -destination=./fake/mock_collection.go -package=fake github.com/artefactual-labs/enduro/internal/collection Service
 
 type Service interface {
+	// Goa returns an implementation of the goacollection Service.
 	Goa() goacollection.Service
+
 	Create(context.Context, *Collection) error
 	UpdateWorkflowStatus(ctx context.Context, ID uint, name string, workflowID, runID, transferID, aipID, pipelineID string, status Status, storedAt time.Time) error
+	SetStatus(ctx context.Context, ID uint, status Status) error
+	SetStatusInProgress(ctx context.Context, ID uint, startedAt time.Time) error
 
 	// HTTPDownload returns a HTTP handler that serves the package over HTTP.
 	//
@@ -42,6 +46,8 @@ type collectionImpl struct {
 	// downloadProxy generates a reverse proxy on each download.
 	downloadProxy *downloadReverseProxy
 }
+
+var _ Service = (*collectionImpl)(nil)
 
 func NewService(logger logr.Logger, db *sql.DB, cc cadenceclient.Client, registry *pipeline.Registry) *collectionImpl {
 	return &collectionImpl{
@@ -111,19 +117,47 @@ func (svc *collectionImpl) UpdateWorkflowStatus(ctx context.Context, ID uint, na
 		ID,
 	}
 
+	_, err := svc.updateRow(ctx, query, args)
+
+	return err
+}
+
+func (svc *collectionImpl) SetStatus(ctx context.Context, ID uint, status Status) error {
+	var query = `UPDATE collection SET status = (?) WHERE id = (?)`
+	var args = []interface{}{
+		status,
+		ID,
+	}
+
+	_, err := svc.updateRow(ctx, query, args)
+
+	return err
+}
+
+func (svc *collectionImpl) SetStatusInProgress(ctx context.Context, ID uint, startedAt time.Time) error {
+	var query = `UPDATE collection SET status = (?), started_at = (?) WHERE id = (?)`
+	var args = []interface{}{
+		StatusInProgress,
+		startedAt,
+		ID,
+	}
+
+	_, err := svc.updateRow(ctx, query, args)
+
+	return err
+}
+
+func (svc *collectionImpl) updateRow(ctx context.Context, query string, args []interface{}) (int64, error) {
 	query = svc.db.Rebind(query)
 	res, err := svc.db.ExecContext(ctx, query, args...)
 	if err != nil {
-		return fmt.Errorf("error updating collection: %w", err)
+		return 0, fmt.Errorf("error updating collection: %v", err)
 	}
 
 	n, err := res.RowsAffected()
 	if err != nil {
-		return fmt.Errorf("error retrieving rows affected: %w", err)
-	}
-	if n != 1 {
-		return fmt.Errorf("error updating collection: %d rows affected", n)
+		return 0, fmt.Errorf("error retrieving rows affected: %v", err)
 	}
 
-	return nil
+	return n, nil
 }

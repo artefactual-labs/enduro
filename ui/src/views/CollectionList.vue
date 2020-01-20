@@ -70,7 +70,7 @@
             <tr>
               <th scope="col" class="hiding">ID</th>
               <th scope="col">Name</th>
-              <th scope="col">Created</th>
+              <th scope="col">Started</th>
               <th scope="col" class="hiding">Completed</th>
               <th scope="col">Status</th>
             </tr>
@@ -79,7 +79,7 @@
             <tr v-for="item in results" v-bind:key="item.id" @click="rowClicked(item.id)">
               <th scope="row" class="hiding">{{ item.id }}</th>
               <td class="collection-name">{{ item.name || 'N/A' }}</td>
-              <td>{{ item.createdAt | formatDateTime }}</td>
+              <td>{{ item.startedAt | formatDateTime }}</td>
               <td class="hiding">{{ item.completedAt | formatDateTime }}</td>
               <td><en-collection-status-badge :status="item.status"/></td>
             </tr>

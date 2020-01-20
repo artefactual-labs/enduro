@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	wferrors "github.com/artefactual-labs/enduro/internal/workflow/errors"
 	"github.com/artefactual-labs/enduro/internal/workflow/manager"
 )
 
@@ -17,10 +18,10 @@ func NewAcquirePipelineActivity(m *manager.Manager) *AcquirePipelineActivity {
 	return &AcquirePipelineActivity{manager: m}
 }
 
-func (a *AcquirePipelineActivity) Execute(ctx context.Context, name string) error {
-	p, err := a.manager.Pipelines.ByName(name)
+func (a *AcquirePipelineActivity) Execute(ctx context.Context, pipelineName string) error {
+	p, err := a.manager.Pipelines.ByName(pipelineName)
 	if err != nil {
-		return err
+		return wferrors.NonRetryableError(err)
 	}
 
 	ctx, cancel := context.WithTimeout(ctx, time.Second)

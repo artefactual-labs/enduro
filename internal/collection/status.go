@@ -13,6 +13,7 @@ const (
 	StatusDone
 	StatusError
 	StatusUnknown
+	StatusQueued
 )
 
 func NewStatus(status string) Status {
@@ -27,6 +28,8 @@ func NewStatus(status string) Status {
 		s = StatusDone
 	case "error":
 		s = StatusError
+	case "queued":
+		s = StatusQueued
 	default:
 		s = StatusUnknown
 	}
@@ -44,6 +47,8 @@ func (p Status) String() string {
 		return "done"
 	case StatusError:
 		return "error"
+	case StatusQueued:
+		return "queued"
 	}
 	return "unknown"
 }

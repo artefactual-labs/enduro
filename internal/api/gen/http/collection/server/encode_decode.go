@@ -95,8 +95,8 @@ func DecodeListRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.De
 			status = &statusRaw
 		}
 		if status != nil {
-			if !(*status == "new" || *status == "in progress" || *status == "done" || *status == "error" || *status == "unknown") {
-				err = goa.MergeErrors(err, goa.InvalidEnumValueError("status", *status, []interface{}{"new", "in progress", "done", "error", "unknown"}))
+			if !(*status == "new" || *status == "in progress" || *status == "done" || *status == "error" || *status == "unknown" || *status == "queued") {
+				err = goa.MergeErrors(err, goa.InvalidEnumValueError("status", *status, []interface{}{"new", "in progress", "done", "error", "unknown", "queued"}))
 			}
 		}
 		cursorRaw := r.URL.Query().Get("cursor")
@@ -544,6 +544,7 @@ func marshalCollectionEnduroStoredCollectionToEnduroStoredCollectionResponseBody
 		OriginalID:  v.OriginalID,
 		PipelineID:  v.PipelineID,
 		CreatedAt:   v.CreatedAt,
+		StartedAt:   v.StartedAt,
 		CompletedAt: v.CompletedAt,
 	}
 

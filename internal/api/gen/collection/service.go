@@ -92,6 +92,8 @@ type EnduroStoredCollection struct {
 	PipelineID *string
 	// Creation datetime
 	CreatedAt string
+	// Start datetime
+	StartedAt *string
 	// Completion datetime
 	CompletedAt *string
 }
@@ -237,6 +239,7 @@ func newEnduroStoredCollection(vres *collectionviews.EnduroStoredCollectionView)
 		AipID:       vres.AipID,
 		OriginalID:  vres.OriginalID,
 		PipelineID:  vres.PipelineID,
+		StartedAt:   vres.StartedAt,
 		CompletedAt: vres.CompletedAt,
 	}
 	if vres.ID != nil {
@@ -268,6 +271,7 @@ func newEnduroStoredCollectionView(res *EnduroStoredCollection) *collectionviews
 		OriginalID:  res.OriginalID,
 		PipelineID:  res.PipelineID,
 		CreatedAt:   &res.CreatedAt,
+		StartedAt:   res.StartedAt,
 		CompletedAt: res.CompletedAt,
 	}
 	return vres

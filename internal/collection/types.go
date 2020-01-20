@@ -22,7 +22,10 @@ type Collection struct {
 	// It defaults to CURRENT_TIMESTAMP(6) so populated as soon as possible.
 	CreatedAt time.Time `db:"created_at"`
 
-	// Nullable and only populated as soon as ingest completes.
+	// Nullable, populated as soon as processing starts.
+	StartedAt sql.NullTime `db:"started_at"`
+
+	// Nullable, populated as soon as ingest completes.
 	CompletedAt sql.NullTime `db:"completed_at"`
 }
 
@@ -39,6 +42,7 @@ func (c Collection) Goa() *goacollection.EnduroStoredCollection {
 		PipelineID:  formatOptionalString(c.PipelineID),
 		Status:      c.Status.String(),
 		CreatedAt:   formatTime(c.CreatedAt),
+		StartedAt:   formatOptionalTime(c.StartedAt),
 		CompletedAt: formatOptionalTime(c.CompletedAt),
 	}
 
