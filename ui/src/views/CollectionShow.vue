@@ -31,7 +31,7 @@
         </template>
 
         <template v-if="collection.status == 'done'">
-          <dt>Completed</dt>
+          <dt>Stored</dt>
           <dd>
             {{ collection.completedAt | formatDateTime }}
             (took {{ took(collection.startedAt, collection.completedAt) }})

@@ -71,7 +71,7 @@
               <th scope="col" class="hiding">ID</th>
               <th scope="col">Name</th>
               <th scope="col">Started</th>
-              <th scope="col" class="hiding">Completed</th>
+              <th scope="col" class="hiding">Stored</th>
               <th scope="col">Status</th>
             </tr>
           </thead>
