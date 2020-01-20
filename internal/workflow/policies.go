@@ -17,7 +17,7 @@ const forever = time.Hour * 24 * 365 * 10
 // options suited for long-running activities without heartbeats
 func withActivityOptsForLongLivedRequest(ctx workflow.Context) workflow.Context {
 	return workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
-		ScheduleToStartTimeout: time.Minute * 1,
+		ScheduleToStartTimeout: forever,
 		StartToCloseTimeout:    time.Minute * 10,
 		RetryPolicy: &cadence.RetryPolicy{
 			InitialInterval:          time.Second,
@@ -57,7 +57,7 @@ func withActivityOptsForHeartbeatedRequest(ctx workflow.Context, heartbeatTimeou
 // suited for short-lived requests that may require multiple attempts.
 func withActivityOptsForRequest(ctx workflow.Context) workflow.Context {
 	return workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
-		ScheduleToStartTimeout: time.Minute * 1,
+		ScheduleToStartTimeout: forever,
 		StartToCloseTimeout:    time.Second * 10,
 		RetryPolicy: &cadence.RetryPolicy{
 			InitialInterval:          time.Second,
@@ -75,7 +75,7 @@ func withActivityOptsForRequest(ctx workflow.Context) workflow.Context {
 //nolint:deadcode,unused
 func withActivityOptsForNoOp(ctx workflow.Context) workflow.Context {
 	return workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
-		ScheduleToStartTimeout: time.Minute * 1,
+		ScheduleToStartTimeout: forever,
 		StartToCloseTimeout:    time.Second * 10,
 	})
 }

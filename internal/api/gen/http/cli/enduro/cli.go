@@ -30,7 +30,7 @@ func UsageCommands() string {
 
 // UsageExamples produces an example of a valid invocation of the CLI tool.
 func UsageExamples() string {
-	return os.Args[0] + ` collection list --name "Ut sunt incidunt." --original-id "Dolor deleniti voluptatem qui." --transfer-id "7D80331A-7620-D09D-7CCB-2EF87B797732" --aip-id "76FB876C-96AC-91E7-BD21-B0C2988DDF65" --pipeline-id "A45D83CF-F038-77BB-220E-D79EFC31D198" --earliest-created-time "1976-02-14T02:11:18Z" --latest-created-time "2006-02-27T19:05:22Z" --status "in progress" --cursor "Ut ullam."` + "\n" +
+	return os.Args[0] + ` collection list --name "Magni quod impedit sapiente ea." --original-id "Dicta non odio." --transfer-id "76FB876C-96AC-91E7-BD21-B0C2988DDF65" --aip-id "A45D83CF-F038-77BB-220E-D79EFC31D198" --pipeline-id "95545D09-3153-0F17-09F7-7FEB1545D780" --earliest-created-time "1975-09-04T16:08:16Z" --latest-created-time "1997-07-04T22:46:11Z" --status "unknown" --cursor "Eligendi quam doloribus quam itaque vitae velit."` + "\n" +
 		""
 }
 
@@ -230,7 +230,7 @@ List all stored collections
     -cursor STRING: 
 
 Example:
-    `+os.Args[0]+` collection list --name "Ut sunt incidunt." --original-id "Dolor deleniti voluptatem qui." --transfer-id "7D80331A-7620-D09D-7CCB-2EF87B797732" --aip-id "76FB876C-96AC-91E7-BD21-B0C2988DDF65" --pipeline-id "A45D83CF-F038-77BB-220E-D79EFC31D198" --earliest-created-time "1976-02-14T02:11:18Z" --latest-created-time "2006-02-27T19:05:22Z" --status "in progress" --cursor "Ut ullam."
+    `+os.Args[0]+` collection list --name "Magni quod impedit sapiente ea." --original-id "Dicta non odio." --transfer-id "76FB876C-96AC-91E7-BD21-B0C2988DDF65" --aip-id "A45D83CF-F038-77BB-220E-D79EFC31D198" --pipeline-id "95545D09-3153-0F17-09F7-7FEB1545D780" --earliest-created-time "1975-09-04T16:08:16Z" --latest-created-time "1997-07-04T22:46:11Z" --status "unknown" --cursor "Eligendi quam doloribus quam itaque vitae velit."
 `, os.Args[0])
 }
 
@@ -241,7 +241,7 @@ Show collection by ID
     -id UINT: Identifier of collection to show
 
 Example:
-    `+os.Args[0]+` collection show --id 9263640075129744265
+    `+os.Args[0]+` collection show --id 142946564596723575
 `, os.Args[0])
 }
 
@@ -252,7 +252,7 @@ Delete collection by ID
     -id UINT: Identifier of collection to delete
 
 Example:
-    `+os.Args[0]+` collection delete --id 10447808246697357189
+    `+os.Args[0]+` collection delete --id 7968451831306147769
 `, os.Args[0])
 }
 
@@ -263,7 +263,7 @@ Cancel collection processing by ID
     -id UINT: Identifier of collection to remove
 
 Example:
-    `+os.Args[0]+` collection cancel --id 224429362866116975
+    `+os.Args[0]+` collection cancel --id 3080901619629439359
 `, os.Args[0])
 }
 
@@ -274,7 +274,7 @@ Retry collection processing by ID
     -id UINT: Identifier of collection to retry
 
 Example:
-    `+os.Args[0]+` collection retry --id 12826886350933798103
+    `+os.Args[0]+` collection retry --id 10483411995578769706
 `, os.Args[0])
 }
 
@@ -285,7 +285,7 @@ Retrieve workflow status by ID
     -id UINT: Identifier of collection to look up
 
 Example:
-    `+os.Args[0]+` collection workflow --id 17237977941828759225
+    `+os.Args[0]+` collection workflow --id 10894263374247530105
 `, os.Args[0])
 }
 
@@ -296,6 +296,6 @@ Download collection by ID
     -id UINT: Identifier of collection to look up
 
 Example:
-    `+os.Args[0]+` collection download --id 13730276368974140301
+    `+os.Args[0]+` collection download --id 15738484422014435571
 `, os.Args[0])
 }

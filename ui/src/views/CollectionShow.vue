@@ -20,11 +20,21 @@
           {{ collection.createdAt | formatDateTime }}
         </dd>
 
+        <template>
+          <dt>Started</dt>
+          <dd v-if="collection.startedAt">
+            {{ collection.startedAt | formatDateTime }}
+          </dd>
+          <dd v-else>
+            Not started yet.
+          </dd>
+        </template>
+
         <template v-if="collection.status == 'done'">
           <dt>Completed</dt>
           <dd>
             {{ collection.completedAt | formatDateTime }}
-            (took {{ took(collection.createdAt, collection.completedAt) }})
+            (took {{ took(collection.startedAt, collection.completedAt) }})
           </dd>
         </template>
 

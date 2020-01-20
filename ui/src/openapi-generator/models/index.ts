@@ -1,6 +1,7 @@
 export * from './CollectionCancelNotFoundResponseBody';
 export * from './CollectionCancelNotRunningResponseBody';
 export * from './CollectionDeleteNotFoundResponseBody';
+export * from './CollectionDownloadNotFoundResponseBody';
 export * from './CollectionListResponseBody';
 export * from './CollectionRetryNotFoundResponseBody';
 export * from './CollectionRetryNotRunningResponseBody';

@@ -1,2 +1,2 @@
 export * from './CollectionApi';
-export * from './DefaultApi';
+export * from './SwaggerApi';

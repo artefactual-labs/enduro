@@ -81,7 +81,7 @@ ui-gen:
 
 ui-client:
 	rm -rf $(CURDIR)/ui/src/client
-	docker container run --rm --user $(shell id -u):$(shell id -g) --volume $(CURDIR):/local openapitools/openapi-generator-cli:v4.2.1 \
+	docker container run --rm --user $(shell id -u):$(shell id -g) --volume $(CURDIR):/local openapitools/openapi-generator-cli:v4.2.2 \
 		generate \
 			--input-spec /local/internal/api/gen/http/openapi.json \
 			--generator-name typescript-fetch \

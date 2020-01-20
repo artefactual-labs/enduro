@@ -18,7 +18,6 @@ import (
 	"github.com/artefactual-labs/enduro/internal/workflow/activities"
 	wferrors "github.com/artefactual-labs/enduro/internal/workflow/errors"
 	"github.com/artefactual-labs/enduro/internal/workflow/manager"
-	"go.uber.org/cadence"
 	"go.uber.org/cadence/workflow"
 	"go.uber.org/zap"
 )
@@ -29,9 +28,6 @@ type ProcessingWorkflow struct {
 
 func NewProcessingWorkflow(m *manager.Manager) *ProcessingWorkflow {
 	return &ProcessingWorkflow{manager: m}
-}
-
-type BundleInfo struct {
 }
 
 // TransferInfo is shared state that is passed down to activities. It can be
@@ -64,11 +60,6 @@ type TransferInfo struct {
 	// It is populated via the workflow request.
 	Event *watcher.BlobEvent
 
-	// Status of the collection.
-	//
-	// It is populated from the workflow (deterministically)
-	Status collection.Status
-
 	// StoredAt is the time when the AIP is stored.
 	//
 	// It is populated by PollIngestActivity as long as Ingest completes.
@@ -96,11 +87,6 @@ type TransferInfo struct {
 	//
 	// It is populated by BundleActivity.
 	Bundle activities.BundleActivityResult
-
-	// Aditional attributes inferred from the transfer name.
-	//
-	// It is populated by parseNameLocalActivity.
-	NameInfo nha.NameInfo
 }
 
 // ProcessingWorkflow orchestrates all the activities related to the processing
@@ -111,29 +97,50 @@ type TransferInfo struct {
 // not have a retry policy in place. The user could trigger a new instance via
 // the API.
 func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.ProcessingWorkflowRequest) error {
-	logger := workflow.GetLogger(ctx)
-	tinfo := &TransferInfo{
-		CollectionID: req.CollectionID,
-		Event:        req.Event,
-		Status:       collection.StatusInProgress,
-	}
+	var (
+		logger = workflow.GetLogger(ctx)
 
-	// Extract details from transfer name.
-	activityOpts := withLocalActivityOpts(ctx)
-	err := workflow.ExecuteLocalActivity(activityOpts, nha_activities.ParseNameLocalActivity, req.Event.Key).Get(activityOpts, &tinfo.NameInfo)
-	if err != nil {
-		return wferrors.NonRetryableError(fmt.Errorf("error parsing name: %v", err))
-	}
+		tinfo = &TransferInfo{
+			CollectionID: req.CollectionID,
+			Event:        req.Event,
+		}
+
+		// Attributes inferred from the name of the transfer. Populated by parseNameLocalActivity.
+		nameInfo nha.NameInfo
+
+		// Collection status. All collections start in queued status.
+		status = collection.StatusQueued
+	)
 
 	// Persist collection as early as possible.
-	activityOpts = withLocalActivityOpts(ctx)
-	err = workflow.ExecuteLocalActivity(activityOpts, createPackageLocalActivity, w.manager.Collection, tinfo).Get(activityOpts, &tinfo)
-	if err != nil {
-		return wferrors.NonRetryableError(fmt.Errorf("error persisting collection: %v", err))
+	{
+		var activityOpts = withLocalActivityOpts(ctx)
+		var err error
+
+		if req.CollectionID == 0 {
+			err = workflow.ExecuteLocalActivity(activityOpts, createPackageLocalActivity, w.manager.Logger, w.manager.Collection, &createPackageLocalActivityParams{
+				OriginalID: nameInfo.Identifier,
+				Status:     status,
+			}).Get(activityOpts, &tinfo.CollectionID)
+		} else {
+			// TODO: investigate better way to reset the collection.
+			err = workflow.ExecuteLocalActivity(activityOpts, updatePackageLocalActivity, w.manager.Logger, w.manager.Collection, &updatePackageLocalActivityParams{
+				CollectionID: req.CollectionID,
+				Key:          req.Event.PipelineName,
+				PipelineID:   "",
+				TransferID:   "",
+				SIPID:        "",
+				StoredAt:     time.Time{},
+				Status:       status,
+			}).Get(activityOpts, nil)
+		}
+
+		if err != nil {
+			return wferrors.NonRetryableError(fmt.Errorf("error persisting collection: %v", err))
+		}
 	}
 
 	defer func() {
-		var status = tinfo.Status
 		if status == collection.StatusInProgress {
 			status = collection.StatusError
 		}
@@ -142,32 +149,41 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 		// ensure that it runs even after cancellation.
 		var dctx, _ = workflow.NewDisconnectedContext(ctx)
 		var activityOpts = withLocalActivityOpts(dctx)
-		_ = workflow.ExecuteLocalActivity(activityOpts, updatePackageStatusLocalActivity, w.manager.Collection, tinfo, status).Get(activityOpts, nil)
+		_ = workflow.ExecuteLocalActivity(activityOpts, updatePackageLocalActivity, w.manager.Logger, w.manager.Collection, &updatePackageLocalActivityParams{
+			CollectionID: tinfo.CollectionID,
+			Key:          tinfo.Event.Key,
+			PipelineID:   tinfo.PipelineID,
+			TransferID:   tinfo.TransferID,
+			SIPID:        tinfo.SIPID,
+			StoredAt:     tinfo.StoredAt,
+			Status:       status,
+		}).Get(activityOpts, nil)
 	}()
 
-	// Load pipeline configuration and hooks.
-	activityOpts = withLocalActivityOpts(ctx)
-	err = workflow.ExecuteLocalActivity(activityOpts, loadConfigLocalActivity, w.manager, req.Event.PipelineName, tinfo).Get(activityOpts, &tinfo)
-	if err != nil {
-		return wferrors.NonRetryableError(fmt.Errorf("error loading configuration: %v", err))
+	// Extract details from transfer name.
+	{
+		activityOpts := withLocalActivityOpts(ctx)
+		err := workflow.ExecuteLocalActivity(activityOpts, nha_activities.ParseNameLocalActivity, req.Event.Key).Get(activityOpts, &nameInfo)
+		if err != nil {
+			return wferrors.NonRetryableError(fmt.Errorf("error parsing name: %v", err))
+		}
 	}
 
-	// Acquire pipeline.
-	//
-	// We keep retrying until the operation succeeds.
-	activityOpts = workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
-		ScheduleToStartTimeout: forever,
-		StartToCloseTimeout:    time.Second * 2,
-		RetryPolicy: &cadence.RetryPolicy{
-			InitialInterval:    time.Second * 2,
-			BackoffCoefficient: 1,
-			MaximumInterval:    time.Second * 2,
-			ExpirationInterval: forever,
-		},
-	})
-	err = workflow.ExecuteActivity(activityOpts, activities.AcquirePipelineActivityName, req.Event.PipelineName).Get(activityOpts, nil)
-	if err != nil {
-		return wferrors.NonRetryableError(fmt.Errorf("error acquiring pipeline: %v", err))
+	// Load pipeline configuration and hooks.
+	{
+		activityOpts := withLocalActivityOpts(ctx)
+		err := workflow.ExecuteLocalActivity(activityOpts, loadConfigLocalActivity, w.manager, req.Event.PipelineName, tinfo).Get(activityOpts, &tinfo)
+		if err != nil {
+			return wferrors.NonRetryableError(fmt.Errorf("error loading configuration: %v", err))
+		}
+	}
+
+	// Block until pipeline semaphore is acquired. The collection status is set
+	// to in-progress as soon as the operation succeeds.
+	{
+		if err := acquirePipeline(ctx, w.manager, req.Event.PipelineName, tinfo.CollectionID); err != nil {
+			return wferrors.NonRetryableError(fmt.Errorf("error acquiring pipeline: %v", err))
+		}
 	}
 
 	// A session guarantees that activities within it are scheduled on the same
@@ -175,10 +191,11 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 	var sessCtx workflow.Context
 	var sessErr error
 	{
-		activityOpts = workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
-			ScheduleToStartTimeout: time.Second * 5,
+		activityOpts := workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
+			ScheduleToStartTimeout: forever,
 			StartToCloseTimeout:    time.Minute,
 		})
+		var err error
 		sessCtx, err = workflow.CreateSession(activityOpts, &workflow.SessionOptions{
 			CreationTimeout:  time.Minute,
 			ExecutionTimeout: time.Hour * 24 * 5,
@@ -191,9 +208,9 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 	}
 
 	if sessErr != nil {
-		tinfo.Status = collection.StatusError
+		status = collection.StatusError
 	} else {
-		tinfo.Status = collection.StatusDone
+		status = collection.StatusDone
 	}
 
 	// One of the activities within the session has failed. There's not much we
@@ -209,15 +226,15 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 	// Passing the activity lets the activity determine if the process failed.
 	var futures []workflow.Future
 	var receiptsFailed bool
-	activityOpts = withActivityOptsForRequest(sessCtx)
-	if tinfo.Status == collection.StatusDone {
+	activityOpts := withActivityOptsForRequest(sessCtx)
+	if status == collection.StatusDone {
 		if disabled, _ := manager.HookAttrBool(tinfo.Hooks, "hari", "disabled"); !disabled {
 			futures = append(futures, workflow.ExecuteActivity(activityOpts, nha_activities.UpdateHARIActivityName, &nha_activities.UpdateHARIActivityParams{
 				SIPID:        tinfo.SIPID,
 				StoredAt:     tinfo.StoredAt,
 				FullPath:     tinfo.Bundle.FullPath,
 				PipelineName: tinfo.Event.PipelineName,
-				NameInfo:     tinfo.NameInfo,
+				NameInfo:     nameInfo,
 			}))
 		}
 	}
@@ -225,8 +242,8 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 		futures = append(futures, workflow.ExecuteActivity(activityOpts, nha_activities.UpdateProductionSystemActivityName, &nha_activities.UpdateProductionSystemActivityParams{
 			StoredAt:     tinfo.StoredAt,
 			PipelineName: tinfo.Event.PipelineName,
-			Status:       tinfo.Status,
-			NameInfo:     tinfo.NameInfo,
+			Status:       status,
+			NameInfo:     nameInfo,
 		}))
 	}
 	for _, f := range futures {
@@ -238,40 +255,47 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 	// we'd prefer to give the user to decide what to do next, e.g. start over,
 	// retry hooks individually, etc...
 	if receiptsFailed {
-		tinfo.Status = collection.StatusError
+		status = collection.StatusError
+		workflow.CompleteSession(sessCtx)
 		return errors.New("at least one hook/receipt activity failed")
 	}
 
 	// Clean-up is the last activity that depends on the session.
 	// We'll close it as soon as the activity completes.
-	if tinfo.Bundle.FullPathBeforeStrip != "" {
-		activityOpts = withActivityOptsForRequest(sessCtx)
-		_ = workflow.ExecuteActivity(activityOpts, activities.CleanUpActivityName, &activities.CleanUpActivityParams{
-			FullPath: tinfo.Bundle.FullPathBeforeStrip,
-		}).Get(activityOpts, nil)
+	{
+		if tinfo.Bundle.FullPathBeforeStrip != "" {
+			activityOpts := withActivityOptsForRequest(sessCtx)
+			_ = workflow.ExecuteActivity(activityOpts, activities.CleanUpActivityName, &activities.CleanUpActivityParams{
+				FullPath: tinfo.Bundle.FullPathBeforeStrip,
+			}).Get(activityOpts, nil)
+		}
 	}
 
 	workflow.CompleteSession(sessCtx)
 
 	// Hide packages from Archivematica Dashboard.
-	if tinfo.Status == collection.StatusDone {
-		futures = []workflow.Future{}
-		activityOpts = withActivityOptsForRequest(ctx)
-		futures = append(futures, workflow.ExecuteActivity(activityOpts, activities.HidePackageActivityName, tinfo.TransferID, "transfer", tinfo.Event.PipelineName))
-		futures = append(futures, workflow.ExecuteActivity(activityOpts, activities.HidePackageActivityName, tinfo.SIPID, "ingest", tinfo.Event.PipelineName))
-		for _, f := range futures {
-			_ = f.Get(activityOpts, nil)
+	{
+		if status == collection.StatusDone {
+			futures = []workflow.Future{}
+			activityOpts = withActivityOptsForRequest(ctx)
+			futures = append(futures, workflow.ExecuteActivity(activityOpts, activities.HidePackageActivityName, tinfo.TransferID, "transfer", tinfo.Event.PipelineName))
+			futures = append(futures, workflow.ExecuteActivity(activityOpts, activities.HidePackageActivityName, tinfo.SIPID, "ingest", tinfo.Event.PipelineName))
+			for _, f := range futures {
+				_ = f.Get(activityOpts, nil)
+			}
 		}
 	}
 
 	// Schedule deletion of the original in the watched data source.
-	if tinfo.Status == collection.StatusDone && tinfo.Event.RetentionPeriod != nil {
-		err := workflow.NewTimer(ctx, *tinfo.Event.RetentionPeriod).Get(ctx, nil)
-		if err != nil {
-			logger.Warn("Retention policy timer failed", zap.Error(err))
-		} else {
-			activityOpts = withActivityOptsForRequest(ctx)
-			_ = workflow.ExecuteActivity(activityOpts, activities.DeleteOriginalActivityName, tinfo.Event).Get(activityOpts, nil)
+	{
+		if status == collection.StatusDone && tinfo.Event.RetentionPeriod != nil {
+			err := workflow.NewTimer(ctx, *tinfo.Event.RetentionPeriod).Get(ctx, nil)
+			if err != nil {
+				logger.Warn("Retention policy timer failed", zap.Error(err))
+			} else {
+				activityOpts = withActivityOptsForRequest(ctx)
+				_ = workflow.ExecuteActivity(activityOpts, activities.DeleteOriginalActivityName, tinfo.Event).Get(activityOpts, nil)
+			}
 		}
 	}
 
@@ -280,7 +304,7 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 		zap.Uint("collectionID", tinfo.CollectionID),
 		zap.String("pipeline", tinfo.Event.PipelineName),
 		zap.String("event", tinfo.Event.String()),
-		zap.String("status", tinfo.Status.String()),
+		zap.String("status", status.String()),
 	)
 
 	return nil
@@ -293,9 +317,7 @@ func (w *ProcessingWorkflow) SessionHandler(ctx workflow.Context, sessCtx workfl
 	)
 
 	defer func() {
-		var dctx, _ = workflow.NewDisconnectedContext(ctx)
-		var activityOpts = withLocalActivityOpts(dctx)
-		_ = workflow.ExecuteLocalActivity(activityOpts, releasePipelineLocalActivity, w.manager.Logger, w.manager.Pipelines, tinfo.Event.PipelineName).Get(activityOpts, nil)
+		_ = releasePipeline(ctx, w.manager, tinfo.Event.PipelineName)
 	}()
 
 	// Download.
@@ -334,9 +356,15 @@ func (w *ProcessingWorkflow) SessionHandler(ctx workflow.Context, sessCtx workfl
 	tinfo.TransferID = transferResponse.TransferID
 	tinfo.PipelineID = transferResponse.PipelineID
 
-	// Update status of collection.
+	// Persist TransferID + PipelineID.
 	activityOpts = withLocalActivityOpts(ctx)
-	_ = workflow.ExecuteLocalActivity(activityOpts, updatePackageStatusLocalActivity, w.manager.Collection, tinfo, tinfo.Status).Get(activityOpts, nil)
+	_ = workflow.ExecuteLocalActivity(activityOpts, updatePackageLocalActivity, w.manager.Logger, w.manager.Collection, &updatePackageLocalActivityParams{
+		CollectionID: tinfo.CollectionID,
+		Key:          tinfo.Event.Key,
+		Status:       collection.StatusInProgress,
+		TransferID:   tinfo.TransferID,
+		PipelineID:   tinfo.PipelineID,
+	}).Get(activityOpts, nil)
 
 	// Poll transfer.
 	activityOpts = withActivityOptsForHeartbeatedRequest(sessCtx, time.Minute)
@@ -347,6 +375,17 @@ func (w *ProcessingWorkflow) SessionHandler(ctx workflow.Context, sessCtx workfl
 	if err != nil {
 		return err
 	}
+
+	// Persist SIPID.
+	activityOpts = withLocalActivityOpts(sessCtx)
+	_ = workflow.ExecuteLocalActivity(activityOpts, updatePackageLocalActivity, w.manager.Logger, w.manager.Collection, &updatePackageLocalActivityParams{
+		CollectionID: tinfo.CollectionID,
+		Key:          tinfo.Event.Key,
+		TransferID:   tinfo.TransferID,
+		PipelineID:   tinfo.PipelineID,
+		Status:       collection.StatusInProgress,
+		SIPID:        tinfo.SIPID,
+	}).Get(activityOpts, nil)
 
 	// Poll ingest.
 	activityOpts = withActivityOptsForHeartbeatedRequest(sessCtx, time.Minute)

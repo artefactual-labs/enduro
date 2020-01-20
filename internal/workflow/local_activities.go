@@ -2,71 +2,68 @@ package workflow
 
 import (
 	"context"
+	"time"
 
 	"github.com/artefactual-labs/enduro/internal/collection"
-	"github.com/artefactual-labs/enduro/internal/pipeline"
 	"github.com/artefactual-labs/enduro/internal/workflow/manager"
-	"github.com/go-logr/logr"
 
+	"github.com/go-logr/logr"
 	"go.uber.org/cadence/activity"
 )
 
-func releasePipelineLocalActivity(ctx context.Context, logger logr.Logger, registry *pipeline.Registry, name string) error {
-	p, err := registry.ByName(name)
-	if err != nil {
-		return err
-	}
-
-	// It's possible that we're trying to release more than is held by the
-	// semaphore, since the semaphore is volatile and local!
-	defer func() {
-		if err := recover(); err != nil {
-			logger.WithName("releasePipelineLocalActivity").Info("Pipeline lock release failed", "err", err)
-		}
-	}()
-
-	p.Release()
-
-	return nil
+type createPackageLocalActivityParams struct {
+	OriginalID string
+	Status     collection.Status
 }
 
-func createPackageLocalActivity(ctx context.Context, colsvc collection.Service, tinfo *TransferInfo) (*TransferInfo, error) {
+func createPackageLocalActivity(ctx context.Context, logger logr.Logger, colsvc collection.Service, params *createPackageLocalActivityParams) (uint, error) {
 	info := activity.GetInfo(ctx)
-
-	if tinfo.CollectionID > 0 {
-		err := updatePackageStatusLocalActivity(ctx, colsvc, tinfo, tinfo.Status)
-		return tinfo, err
-	}
 
 	col := &collection.Collection{
 		WorkflowID: info.WorkflowExecution.ID,
 		RunID:      info.WorkflowExecution.RunID,
-		OriginalID: tinfo.NameInfo.Identifier,
-		Status:     tinfo.Status,
+		OriginalID: params.OriginalID,
+		Status:     params.Status,
 	}
 
 	if err := colsvc.Create(ctx, col); err != nil {
-		return tinfo, err
+		logger.Error(err, "Error creating collection")
+		return 0, err
 	}
 
-	tinfo.CollectionID = col.ID
-
-	return tinfo, nil
+	return col.ID, nil
 }
 
-func updatePackageStatusLocalActivity(ctx context.Context, colsvc collection.Service, tinfo *TransferInfo, status collection.Status) error {
+type updatePackageLocalActivityParams struct {
+	CollectionID uint
+	Key          string
+	PipelineID   string
+	TransferID   string
+	SIPID        string
+	StoredAt     time.Time
+	Status       collection.Status
+}
+
+func updatePackageLocalActivity(ctx context.Context, logger logr.Logger, colsvc collection.Service, params *updatePackageLocalActivityParams) error {
 	info := activity.GetInfo(ctx)
 
-	return colsvc.UpdateWorkflowStatus(
-		ctx, tinfo.CollectionID, tinfo.Event.Key, info.WorkflowExecution.ID,
-		info.WorkflowExecution.RunID, tinfo.TransferID, tinfo.SIPID, tinfo.PipelineID,
-		status, tinfo.StoredAt,
+	err := colsvc.UpdateWorkflowStatus(
+		ctx, params.CollectionID, params.Key, info.WorkflowExecution.ID,
+		info.WorkflowExecution.RunID, params.TransferID, params.SIPID, params.PipelineID,
+		params.Status, params.StoredAt,
 	)
+	if err != nil {
+		logger.Error(err, "Error updating collection")
+		return err
+	}
+
+	return nil
 }
 
 func loadConfigLocalActivity(ctx context.Context, m *manager.Manager, pipeline string, tinfo *TransferInfo) (*TransferInfo, error) {
 	p, err := m.Pipelines.ByName(pipeline)
 	if err != nil {
+		m.Logger.Error(err, "Error loading local configuration")
 		return nil, err
 	}
 

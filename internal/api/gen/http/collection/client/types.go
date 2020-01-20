@@ -44,6 +44,8 @@ type ShowResponseBody struct {
 	PipelineID *string `form:"pipeline_id,omitempty" json:"pipeline_id,omitempty" xml:"pipeline_id,omitempty"`
 	// Creation datetime
 	CreatedAt *string `form:"created_at,omitempty" json:"created_at,omitempty" xml:"created_at,omitempty"`
+	// Start datetime
+	StartedAt *string `form:"started_at,omitempty" json:"started_at,omitempty" xml:"started_at,omitempty"`
 	// Completion datetime
 	CompletedAt *string `form:"completed_at,omitempty" json:"completed_at,omitempty" xml:"completed_at,omitempty"`
 }
@@ -172,6 +174,8 @@ type EnduroStoredCollectionResponseBody struct {
 	PipelineID *string `form:"pipeline_id,omitempty" json:"pipeline_id,omitempty" xml:"pipeline_id,omitempty"`
 	// Creation datetime
 	CreatedAt *string `form:"created_at,omitempty" json:"created_at,omitempty" xml:"created_at,omitempty"`
+	// Start datetime
+	StartedAt *string `form:"started_at,omitempty" json:"started_at,omitempty" xml:"started_at,omitempty"`
 	// Completion datetime
 	CompletedAt *string `form:"completed_at,omitempty" json:"completed_at,omitempty" xml:"completed_at,omitempty"`
 }
@@ -218,6 +222,7 @@ func NewShowEnduroStoredCollectionOK(body *ShowResponseBody) *collectionviews.En
 		OriginalID:  body.OriginalID,
 		PipelineID:  body.PipelineID,
 		CreatedAt:   body.CreatedAt,
+		StartedAt:   body.StartedAt,
 		CompletedAt: body.CompletedAt,
 	}
 	return v
@@ -485,8 +490,8 @@ func ValidateEnduroStoredCollectionResponseBody(body *EnduroStoredCollectionResp
 		err = goa.MergeErrors(err, goa.MissingFieldError("created_at", "body"))
 	}
 	if body.Status != nil {
-		if !(*body.Status == "new" || *body.Status == "in progress" || *body.Status == "done" || *body.Status == "error" || *body.Status == "unknown") {
-			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.status", *body.Status, []interface{}{"new", "in progress", "done", "error", "unknown"}))
+		if !(*body.Status == "new" || *body.Status == "in progress" || *body.Status == "done" || *body.Status == "error" || *body.Status == "unknown" || *body.Status == "queued") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.status", *body.Status, []interface{}{"new", "in progress", "done", "error", "unknown", "queued"}))
 		}
 	}
 	if body.WorkflowID != nil {
@@ -506,6 +511,9 @@ func ValidateEnduroStoredCollectionResponseBody(body *EnduroStoredCollectionResp
 	}
 	if body.CreatedAt != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("body.created_at", *body.CreatedAt, goa.FormatDateTime))
+	}
+	if body.StartedAt != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.started_at", *body.StartedAt, goa.FormatDateTime))
 	}
 	if body.CompletedAt != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("body.completed_at", *body.CompletedAt, goa.FormatDateTime))

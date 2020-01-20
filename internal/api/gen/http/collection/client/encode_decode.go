@@ -613,6 +613,7 @@ func unmarshalEnduroStoredCollectionResponseBodyToCollectionEnduroStoredCollecti
 		OriginalID:  v.OriginalID,
 		PipelineID:  v.PipelineID,
 		CreatedAt:   *v.CreatedAt,
+		StartedAt:   v.StartedAt,
 		CompletedAt: v.CompletedAt,
 	}
 

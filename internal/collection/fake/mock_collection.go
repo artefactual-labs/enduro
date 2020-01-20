@@ -80,6 +80,34 @@ func (mr *MockServiceMockRecorder) HTTPDownload(arg0, arg1 interface{}) *gomock.
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HTTPDownload", reflect.TypeOf((*MockService)(nil).HTTPDownload), arg0, arg1)
 }
 
+// SetStatus mocks base method
+func (m *MockService) SetStatus(arg0 context.Context, arg1 uint, arg2 collection0.Status) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetStatus", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetStatus indicates an expected call of SetStatus
+func (mr *MockServiceMockRecorder) SetStatus(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetStatus", reflect.TypeOf((*MockService)(nil).SetStatus), arg0, arg1, arg2)
+}
+
+// SetStatusInProgress mocks base method
+func (m *MockService) SetStatusInProgress(arg0 context.Context, arg1 uint, arg2 time.Time) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetStatusInProgress", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetStatusInProgress indicates an expected call of SetStatusInProgress
+func (mr *MockServiceMockRecorder) SetStatusInProgress(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetStatusInProgress", reflect.TypeOf((*MockService)(nil).SetStatusInProgress), arg0, arg1, arg2)
+}
+
 // UpdateWorkflowStatus mocks base method
 func (m *MockService) UpdateWorkflowStatus(arg0 context.Context, arg1 uint, arg2, arg3, arg4, arg5, arg6, arg7 string, arg8 collection0.Status, arg9 time.Time) error {
 	m.ctrl.T.Helper()

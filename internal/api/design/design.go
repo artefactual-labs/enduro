@@ -163,7 +163,7 @@ var _ = Service("swagger", func() {
 })
 
 var EnumCollectionStatus = func() {
-	Enum("new", "in progress", "done", "error", "unknown")
+	Enum("new", "in progress", "done", "error", "unknown", "queued")
 }
 
 var Collection = Type("Collection", func() {
@@ -192,6 +192,9 @@ var Collection = Type("Collection", func() {
 	Attribute("created_at", String, "Creation datetime", func() {
 		Format(FormatDateTime)
 	})
+	Attribute("started_at", String, "Start datetime", func() {
+		Format(FormatDateTime)
+	})
 	Attribute("completed_at", String, "Completion datetime", func() {
 		Format(FormatDateTime)
 	})
@@ -212,6 +215,7 @@ var StoredCollection = ResultType("application/vnd.enduro.stored-collection", fu
 		Attribute("original_id")
 		Attribute("pipeline_id")
 		Attribute("created_at")
+		Attribute("started_at")
 		Attribute("completed_at")
 	})
 	View("default", func() {
@@ -225,6 +229,7 @@ var StoredCollection = ResultType("application/vnd.enduro.stored-collection", fu
 		Attribute("original_id")
 		Attribute("pipeline_id")
 		Attribute("created_at")
+		Attribute("started_at")
 		Attribute("completed_at")
 	})
 	Required("id", "status", "created_at")
