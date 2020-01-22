@@ -94,3 +94,9 @@ func withLocalActivityOpts(ctx workflow.Context) workflow.Context {
 		},
 	})
 }
+
+func withLocalActivityWithoutRetriesOpts(ctx workflow.Context) workflow.Context {
+	return workflow.WithLocalActivityOptions(ctx, workflow.LocalActivityOptions{
+		ScheduleToCloseTimeout: 5 * time.Second,
+	})
+}

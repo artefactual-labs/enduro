@@ -80,6 +80,20 @@ func (mr *MockServiceMockRecorder) HTTPDownload(arg0, arg1 interface{}) *gomock.
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HTTPDownload", reflect.TypeOf((*MockService)(nil).HTTPDownload), arg0, arg1)
 }
 
+// SetOriginalID mocks base method
+func (m *MockService) SetOriginalID(arg0 context.Context, arg1 uint, arg2 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetOriginalID", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetOriginalID indicates an expected call of SetOriginalID
+func (mr *MockServiceMockRecorder) SetOriginalID(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetOriginalID", reflect.TypeOf((*MockService)(nil).SetOriginalID), arg0, arg1, arg2)
+}
+
 // SetStatus mocks base method
 func (m *MockService) SetStatus(arg0 context.Context, arg1 uint, arg2 collection0.Status) error {
 	m.ctrl.T.Helper()
