@@ -12,17 +12,17 @@ import (
 )
 
 type createPackageLocalActivityParams struct {
-	OriginalID string
-	Status     collection.Status
+	Key    string
+	Status collection.Status
 }
 
 func createPackageLocalActivity(ctx context.Context, logger logr.Logger, colsvc collection.Service, params *createPackageLocalActivityParams) (uint, error) {
 	info := activity.GetInfo(ctx)
 
 	col := &collection.Collection{
+		Name:       params.Key,
 		WorkflowID: info.WorkflowExecution.ID,
 		RunID:      info.WorkflowExecution.RunID,
-		OriginalID: params.OriginalID,
 		Status:     params.Status,
 	}
 
@@ -71,4 +71,17 @@ func loadConfigLocalActivity(ctx context.Context, m *manager.Manager, pipeline s
 	tinfo.Hooks = m.Hooks
 
 	return tinfo, nil
+}
+
+func setStatusInProgressLocalActivity(ctx context.Context, colsvc collection.Service, colID uint, startedAt time.Time) error {
+	return colsvc.SetStatusInProgress(ctx, colID, startedAt)
+}
+
+//nolint:deadcode,unused
+func setStatusLocalActivity(ctx context.Context, colsvc collection.Service, colID uint, status collection.Status) error {
+	return colsvc.SetStatus(ctx, colID, status)
+}
+
+func setOriginalIDLocalActivity(ctx context.Context, colsvc collection.Service, colID uint, originalID string) error {
+	return colsvc.SetOriginalID(ctx, colID, originalID)
 }

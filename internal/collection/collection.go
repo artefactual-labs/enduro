@@ -26,6 +26,7 @@ type Service interface {
 	UpdateWorkflowStatus(ctx context.Context, ID uint, name string, workflowID, runID, transferID, aipID, pipelineID string, status Status, storedAt time.Time) error
 	SetStatus(ctx context.Context, ID uint, status Status) error
 	SetStatusInProgress(ctx context.Context, ID uint, startedAt time.Time) error
+	SetOriginalID(ctx context.Context, ID uint, originalID string) error
 
 	// HTTPDownload returns a HTTP handler that serves the package over HTTP.
 	//
@@ -139,6 +140,18 @@ func (svc *collectionImpl) SetStatusInProgress(ctx context.Context, ID uint, sta
 	var args = []interface{}{
 		StatusInProgress,
 		startedAt,
+		ID,
+	}
+
+	_, err := svc.updateRow(ctx, query, args)
+
+	return err
+}
+
+func (svc *collectionImpl) SetOriginalID(ctx context.Context, ID uint, originalID string) error {
+	var query = `UPDATE collection SET original_id = (?) WHERE id = (?)`
+	var args = []interface{}{
+		originalID,
 		ID,
 	}
 

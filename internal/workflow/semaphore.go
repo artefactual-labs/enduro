@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/artefactual-labs/enduro/internal/collection"
 	"github.com/artefactual-labs/enduro/internal/pipeline"
 	"github.com/artefactual-labs/enduro/internal/workflow/activities"
 	wferrors "github.com/artefactual-labs/enduro/internal/workflow/errors"
@@ -57,10 +56,6 @@ func releasePipeline(ctx workflow.Context, manager *manager.Manager, pipelineNam
 	}
 
 	return nil
-}
-
-func setStatusInProgressLocalActivity(ctx context.Context, colsvc collection.Service, colID uint, startedAt time.Time) error {
-	return colsvc.SetStatusInProgress(ctx, colID, startedAt)
 }
 
 func releasePipelineLocalActivity(ctx context.Context, logger logr.Logger, registry *pipeline.Registry, pipelineName string) error {

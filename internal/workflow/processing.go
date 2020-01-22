@@ -15,7 +15,6 @@ import (
 	"github.com/artefactual-labs/enduro/internal/pipeline"
 	"github.com/artefactual-labs/enduro/internal/watcher"
 	"github.com/artefactual-labs/enduro/internal/workflow/activities"
-	wferrors "github.com/artefactual-labs/enduro/internal/workflow/errors"
 	"github.com/artefactual-labs/enduro/internal/workflow/manager"
 	"go.uber.org/cadence/workflow"
 	"go.uber.org/zap"
@@ -118,14 +117,14 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 
 		if req.CollectionID == 0 {
 			err = workflow.ExecuteLocalActivity(activityOpts, createPackageLocalActivity, w.manager.Logger, w.manager.Collection, &createPackageLocalActivityParams{
-				OriginalID: nameInfo.Identifier,
-				Status:     status,
+				Key:    req.Event.Key,
+				Status: status,
 			}).Get(activityOpts, &tinfo.CollectionID)
 		} else {
 			// TODO: investigate better way to reset the collection.
 			err = workflow.ExecuteLocalActivity(activityOpts, updatePackageLocalActivity, w.manager.Logger, w.manager.Collection, &updatePackageLocalActivityParams{
 				CollectionID: req.CollectionID,
-				Key:          req.Event.PipelineName,
+				Key:          req.Event.Key,
 				PipelineID:   "",
 				TransferID:   "",
 				SIPID:        "",
@@ -135,17 +134,19 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 		}
 
 		if err != nil {
-			return wferrors.NonRetryableError(fmt.Errorf("error persisting collection: %v", err))
+			return fmt.Errorf("error persisting collection: %v", err)
 		}
 	}
 
+	// Ensure that the status of the collection is always updated when this
+	// workflow function returns.
 	defer func() {
-		if status == collection.StatusInProgress {
+		// Mark as failed unless it completed successfully.
+		if status != collection.StatusDone {
 			status = collection.StatusError
 		}
 
-		// Update package status, using a workflow-disconnected context to
-		// ensure that it runs even after cancellation.
+		// Use disconnected context so it also runs after cancellation.
 		var dctx, _ = workflow.NewDisconnectedContext(ctx)
 		var activityOpts = withLocalActivityOpts(dctx)
 		_ = workflow.ExecuteLocalActivity(activityOpts, updatePackageLocalActivity, w.manager.Logger, w.manager.Collection, &updatePackageLocalActivityParams{
@@ -161,19 +162,28 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 
 	// Extract details from transfer name.
 	{
-		activityOpts := withLocalActivityOpts(ctx)
+		var activityOpts = withLocalActivityWithoutRetriesOpts(ctx)
 		err := workflow.ExecuteLocalActivity(activityOpts, nha_activities.ParseNameLocalActivity, req.Event.Key).Get(activityOpts, &nameInfo)
-		if err != nil {
-			return wferrors.NonRetryableError(fmt.Errorf("error parsing name: %v", err))
+
+		// An error should only stop the workflow if hari/prod activities are enabled.
+		hariDisabled, _ := manager.HookAttrBool(w.manager.Hooks, "hari", "disabled")
+		prodDisabled, _ := manager.HookAttrBool(w.manager.Hooks, "prod", "disabled")
+		if err != nil && !hariDisabled && !prodDisabled {
+			return fmt.Errorf("error parsing transfer name: %v", err)
+		}
+
+		if nameInfo.Identifier != "" {
+			activityOpts = withLocalActivityOpts(ctx)
+			_ = workflow.ExecuteLocalActivity(activityOpts, setOriginalIDLocalActivity, w.manager.Collection, tinfo.CollectionID, nameInfo.Identifier).Get(activityOpts, nil)
 		}
 	}
 
 	// Load pipeline configuration and hooks.
 	{
-		activityOpts := withLocalActivityOpts(ctx)
+		activityOpts := withLocalActivityWithoutRetriesOpts(ctx)
 		err := workflow.ExecuteLocalActivity(activityOpts, loadConfigLocalActivity, w.manager, req.Event.PipelineName, tinfo).Get(activityOpts, &tinfo)
 		if err != nil {
-			return wferrors.NonRetryableError(fmt.Errorf("error loading configuration: %v", err))
+			return fmt.Errorf("error loading configuration: %v", err)
 		}
 	}
 
@@ -181,7 +191,7 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 	// to in-progress as soon as the operation succeeds.
 	{
 		if err := acquirePipeline(ctx, w.manager, req.Event.PipelineName, tinfo.CollectionID); err != nil {
-			return wferrors.NonRetryableError(fmt.Errorf("error acquiring pipeline: %v", err))
+			return fmt.Errorf("error acquiring pipeline: %v", err)
 		}
 	}
 
@@ -200,7 +210,7 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 			ExecutionTimeout: time.Hour * 24 * 5,
 		})
 		if err != nil {
-			return wferrors.NonRetryableError(fmt.Errorf("error creating session: %w", err))
+			return fmt.Errorf("error creating session: %v", err)
 		}
 
 		sessErr = w.SessionHandler(ctx, sessCtx, tinfo)
