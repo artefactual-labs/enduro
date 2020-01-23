@@ -7,6 +7,18 @@
 
     <template v-else>
       <b-link class="reload" v-on:click="reload()">Reload</b-link>
+
+      <b-alert variant="danger" v-if="workflowError" show>
+        <h4 class="alert-heading">Workflow failure</h4>
+        <p>The workflow completed with an error, see below for more details.</p>
+        <hr /><pre>{{ workflowError }}</pre>
+      </b-alert>
+
+      <b-alert variant="warning" v-else-if="activityError" show>
+        <h4 class="alert-heading">Activity error(s)</h4>
+        At least one activity has failed, see below for more details.
+      </b-alert>
+
       <dl>
 
         <dt>ID</dt>
@@ -19,6 +31,16 @@
         <dd>
           <b-badge>{{ history.status }}</b-badge>
         </dd>
+
+        <template v-if="startedAt">
+          <dt>Started</dt>
+          <dd>{{ startedAt | formatEpoch }}</dd>
+        </template>
+
+        <template v-if="completedAt">
+          <dt>Completed</dt>
+          <dd>{{ completedAt | formatEpoch }}</dd>
+        </template>
 
         <dt>Activity summary</dt>
         <dd>
@@ -77,6 +99,10 @@ export default class CollectionShowWorkflow extends Vue {
   private activities: any = {};
   private name: string = '';
   private error: boolean = false;
+  private workflowError: string = '';
+  private activityError: boolean = false;
+  private startedAt: string = '';
+  private completedAt: string = '';
 
   private created() {
     this.loadHistory();
@@ -93,6 +119,15 @@ export default class CollectionShowWorkflow extends Vue {
     }).catch((response) => {
       this.error = true;
     });
+  }
+
+  private parseEncodedField(input: string): string {
+    const value = window.atob(input);
+    try {
+      return JSON.parse(value);
+    } catch {
+      return value;
+    }
   }
 
   private processHistory() {
@@ -137,6 +172,7 @@ export default class CollectionShowWorkflow extends Vue {
         }
       } else if (event.type === 'ActivityTaskFailed') {
         const attrs = details.activityTaskFailedEventAttributes;
+        this.activityError = true;
         if (attrs.scheduledEventId in this.activities) {
           const item = this.activities[attrs.scheduledEventId];
           item.status = 'error';
@@ -154,6 +190,17 @@ export default class CollectionShowWorkflow extends Vue {
           item.duration = (item.completed - item.started) / 1000000000;
           item.duration = item.duration.toFixed(2);
         }
+      } else if (event.type === 'WorkflowExecutionStarted') {
+        this.startedAt = details.timestamp;
+      } else if (event.type === 'WorkflowExecutionCompleted') {
+        console.log(details);
+        this.completedAt = details.timestamp;
+      } else if (event.type === 'WorkflowExecutionFailed') {
+        const attrs = details.workflowExecutionFailedEventAttributes;
+        const reason = attrs.reason;
+        const info = this.parseEncodedField(attrs.details);
+        this.workflowError = reason + ' - ' + info;
+        this.completedAt = details.timestamp;
       }
     }
   }
@@ -173,6 +220,10 @@ export default class CollectionShowWorkflow extends Vue {
     } else if (event.type === 'DecisionTaskScheduled') {
       const attempt: number = parseInt(attrs.decisionTaskScheduledEventAttributes.attempt, 10) + 1;
       ret = 'Attempts: ' + attempt;
+    } else if (event.type === 'WorkflowExecutionFailed') {
+      const reason = attrs.workflowExecutionFailedEventAttributes.reason;
+      const info = this.parseEncodedField(attrs.workflowExecutionFailedEventAttributes.details);
+      ret = reason + ' - ' + info;
     }
 
     if (ret.length) {
