@@ -107,6 +107,7 @@ import { namespace } from 'vuex-class';
 import * as CollectionStore from '../store/collection';
 import CollectionStatusBadge from '@/components/CollectionStatusBadge.vue';
 import moment from 'moment';
+import humanizeDuration from 'humanize-duration';
 
 import { api, EnduroCollectionClient } from '../client';
 
@@ -127,7 +128,7 @@ export default class CollectionShow extends Vue {
 
   private took(created: Date, completed: Date): string {
     const diff = moment(completed).diff(created);
-    return moment.duration(diff).humanize();
+    return humanizeDuration(moment.duration(diff).asMilliseconds());
   }
 
   private retry(id: string): Promise<any> {
