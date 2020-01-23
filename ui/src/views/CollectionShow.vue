@@ -34,7 +34,7 @@
           <dt>Stored</dt>
           <dd>
             {{ collection.completedAt | formatDateTime }}
-            (took {{ took(collection.startedAt, collection.completedAt) }})
+            (took {{ collection.startedAt | formatDuration(collection.completedAt) }})
           </dd>
         </template>
 
@@ -106,8 +106,6 @@ import { Component, Vue } from 'vue-property-decorator';
 import { namespace } from 'vuex-class';
 import * as CollectionStore from '../store/collection';
 import CollectionStatusBadge from '@/components/CollectionStatusBadge.vue';
-import moment from 'moment';
-import humanizeDuration from 'humanize-duration';
 
 import { api, EnduroCollectionClient } from '../client';
 
@@ -125,11 +123,6 @@ export default class CollectionShow extends Vue {
 
   @collectionStoreNs.Action(CollectionStore.SEARCH_COLLECTION)
   private search: any;
-
-  private took(created: Date, completed: Date): string {
-    const diff = moment(completed).diff(created);
-    return humanizeDuration(moment.duration(diff).asMilliseconds());
-  }
 
   private retry(id: string): Promise<any> {
     return EnduroCollectionClient.collectionRetry({id: +id});

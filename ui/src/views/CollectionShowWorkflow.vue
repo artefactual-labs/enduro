@@ -39,7 +39,10 @@
 
         <template v-if="completedAt">
           <dt>Completed</dt>
-          <dd>{{ completedAt | formatEpoch }}</dd>
+          <dd>
+            {{ completedAt | formatEpoch }}
+            (took {{ startedAt | formatEpochDuration(completedAt) }})
+          </dd>
         </template>
 
         <dt>Activity summary</dt>
@@ -193,7 +196,6 @@ export default class CollectionShowWorkflow extends Vue {
       } else if (event.type === 'WorkflowExecutionStarted') {
         this.startedAt = details.timestamp;
       } else if (event.type === 'WorkflowExecutionCompleted') {
-        console.log(details);
         this.completedAt = details.timestamp;
       } else if (event.type === 'WorkflowExecutionFailed') {
         const attrs = details.workflowExecutionFailedEventAttributes;
