@@ -22,7 +22,7 @@ require (
 	github.com/gogo/status v1.1.0 // indirect
 	github.com/golang-migrate/migrate/v4 v4.8.0
 	github.com/golang/groupcache v0.0.0-20191227052852-215e87163ea7 // indirect
-	github.com/golang/mock v1.3.1
+	github.com/golang/mock v1.4.0
 	github.com/google/uuid v1.1.1
 	github.com/google/wire v0.4.0 // indirect
 	github.com/gorilla/schema v1.1.0
