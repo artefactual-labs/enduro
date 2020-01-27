@@ -94,7 +94,7 @@ func main() {
 		}
 
 		logger = zapr.NewLogger(zlogger)
-		logger.Info("Starting...", "version", version)
+		logger.Info("Starting...", "version", version, "pid", os.Getpid())
 	}
 
 	if configFileFound {

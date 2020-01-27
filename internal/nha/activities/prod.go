@@ -10,7 +10,6 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/artefactual-labs/enduro/internal/collection"
 	"github.com/artefactual-labs/enduro/internal/nha"
 	wferrors "github.com/artefactual-labs/enduro/internal/workflow/errors"
 	"github.com/artefactual-labs/enduro/internal/workflow/manager"
@@ -32,7 +31,6 @@ func NewUpdateProductionSystemActivity(m *manager.Manager) *UpdateProductionSyst
 type UpdateProductionSystemActivityParams struct {
 	StoredAt     time.Time
 	PipelineName string
-	Status       collection.Status
 	NameInfo     nha.NameInfo
 }
 
@@ -85,22 +83,11 @@ func (a *UpdateProductionSystemActivity) Execute(ctx context.Context, params *Up
 }
 
 func (a UpdateProductionSystemActivity) generateReceipt(params *UpdateProductionSystemActivityParams, file *os.File) error {
-	var accepted bool
-	var message string
-
-	if params.Status == collection.StatusDone {
-		accepted = true
-		message = fmt.Sprintf("Package was processed by Archivematica pipeline %s", params.PipelineName)
-	} else {
-		accepted = false
-		message = fmt.Sprintf("Package was not processed successfully")
-	}
-
 	receipt := prodSystemReceipt{
 		Identifier: params.NameInfo.Identifier,
 		Type:       params.NameInfo.Type.Lower(),
-		Accepted:   accepted,
-		Message:    message,
+		Accepted:   true,
+		Message:    fmt.Sprintf("Package was processed by Archivematica pipeline %s", params.PipelineName),
 		Timestamp:  params.StoredAt,
 	}
 
