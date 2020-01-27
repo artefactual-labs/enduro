@@ -24,7 +24,7 @@ func (a *AcquirePipelineActivity) Execute(ctx context.Context, pipelineName stri
 		return wferrors.NonRetryableError(err)
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, time.Second)
+	ctx, cancel := context.WithTimeout(ctx, time.Second*4)
 	defer cancel()
 
 	return p.Acquire(ctx)

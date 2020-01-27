@@ -6,6 +6,7 @@
 package workflow
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -16,6 +17,7 @@ import (
 	"github.com/artefactual-labs/enduro/internal/watcher"
 	"github.com/artefactual-labs/enduro/internal/workflow/activities"
 	"github.com/artefactual-labs/enduro/internal/workflow/manager"
+
 	"go.uber.org/cadence/workflow"
 	"go.uber.org/zap"
 )
@@ -187,78 +189,56 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 		}
 	}
 
-	// Block until pipeline semaphore is acquired. The collection status is set
-	// to in-progress as soon as the operation succeeds.
+	// Activities running within a session.
 	{
-		if err := acquirePipeline(ctx, w.manager, req.Event.PipelineName, tinfo.CollectionID); err != nil {
-			return fmt.Errorf("error acquiring pipeline: %v", err)
+		var sessErr error
+		var maxAttempts = 5
+
+		for attempt := 1; attempt <= maxAttempts; attempt++ {
+			activityOpts := workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
+				ScheduleToStartTimeout: forever,
+				StartToCloseTimeout:    time.Minute,
+			})
+			sessCtx, err := workflow.CreateSession(activityOpts, &workflow.SessionOptions{
+				CreationTimeout:  time.Minute * 10,
+				ExecutionTimeout: forever,
+			})
+			if err != nil {
+				return fmt.Errorf("error creating session: %v", err)
+			}
+
+			sessErr = w.SessionHandler(sessCtx, attempt, tinfo, nameInfo)
+
+			// When we want to start over again. Possible scenarios:
+			//
+			// A) Worker died (ErrSessionFailed) or wants to quit (ErrCanceled).
+			// B) Workflow is canceled (ErrCanceled).
+			//
+			if errors.Is(sessErr, workflow.ErrSessionFailed) || errors.Is(sessErr, workflow.ErrCanceled) {
+				// Root context canceled, hence workflow canceled.
+				if ctx.Err() == workflow.ErrCanceled {
+					return nil
+				}
+
+				logger.Error("Session failed, will retry shortly (10s)...",
+					zap.NamedError("rootCtx", ctx.Err()),
+					zap.Int("attemptFailed", attempt),
+					zap.Int("attemptsLeft", maxAttempts-attempt))
+
+				_ = workflow.Sleep(ctx, time.Second*10)
+
+				continue
+			}
+			break
 		}
-	}
 
-	// A session guarantees that activities within it are scheduled on the same
-	// worker.
-	var sessCtx workflow.Context
-	var sessErr error
-	{
-		activityOpts := workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
-			ScheduleToStartTimeout: forever,
-			StartToCloseTimeout:    time.Minute,
-		})
-		var err error
-		sessCtx, err = workflow.CreateSession(activityOpts, &workflow.SessionOptions{
-			CreationTimeout:  time.Minute,
-			ExecutionTimeout: time.Hour * 24 * 5,
-		})
-		if err != nil {
-			return fmt.Errorf("error creating session: %v", err)
+		if sessErr != nil {
+			status = collection.StatusError
+			return sessErr
 		}
 
-		sessErr = w.SessionHandler(ctx, sessCtx, tinfo)
-	}
-
-	if sessErr != nil {
-		status = collection.StatusError
-	} else {
 		status = collection.StatusDone
 	}
-
-	// One of the activities within the session has failed. There's not much we
-	// can do if the worker died at this point, since what we aim to do next
-	// depends on resources only available within that worker.
-	if sessErr == workflow.ErrSessionFailed {
-		workflow.CompleteSession(sessCtx)
-		return sessErr
-	}
-
-	// Deliver receipts.
-	{
-		err := sendReceipts(sessCtx, tinfo.Hooks, &sendReceiptsParams{
-			SIPID:        tinfo.SIPID,
-			StoredAt:     tinfo.StoredAt,
-			FullPath:     tinfo.Bundle.FullPath,
-			PipelineName: tinfo.Event.PipelineName,
-			NameInfo:     nameInfo,
-			Status:       status,
-		})
-		if err != nil {
-			status = collection.StatusError
-			workflow.CompleteSession(sessCtx)
-			return fmt.Errorf("error delivering receipt(s): %v", err)
-		}
-	}
-
-	// Clean-up is the last activity that depends on the session.
-	// We'll close it as soon as the activity completes.
-	{
-		if tinfo.Bundle.FullPathBeforeStrip != "" {
-			activityOpts := withActivityOptsForRequest(sessCtx)
-			_ = workflow.ExecuteActivity(activityOpts, activities.CleanUpActivityName, &activities.CleanUpActivityParams{
-				FullPath: tinfo.Bundle.FullPathBeforeStrip,
-			}).Get(activityOpts, nil)
-		}
-	}
-
-	workflow.CompleteSession(sessCtx)
 
 	// Hide packages from Archivematica Dashboard.
 	{
@@ -297,136 +277,145 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 	return nil
 }
 
-func (w *ProcessingWorkflow) SessionHandler(ctx workflow.Context, sessCtx workflow.Context, tinfo *TransferInfo) error {
-	var (
-		activityOpts workflow.Context
-		err          error
-	)
-
+// SessionHandler runs activities that belong to the same session.
+func (w *ProcessingWorkflow) SessionHandler(sessCtx workflow.Context, attempt int, tinfo *TransferInfo, nameInfo nha.NameInfo) error {
 	defer func() {
-		_ = releasePipeline(ctx, w.manager, tinfo.Event.PipelineName)
+		_ = releasePipeline(sessCtx, w.manager, tinfo.Event.PipelineName)
+		workflow.CompleteSession(sessCtx)
 	}()
 
-	// Download.
-	activityOpts = withActivityOptsForLongLivedRequest(sessCtx)
-	err = workflow.ExecuteActivity(activityOpts, activities.DownloadActivityName, tinfo.Event).Get(activityOpts, &tinfo.TempFile)
-	if err != nil {
-		return err
-	}
-
-	// Bundle.
-	activityOpts = withActivityOptsForLongLivedRequest(sessCtx)
-	err = workflow.ExecuteActivity(activityOpts, activities.BundleActivityName, &activities.BundleActivityParams{
-		TransferDir:      tinfo.PipelineConfig.TransferDir,
-		Key:              tinfo.Event.Key,
-		TempFile:         tinfo.TempFile,
-		StripTopLevelDir: tinfo.Event.StripTopLevelDir,
-	}).Get(activityOpts, &tinfo.Bundle)
-	if err != nil {
-		return err
-	}
-
-	// Transfer.
-	activityOpts = withActivityOptsForRequest(sessCtx)
-	var transferResponse = activities.TransferActivityResponse{}
-	err = workflow.ExecuteActivity(activityOpts, activities.TransferActivityName, &activities.TransferActivityParams{
-		PipelineName:       tinfo.Event.PipelineName,
-		TransferLocationID: tinfo.PipelineConfig.TransferLocationID,
-		RelPath:            tinfo.Bundle.RelPath,
-		Name:               tinfo.Event.Key,
-		ProcessingConfig:   tinfo.PipelineConfig.ProcessingConfig,
-		AutoApprove:        true,
-	}).Get(activityOpts, &transferResponse)
-	if err != nil {
-		return err
-	}
-	tinfo.TransferID = transferResponse.TransferID
-	tinfo.PipelineID = transferResponse.PipelineID
-
-	// Persist TransferID + PipelineID.
-	activityOpts = withLocalActivityOpts(ctx)
-	_ = workflow.ExecuteLocalActivity(activityOpts, updatePackageLocalActivity, w.manager.Logger, w.manager.Collection, &updatePackageLocalActivityParams{
-		CollectionID: tinfo.CollectionID,
-		Key:          tinfo.Event.Key,
-		Status:       collection.StatusInProgress,
-		TransferID:   tinfo.TransferID,
-		PipelineID:   tinfo.PipelineID,
-	}).Get(activityOpts, nil)
-
-	// Poll transfer.
-	activityOpts = withActivityOptsForHeartbeatedRequest(sessCtx, time.Minute)
-	err = workflow.ExecuteActivity(activityOpts, activities.PollTransferActivityName, &activities.PollTransferActivityParams{
-		PipelineName: tinfo.Event.PipelineName,
-		TransferID:   tinfo.TransferID,
-	}).Get(activityOpts, &tinfo.SIPID)
-	if err != nil {
-		return err
-	}
-
-	// Persist SIPID.
-	activityOpts = withLocalActivityOpts(sessCtx)
-	_ = workflow.ExecuteLocalActivity(activityOpts, updatePackageLocalActivity, w.manager.Logger, w.manager.Collection, &updatePackageLocalActivityParams{
-		CollectionID: tinfo.CollectionID,
-		Key:          tinfo.Event.Key,
-		TransferID:   tinfo.TransferID,
-		PipelineID:   tinfo.PipelineID,
-		Status:       collection.StatusInProgress,
-		SIPID:        tinfo.SIPID,
-	}).Get(activityOpts, nil)
-
-	// Poll ingest.
-	activityOpts = withActivityOptsForHeartbeatedRequest(sessCtx, time.Minute)
-	err = workflow.ExecuteActivity(activityOpts, activities.PollIngestActivityName, &activities.PollIngestActivityParams{
-		PipelineName: tinfo.Event.PipelineName,
-		SIPID:        tinfo.SIPID,
-	}).Get(activityOpts, &tinfo.StoredAt)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-type sendReceiptsParams struct {
-	SIPID        string
-	StoredAt     time.Time
-	FullPath     string
-	PipelineName string
-	NameInfo     nha.NameInfo
-	Status       collection.Status
-}
-
-func sendReceipts(ctx workflow.Context, hooks map[string]map[string]interface{}, params *sendReceiptsParams) error {
-	if params.Status != collection.StatusDone {
-		return nil
-	}
-
-	ctx = withActivityOptsForRequest(ctx)
-
-	if disabled, _ := manager.HookAttrBool(hooks, "hari", "disabled"); !disabled {
-		err := workflow.ExecuteActivity(ctx, nha_activities.UpdateHARIActivityName, &nha_activities.UpdateHARIActivityParams{
-			SIPID:        params.SIPID,
-			StoredAt:     params.StoredAt,
-			FullPath:     params.FullPath,
-			PipelineName: params.PipelineName,
-			NameInfo:     params.NameInfo,
-		}).Get(ctx, nil)
-
-		if err != nil {
-			return fmt.Errorf("error sending hari receipt: %v", err)
+	// Block until pipeline semaphore is acquired. The collection status is set
+	// to in-progress as soon as the operation succeeds.
+	{
+		if err := acquirePipeline(sessCtx, w.manager, tinfo.Event.PipelineName, tinfo.CollectionID); err != nil {
+			return err
 		}
 	}
 
-	if disabled, _ := manager.HookAttrBool(hooks, "prod", "disabled"); !disabled {
-		err := workflow.ExecuteActivity(ctx, nha_activities.UpdateProductionSystemActivityName, &nha_activities.UpdateProductionSystemActivityParams{
-			StoredAt:     params.StoredAt,
-			PipelineName: params.PipelineName,
-			Status:       params.Status,
-			NameInfo:     params.NameInfo,
-		}).Get(ctx, nil)
+	// Download.
+	{
+		if tinfo.TempFile == "" {
+			activityOpts := withActivityOptsForLongLivedRequest(sessCtx)
+			err := workflow.ExecuteActivity(activityOpts, activities.DownloadActivityName, tinfo.Event).Get(activityOpts, &tinfo.TempFile)
+			if err != nil {
+				return err
+			}
+		}
+	}
 
+	// Bundle.
+	{
+		if tinfo.Bundle == (activities.BundleActivityResult{}) {
+			activityOpts := withActivityOptsForLongLivedRequest(sessCtx)
+			err := workflow.ExecuteActivity(activityOpts, activities.BundleActivityName, &activities.BundleActivityParams{
+				TransferDir:      tinfo.PipelineConfig.TransferDir,
+				Key:              tinfo.Event.Key,
+				TempFile:         tinfo.TempFile,
+				StripTopLevelDir: tinfo.Event.StripTopLevelDir,
+			}).Get(activityOpts, &tinfo.Bundle)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	// Transfer.
+	{
+		if tinfo.TransferID == "" {
+			var transferResponse = activities.TransferActivityResponse{}
+
+			activityOpts := withActivityOptsForRequest(sessCtx)
+			err := workflow.ExecuteActivity(activityOpts, activities.TransferActivityName, &activities.TransferActivityParams{
+				PipelineName:       tinfo.Event.PipelineName,
+				TransferLocationID: tinfo.PipelineConfig.TransferLocationID,
+				RelPath:            tinfo.Bundle.RelPath,
+				Name:               tinfo.Event.Key,
+				ProcessingConfig:   tinfo.PipelineConfig.ProcessingConfig,
+				AutoApprove:        true,
+			}).Get(activityOpts, &transferResponse)
+			if err != nil {
+				return err
+			}
+
+			tinfo.TransferID = transferResponse.TransferID
+			tinfo.PipelineID = transferResponse.PipelineID
+		}
+	}
+
+	// Persist TransferID + PipelineID.
+	{
+		activityOpts := withLocalActivityOpts(sessCtx)
+		_ = workflow.ExecuteLocalActivity(activityOpts, updatePackageLocalActivity, w.manager.Logger, w.manager.Collection, &updatePackageLocalActivityParams{
+			CollectionID: tinfo.CollectionID,
+			Key:          tinfo.Event.Key,
+			Status:       collection.StatusInProgress,
+			TransferID:   tinfo.TransferID,
+			PipelineID:   tinfo.PipelineID,
+		}).Get(activityOpts, nil)
+	}
+
+	// Poll transfer.
+	{
+		if tinfo.SIPID == "" {
+			activityOpts := withActivityOptsForHeartbeatedRequest(sessCtx, time.Minute)
+			err := workflow.ExecuteActivity(activityOpts, activities.PollTransferActivityName, &activities.PollTransferActivityParams{
+				PipelineName: tinfo.Event.PipelineName,
+				TransferID:   tinfo.TransferID,
+			}).Get(activityOpts, &tinfo.SIPID)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	// Persist SIPID.
+	{
+		activityOpts := withLocalActivityOpts(sessCtx)
+		_ = workflow.ExecuteLocalActivity(activityOpts, updatePackageLocalActivity, w.manager.Logger, w.manager.Collection, &updatePackageLocalActivityParams{
+			CollectionID: tinfo.CollectionID,
+			Key:          tinfo.Event.Key,
+			TransferID:   tinfo.TransferID,
+			PipelineID:   tinfo.PipelineID,
+			Status:       collection.StatusInProgress,
+			SIPID:        tinfo.SIPID,
+		}).Get(activityOpts, nil)
+	}
+
+	// Poll ingest.
+	{
+		if tinfo.StoredAt.IsZero() {
+			activityOpts := withActivityOptsForHeartbeatedRequest(sessCtx, time.Minute)
+			err := workflow.ExecuteActivity(activityOpts, activities.PollIngestActivityName, &activities.PollIngestActivityParams{
+				PipelineName: tinfo.Event.PipelineName,
+				SIPID:        tinfo.SIPID,
+			}).Get(activityOpts, &tinfo.StoredAt)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	// Deliver receipts.
+	{
+		err := sendReceipts(sessCtx, tinfo.Hooks, &sendReceiptsParams{
+			SIPID:        tinfo.SIPID,
+			StoredAt:     tinfo.StoredAt,
+			FullPath:     tinfo.Bundle.FullPath,
+			PipelineName: tinfo.Event.PipelineName,
+			NameInfo:     nameInfo,
+		})
 		if err != nil {
-			return fmt.Errorf("error sending prod receipt: %v", err)
+			return fmt.Errorf("error delivering receipt(s): %v", err)
+		}
+	}
+
+	// Delete local temporary files.
+	{
+		if tinfo.Bundle.FullPathBeforeStrip != "" {
+			activityOpts := withActivityOptsForRequest(sessCtx)
+			_ = workflow.ExecuteActivity(activityOpts, activities.CleanUpActivityName, &activities.CleanUpActivityParams{
+				FullPath: tinfo.Bundle.FullPathBeforeStrip,
+			}).Get(activityOpts, nil)
 		}
 	}
 

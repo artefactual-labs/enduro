@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/artefactual-labs/enduro/internal/collection"
 	collectionfake "github.com/artefactual-labs/enduro/internal/collection/fake"
 	"github.com/artefactual-labs/enduro/internal/nha"
 	"github.com/artefactual-labs/enduro/internal/pipeline"
@@ -41,7 +40,6 @@ func TestProdActivity(t *testing.T) {
 			params: UpdateProductionSystemActivityParams{
 				StoredAt:     time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
 				PipelineName: "foo-bar-001",
-				Status:       collection.StatusDone,
 				NameInfo: nha.NameInfo{
 					Identifier: "aa1df25d-1477-4085-8be3-a17fed20f843",
 					Type:       nha.TransferTypeDPJ,
@@ -57,31 +55,10 @@ func TestProdActivity(t *testing.T) {
 `,
 			wantChecksum: "eed2dd4ee8a1dcf637b0708e616a4767",
 		},
-		"Receipt is generated successfully with status 'error'": {
-			params: UpdateProductionSystemActivityParams{
-				StoredAt:     time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
-				PipelineName: "foo-bar-002",
-				Status:       collection.StatusError,
-				NameInfo: nha.NameInfo{
-					Identifier: "aa1df25d-1477-4085-8be3-a17fed20f843",
-					Type:       nha.TransferTypeDPJ,
-				},
-			},
-			wantContent: `{
-  "identifier": "aa1df25d-1477-4085-8be3-a17fed20f843",
-  "type": "dpj",
-  "accepted": false,
-  "message": "Package was not processed successfully",
-  "timestamp": "2009-11-10T23:00:00Z"
-}
-`,
-			wantChecksum: "210995b572d4e87fed73ca4312d59557",
-		},
 		"Missing receiptPath is rejected": {
 			params: UpdateProductionSystemActivityParams{
 				StoredAt:     time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
 				PipelineName: "foo-bar-001",
-				Status:       collection.StatusDone,
 				NameInfo: nha.NameInfo{
 					Identifier: "aa1df25d-1477-4085-8be3-a17fed20f843",
 					Type:       nha.TransferTypeDPJ,
@@ -97,7 +74,6 @@ func TestProdActivity(t *testing.T) {
 			params: UpdateProductionSystemActivityParams{
 				StoredAt:     time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
 				PipelineName: "foo-bar-001",
-				Status:       collection.StatusDone,
 				NameInfo: nha.NameInfo{
 					Identifier: "aa1df25d-1477-4085-8be3-a17fed20f843",
 					Type:       nha.TransferTypeDPJ,

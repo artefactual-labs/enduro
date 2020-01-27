@@ -20,7 +20,7 @@ func acquirePipeline(ctx workflow.Context, manager *manager.Manager, pipelineNam
 	{
 		ctx := workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
 			ScheduleToStartTimeout: forever,
-			StartToCloseTimeout:    time.Second * 2,
+			StartToCloseTimeout:    time.Second * 5,
 			RetryPolicy: &cadence.RetryPolicy{
 				InitialInterval:    time.Second * 2,
 				BackoffCoefficient: 1,
@@ -30,7 +30,7 @@ func acquirePipeline(ctx workflow.Context, manager *manager.Manager, pipelineNam
 		})
 
 		if err := workflow.ExecuteActivity(ctx, activities.AcquirePipelineActivityName, pipelineName).Get(ctx, nil); err != nil {
-			return fmt.Errorf("error acquiring pipeline: %v", err)
+			return fmt.Errorf("error acquiring pipeline: %w", err)
 		}
 	}
 
@@ -39,7 +39,7 @@ func acquirePipeline(ctx workflow.Context, manager *manager.Manager, pipelineNam
 		ctx := withLocalActivityOpts(ctx)
 		err := workflow.ExecuteLocalActivity(ctx, setStatusInProgressLocalActivity, manager.Collection, colID, time.Now()).Get(ctx, nil)
 		if err != nil {
-			return fmt.Errorf("error updating collection status: %v", err)
+			return fmt.Errorf("error updating collection status: %w", err)
 		}
 	}
 
@@ -47,12 +47,14 @@ func acquirePipeline(ctx workflow.Context, manager *manager.Manager, pipelineNam
 }
 
 func releasePipeline(ctx workflow.Context, manager *manager.Manager, pipelineName string) error {
-	ctx, _ = workflow.NewDisconnectedContext(ctx)
-	ctx = withLocalActivityOpts(ctx)
+	// Not using a disconnected workflow because the semaphore is local and we
+	// don't want to release when the process is back up. We just need a real
+	// semaphore.
+	ctx = withLocalActivityWithoutRetriesOpts(ctx)
 
 	err := workflow.ExecuteLocalActivity(ctx, releasePipelineLocalActivity, manager.Logger, manager.Pipelines, pipelineName).Get(ctx, nil)
 	if err != nil {
-		return fmt.Errorf("error releasing pipeline semaphore: %v", err)
+		return fmt.Errorf("error releasing pipeline semaphore: %w", err)
 	}
 
 	return nil
