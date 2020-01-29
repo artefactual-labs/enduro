@@ -1,7 +1,6 @@
 <p align="left">
   <a href="https://github.com/artefactual-labs/enduro/releases/latest"><img src="https://img.shields.io/github/v/release/artefactual-labs/enduro.svg?color=orange"/></a>
   <img src="https://github.com/artefactual-labs/enduro/workflows/Test/badge.svg"/>
-  <a href="https://app.netlify.com/sites/enduroproject/deploys"><img alt="Website" src="https://img.shields.io/netlify/1f773515-dfa7-4a27-8af8-6232a21fee61?color=00ad9f&label=website&logo=netlify"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache%202.0-blue.svg"/></a>
   <a href="https://goreportcard.com/report/github.com/artefactual-labs/enduro"><img src="https://goreportcard.com/badge/github.com/artefactual-labs/enduro"/></a>
   <a href="https://codecov.io/gh/artefactual-labs/enduro"><img src="https://img.shields.io/codecov/c/github/artefactual-labs/enduro"/></a>
