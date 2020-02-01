@@ -40,7 +40,7 @@ services:
       - "./hack/cadence/config.yml:/etc/cadence/config/docker.yaml:ro"
 
   cadence-web:
-    image: "ubercadence/web:3.4.1"
+    image: "ubercadence/web:3.7.0"
     environment:
       - "CADENCE_TCHANNEL_PEERS=cadence:7400"
     ports:
