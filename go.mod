@@ -58,7 +58,7 @@ require (
 	go.uber.org/zap v1.13.0
 	goa.design/goa v2.0.8+incompatible
 	goa.design/goa/v3 v3.0.9
-	goa.design/plugins/v3 v3.0.9
+	goa.design/plugins/v3 v3.0.10
 	gocloud.dev v0.18.0
 	golang.org/x/net v0.0.0-20191209160850-c0dbc17a3553 // indirect
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
