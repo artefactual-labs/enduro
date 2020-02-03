@@ -528,6 +528,8 @@ github.com/uber-go/mapdecode v1.0.0/go.mod h1:b5nP15FwXTgpjTjeA9A2uTHXV5UJCl4arw
 github.com/uber-go/tally v3.3.1+incompatible/go.mod h1:YDTIBxdXyOU/sCWilKB4bgyufu1cEi0jdVnRdxvjnmU=
 github.com/uber-go/tally v3.3.13+incompatible h1:5ic2UsDwjcWsw9jvEdWEE2XsmGCLMTt5Ukg4d74fed4=
 github.com/uber-go/tally v3.3.13+incompatible/go.mod h1:YDTIBxdXyOU/sCWilKB4bgyufu1cEi0jdVnRdxvjnmU=
+github.com/uber-go/tally v3.3.14+incompatible h1:kQ7qo/3FHlWyzX7QrsFoUgqMVAiFSO48kTDE+otUkcY=
+github.com/uber-go/tally v3.3.14+incompatible/go.mod h1:YDTIBxdXyOU/sCWilKB4bgyufu1cEi0jdVnRdxvjnmU=
 github.com/uber/jaeger-client-go v2.15.0+incompatible/go.mod h1:WVhlPFC8FDjOFMMWRy2pZqQJSXxYSwNYOkTr/Z6d3Kk=
 github.com/uber/jaeger-client-go v2.17.0+incompatible h1:35tpDuT3k0oBiN/aGoSWuiFaqKgKZSciSMnWrazhSHE=
 github.com/uber/jaeger-client-go v2.17.0+incompatible/go.mod h1:WVhlPFC8FDjOFMMWRy2pZqQJSXxYSwNYOkTr/Z6d3Kk=
