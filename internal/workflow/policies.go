@@ -18,14 +18,17 @@ const forever = time.Hour * 24 * 365 * 10
 func withActivityOptsForLongLivedRequest(ctx workflow.Context) workflow.Context {
 	return workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
 		ScheduleToStartTimeout: forever,
-		StartToCloseTimeout:    time.Minute * 10,
+		StartToCloseTimeout:    time.Hour * 2,
 		RetryPolicy: &cadence.RetryPolicy{
-			InitialInterval:          time.Second,
-			BackoffCoefficient:       2,
-			MaximumInterval:          time.Minute * 10,
-			ExpirationInterval:       time.Minute * 10,
-			MaximumAttempts:          5,
-			NonRetriableErrorReasons: []string{wferrors.NRE},
+			InitialInterval:    time.Second,
+			BackoffCoefficient: 2,
+			MaximumInterval:    time.Minute * 10,
+			ExpirationInterval: time.Minute * 10,
+			MaximumAttempts:    5,
+			NonRetriableErrorReasons: []string{
+				wferrors.NRE,
+				"cadenceInternal:Timeout START_TO_CLOSE",
+			},
 		},
 	})
 }
