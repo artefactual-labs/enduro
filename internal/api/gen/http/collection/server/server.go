@@ -28,6 +28,7 @@ type Server struct {
 	Retry    http.Handler
 	Workflow http.Handler
 	Download http.Handler
+	Decide   http.Handler
 	CORS     http.Handler
 }
 
@@ -71,12 +72,14 @@ func New(
 			{"Retry", "POST", "/collection/{id}/retry"},
 			{"Workflow", "GET", "/collection/{id}/workflow"},
 			{"Download", "GET", "/collection/{id}/download"},
+			{"Decide", "POST", "/collection/{id}/decision"},
 			{"CORS", "OPTIONS", "/collection"},
 			{"CORS", "OPTIONS", "/collection/{id}"},
 			{"CORS", "OPTIONS", "/collection/{id}/cancel"},
 			{"CORS", "OPTIONS", "/collection/{id}/retry"},
 			{"CORS", "OPTIONS", "/collection/{id}/workflow"},
 			{"CORS", "OPTIONS", "/collection/{id}/download"},
+			{"CORS", "OPTIONS", "/collection/{id}/decision"},
 		},
 		List:     NewListHandler(e.List, mux, decoder, encoder, errhandler, formatter),
 		Show:     NewShowHandler(e.Show, mux, decoder, encoder, errhandler, formatter),
@@ -85,6 +88,7 @@ func New(
 		Retry:    NewRetryHandler(e.Retry, mux, decoder, encoder, errhandler, formatter),
 		Workflow: NewWorkflowHandler(e.Workflow, mux, decoder, encoder, errhandler, formatter),
 		Download: NewDownloadHandler(e.Download, mux, decoder, encoder, errhandler, formatter),
+		Decide:   NewDecideHandler(e.Decide, mux, decoder, encoder, errhandler, formatter),
 		CORS:     NewCORSHandler(),
 	}
 }
@@ -101,6 +105,7 @@ func (s *Server) Use(m func(http.Handler) http.Handler) {
 	s.Retry = m(s.Retry)
 	s.Workflow = m(s.Workflow)
 	s.Download = m(s.Download)
+	s.Decide = m(s.Decide)
 	s.CORS = m(s.CORS)
 }
 
@@ -113,6 +118,7 @@ func Mount(mux goahttp.Muxer, h *Server) {
 	MountRetryHandler(mux, h.Retry)
 	MountWorkflowHandler(mux, h.Workflow)
 	MountDownloadHandler(mux, h.Download)
+	MountDecideHandler(mux, h.Decide)
 	MountCORSHandler(mux, h.CORS)
 }
 
@@ -487,6 +493,59 @@ func NewDownloadHandler(
 	})
 }
 
+// MountDecideHandler configures the mux to serve the "collection" service
+// "decide" endpoint.
+func MountDecideHandler(mux goahttp.Muxer, h http.Handler) {
+	f, ok := handleCollectionOrigin(h).(http.HandlerFunc)
+	if !ok {
+		f = func(w http.ResponseWriter, r *http.Request) {
+			h.ServeHTTP(w, r)
+		}
+	}
+	mux.Handle("POST", "/collection/{id}/decision", f)
+}
+
+// NewDecideHandler creates a HTTP handler which loads the HTTP request and
+// calls the "collection" service "decide" endpoint.
+func NewDecideHandler(
+	endpoint goa.Endpoint,
+	mux goahttp.Muxer,
+	decoder func(*http.Request) goahttp.Decoder,
+	encoder func(context.Context, http.ResponseWriter) goahttp.Encoder,
+	errhandler func(context.Context, http.ResponseWriter, error),
+	formatter func(err error) goahttp.Statuser,
+) http.Handler {
+	var (
+		decodeRequest  = DecodeDecideRequest(mux, decoder)
+		encodeResponse = EncodeDecideResponse(encoder)
+		encodeError    = EncodeDecideError(encoder, formatter)
+	)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
+		ctx = context.WithValue(ctx, goa.MethodKey, "decide")
+		ctx = context.WithValue(ctx, goa.ServiceKey, "collection")
+		payload, err := decodeRequest(r)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+
+		res, err := endpoint(ctx, payload)
+
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		if err := encodeResponse(ctx, w, res); err != nil {
+			errhandler(ctx, w, err)
+		}
+	})
+}
+
 // MountCORSHandler configures the mux to serve the CORS endpoints for the
 // service collection.
 func MountCORSHandler(mux goahttp.Muxer, h http.Handler) {
@@ -503,6 +562,7 @@ func MountCORSHandler(mux goahttp.Muxer, h http.Handler) {
 	mux.Handle("OPTIONS", "/collection/{id}/retry", f)
 	mux.Handle("OPTIONS", "/collection/{id}/workflow", f)
 	mux.Handle("OPTIONS", "/collection/{id}/download", f)
+	mux.Handle("OPTIONS", "/collection/{id}/decision", f)
 }
 
 // NewCORSHandler creates a HTTP handler which returns a simple 200 response.

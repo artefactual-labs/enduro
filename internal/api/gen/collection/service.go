@@ -31,6 +31,8 @@ type Service interface {
 	Workflow(context.Context, *WorkflowPayload) (res *EnduroCollectionWorkflowStatus, err error)
 	// Download collection by ID
 	Download(context.Context, *DownloadPayload) (res []byte, err error)
+	// Make decision for a pending collection by ID
+	Decide(context.Context, *DecidePayload) (err error)
 }
 
 // ServiceName is the name of the service as defined in the design. This is the
@@ -41,7 +43,7 @@ const ServiceName = "collection"
 // MethodNames lists the service method names as defined in the design. These
 // are the same values that are set in the endpoint request contexts under the
 // MethodKey key.
-var MethodNames = [7]string{"list", "show", "delete", "cancel", "retry", "workflow", "download"}
+var MethodNames = [8]string{"list", "show", "delete", "cancel", "retry", "workflow", "download", "decide"}
 
 // ListPayload is the payload type of the collection service list method.
 type ListPayload struct {
@@ -137,6 +139,14 @@ type DownloadPayload struct {
 	ID uint
 }
 
+// DecidePayload is the payload type of the collection service decide method.
+type DecidePayload struct {
+	// Identifier of collection to look up
+	ID uint
+	// Decision option to proceed with
+	Option string
+}
+
 type EnduroStoredCollectionCollection []*EnduroStoredCollection
 
 type EnduroCollectionWorkflowHistoryCollection []*EnduroCollectionWorkflowHistory
@@ -174,6 +184,15 @@ func (e *NotFound) ErrorName() string {
 func MakeNotRunning(err error) *goa.ServiceError {
 	return &goa.ServiceError{
 		Name:    "not_running",
+		ID:      goa.NewErrorID(),
+		Message: err.Error(),
+	}
+}
+
+// MakeNotValid builds a goa.ServiceError from an error.
+func MakeNotValid(err error) *goa.ServiceError {
+	return &goa.ServiceError{
+		Name:    "not_valid",
 		ID:      goa.NewErrorID(),
 		Message: err.Error(),
 	}

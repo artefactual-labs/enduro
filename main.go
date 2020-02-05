@@ -218,6 +218,8 @@ func main() {
 		cadence.RegisterActivity(activities.NewHidePackageActivity(m).Execute, activities.HidePackageActivityName)
 		cadence.RegisterActivity(activities.NewDeleteOriginalActivity(m).Execute, activities.DeleteOriginalActivityName)
 
+		cadence.RegisterActivity(workflow.NewAsyncCompletionActivity(m).Execute, workflow.AsyncCompletionActivityName)
+
 		cadence.RegisterActivity(nha_activities.NewUpdateHARIActivity(m).Execute, nha_activities.UpdateHARIActivityName)
 		cadence.RegisterActivity(nha_activities.NewUpdateProductionSystemActivity(m).Execute, nha_activities.UpdateProductionSystemActivityName)
 

@@ -23,6 +23,7 @@ type Endpoints struct {
 	Retry    goa.Endpoint
 	Workflow goa.Endpoint
 	Download goa.Endpoint
+	Decide   goa.Endpoint
 }
 
 // NewEndpoints wraps the methods of the "collection" service with endpoints.
@@ -35,6 +36,7 @@ func NewEndpoints(s Service) *Endpoints {
 		Retry:    NewRetryEndpoint(s),
 		Workflow: NewWorkflowEndpoint(s),
 		Download: NewDownloadEndpoint(s),
+		Decide:   NewDecideEndpoint(s),
 	}
 }
 
@@ -47,6 +49,7 @@ func (e *Endpoints) Use(m func(goa.Endpoint) goa.Endpoint) {
 	e.Retry = m(e.Retry)
 	e.Workflow = m(e.Workflow)
 	e.Download = m(e.Download)
+	e.Decide = m(e.Decide)
 }
 
 // NewListEndpoint returns an endpoint function that calls the method "list" of
@@ -119,5 +122,14 @@ func NewDownloadEndpoint(s Service) goa.Endpoint {
 	return func(ctx context.Context, req interface{}) (interface{}, error) {
 		p := req.(*DownloadPayload)
 		return s.Download(ctx, p)
+	}
+}
+
+// NewDecideEndpoint returns an endpoint function that calls the method
+// "decide" of service "collection".
+func NewDecideEndpoint(s Service) goa.Endpoint {
+	return func(ctx context.Context, req interface{}) (interface{}, error) {
+		p := req.(*DecidePayload)
+		return nil, s.Decide(ctx, p)
 	}
 }

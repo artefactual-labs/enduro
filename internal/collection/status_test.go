@@ -35,6 +35,14 @@ func TestStatus(t *testing.T) {
 			str: "queued",
 			val: StatusQueued,
 		},
+		{
+			str: "abandoned",
+			val: StatusAbandoned,
+		},
+		{
+			str: "pending",
+			val: StatusPending,
+		},
 	}
 	for _, tc := range tests {
 		tc := tc

@@ -5,15 +5,18 @@ import (
 	"strings"
 )
 
+// See https://gist.github.com/sevein/dd36c2af23fd0d9e2e2438d8eb091314.
 type Status uint
 
 const (
-	StatusNew Status = iota
-	StatusInProgress
-	StatusDone
-	StatusError
-	StatusUnknown
-	StatusQueued
+	StatusNew        Status = iota // Unused!
+	StatusInProgress               // Undergoing work.
+	StatusDone                     // Work has completed.
+	StatusError                    // Processing failed.
+	StatusUnknown                  // Unused!
+	StatusQueued                   // Awaiting resource allocation.
+	StatusAbandoned                // User abandoned processing.
+	StatusPending                  // Awaiting user decision.
 )
 
 func NewStatus(status string) Status {
@@ -30,6 +33,10 @@ func NewStatus(status string) Status {
 		s = StatusError
 	case "queued":
 		s = StatusQueued
+	case "abandoned":
+		s = StatusAbandoned
+	case "pending":
+		s = StatusPending
 	default:
 		s = StatusUnknown
 	}
@@ -49,6 +56,10 @@ func (p Status) String() string {
 		return "error"
 	case StatusQueued:
 		return "queued"
+	case StatusAbandoned:
+		return "abandoned"
+	case StatusPending:
+		return "pending"
 	}
 	return "unknown"
 }

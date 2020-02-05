@@ -150,6 +150,25 @@ var _ = Service("collection", func() {
 			Response("not_found", StatusNotFound)
 		})
 	})
+	Method("decide", func() {
+		Description("Make decision for a pending collection by ID")
+		Payload(func() {
+			Attribute("id", UInt, "Identifier of collection to look up")
+			Attribute("option", String, "Decision option to proceed with")
+			Required("id", "option")
+		})
+		Error("not_found", NotFound, "Collection not found")
+		Error("not_valid")
+		HTTP(func() {
+			POST("/{id}/decision")
+			Body(func() {
+				Attribute("option")
+			})
+			Response(StatusOK)
+			Response("not_found", StatusNotFound)
+			Response("not_valid", StatusBadRequest)
+		})
+	})
 })
 
 var _ = Service("swagger", func() {
@@ -163,7 +182,7 @@ var _ = Service("swagger", func() {
 })
 
 var EnumCollectionStatus = func() {
-	Enum("new", "in progress", "done", "error", "unknown", "queued")
+	Enum("new", "in progress", "done", "error", "unknown", "queued", "pending", "abandoned")
 }
 
 var Collection = Type("Collection", func() {

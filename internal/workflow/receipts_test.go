@@ -15,22 +15,24 @@ import (
 	cadenceactivity "go.uber.org/cadence/activity"
 	cadencetestsuite "go.uber.org/cadence/testsuite"
 	cadenceworkflow "go.uber.org/cadence/workflow"
-	"go.uber.org/zap"
 )
 
 // sendReceipts exits immediately after an activity error, ensuring that
 // receipt delivery is halted once one delivery has failed.
 func TestSendReceiptsSequentialBehavior(t *testing.T) {
 	wts := cadencetestsuite.WorkflowTestSuite{}
-	wts.SetLogger(zap.NewNop())
 	env := wts.NewTestWorkflowEnvironment()
 
 	m := buildManager(t, gomock.NewController(t))
+	pw := NewProcessingWorkflow(m)
 
-	wf := func(ctx cadenceworkflow.Context, hooks map[string]map[string]interface{}, params *sendReceiptsParams) error {
-		return sendReceipts(ctx, hooks, params)
+	wf := func(ctx cadenceworkflow.Context, params *sendReceiptsParams) error {
+		return pw.sendReceipts(ctx, params)
 	}
 	cadenceworkflow.Register(wf)
+
+	AsyncCompletionActivityName = uuid.New().String()
+	cadenceactivity.RegisterWithOptions(NewAsyncCompletionActivity(m).Execute, cadenceactivity.RegisterOptions{Name: AsyncCompletionActivityName})
 
 	nha_activities.UpdateHARIActivityName = uuid.New().String()
 	cadenceactivity.RegisterWithOptions(nha_activities.NewUpdateHARIActivity(m).Execute, cadenceactivity.RegisterOptions{Name: nha_activities.UpdateHARIActivityName})
@@ -44,6 +46,7 @@ func TestSendReceiptsSequentialBehavior(t *testing.T) {
 		FullPath:     "/",
 		PipelineName: "pipeline",
 		NameInfo:     nha.NameInfo{},
+		CollectionID: uint(12345),
 	}
 
 	// Make HARI fail so the workflow returns immediately.
@@ -57,24 +60,30 @@ func TestSendReceiptsSequentialBehavior(t *testing.T) {
 			PipelineName: params.PipelineName,
 			NameInfo:     params.NameInfo,
 		},
-	).Return(errors.New("failed")).Once()
+	).Return(errors.New("failed")).Times(9)
 
-	env.ExecuteWorkflow(wf, m.Hooks, &params)
+	env.OnActivity(
+		AsyncCompletionActivityName,
+		mock.Anything,
+		uint(12345),
+	).Return("ABANDON", nil).Once()
+
+	env.ExecuteWorkflow(wf, &params)
 
 	assert.True(t, env.IsWorkflowCompleted())
-	assert.Error(t, env.GetWorkflowError())
+	assert.Equal(t, "error sending hari receipt: user abandoned", env.GetWorkflowError().Error())
 	env.AssertExpectations(t)
 }
 
 func TestSendReceipts(t *testing.T) {
 	wts := cadencetestsuite.WorkflowTestSuite{}
-	wts.SetLogger(zap.NewNop())
 	env := wts.NewTestWorkflowEnvironment()
 
 	m := buildManager(t, gomock.NewController(t))
+	pw := NewProcessingWorkflow(m)
 
 	wf := func(ctx cadenceworkflow.Context, hooks map[string]map[string]interface{}, params *sendReceiptsParams) error {
-		return sendReceipts(ctx, hooks, params)
+		return pw.sendReceipts(ctx, params)
 	}
 	cadenceworkflow.Register(wf)
 
@@ -90,6 +99,7 @@ func TestSendReceipts(t *testing.T) {
 		FullPath:     "/",
 		PipelineName: "pipeline",
 		NameInfo:     nha.NameInfo{},
+		CollectionID: uint(12345),
 	}
 
 	env.OnActivity(

@@ -95,8 +95,20 @@ func withLocalActivityOpts(ctx workflow.Context) workflow.Context {
 	})
 }
 
+// withActivityOptsForAsyncCompletion returns a workflow context with activity
+// options for local and short-lived activities that don't deserve retries.
 func withLocalActivityWithoutRetriesOpts(ctx workflow.Context) workflow.Context {
 	return workflow.WithLocalActivityOptions(ctx, workflow.LocalActivityOptions{
 		ScheduleToCloseTimeout: 5 * time.Second,
+	})
+}
+
+// withActivityOptsForAsyncCompletion returns a workflow context with activity
+// options suited for asynchronous completion, embracing the fact that users
+// can be away from keyboard for long periods (weekends, holidays...).
+func withActivityOptsForAsyncCompletion(ctx workflow.Context) workflow.Context {
+	return workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
+		ScheduleToStartTimeout: forever,
+		StartToCloseTimeout:    time.Hour * 24 * 7,
 	})
 }

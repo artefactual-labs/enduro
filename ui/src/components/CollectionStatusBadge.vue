@@ -26,7 +26,9 @@ export default class CollectionStatusBadge extends Vue {
     [api.CollectionShowResponseBodyStatusEnum.Done]: 'success',
     [api.CollectionShowResponseBodyStatusEnum.New]: 'secondary',
     [api.CollectionShowResponseBodyStatusEnum.Unknown]: 'dark',
+    [api.CollectionShowResponseBodyStatusEnum.Abandoned]: 'secondary',
     [api.CollectionShowResponseBodyStatusEnum.Queued]: 'light',
+    [api.CollectionShowResponseBodyStatusEnum.Pending]: 'light',
   };
 
   private variant(): string {

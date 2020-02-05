@@ -5,6 +5,15 @@
     <!-- Main column -->
     <b-col cols="6">
 
+      <b-alert variant="warning" v-if="isPending" show>
+        <h4 class="alert-heading">Awaiting decision</h4>
+        <p>An activity has failed irremediably. More information can be found under the <b-link :to="{ name: 'collection-workflow', params: {id: $route.params.id} }">Workflow</b-link> tab. You can decide what to do next.</p>
+        <b-button-group size="sm">
+          <b-button @click="onDecisionAbandon()">Abandon</b-button>
+          <b-button @click="onDecisionRetry()" variant="info">Retry</b-button>
+        </b-button-group>
+      </b-alert>
+
       <dl>
 
         <dt>Status</dt>
@@ -124,6 +133,9 @@ export default class CollectionShow extends Vue {
   @collectionStoreNs.Action(CollectionStore.SEARCH_COLLECTION)
   private search: any;
 
+  @collectionStoreNs.Action(CollectionStore.MAKE_WORKFLOW_DECISION)
+  private decide: any;
+
   private retry(id: string): Promise<any> {
     return EnduroCollectionClient.collectionRetry({id: +id});
   }
@@ -137,7 +149,11 @@ export default class CollectionShow extends Vue {
   }
 
   private get isRunning() {
-    return !['done', 'error'].includes(this.collection.status);
+    return ['new', 'in progress', 'queued', 'pending'].includes(this.collection.status);
+  }
+
+  private get isPending() {
+    return ['pending'].includes(this.collection.status);
   }
 
   private onDelete() {
@@ -152,6 +168,14 @@ export default class CollectionShow extends Vue {
 
   private onReload() {
     this.search(this.collection.id);
+  }
+
+  private onDecisionAbandon() {
+    this.decide({id: this.collection.id, option: 'ABANDON'});
+  }
+
+  private onDecisionRetry() {
+    this.decide({id: this.collection.id, option: 'RETRY_ONCE'});
   }
 
 }

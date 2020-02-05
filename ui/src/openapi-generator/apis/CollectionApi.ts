@@ -21,6 +21,12 @@ import {
     CollectionCancelNotRunningResponseBody,
     CollectionCancelNotRunningResponseBodyFromJSON,
     CollectionCancelNotRunningResponseBodyToJSON,
+    CollectionDecideNotFoundResponseBody,
+    CollectionDecideNotFoundResponseBodyFromJSON,
+    CollectionDecideNotFoundResponseBodyToJSON,
+    CollectionDecideNotValidResponseBody,
+    CollectionDecideNotValidResponseBodyFromJSON,
+    CollectionDecideNotValidResponseBodyToJSON,
     CollectionDeleteNotFoundResponseBody,
     CollectionDeleteNotFoundResponseBodyFromJSON,
     CollectionDeleteNotFoundResponseBodyToJSON,
@@ -48,10 +54,18 @@ import {
     CollectionWorkflowResponseBody,
     CollectionWorkflowResponseBodyFromJSON,
     CollectionWorkflowResponseBodyToJSON,
+    InlineObject,
+    InlineObjectFromJSON,
+    InlineObjectToJSON,
 } from '../models';
 
 export interface CollectionCancelRequest {
     id: number;
+}
+
+export interface CollectionDecideRequest {
+    id: number;
+    object: InlineObject;
 }
 
 export interface CollectionDeleteRequest {
@@ -120,6 +134,44 @@ export class CollectionApi extends runtime.BaseAPI {
      */
     async collectionCancel(requestParameters: CollectionCancelRequest): Promise<void> {
         await this.collectionCancelRaw(requestParameters);
+    }
+
+    /**
+     * Make decision for a pending collection by ID
+     * decide collection
+     */
+    async collectionDecideRaw(requestParameters: CollectionDecideRequest): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters.id === null || requestParameters.id === undefined) {
+            throw new runtime.RequiredError('id','Required parameter requestParameters.id was null or undefined when calling collectionDecide.');
+        }
+
+        if (requestParameters.object === null || requestParameters.object === undefined) {
+            throw new runtime.RequiredError('object','Required parameter requestParameters.object was null or undefined when calling collectionDecide.');
+        }
+
+        const queryParameters: runtime.HTTPQuery = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        const response = await this.request({
+            path: `/collection/{id}/decision`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters.id))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: InlineObjectToJSON(requestParameters.object),
+        });
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Make decision for a pending collection by ID
+     * decide collection
+     */
+    async collectionDecide(requestParameters: CollectionDecideRequest): Promise<void> {
+        await this.collectionDecideRaw(requestParameters);
     }
 
     /**
@@ -356,5 +408,7 @@ export enum CollectionListStatusEnum {
     Done = 'done',
     Error = 'error',
     Unknown = 'unknown',
-    Queued = 'queued'
+    Queued = 'queued',
+    Pending = 'pending',
+    Abandoned = 'abandoned'
 }

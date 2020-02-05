@@ -37,7 +37,7 @@ func acquirePipeline(ctx workflow.Context, manager *manager.Manager, pipelineNam
 	// Set in-progress status.
 	{
 		ctx := withLocalActivityOpts(ctx)
-		err := workflow.ExecuteLocalActivity(ctx, setStatusInProgressLocalActivity, manager.Collection, colID, time.Now()).Get(ctx, nil)
+		err := workflow.ExecuteLocalActivity(ctx, setStatusInProgressLocalActivity, manager.Collection, colID, time.Now().UTC()).Get(ctx, nil)
 		if err != nil {
 			return fmt.Errorf("error updating collection status: %w", err)
 		}

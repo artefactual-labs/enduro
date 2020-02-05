@@ -25,6 +25,8 @@
                 <option value="done">Done</option>
                 <option value="in progress">In progress</option>
                 <option value="queued">Queued</option>
+                <option value="pending">Pending</option>
+                <option value="abandoned">Abandoned</option>
               </b-form-select>
             </div>
             <div class="form-group col-12 col-sm-6 col-md-2">

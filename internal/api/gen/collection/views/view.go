@@ -165,8 +165,8 @@ func ValidateEnduroStoredCollectionView(result *EnduroStoredCollectionView) (err
 		err = goa.MergeErrors(err, goa.MissingFieldError("created_at", "result"))
 	}
 	if result.Status != nil {
-		if !(*result.Status == "new" || *result.Status == "in progress" || *result.Status == "done" || *result.Status == "error" || *result.Status == "unknown" || *result.Status == "queued") {
-			err = goa.MergeErrors(err, goa.InvalidEnumValueError("result.status", *result.Status, []interface{}{"new", "in progress", "done", "error", "unknown", "queued"}))
+		if !(*result.Status == "new" || *result.Status == "in progress" || *result.Status == "done" || *result.Status == "error" || *result.Status == "unknown" || *result.Status == "queued" || *result.Status == "pending" || *result.Status == "abandoned") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("result.status", *result.Status, []interface{}{"new", "in progress", "done", "error", "unknown", "queued", "pending", "abandoned"}))
 		}
 	}
 	if result.WorkflowID != nil {

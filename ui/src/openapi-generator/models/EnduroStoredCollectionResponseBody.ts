@@ -152,7 +152,9 @@ export enum EnduroStoredCollectionResponseBodyStatusEnum {
     Done = 'done',
     Error = 'error',
     Unknown = 'unknown',
-    Queued = 'queued'
+    Queued = 'queued',
+    Pending = 'pending',
+    Abandoned = 'abandoned'
 }
 
 

@@ -46,3 +46,8 @@ func WorkflowCollectionPath(id uint) string {
 func DownloadCollectionPath(id uint) string {
 	return fmt.Sprintf("/collection/%v/download", id)
 }
+
+// DecideCollectionPath returns the URL path to the collection service decide HTTP endpoint.
+func DecideCollectionPath(id uint) string {
+	return fmt.Sprintf("/collection/%v/decision", id)
+}
