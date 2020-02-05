@@ -21,7 +21,6 @@ import (
 	"go.uber.org/cadence"
 	cadencetestsuite "go.uber.org/cadence/testsuite"
 	cadenceworkflow "go.uber.org/cadence/workflow"
-	"go.uber.org/zap"
 )
 
 type ProcessingWorkflowTestSuite struct {
@@ -37,7 +36,6 @@ type ProcessingWorkflowTestSuite struct {
 }
 
 func (s *ProcessingWorkflowTestSuite) SetupTest() {
-	s.SetLogger(zap.NewNop())
 	s.env = s.NewTestWorkflowEnvironment()
 	s.manager = buildManager(s.T(), gomock.NewController(s.T()))
 

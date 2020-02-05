@@ -24,13 +24,13 @@ import (
 //    command (subcommand1|subcommand2|...)
 //
 func UsageCommands() string {
-	return `collection (list|show|delete|cancel|retry|workflow|download)
+	return `collection (list|show|delete|cancel|retry|workflow|download|decide)
 `
 }
 
 // UsageExamples produces an example of a valid invocation of the CLI tool.
 func UsageExamples() string {
-	return os.Args[0] + ` collection list --name "Magni quod impedit sapiente ea." --original-id "Dicta non odio." --transfer-id "76FB876C-96AC-91E7-BD21-B0C2988DDF65" --aip-id "A45D83CF-F038-77BB-220E-D79EFC31D198" --pipeline-id "95545D09-3153-0F17-09F7-7FEB1545D780" --earliest-created-time "1975-09-04T16:08:16Z" --latest-created-time "1997-07-04T22:46:11Z" --status "unknown" --cursor "Eligendi quam doloribus quam itaque vitae velit."` + "\n" +
+	return os.Args[0] + ` collection list --name "Dicta non odio." --original-id "Laboriosam rerum amet." --transfer-id "76FB876C-96AC-91E7-BD21-B0C2988DDF65" --aip-id "A45D83CF-F038-77BB-220E-D79EFC31D198" --pipeline-id "95545D09-3153-0F17-09F7-7FEB1545D780" --earliest-created-time "2015-11-24T16:44:22Z" --latest-created-time "1996-11-22T23:00:23Z" --status "error" --cursor "Itaque vitae velit iusto aspernatur ut iure."` + "\n" +
 		""
 }
 
@@ -74,6 +74,10 @@ func ParseEndpoint(
 
 		collectionDownloadFlags  = flag.NewFlagSet("download", flag.ExitOnError)
 		collectionDownloadIDFlag = collectionDownloadFlags.String("id", "REQUIRED", "Identifier of collection to look up")
+
+		collectionDecideFlags    = flag.NewFlagSet("decide", flag.ExitOnError)
+		collectionDecideBodyFlag = collectionDecideFlags.String("body", "REQUIRED", "")
+		collectionDecideIDFlag   = collectionDecideFlags.String("id", "REQUIRED", "Identifier of collection to look up")
 	)
 	collectionFlags.Usage = collectionUsage
 	collectionListFlags.Usage = collectionListUsage
@@ -83,6 +87,7 @@ func ParseEndpoint(
 	collectionRetryFlags.Usage = collectionRetryUsage
 	collectionWorkflowFlags.Usage = collectionWorkflowUsage
 	collectionDownloadFlags.Usage = collectionDownloadUsage
+	collectionDecideFlags.Usage = collectionDecideUsage
 
 	if err := flag.CommandLine.Parse(os.Args[1:]); err != nil {
 		return nil, nil, err
@@ -139,6 +144,9 @@ func ParseEndpoint(
 			case "download":
 				epf = collectionDownloadFlags
 
+			case "decide":
+				epf = collectionDecideFlags
+
 			}
 
 		}
@@ -185,6 +193,9 @@ func ParseEndpoint(
 			case "download":
 				endpoint = c.Download()
 				data, err = collectionc.BuildDownloadPayload(*collectionDownloadIDFlag)
+			case "decide":
+				endpoint = c.Decide()
+				data, err = collectionc.BuildDecidePayload(*collectionDecideBodyFlag, *collectionDecideIDFlag)
 			}
 		}
 	}
@@ -210,6 +221,7 @@ COMMAND:
     retry: Retry collection processing by ID
     workflow: Retrieve workflow status by ID
     download: Download collection by ID
+    decide: Make decision for a pending collection by ID
 
 Additional help:
     %s collection COMMAND --help
@@ -230,7 +242,7 @@ List all stored collections
     -cursor STRING: 
 
 Example:
-    `+os.Args[0]+` collection list --name "Magni quod impedit sapiente ea." --original-id "Dicta non odio." --transfer-id "76FB876C-96AC-91E7-BD21-B0C2988DDF65" --aip-id "A45D83CF-F038-77BB-220E-D79EFC31D198" --pipeline-id "95545D09-3153-0F17-09F7-7FEB1545D780" --earliest-created-time "1975-09-04T16:08:16Z" --latest-created-time "1997-07-04T22:46:11Z" --status "unknown" --cursor "Eligendi quam doloribus quam itaque vitae velit."
+    `+os.Args[0]+` collection list --name "Dicta non odio." --original-id "Laboriosam rerum amet." --transfer-id "76FB876C-96AC-91E7-BD21-B0C2988DDF65" --aip-id "A45D83CF-F038-77BB-220E-D79EFC31D198" --pipeline-id "95545D09-3153-0F17-09F7-7FEB1545D780" --earliest-created-time "2015-11-24T16:44:22Z" --latest-created-time "1996-11-22T23:00:23Z" --status "error" --cursor "Itaque vitae velit iusto aspernatur ut iure."
 `, os.Args[0])
 }
 
@@ -241,7 +253,7 @@ Show collection by ID
     -id UINT: Identifier of collection to show
 
 Example:
-    `+os.Args[0]+` collection show --id 142946564596723575
+    `+os.Args[0]+` collection show --id 1695537954240107722
 `, os.Args[0])
 }
 
@@ -297,5 +309,19 @@ Download collection by ID
 
 Example:
     `+os.Args[0]+` collection download --id 15738484422014435571
+`, os.Args[0])
+}
+
+func collectionDecideUsage() {
+	fmt.Fprintf(os.Stderr, `%s [flags] collection decide -body JSON -id UINT
+
+Make decision for a pending collection by ID
+    -body JSON: 
+    -id UINT: Identifier of collection to look up
+
+Example:
+    `+os.Args[0]+` collection decide --body '{
+      "option": "Et saepe eos eos sed."
+   }' --id 10177787339530286590
 `, os.Args[0])
 }

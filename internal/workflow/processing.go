@@ -143,8 +143,8 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 	// Ensure that the status of the collection is always updated when this
 	// workflow function returns.
 	defer func() {
-		// Mark as failed unless it completed successfully.
-		if status != collection.StatusDone {
+		// Mark as failed unless it completed successfully or it was abandoned.
+		if status != collection.StatusDone && status != collection.StatusAbandoned {
 			status = collection.StatusError
 		}
 
@@ -234,6 +234,11 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 
 		if sessErr != nil {
 			status = collection.StatusError
+
+			if errors.Is(sessErr, ErrAsyncCompletionAbandoned) {
+				status = collection.StatusAbandoned
+			}
+
 			return sessErr
 		}
 
@@ -294,6 +299,10 @@ func (w *ProcessingWorkflow) SessionHandler(sessCtx workflow.Context, attempt in
 
 	// Download.
 	{
+		// TODO: even if TempFile is defined, we should confirm that the file is
+		// locally available in disk, just in case we're in the context of a
+		// session retry where a different working is doing the work. In that
+		// case, the activity whould be executed again.
 		if tinfo.TempFile == "" {
 			activityOpts := withActivityOptsForLongLivedRequest(sessCtx)
 			err := workflow.ExecuteActivity(activityOpts, activities.DownloadActivityName, tinfo.Event).Get(activityOpts, &tinfo.TempFile)
@@ -397,15 +406,16 @@ func (w *ProcessingWorkflow) SessionHandler(sessCtx workflow.Context, attempt in
 
 	// Deliver receipts.
 	{
-		err := sendReceipts(sessCtx, tinfo.Hooks, &sendReceiptsParams{
+		err := w.sendReceipts(sessCtx, &sendReceiptsParams{
 			SIPID:        tinfo.SIPID,
 			StoredAt:     tinfo.StoredAt,
 			FullPath:     tinfo.Bundle.FullPath,
 			PipelineName: tinfo.Event.PipelineName,
 			NameInfo:     nameInfo,
+			CollectionID: tinfo.CollectionID,
 		})
 		if err != nil {
-			return fmt.Errorf("error delivering receipt(s): %v", err)
+			return fmt.Errorf("error delivering receipt(s): %w", err)
 		}
 	}
 

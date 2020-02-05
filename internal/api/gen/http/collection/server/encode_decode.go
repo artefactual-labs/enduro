@@ -10,6 +10,7 @@ package server
 
 import (
 	"context"
+	"io"
 	"net/http"
 	"strconv"
 
@@ -95,8 +96,8 @@ func DecodeListRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.De
 			status = &statusRaw
 		}
 		if status != nil {
-			if !(*status == "new" || *status == "in progress" || *status == "done" || *status == "error" || *status == "unknown" || *status == "queued") {
-				err = goa.MergeErrors(err, goa.InvalidEnumValueError("status", *status, []interface{}{"new", "in progress", "done", "error", "unknown", "queued"}))
+			if !(*status == "new" || *status == "in progress" || *status == "done" || *status == "error" || *status == "unknown" || *status == "queued" || *status == "pending" || *status == "abandoned") {
+				err = goa.MergeErrors(err, goa.InvalidEnumValueError("status", *status, []interface{}{"new", "in progress", "done", "error", "unknown", "queued", "pending", "abandoned"}))
 			}
 		}
 		cursorRaw := r.URL.Query().Get("cursor")
@@ -522,6 +523,96 @@ func EncodeDownloadError(encoder func(context.Context, http.ResponseWriter) goah
 			}
 			w.Header().Set("goa-error", "not_found")
 			w.WriteHeader(http.StatusNotFound)
+			return enc.Encode(body)
+		default:
+			return encodeError(ctx, w, v)
+		}
+	}
+}
+
+// EncodeDecideResponse returns an encoder for responses returned by the
+// collection decide endpoint.
+func EncodeDecideResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, interface{}) error {
+	return func(ctx context.Context, w http.ResponseWriter, v interface{}) error {
+		w.WriteHeader(http.StatusOK)
+		return nil
+	}
+}
+
+// DecodeDecideRequest returns a decoder for requests sent to the collection
+// decide endpoint.
+func DecodeDecideRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (interface{}, error) {
+	return func(r *http.Request) (interface{}, error) {
+		var (
+			body struct {
+				// Decision option to proceed with
+				Option *string
+			}
+			err error
+		)
+		err = decoder(r).Decode(&body)
+		if err != nil {
+			if err == io.EOF {
+				return nil, goa.MissingPayloadError()
+			}
+			return nil, goa.DecodePayloadError(err.Error())
+		}
+
+		var (
+			id uint
+
+			params = mux.Vars(r)
+		)
+		{
+			idRaw := params["id"]
+			v, err2 := strconv.ParseUint(idRaw, 10, strconv.IntSize)
+			if err2 != nil {
+				err = goa.MergeErrors(err, goa.InvalidFieldTypeError("id", idRaw, "unsigned integer"))
+			}
+			id = uint(v)
+		}
+		if err != nil {
+			return nil, err
+		}
+		payload := NewDecidePayload(body, id)
+
+		return payload, nil
+	}
+}
+
+// EncodeDecideError returns an encoder for errors returned by the decide
+// collection endpoint.
+func EncodeDecideError(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder, formatter func(err error) goahttp.Statuser) func(context.Context, http.ResponseWriter, error) error {
+	encodeError := goahttp.ErrorEncoder(encoder, formatter)
+	return func(ctx context.Context, w http.ResponseWriter, v error) error {
+		en, ok := v.(ErrorNamer)
+		if !ok {
+			return encodeError(ctx, w, v)
+		}
+		switch en.ErrorName() {
+		case "not_found":
+			res := v.(*collection.NotFound)
+			enc := encoder(ctx, w)
+			var body interface{}
+			if formatter != nil {
+				body = formatter(res)
+			} else {
+				body = NewDecideNotFoundResponseBody(res)
+			}
+			w.Header().Set("goa-error", "not_found")
+			w.WriteHeader(http.StatusNotFound)
+			return enc.Encode(body)
+		case "not_valid":
+			res := v.(*goa.ServiceError)
+			enc := encoder(ctx, w)
+			var body interface{}
+			if formatter != nil {
+				body = formatter(res)
+			} else {
+				body = NewDecideNotValidResponseBody(res)
+			}
+			w.Header().Set("goa-error", "not_valid")
+			w.WriteHeader(http.StatusBadRequest)
 			return enc.Encode(body)
 		default:
 			return encodeError(ctx, w, v)

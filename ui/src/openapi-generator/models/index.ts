@@ -1,5 +1,7 @@
 export * from './CollectionCancelNotFoundResponseBody';
 export * from './CollectionCancelNotRunningResponseBody';
+export * from './CollectionDecideNotFoundResponseBody';
+export * from './CollectionDecideNotValidResponseBody';
 export * from './CollectionDeleteNotFoundResponseBody';
 export * from './CollectionDownloadNotFoundResponseBody';
 export * from './CollectionListResponseBody';
@@ -13,3 +15,4 @@ export * from './EnduroCollectionWorkflowHistoryResponseBody';
 export * from './EnduroCollectionWorkflowHistoryResponseBodyCollection';
 export * from './EnduroStoredCollectionResponseBody';
 export * from './EnduroStoredCollectionResponseBodyCollection';
+export * from './InlineObject';

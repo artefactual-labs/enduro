@@ -26,6 +26,7 @@ type Service interface {
 	UpdateWorkflowStatus(ctx context.Context, ID uint, name string, workflowID, runID, transferID, aipID, pipelineID string, status Status, storedAt time.Time) error
 	SetStatus(ctx context.Context, ID uint, status Status) error
 	SetStatusInProgress(ctx context.Context, ID uint, startedAt time.Time) error
+	SetStatusPending(ctx context.Context, ID uint, taskToken []byte) error
 	SetOriginalID(ctx context.Context, ID uint, originalID string) error
 
 	// HTTPDownload returns a HTTP handler that serves the package over HTTP.
@@ -67,7 +68,7 @@ func (svc *collectionImpl) Goa() goacollection.Service {
 }
 
 func (svc *collectionImpl) Create(ctx context.Context, col *Collection) error {
-	var query = `INSERT INTO collection (name, workflow_id, run_id, transfer_id, aip_id, original_id, pipeline_id, status) VALUES ((?), (?), (?), (?), (?), (?), (?), (?))`
+	var query = `INSERT INTO collection (name, workflow_id, run_id, transfer_id, aip_id, original_id, pipeline_id, decision_token, status) VALUES ((?), (?), (?), (?), (?), (?), (?), (?), (?))`
 	var args = []interface{}{
 		col.Name,
 		col.WorkflowID,
@@ -76,6 +77,7 @@ func (svc *collectionImpl) Create(ctx context.Context, col *Collection) error {
 		col.AIPID,
 		col.OriginalID,
 		col.PipelineID,
+		col.DecisionToken,
 		col.Status,
 	}
 
@@ -136,10 +138,27 @@ func (svc *collectionImpl) SetStatus(ctx context.Context, ID uint, status Status
 }
 
 func (svc *collectionImpl) SetStatusInProgress(ctx context.Context, ID uint, startedAt time.Time) error {
-	var query = `UPDATE collection SET status = (?), started_at = (?) WHERE id = (?)`
+	var query string
+	var args = []interface{}{StatusInProgress}
+
+	if !startedAt.IsZero() {
+		query = `UPDATE collection SET status = (?), started_at = (?) WHERE id = (?)`
+		args = append(args, startedAt, ID)
+	} else {
+		query = `UPDATE collection SET status = (?) WHERE id = (?)`
+		args = append(args, ID)
+	}
+
+	_, err := svc.updateRow(ctx, query, args)
+
+	return err
+}
+
+func (svc *collectionImpl) SetStatusPending(ctx context.Context, ID uint, taskToken []byte) error {
+	var query = `UPDATE collection SET status = (?), decision_token = (?) WHERE id = (?)`
 	var args = []interface{}{
-		StatusInProgress,
-		startedAt,
+		StatusPending,
+		taskToken,
 		ID,
 	}
 
@@ -173,4 +192,17 @@ func (svc *collectionImpl) updateRow(ctx context.Context, query string, args []i
 	}
 
 	return n, nil
+}
+
+func (svc *collectionImpl) read(ctx context.Context, ID uint) (*Collection, error) {
+	var query = "SELECT id, name, workflow_id, run_id, transfer_id, aip_id, original_id, pipeline_id, decision_token, status, CONVERT_TZ(created_at, @@session.time_zone, '+00:00') AS created_at, CONVERT_TZ(started_at, @@session.time_zone, '+00:00') AS started_at, CONVERT_TZ(completed_at, @@session.time_zone, '+00:00') AS completed_at FROM collection WHERE id = (?)"
+	var args = []interface{}{ID}
+	var c = Collection{}
+
+	query = svc.db.Rebind(query)
+	if err := svc.db.GetContext(ctx, &c, query, args...); err != nil {
+		return nil, err
+	}
+
+	return &c, nil
 }

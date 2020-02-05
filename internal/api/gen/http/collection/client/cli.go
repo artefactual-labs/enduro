@@ -9,6 +9,7 @@
 package client
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 
@@ -198,4 +199,35 @@ func BuildDownloadPayload(collectionDownloadID string) (*collection.DownloadPayl
 		ID: id,
 	}
 	return payload, nil
+}
+
+// BuildDecidePayload builds the payload for the collection decide endpoint
+// from CLI flags.
+func BuildDecidePayload(collectionDecideBody string, collectionDecideID string) (*collection.DecidePayload, error) {
+	var err error
+	var body struct {
+		// Decision option to proceed with
+		Option *string
+	}
+	{
+		err = json.Unmarshal([]byte(collectionDecideBody), &body)
+		if err != nil {
+			return nil, fmt.Errorf("invalid JSON for body, example of valid JSON:\n%s", "'{\n      \"option\": \"Et saepe eos eos sed.\"\n   }'")
+		}
+	}
+	var id uint
+	{
+		var v uint64
+		v, err = strconv.ParseUint(collectionDecideID, 10, 64)
+		id = uint(v)
+		if err != nil {
+			return nil, fmt.Errorf("invalid value for id, must be UINT")
+		}
+	}
+	v := &collection.DecidePayload{}
+	if body.Option != nil {
+		v.Option = *body.Option
+	}
+	v.ID = id
+	return v, nil
 }

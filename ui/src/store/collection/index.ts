@@ -27,6 +27,7 @@ export const SET_SEARCH_HOME_PAGE = 'SET_SEARCH_HOME_PAGE';
 export const SET_SEARCH_PREV_PAGE = 'SET_SEARCH_PREV_PAGE';
 export const SET_SEARCH_NEXT_PAGE = 'SET_SEARCH_NEXT_PAGE';
 export const SET_SEARCH_NEXT_CURSOR = 'SET_SEARCH_NEXT_CURSOR';
+export const SET_WORKFLOW_DECISION_ERROR = 'SET_WORKFLOW_DECISION_ERROR';
 
 // Action types.
 export const SEARCH_COLLECTION = 'SEARCH_COLLECTION';
@@ -35,6 +36,7 @@ export const SEARCH_COLLECTIONS = 'SEARCH_COLLECTIONS';
 export const SEARCH_COLLECTIONS_HOME_PAGE = 'SEARCH_COLLECTIONS_HOME_PAGE';
 export const SEARCH_COLLECTIONS_PREV_PAGE = 'SEARCH_COLLECTIONS_PREV_PAGE';
 export const SEARCH_COLLECTIONS_NEXT_PAGE = 'SEARCH_COLLECTIONS_NEXT_PAGE';
+export const MAKE_WORKFLOW_DECISION = 'MAKE_WORKFLOW_DECISION';
 
 const namespaced: boolean = true;
 
@@ -146,6 +148,12 @@ const actions: ActionTree<State, RootState> = {
       case 'queued':
         request.status = api.CollectionListStatusEnum.Queued;
         break;
+      case 'pending':
+        request.status = api.CollectionListStatusEnum.Pending;
+        break;
+      case 'abandoned':
+        request.status = api.CollectionListStatusEnum.Abandoned;
+        break;
     }
 
     if (state.query.query) {
@@ -198,6 +206,20 @@ const actions: ActionTree<State, RootState> = {
   [SEARCH_COLLECTIONS_NEXT_PAGE]({ commit, dispatch }): any {
     commit(SET_SEARCH_NEXT_PAGE);
     dispatch(SEARCH_COLLECTIONS);
+  },
+
+  [MAKE_WORKFLOW_DECISION]({ commit }, payload): any {
+    const request: api.CollectionDecideRequest = {
+      id: +payload.id,
+      object: {
+        option: payload.option,
+      },
+    };
+    return EnduroCollectionClient.collectionDecide(request).then(() => {
+      commit(SET_WORKFLOW_DECISION_ERROR, false);
+    }).catch(() => {
+      commit(SET_WORKFLOW_DECISION_ERROR, true);
+    });
   },
 };
 
@@ -288,6 +310,10 @@ const mutations: MutationTree<State> = {
 
   [SET_SEARCH_NEXT_CURSOR](state, cursor: string | undefined) {
     state.nextCursor = cursor ? cursor : null;
+  },
+
+  [SET_WORKFLOW_DECISION_ERROR](state, failed: boolean) {
+    state.error = true;
   },
 
 };

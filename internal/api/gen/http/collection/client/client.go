@@ -41,6 +41,9 @@ type Client struct {
 	// endpoint.
 	DownloadDoer goahttp.Doer
 
+	// Decide Doer is the HTTP client used to make requests to the decide endpoint.
+	DecideDoer goahttp.Doer
+
 	// CORS Doer is the HTTP client used to make requests to the  endpoint.
 	CORSDoer goahttp.Doer
 
@@ -71,6 +74,7 @@ func NewClient(
 		RetryDoer:           doer,
 		WorkflowDoer:        doer,
 		DownloadDoer:        doer,
+		DecideDoer:          doer,
 		CORSDoer:            doer,
 		RestoreResponseBody: restoreBody,
 		scheme:              scheme,
@@ -220,6 +224,31 @@ func (c *Client) Download() goa.Endpoint {
 
 		if err != nil {
 			return nil, goahttp.ErrRequestError("collection", "download", err)
+		}
+		return decodeResponse(resp)
+	}
+}
+
+// Decide returns an endpoint that makes HTTP requests to the collection
+// service decide server.
+func (c *Client) Decide() goa.Endpoint {
+	var (
+		encodeRequest  = EncodeDecideRequest(c.encoder)
+		decodeResponse = DecodeDecideResponse(c.decoder, c.RestoreResponseBody)
+	)
+	return func(ctx context.Context, v interface{}) (interface{}, error) {
+		req, err := c.BuildDecideRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		err = encodeRequest(req, v)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.DecideDoer.Do(req)
+
+		if err != nil {
+			return nil, goahttp.ErrRequestError("collection", "decide", err)
 		}
 		return decodeResponse(resp)
 	}

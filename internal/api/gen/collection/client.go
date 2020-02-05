@@ -23,10 +23,11 @@ type Client struct {
 	RetryEndpoint    goa.Endpoint
 	WorkflowEndpoint goa.Endpoint
 	DownloadEndpoint goa.Endpoint
+	DecideEndpoint   goa.Endpoint
 }
 
 // NewClient initializes a "collection" service client given the endpoints.
-func NewClient(list, show, delete_, cancel, retry, workflow, download goa.Endpoint) *Client {
+func NewClient(list, show, delete_, cancel, retry, workflow, download, decide goa.Endpoint) *Client {
 	return &Client{
 		ListEndpoint:     list,
 		ShowEndpoint:     show,
@@ -35,6 +36,7 @@ func NewClient(list, show, delete_, cancel, retry, workflow, download goa.Endpoi
 		RetryEndpoint:    retry,
 		WorkflowEndpoint: workflow,
 		DownloadEndpoint: download,
+		DecideEndpoint:   decide,
 	}
 }
 
@@ -114,4 +116,14 @@ func (c *Client) Download(ctx context.Context, p *DownloadPayload) (res []byte, 
 		return
 	}
 	return ires.([]byte), nil
+}
+
+// Decide calls the "decide" endpoint of the "collection" service.
+// Decide may return the following errors:
+//	- "not_found" (type *NotFound): Collection not found
+//	- "not_valid" (type *goa.ServiceError)
+//	- error: internal error
+func (c *Client) Decide(ctx context.Context, p *DecidePayload) (err error) {
+	_, err = c.DecideEndpoint(ctx, p)
+	return
 }

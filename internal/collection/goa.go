@@ -5,6 +5,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -122,16 +123,11 @@ func (w *goaWrapper) List(ctx context.Context, payload *goacollection.ListPayloa
 
 // Show collection by ID. It implements goacollection.Service.
 func (w *goaWrapper) Show(ctx context.Context, payload *goacollection.ShowPayload) (*goacollection.EnduroStoredCollection, error) {
-	var query = "SELECT id, name, workflow_id, run_id, transfer_id, aip_id, original_id, pipeline_id, status, CONVERT_TZ(created_at, @@session.time_zone, '+00:00') AS created_at, CONVERT_TZ(started_at, @@session.time_zone, '+00:00') AS started_at, CONVERT_TZ(completed_at, @@session.time_zone, '+00:00') AS completed_at FROM collection WHERE id = (?)"
-	var c = Collection{}
-
-	query = w.db.Rebind(query)
-	if err := w.db.GetContext(ctx, &c, query, payload.ID); err != nil {
-		if err == sql.ErrNoRows {
-			return nil, &goacollection.NotFound{ID: payload.ID, Message: "not_found"}
-		} else {
-			return nil, err
-		}
+	c, err := w.read(ctx, payload.ID)
+	if err == sql.ErrNoRows {
+		return nil, &goacollection.NotFound{ID: payload.ID, Message: "not_found"}
+	} else if err != nil {
+		return nil, err
 	}
 
 	return c.Goa(), nil
@@ -273,4 +269,29 @@ func (w *goaWrapper) Workflow(ctx context.Context, payload *goacollection.Workfl
 // easy to adopt, e.g. with a io.Writer argument?
 func (w *goaWrapper) Download(ctx context.Context, payload *goacollection.DownloadPayload) (res []byte, err error) {
 	return []byte{}, nil
+}
+
+// Make decision for a pending collection by ID.
+func (w *goaWrapper) Decide(ctx context.Context, payload *goacollection.DecidePayload) (err error) {
+	c, err := w.read(ctx, payload.ID)
+
+	if err == sql.ErrNoRows {
+		return &goacollection.NotFound{ID: payload.ID, Message: "not_found"}
+	} else if err != nil {
+		return err
+	}
+
+	if c.DecisionToken == "" || c.Status != StatusPending {
+		return goacollection.MakeNotValid(errors.New("collection is not awaiting decision"))
+	}
+
+	if payload.Option == "" {
+		return goacollection.MakeNotValid(errors.New("missing decision option"))
+	}
+
+	if err := w.cc.CompleteActivity(ctx, []byte(c.DecisionToken), payload.Option, nil); err != nil {
+		return err
+	}
+
+	return nil
 }

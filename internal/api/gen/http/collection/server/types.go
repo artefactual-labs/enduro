@@ -147,6 +147,33 @@ type DownloadNotFoundResponseBody struct {
 	ID uint `form:"id" json:"id" xml:"id"`
 }
 
+// DecideNotFoundResponseBody is the type of the "collection" service "decide"
+// endpoint HTTP response body for the "not_found" error.
+type DecideNotFoundResponseBody struct {
+	// Message of error
+	Message string `form:"message" json:"message" xml:"message"`
+	// Identifier of missing collection
+	ID uint `form:"id" json:"id" xml:"id"`
+}
+
+// DecideNotValidResponseBody is the type of the "collection" service "decide"
+// endpoint HTTP response body for the "not_valid" error.
+type DecideNotValidResponseBody struct {
+	// Name is the name of this class of errors.
+	Name string `form:"name" json:"name" xml:"name"`
+	// ID is a unique identifier for this particular occurrence of the problem.
+	ID string `form:"id" json:"id" xml:"id"`
+	// Message is a human-readable explanation specific to this occurrence of the
+	// problem.
+	Message string `form:"message" json:"message" xml:"message"`
+	// Is the error temporary?
+	Temporary bool `form:"temporary" json:"temporary" xml:"temporary"`
+	// Is the error a timeout?
+	Timeout bool `form:"timeout" json:"timeout" xml:"timeout"`
+	// Is the error a server-side fault?
+	Fault bool `form:"fault" json:"fault" xml:"fault"`
+}
+
 // EnduroStoredCollectionCollectionResponseBody is used to define fields on
 // response body types.
 type EnduroStoredCollectionCollectionResponseBody []*EnduroStoredCollectionResponseBody
@@ -333,6 +360,30 @@ func NewDownloadNotFoundResponseBody(res *collection.NotFound) *DownloadNotFound
 	return body
 }
 
+// NewDecideNotFoundResponseBody builds the HTTP response body from the result
+// of the "decide" endpoint of the "collection" service.
+func NewDecideNotFoundResponseBody(res *collection.NotFound) *DecideNotFoundResponseBody {
+	body := &DecideNotFoundResponseBody{
+		Message: res.Message,
+		ID:      res.ID,
+	}
+	return body
+}
+
+// NewDecideNotValidResponseBody builds the HTTP response body from the result
+// of the "decide" endpoint of the "collection" service.
+func NewDecideNotValidResponseBody(res *goa.ServiceError) *DecideNotValidResponseBody {
+	body := &DecideNotValidResponseBody{
+		Name:      res.Name,
+		ID:        res.ID,
+		Message:   res.Message,
+		Temporary: res.Temporary,
+		Timeout:   res.Timeout,
+		Fault:     res.Fault,
+	}
+	return body
+}
+
 // NewListPayload builds a collection service list endpoint payload.
 func NewListPayload(name *string, originalID *string, transferID *string, aipID *string, pipelineID *string, earliestCreatedTime *string, latestCreatedTime *string, status *string, cursor *string) *collection.ListPayload {
 	return &collection.ListPayload{
@@ -390,6 +441,19 @@ func NewDownloadPayload(id uint) *collection.DownloadPayload {
 	}
 }
 
+// NewDecidePayload builds a collection service decide endpoint payload.
+func NewDecidePayload(body struct {
+	// Decision option to proceed with
+	Option *string
+}, id uint) *collection.DecidePayload {
+	v := &collection.DecidePayload{}
+	if body.Option != nil {
+		v.Option = *body.Option
+	}
+	v.ID = id
+	return v
+}
+
 // ValidateEnduroStoredCollectionCollectionResponseBody runs the validations
 // defined on EnduroStored-CollectionCollectionResponseBody
 func ValidateEnduroStoredCollectionCollectionResponseBody(body EnduroStoredCollectionCollectionResponseBody) (err error) {
@@ -406,8 +470,8 @@ func ValidateEnduroStoredCollectionCollectionResponseBody(body EnduroStoredColle
 // ValidateEnduroStoredCollectionResponseBody runs the validations defined on
 // EnduroStored-CollectionResponseBody
 func ValidateEnduroStoredCollectionResponseBody(body *EnduroStoredCollectionResponseBody) (err error) {
-	if !(body.Status == "new" || body.Status == "in progress" || body.Status == "done" || body.Status == "error" || body.Status == "unknown" || body.Status == "queued") {
-		err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.status", body.Status, []interface{}{"new", "in progress", "done", "error", "unknown", "queued"}))
+	if !(body.Status == "new" || body.Status == "in progress" || body.Status == "done" || body.Status == "error" || body.Status == "unknown" || body.Status == "queued" || body.Status == "pending" || body.Status == "abandoned") {
+		err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.status", body.Status, []interface{}{"new", "in progress", "done", "error", "unknown", "queued", "pending", "abandoned"}))
 	}
 	if body.WorkflowID != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("body.workflow_id", *body.WorkflowID, goa.FormatUUID))
