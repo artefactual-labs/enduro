@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
+	"net"
 
 	"github.com/artefactual-labs/enduro/internal/amclient"
 )
@@ -19,17 +19,19 @@ var (
 func TransferStatus(ctx context.Context, client *amclient.Client, ID string) (string, error) {
 	status, _, err := client.Transfer.Status(ctx, ID)
 	if err != nil {
-		if errors.Is(err, context.DeadlineExceeded) || os.IsTimeout(err) {
+		if errors.Is(err, context.DeadlineExceeded) {
 			return "", fmt.Errorf("error checking transfer status (%w): %v", ErrStatusRetryable, err)
 		}
-		if err, ok := err.(*amclient.ErrorResponse); ok {
-			if err.Response.StatusCode >= 400 {
-				return "", fmt.Errorf("error checking transfer status (%w): %v (%d)", ErrStatusRetryable, err, err.Response.StatusCode)
+		if amErr, ok := err.(*amclient.ErrorResponse); ok {
+			if amErr.Response.StatusCode >= 400 {
+				return "", fmt.Errorf("error checking transfer status (%w): %v (%d)", ErrStatusRetryable, err, amErr.Response.StatusCode)
 			} else {
-				return "", fmt.Errorf("error checking transfer status (%w): %v (%d)", ErrStatusNonRetryable, err, err.Response.StatusCode)
+				return "", fmt.Errorf("error checking transfer status (%w): %v (%d)", ErrStatusNonRetryable, err, amErr.Response.StatusCode)
 			}
+		} else if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
+			return "", fmt.Errorf("error checking transfer status (%w): %v", ErrStatusRetryable, netErr)
 		}
-		return "", fmt.Errorf("error checking transfer status (%w): %v", ErrStatusNonRetryable, err)
+		return "", fmt.Errorf("error checking transfer status (%w): %v (%T)", ErrStatusNonRetryable, err, err)
 	}
 
 	if status.Status == "" {
@@ -70,17 +72,19 @@ func TransferStatus(ctx context.Context, client *amclient.Client, ID string) (st
 func IngestStatus(ctx context.Context, client *amclient.Client, ID string) error {
 	status, _, err := client.Ingest.Status(ctx, ID)
 	if err != nil {
-		if errors.Is(err, context.DeadlineExceeded) || os.IsTimeout(err) {
+		if errors.Is(err, context.DeadlineExceeded) {
 			return fmt.Errorf("error checking ingest status (%w): %v", ErrStatusRetryable, err)
 		}
-		if err, ok := err.(*amclient.ErrorResponse); ok {
-			if err.Response.StatusCode >= 400 {
-				return fmt.Errorf("error checking ingest status (%w): %v (%d)", ErrStatusRetryable, err, err.Response.StatusCode)
+		if amErr, ok := err.(*amclient.ErrorResponse); ok {
+			if amErr.Response.StatusCode >= 400 {
+				return fmt.Errorf("error checking ingest status (%w): %v (%d)", ErrStatusRetryable, err, amErr.Response.StatusCode)
 			} else {
-				return fmt.Errorf("error checking ingest status (%w): %v (%d)", ErrStatusNonRetryable, err, err.Response.StatusCode)
+				return fmt.Errorf("error checking ingest status (%w): %v (%d)", ErrStatusNonRetryable, err, amErr.Response.StatusCode)
 			}
+		} else if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
+			return fmt.Errorf("error checking ingest status (%w): %v", ErrStatusRetryable, netErr)
 		}
-		return fmt.Errorf("error checking ingest status (%w): %v", ErrStatusNonRetryable, err)
+		return fmt.Errorf("error checking ingest status (%w): %v (%T)", ErrStatusNonRetryable, err, err)
 	}
 
 	if status.Status == "" {
