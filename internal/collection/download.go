@@ -10,9 +10,9 @@ import (
 	"github.com/artefactual-labs/enduro/internal/api/gen/collection"
 	"github.com/artefactual-labs/enduro/internal/api/gen/http/collection/server"
 	"github.com/artefactual-labs/enduro/internal/pipeline"
-	goahttp "goa.design/goa/v3/http"
 
 	"github.com/go-logr/logr"
+	goahttp "goa.design/goa/v3/http"
 )
 
 const userAgent = "Enduro (ssclient)"

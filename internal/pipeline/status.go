@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 
 	"github.com/artefactual-labs/enduro/internal/amclient"
 )
@@ -18,7 +19,7 @@ var (
 func TransferStatus(ctx context.Context, client *amclient.Client, ID string) (string, error) {
 	status, _, err := client.Transfer.Status(ctx, ID)
 	if err != nil {
-		if errors.Is(err, context.DeadlineExceeded) {
+		if errors.Is(err, context.DeadlineExceeded) || os.IsTimeout(err) {
 			return "", fmt.Errorf("error checking transfer status (%w): %v", ErrStatusRetryable, err)
 		}
 		if err, ok := err.(*amclient.ErrorResponse); ok {
@@ -69,7 +70,7 @@ func TransferStatus(ctx context.Context, client *amclient.Client, ID string) (st
 func IngestStatus(ctx context.Context, client *amclient.Client, ID string) error {
 	status, _, err := client.Ingest.Status(ctx, ID)
 	if err != nil {
-		if errors.Is(err, context.DeadlineExceeded) {
+		if errors.Is(err, context.DeadlineExceeded) || os.IsTimeout(err) {
 			return fmt.Errorf("error checking ingest status (%w): %v", ErrStatusRetryable, err)
 		}
 		if err, ok := err.(*amclient.ErrorResponse); ok {
