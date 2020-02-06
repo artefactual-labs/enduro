@@ -2,6 +2,7 @@
 base = "website"
 publish = "public"
 command = "git submodule update --init --recursive && hugo --gc --minify"
+ignore = "cd ..; git diff --quiet HEAD^ HEAD ./website ./internal/api/gen/http/openapi.json"
 
 [context.split1]
 command = "git submodule update --init --recursive && hugo --gc --minify --enableGitInfo"
