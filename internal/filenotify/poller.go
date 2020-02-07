@@ -28,11 +28,21 @@ func (w *filePoller) loop() {
 	for {
 		select {
 		case event := <-w.wr.Event:
-			if event.Op != watcher.Create {
+			var op fsnotify.Op
+
+			switch event.Op {
+			case watcher.Create:
+				op = fsnotify.Create
+			case watcher.Rename:
+				fallthrough
+			case watcher.Move:
+				op = fsnotify.Rename
+			default:
 				continue
 			}
+
 			w.events <- fsnotify.Event{
-				Op:   fsnotify.Create,
+				Op:   op,
 				Name: event.Path,
 			}
 		case err := <-w.wr.Error:
