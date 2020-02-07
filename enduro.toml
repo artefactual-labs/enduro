@@ -30,9 +30,10 @@ stripTopLevelDir = true
 [[watcher.filesystem]]
 name = "dev-fs"
 path = "./hack/watched-dir"
-inotify = true
+inotify = false
 pipeline = "am"
 retentionPeriod = "11s"
+ignore = "^*\\.mft$"
 stripTopLevelDir = true
 
 [[pipeline]]
