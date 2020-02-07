@@ -6,7 +6,7 @@ require (
 	github.com/GeertJohan/go.rice v1.0.1-0.20190430230923-c880e3cd4dd8
 	github.com/apache/thrift v0.13.0 // indirect
 	github.com/atrox/go-migrate-rice v1.0.1
-	github.com/aws/aws-sdk-go v1.28.11
+	github.com/aws/aws-sdk-go v1.28.12
 	github.com/cenkalti/backoff/v3 v3.2.2
 	github.com/daaku/go.zipexe v1.0.1 // indirect
 	github.com/dsnet/compress v0.0.1 // indirect
@@ -33,7 +33,7 @@ require (
 	github.com/opentracing/opentracing-go v1.1.0 // indirect
 	github.com/pelletier/go-toml v1.6.0 // indirect
 	github.com/pierrec/lz4 v2.4.1+incompatible // indirect
-	github.com/prometheus/client_golang v1.4.0
+	github.com/prometheus/client_golang v1.4.1
 	github.com/radovskyb/watcher v1.0.7
 	github.com/samuel/go-thrift v0.0.0-20191111193933-5165175b40af // indirect
 	github.com/spf13/afero v1.2.2
@@ -63,7 +63,7 @@ require (
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
 	golang.org/x/sys v0.0.0-20200202164722-d101bd2416d5 // indirect
 	golang.org/x/time v0.0.0-20191024005414-555d28b269f0 // indirect
-	golang.org/x/tools v0.0.0-20200206001521-403f1254bdfd // indirect
+	golang.org/x/tools v0.0.0-20200207183749-b753a1ba74fa // indirect
 	google.golang.org/genproto v0.0.0-20200205142000-a86caf926a67 // indirect
 	google.golang.org/grpc v1.27.1 // indirect
 	gopkg.in/ini.v1 v1.52.0 // indirect
