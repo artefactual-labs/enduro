@@ -76,7 +76,10 @@ func (w *filesystemWatcher) loop() {
 	for {
 		select {
 		case event, ok := <-w.fsw.Events():
-			if !ok || event.Op != fsnotify.Create {
+			if !ok {
+				continue
+			}
+			if event.Op != fsnotify.Create && event.Op != fsnotify.Rename {
 				continue
 			}
 			w.ch <- &event

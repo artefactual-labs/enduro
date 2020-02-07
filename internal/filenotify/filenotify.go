@@ -43,7 +43,7 @@ func NewPollingWatcher() (FileWatcher, error) {
 		events: make(chan fsnotify.Event),
 		errors: make(chan error),
 	}
-	poller.wr.FilterOps(watcher.Create)
+	poller.wr.FilterOps(watcher.Create, watcher.Rename, watcher.Move)
 	go poller.loop()
 
 	done := make(chan error)
