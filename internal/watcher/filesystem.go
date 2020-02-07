@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"runtime"
 
 	"github.com/artefactual-labs/enduro/internal/filenotify"
@@ -17,10 +18,11 @@ import (
 
 // filesystemWatcher implements a Watcher for watching paths in a local filesystem.
 type filesystemWatcher struct {
-	ctx  context.Context
-	fsw  filenotify.FileWatcher
-	ch   chan *fsnotify.Event
-	path string
+	ctx   context.Context
+	fsw   filenotify.FileWatcher
+	ch    chan *fsnotify.Event
+	path  string
+	regex *regexp.Regexp
 	*commonWatcherImpl
 }
 
@@ -39,6 +41,13 @@ func NewFilesystemWatcher(ctx context.Context, config *FilesystemConfig) (*files
 		return nil, fmt.Errorf("error generating absolute path of %s: %v", config.Path, err)
 	}
 
+	var regex *regexp.Regexp
+	if config.Ignore != "" {
+		if regex, err = regexp.Compile(config.Ignore); err != nil {
+			return nil, fmt.Errorf("error compiling regular expression (ignore): %v", err)
+		}
+	}
+
 	// The inotify API isn't always available, fall back to polling.
 	var fsw filenotify.FileWatcher
 	if config.Inotify && runtime.GOOS != "windows" {
@@ -51,10 +60,11 @@ func NewFilesystemWatcher(ctx context.Context, config *FilesystemConfig) (*files
 	}
 
 	w := &filesystemWatcher{
-		ctx:  ctx,
-		fsw:  fsw,
-		ch:   make(chan *fsnotify.Event, 100),
-		path: abspath,
+		ctx:   ctx,
+		fsw:   fsw,
+		ch:    make(chan *fsnotify.Event, 100),
+		path:  abspath,
+		regex: regex,
 		commonWatcherImpl: &commonWatcherImpl{
 			name:             config.Name,
 			pipeline:         config.Pipeline,
@@ -80,6 +90,9 @@ func (w *filesystemWatcher) loop() {
 				continue
 			}
 			if event.Op != fsnotify.Create && event.Op != fsnotify.Rename {
+				continue
+			}
+			if w.regex != nil && w.regex.MatchString(event.Name) {
 				continue
 			}
 			w.ch <- &event

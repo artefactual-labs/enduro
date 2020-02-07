@@ -12,6 +12,7 @@ type FilesystemConfig struct {
 	Name    string
 	Path    string
 	Inotify bool
+	Ignore  string
 
 	Pipeline         string
 	RetentionPeriod  *time.Duration

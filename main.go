@@ -183,6 +183,7 @@ func main() {
 								}
 								logger.Error(err, "Error monitoring watcher interface.")
 							}
+							logger.V(1).Info("Starting new workflow", "watcher", event.WatcherName, "bucket", event.Bucket, "key", event.Key)
 							go func() {
 								if err := collection.InitProcessingWorkflow(ctx, workflowClient, event); err != nil {
 									logger.Error(err, "Error initializing processing workflow.")
