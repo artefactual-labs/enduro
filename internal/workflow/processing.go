@@ -200,7 +200,7 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 				StartToCloseTimeout:    time.Minute,
 			})
 			sessCtx, err := workflow.CreateSession(activityOpts, &workflow.SessionOptions{
-				CreationTimeout:  time.Minute * 10,
+				CreationTimeout:  forever,
 				ExecutionTimeout: forever,
 			})
 			if err != nil {
