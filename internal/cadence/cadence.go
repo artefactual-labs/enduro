@@ -33,9 +33,10 @@ func NewWorker(logger *zap.Logger, appName string, config Config) (worker.Worker
 		return nil, err
 	}
 	opts := worker.Options{
-		MetricsScope:        tally.NoopScope,
-		Logger:              logger,
-		EnableSessionWorker: true,
+		MetricsScope:                      tally.NoopScope,
+		Logger:                            logger,
+		EnableSessionWorker:               true,
+		MaxConcurrentSessionExecutionSize: 5000,
 	}
 	return worker.New(svc, config.Domain, GlobalTaskListName, opts), nil
 }
