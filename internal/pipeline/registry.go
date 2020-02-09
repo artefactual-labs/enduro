@@ -29,6 +29,19 @@ func NewPipelineRegistry(logger logr.Logger, configs []Config) (*Registry, error
 	}, nil
 }
 
+func (r *Registry) List() []*Pipeline {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	pipelines := make([]*Pipeline, 0, len(r.pipelines))
+	for _, p := range r.pipelines {
+		p := p
+		pipelines = append(pipelines, p)
+	}
+
+	return pipelines
+}
+
 func (r *Registry) ByName(name string) (*Pipeline, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -42,6 +55,9 @@ func (r *Registry) ByName(name string) (*Pipeline, error) {
 }
 
 func (r *Registry) ByID(id string) (*Pipeline, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	for _, p := range r.pipelines {
 		if p.ID == id {
 			return p, nil

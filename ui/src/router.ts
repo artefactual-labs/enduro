@@ -1,10 +1,15 @@
 import Vue from 'vue';
 import Router from 'vue-router';
+
 import Collections from './views/Collections.vue';
 import CollectionList from './views/CollectionList.vue';
 import Collection from './views/Collection.vue';
 import CollectionShow from './views/CollectionShow.vue';
 import CollectionShowWorkflow from './views/CollectionShowWorkflow.vue';
+
+import Pipelines from './views/Pipelines.vue';
+import PipelineList from './views/PipelineList.vue';
+import Pipeline from './views/Pipeline.vue';
 
 Vue.use(Router);
 
@@ -45,6 +50,22 @@ export default new Router({
               component: CollectionShowWorkflow,
             },
           ],
+        },
+      ],
+    },
+    {
+      path: '/pipelines',
+      component: Pipelines,
+      children: [
+        {
+          path: '',
+          name: 'pipelines',
+          component: PipelineList,
+        },
+        {
+          path: '/pipelines/:id',
+          name: 'pipeline',
+          component: Pipeline,
         },
       ],
     },

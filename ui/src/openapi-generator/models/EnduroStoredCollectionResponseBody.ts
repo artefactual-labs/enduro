@@ -14,7 +14,7 @@
 
 import { exists, mapValues } from '../runtime';
 /**
- * StoredPackage describes a collection retrieved by the service. (default view)
+ * StoredPipeline describes a collection retrieved by the service. (default view)
  * @export
  * @interface EnduroStoredCollectionResponseBody
  */

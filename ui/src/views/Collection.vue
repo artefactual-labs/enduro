@@ -36,14 +36,17 @@
 import { Component, Vue } from 'vue-property-decorator';
 import { namespace } from 'vuex-class';
 import * as CollectionStore from '../store/collection';
+import * as PipelineStore from '../store/pipeline';
+import { api } from '../client';
 
 const collectionStoreNs = namespace('collection');
+const pipelineStoreNs = namespace('pipeline');
 
 @Component({})
 export default class Collection extends Vue {
 
   @collectionStoreNs.Getter(CollectionStore.GET_SEARCH_RESULT)
-  private result: any;
+  private result: api.CollectionShowResponseBody | undefined;
 
   @collectionStoreNs.Getter(CollectionStore.GET_SEARCH_ERROR)
   private error: any;
@@ -54,11 +57,29 @@ export default class Collection extends Vue {
   @collectionStoreNs.Action(CollectionStore.SEARCH_COLLECTION_RESET)
   private reset: any;
 
+  @pipelineStoreNs.Getter(PipelineStore.GET_PIPELINE_RESULT)
+  private pipelineResult: any;
+
+  @pipelineStoreNs.Getter(PipelineStore.GET_PIPELINE_ERROR)
+  private pipelineError: any;
+
+  @pipelineStoreNs.Action(PipelineStore.SEARCH_PIPELINE)
+  private searchPipeline: any;
+
   private async created() {
     this.reset();
+
     await this.search(+this.$route.params.id);
     if (this.error) {
       this.$router.push({name: 'collections'});
+    }
+
+    if (!this.result) {
+      return;
+    }
+
+    if (this.result.pipelineId) {
+      await this.searchPipeline(this.result.pipelineId);
     }
   }
 

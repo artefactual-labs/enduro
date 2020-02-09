@@ -9,11 +9,11 @@ import (
 
 	goacollection "github.com/artefactual-labs/enduro/internal/api/gen/collection"
 	"github.com/artefactual-labs/enduro/internal/pipeline"
-	"github.com/go-logr/logr"
-	goahttp "goa.design/goa/v3/http"
 
+	"github.com/go-logr/logr"
 	"github.com/jmoiron/sqlx"
 	cadenceclient "go.uber.org/cadence/client"
+	goahttp "goa.design/goa/v3/http"
 )
 
 //go:generate mockgen  -destination=./fake/mock_collection.go -package=fake github.com/artefactual-labs/enduro/internal/collection Service
