@@ -15,4 +15,7 @@ export * from './EnduroCollectionWorkflowHistoryResponseBody';
 export * from './EnduroCollectionWorkflowHistoryResponseBodyCollection';
 export * from './EnduroStoredCollectionResponseBody';
 export * from './EnduroStoredCollectionResponseBodyCollection';
+export * from './EnduroStoredPipelineResponse';
 export * from './InlineObject';
+export * from './PipelineShowNotFoundResponseBody';
+export * from './PipelineShowResponseBody';

@@ -12,7 +12,6 @@ import (
 
 	goacollection "github.com/artefactual-labs/enduro/internal/api/gen/collection"
 	"github.com/artefactual-labs/enduro/internal/cadence"
-
 	"go.uber.org/cadence/.gen/go/shared"
 )
 

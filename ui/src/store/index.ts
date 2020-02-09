@@ -2,6 +2,7 @@ import Vue from 'vue';
 import Vuex, { ActionTree, MutationTree, StoreOptions, Action } from 'vuex';
 
 import { collection } from './collection';
+import { pipeline } from './pipeline';
 import { EnduroCollectionClient, api } from '@/client';
 
 Vue.use(Vuex);
@@ -39,6 +40,7 @@ const mutations: MutationTree<RootState> = {
 const store: StoreOptions<RootState> = {
   strict: process.env.NODE_ENV !== 'production',
   modules: {
+    pipeline,
     collection,
   },
 

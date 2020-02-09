@@ -8,8 +8,11 @@ import (
 
 	"github.com/artefactual-labs/enduro/internal/api/gen/collection"
 	collectionsvr "github.com/artefactual-labs/enduro/internal/api/gen/http/collection/server"
+	pipelinesvr "github.com/artefactual-labs/enduro/internal/api/gen/http/pipeline/server"
 	swaggersvr "github.com/artefactual-labs/enduro/internal/api/gen/http/swagger/server"
+	"github.com/artefactual-labs/enduro/internal/api/gen/pipeline"
 	intcol "github.com/artefactual-labs/enduro/internal/collection"
+	intpipe "github.com/artefactual-labs/enduro/internal/pipeline"
 	"github.com/artefactual-labs/enduro/ui"
 
 	"github.com/go-logr/logr"
@@ -18,14 +21,23 @@ import (
 	goahttpmwr "goa.design/goa/v3/http/middleware"
 )
 
-func HTTPServer(logger logr.Logger, config *Config, colsvc intcol.Service) *http.Server {
+func HTTPServer(
+	logger logr.Logger, config *Config,
+	pipesvc intpipe.Service,
+	colsvc intcol.Service,
+) *http.Server {
 	var dec = goahttp.RequestDecoder
 	var enc = goahttp.ResponseEncoder
 	var mux goahttp.Muxer = goahttp.NewMuxer()
 
+	// Pipeline service.
+	var pipelineEndpoints *pipeline.Endpoints = pipeline.NewEndpoints(pipesvc)
+	var pipelineErrorHandler = errorHandler(logger, "Pipeline error.")
+	var pipelineServer *pipelinesvr.Server = pipelinesvr.New(pipelineEndpoints, mux, dec, enc, pipelineErrorHandler, nil)
+	pipelinesvr.Mount(mux, pipelineServer)
+
 	// Collection service.
-	var collectionService collection.Service = colsvc.Goa()
-	var collectionEndpoints *collection.Endpoints = collection.NewEndpoints(collectionService)
+	var collectionEndpoints *collection.Endpoints = collection.NewEndpoints(colsvc.Goa())
 	var collectionErrorHandler = errorHandler(logger, "Collection error.")
 	var collectionServer *collectionsvr.Server = collectionsvr.New(collectionEndpoints, mux, dec, enc, collectionErrorHandler, nil)
 	// Intercept request in Download endpoint so we can serve the file directly.

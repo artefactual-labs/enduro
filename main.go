@@ -129,6 +129,12 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Set up the pipeline service.
+	var pipesvc pipeline.Service
+	{
+		pipesvc = pipeline.NewService(logger.WithName("pipeline"), pipelineRegistry)
+	}
+
 	// Set up the collection service.
 	var colsvc collection.Service
 	{
@@ -153,7 +159,7 @@ func main() {
 
 		g.Add(
 			func() error {
-				srv = api.HTTPServer(logger, &config.API, colsvc)
+				srv = api.HTTPServer(logger, &config.API, pipesvc, colsvc)
 				return srv.ListenAndServe()
 			},
 			func(err error) {

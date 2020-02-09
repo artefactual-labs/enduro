@@ -20,6 +20,7 @@ function apiPath(): string {
 }
 
 let EnduroCollectionClient: api.CollectionApi;
+let EnduroPipelineClient: api.PipelineApi;
 
 function setUpEnduroClient() {
   let path = apiPath();
@@ -33,6 +34,7 @@ function setUpEnduroClient() {
 
   const config: api.Configuration = new api.Configuration({basePath: path});
   EnduroCollectionClient = new api.CollectionApi(config);
+  EnduroPipelineClient = new api.PipelineApi(config);
 
   // tslint:disable-next-line:no-console
   console.log('Enduro client created', path);
@@ -47,6 +49,7 @@ window.enduro = {
 
 export {
   EnduroCollectionClient,
+  EnduroPipelineClient,
   setUpEnduroClient,
   api,
 };

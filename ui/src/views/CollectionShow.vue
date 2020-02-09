@@ -52,11 +52,6 @@
           <dd>{{ collection.transferId }}</dd>
         </template>
 
-        <template v-if="collection.pipelineId">
-          <dt>Pipeline</dt>
-          <dd>{{ collection.pipelineId }}</dd>
-        </template>
-
         <template v-if="collection.status == 'done' && collection.aipId">
           <dt>AIP</dt>
           <dd>{{ collection.aipId }}</dd>
@@ -84,6 +79,18 @@
     <!-- Sidebar -->
     <b-col cols="6">
 
+      <b-card class="mb-4">
+        <b-card-title v-if="pipeline.name">Pipeline {{ pipeline.name }}</b-card-title>
+        <b-card-title v-else>Pipeline</b-card-title>
+
+        <b-card-text v-if="collection.pipelineId">
+          {{ collection.pipelineId }}
+        </b-card-text>
+        <b-card-text v-else>
+          Not identified yet.
+        </b-card-text>
+      </b-card>
+
       <b-card>
         <b-card-title>Workflow</b-card-title>
         <b-card-text>
@@ -93,7 +100,6 @@
             <dt>RunID</dt>
             <dd>{{ collection.runId }}</dd>
           </dl>
-          <small>Use Cadence's Web UI for more details.</small>
           <hr />
           <b-button-group size="sm">
             <b-button :to="{ name: 'collection-workflow', items: {id: collection.id} }">Status</b-button>
@@ -114,11 +120,13 @@
 import { Component, Vue } from 'vue-property-decorator';
 import { namespace } from 'vuex-class';
 import * as CollectionStore from '../store/collection';
+import * as PipelineStore from '../store/pipeline';
 import CollectionStatusBadge from '@/components/CollectionStatusBadge.vue';
 
 import { api, EnduroCollectionClient } from '../client';
 
 const collectionStoreNs = namespace('collection');
+const pipelineStoreNs = namespace('pipeline');
 
 @Component({
   components: {
@@ -128,7 +136,10 @@ const collectionStoreNs = namespace('collection');
 export default class CollectionShow extends Vue {
 
   @collectionStoreNs.Getter(CollectionStore.GET_SEARCH_RESULT)
-  private collection: any;
+  private collection: api.CollectionShowResponseBody | undefined;
+
+  @pipelineStoreNs.Getter(PipelineStore.GET_PIPELINE_RESULT)
+  private pipeline: api.PipelineShowResponseBody | undefined;
 
   @collectionStoreNs.Action(CollectionStore.SEARCH_COLLECTION)
   private search: any;
@@ -136,28 +147,37 @@ export default class CollectionShow extends Vue {
   @collectionStoreNs.Action(CollectionStore.MAKE_WORKFLOW_DECISION)
   private decide: any;
 
-  private retry(id: string): Promise<any> {
-    return EnduroCollectionClient.collectionRetry({id: +id});
+  private retry(id: number): Promise<any> {
+    return EnduroCollectionClient.collectionRetry({id});
   }
 
-  private cancel(id: string): Promise<any> {
-    return EnduroCollectionClient.collectionCancel({id: +id});
+  private cancel(id: number): Promise<any> {
+    return EnduroCollectionClient.collectionCancel({id});
   }
 
-  private delete(id: string): Promise<any> {
-    return EnduroCollectionClient.collectionDelete({id: +id});
+  private delete(id: number): Promise<any> {
+    return EnduroCollectionClient.collectionDelete({id});
   }
 
   private get isRunning() {
+    if (!this.collection) {
+      return false;
+    }
     return ['new', 'in progress', 'queued', 'pending'].includes(this.collection.status);
   }
 
   private get isPending() {
+    if (!this.collection) {
+      return false;
+    }
     return ['pending'].includes(this.collection.status);
   }
 
   private onDelete() {
-    this.delete(this.collection.id).then(() => {
+    if (!this.collection) {
+      return;
+    }
+    this.delete(+this.collection.id).then(() => {
       this.$router.push({name: 'collections'});
     });
   }
@@ -167,15 +187,24 @@ export default class CollectionShow extends Vue {
   }
 
   private onReload() {
+    if (!this.collection) {
+      return;
+    }
     this.search(this.collection.id);
   }
 
   private onDecisionAbandon() {
-    this.decide({id: this.collection.id, option: 'ABANDON'});
+    if (!this.collection) {
+      return;
+    }
+    this.decide({id: +this.collection.id, option: 'ABANDON'});
   }
 
   private onDecisionRetry() {
-    this.decide({id: this.collection.id, option: 'RETRY_ONCE'});
+    if (!this.collection) {
+      return;
+    }
+    this.decide({id: +this.collection.id, option: 'RETRY_ONCE'});
   }
 
 }
