@@ -68,7 +68,7 @@ require (
 	google.golang.org/grpc v1.27.1 // indirect
 	gopkg.in/ini.v1 v1.52.0 // indirect
 	gopkg.in/yaml.v2 v2.2.8 // indirect
-	gotest.tools/v3 v3.0.0
+	gotest.tools/v3 v3.0.2
 )
 
 // "go.uber.org/cadence" requires it but "go mod" selects "v0.12.0".
