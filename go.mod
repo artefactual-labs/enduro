@@ -42,7 +42,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.6.2
 	github.com/stretchr/testify v1.4.0
-	github.com/uber-go/tally v3.3.14+incompatible
+	github.com/uber-go/tally v3.3.15+incompatible
 	github.com/uber/jaeger-client-go v2.17.0+incompatible // indirect
 	github.com/uber/jaeger-lib v2.0.0+incompatible // indirect
 	github.com/uber/tchannel-go v1.16.0 // indirect

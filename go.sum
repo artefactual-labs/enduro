@@ -544,6 +544,8 @@ github.com/uber-go/tally v3.3.1+incompatible/go.mod h1:YDTIBxdXyOU/sCWilKB4bgyuf
 github.com/uber-go/tally v3.3.12+incompatible/go.mod h1:YDTIBxdXyOU/sCWilKB4bgyufu1cEi0jdVnRdxvjnmU=
 github.com/uber-go/tally v3.3.14+incompatible h1:kQ7qo/3FHlWyzX7QrsFoUgqMVAiFSO48kTDE+otUkcY=
 github.com/uber-go/tally v3.3.14+incompatible/go.mod h1:YDTIBxdXyOU/sCWilKB4bgyufu1cEi0jdVnRdxvjnmU=
+github.com/uber-go/tally v3.3.15+incompatible h1:9hLSgNBP28CjIaDmAuRTq9qV+UZY+9PcvAkXO4nNMwg=
+github.com/uber-go/tally v3.3.15+incompatible/go.mod h1:YDTIBxdXyOU/sCWilKB4bgyufu1cEi0jdVnRdxvjnmU=
 github.com/uber/jaeger-client-go v2.15.0+incompatible/go.mod h1:WVhlPFC8FDjOFMMWRy2pZqQJSXxYSwNYOkTr/Z6d3Kk=
 github.com/uber/jaeger-client-go v2.17.0+incompatible h1:35tpDuT3k0oBiN/aGoSWuiFaqKgKZSciSMnWrazhSHE=
 github.com/uber/jaeger-client-go v2.17.0+incompatible/go.mod h1:WVhlPFC8FDjOFMMWRy2pZqQJSXxYSwNYOkTr/Z6d3Kk=
