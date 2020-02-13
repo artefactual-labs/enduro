@@ -155,6 +155,38 @@ var _ = Service("collection", func() {
 			Response("not_valid", StatusBadRequest)
 		})
 	})
+	Method("bulk", func() {
+		Description("Bulk operations (retry, cancel...).")
+		Payload(func() {
+			Attribute("operation", String, func() {
+				Enum("retry", "cancel", "abandon")
+			})
+			Attribute("status", String, func() {
+				EnumCollectionStatus()
+			})
+			Attribute("size", UInt, func() {
+				Default(100)
+			})
+			Required("operation", "status")
+		})
+		Result(BulkResult)
+		Error("not_available")
+		Error("not_valid")
+		HTTP(func() {
+			POST("/bulk")
+			Response(StatusAccepted)
+			Response("not_available", StatusConflict)
+			Response("not_valid", StatusBadRequest)
+		})
+	})
+	Method("bulk_status", func() {
+		Description("Retrieve status of current bulk operation.")
+		Result(BulkStatusResult)
+		HTTP(func() {
+			GET("/bulk")
+			Response(StatusOK)
+		})
+	})
 })
 
 var _ = Service("swagger", func() {
@@ -262,4 +294,24 @@ var NotFound = Type("NotFound", func() {
 	})
 	Attribute("id", UInt, "Identifier of missing collection")
 	Required("message", "id")
+})
+
+var BulkResult = Type("BulkResult", func() {
+	Attribute("workflow_id", String)
+	Attribute("run_id", String)
+	Required("workflow_id", "run_id")
+})
+
+var BulkStatusResult = Type("BulkStatusResult", func() {
+	Attribute("running", Boolean)
+	Attribute("started_at", String, func() {
+		Format(FormatDateTime)
+	})
+	Attribute("closed_at", String, func() {
+		Format(FormatDateTime)
+	})
+	Attribute("status", String)
+	Attribute("workflow_id", String)
+	Attribute("run_id", String)
+	Required("running")
 })

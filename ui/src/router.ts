@@ -6,6 +6,7 @@ import CollectionList from './views/CollectionList.vue';
 import Collection from './views/Collection.vue';
 import CollectionShow from './views/CollectionShow.vue';
 import CollectionShowWorkflow from './views/CollectionShowWorkflow.vue';
+import CollectionBulk from './views/CollectionBulk.vue';
 
 import Pipelines from './views/Pipelines.vue';
 import PipelineList from './views/PipelineList.vue';
@@ -34,6 +35,11 @@ export default new Router({
           path: '',
           name: 'collections',
           component: CollectionList,
+        },
+        {
+          path: '/collections/bulk',
+          name: 'collection-bulk',
+          component: CollectionBulk,
         },
         {
           path: '/collections/:id',

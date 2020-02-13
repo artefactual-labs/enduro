@@ -1,3 +1,6 @@
+/*
+Package cadence provide some utilities to interact with Cadence.
+*/
 package cadence
 
 import (

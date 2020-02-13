@@ -15,6 +15,21 @@
 
 import * as runtime from '../runtime';
 import {
+    CollectionBulkNotAvailableResponseBody,
+    CollectionBulkNotAvailableResponseBodyFromJSON,
+    CollectionBulkNotAvailableResponseBodyToJSON,
+    CollectionBulkNotValidResponseBody,
+    CollectionBulkNotValidResponseBodyFromJSON,
+    CollectionBulkNotValidResponseBodyToJSON,
+    CollectionBulkRequestBody,
+    CollectionBulkRequestBodyFromJSON,
+    CollectionBulkRequestBodyToJSON,
+    CollectionBulkResponseBody,
+    CollectionBulkResponseBodyFromJSON,
+    CollectionBulkResponseBodyToJSON,
+    CollectionBulkStatusResponseBody,
+    CollectionBulkStatusResponseBodyFromJSON,
+    CollectionBulkStatusResponseBodyToJSON,
     CollectionCancelNotFoundResponseBody,
     CollectionCancelNotFoundResponseBodyFromJSON,
     CollectionCancelNotFoundResponseBodyToJSON,
@@ -58,6 +73,10 @@ import {
     InlineObjectFromJSON,
     InlineObjectToJSON,
 } from '../models';
+
+export interface CollectionBulkRequest {
+    bulkRequestBody: CollectionBulkRequestBody;
+}
 
 export interface CollectionCancelRequest {
     id: number;
@@ -104,6 +123,69 @@ export interface CollectionWorkflowRequest {
  * no description
  */
 export class CollectionApi extends runtime.BaseAPI {
+
+    /**
+     * Bulk operations (retry, cancel...).
+     * bulk collection
+     */
+    async collectionBulkRaw(requestParameters: CollectionBulkRequest): Promise<runtime.ApiResponse<CollectionBulkResponseBody>> {
+        if (requestParameters.bulkRequestBody === null || requestParameters.bulkRequestBody === undefined) {
+            throw new runtime.RequiredError('bulkRequestBody','Required parameter requestParameters.bulkRequestBody was null or undefined when calling collectionBulk.');
+        }
+
+        const queryParameters: runtime.HTTPQuery = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        const response = await this.request({
+            path: `/collection/bulk`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: CollectionBulkRequestBodyToJSON(requestParameters.bulkRequestBody),
+        });
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => CollectionBulkResponseBodyFromJSON(jsonValue));
+    }
+
+    /**
+     * Bulk operations (retry, cancel...).
+     * bulk collection
+     */
+    async collectionBulk(requestParameters: CollectionBulkRequest): Promise<CollectionBulkResponseBody> {
+        const response = await this.collectionBulkRaw(requestParameters);
+        return await response.value();
+    }
+
+    /**
+     * Retrieve status of current bulk operation.
+     * bulk_status collection
+     */
+    async collectionBulkStatusRaw(): Promise<runtime.ApiResponse<CollectionBulkStatusResponseBody>> {
+        const queryParameters: runtime.HTTPQuery = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/collection/bulk`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        });
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => CollectionBulkStatusResponseBodyFromJSON(jsonValue));
+    }
+
+    /**
+     * Retrieve status of current bulk operation.
+     * bulk_status collection
+     */
+    async collectionBulkStatus(): Promise<CollectionBulkStatusResponseBody> {
+        const response = await this.collectionBulkStatusRaw();
+        return await response.value();
+    }
 
     /**
      * Cancel collection processing by ID

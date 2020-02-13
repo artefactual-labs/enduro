@@ -1,2 +1,2 @@
-internal/api/gen/http/openapi.json linguist-generated=true
-internal/api/gen/http/openapi.yaml linguist-generated=true
+internal/api/gen/* linguist-generated=true
+ui/src/openapi-generator/* linguist-generated=true

@@ -21,7 +21,7 @@ const actions: ActionTree<RootState, RootState> = {
 
   [LOOK_UP_VERSION]({ commit }) {
     // TODO: hit a static asset?
-    EnduroCollectionClient.collectionShow({id: 0}).catch((response) => {
+    EnduroCollectionClient.collectionList({cursor: '0'}).catch((response) => {
       const v = response.headers.get('X-Enduro-Version');
       commit(SET_VERSION, v);
     });
