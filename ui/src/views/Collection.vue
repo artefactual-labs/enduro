@@ -67,7 +67,9 @@ export default class Collection extends Vue {
   private searchPipeline: any;
 
   private async created() {
-    this.reset();
+    if (!this.$route.params.id) {
+      return;
+    }
 
     await this.search(+this.$route.params.id);
     if (this.error) {

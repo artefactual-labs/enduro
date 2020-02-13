@@ -10,7 +10,7 @@ push-tar: content-creation archive-tar
 
 archive-tar:
 	@echo "--> Creating blob: $(CURDIR)/archive.tar"
-	@cd $(TMPDIR) && tar cvf $(CURDIR)/archive.tar .
+	@cd $(TMPDIR) && tar cf $(CURDIR)/archive.tar .
 
 push-tar-gz: content-creation archive-tar-gz
 	@echo "--> Uploading blob: enduro/sips/$(NAME).tar.gz"
@@ -18,7 +18,7 @@ push-tar-gz: content-creation archive-tar-gz
 
 archive-tar-gz:
 	@echo "--> Creating blob: $(CURDIR)/archive.tar.gz"
-	@cd $(TMPDIR) && tar cvzf $(CURDIR)/archive.tar.gz .
+	@cd $(TMPDIR) && tar czf $(CURDIR)/archive.tar.gz .
 
 FIXITY_ERR ?= no
 content-creation:
@@ -37,6 +37,12 @@ TIMES ?= 10
 many-ok:
 	@for run in {1..$(TIMES)}; do \
         make push-tar; \
+    done;
+
+TIMES ?= 10
+many-err:
+	@for run in {1..$(TIMES)}; do \
+        make push-tar FIXITY_ERR=yes; \
     done;
 
 TIMES ?= 10

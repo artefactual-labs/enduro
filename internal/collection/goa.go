@@ -9,11 +9,17 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
+	"github.com/artefactual-labs/enduro/internal/api/gen/collection"
 	goacollection "github.com/artefactual-labs/enduro/internal/api/gen/collection"
 	"github.com/artefactual-labs/enduro/internal/cadence"
+	cadenceclient "go.uber.org/cadence/client"
+
 	"go.uber.org/cadence/.gen/go/shared"
 )
+
+var ErrBulkStatusUnavailable = errors.New("bulk status unavailable")
 
 // GoaWrapper returns a collectionImpl wrapper that implements
 // goacollection.Service. It can handle types that are specific to the Goa API.
@@ -176,9 +182,7 @@ func (w *goaWrapper) Cancel(ctx context.Context, payload *goacollection.CancelPa
 
 // Retry collection processing by ID. It implements goacollection.Service.
 //
-// TODO: collection and workflow packages belong to the same domain, they should live in the same package!
 // TODO: conceptually Cadence workflows should handle retries, i.e. retry could be part of workflow code too (e.g. signals, children, etc).
-// TODO: forbid retry when already running.
 func (w *goaWrapper) Retry(ctx context.Context, payload *goacollection.RetryPayload) error {
 	var err error
 	var goacol *goacollection.EnduroStoredCollection
@@ -250,10 +254,10 @@ func (w *goaWrapper) Workflow(ctx context.Context, payload *goacollection.Workfl
 			return nil, fmt.Errorf("error looking up history events: %v", err)
 		}
 
-		var eventId uint = uint(*event.EventId)
-		var eventType string = event.EventType.String()
+		var eventID = uint(*event.EventId)
+		var eventType = event.EventType.String()
 		resp.History = append(resp.History, &goacollection.EnduroCollectionWorkflowHistory{
-			ID:      &eventId,
+			ID:      &eventID,
 			Type:    &eventType,
 			Details: event,
 		})
@@ -293,4 +297,97 @@ func (w *goaWrapper) Decide(ctx context.Context, payload *goacollection.DecidePa
 	}
 
 	return nil
+}
+
+func (w *goaWrapper) Bulk(ctx context.Context, payload *goacollection.BulkPayload) (*collection.BulkResult, error) {
+	if payload.Size == 0 {
+		return nil, goacollection.MakeNotValid(errors.New("size is zero"))
+	}
+	input := BulkWorkflowInput{
+		Operation: BulkWorkflowOperation(payload.Operation),
+		Status:    NewStatus(payload.Status),
+		Size:      payload.Size,
+	}
+
+	opts := cadenceclient.StartWorkflowOptions{
+		ID:                              BulkWorkflowID,
+		WorkflowIDReusePolicy:           cadenceclient.WorkflowIDReusePolicyAllowDuplicate,
+		TaskList:                        cadence.GlobalTaskListName,
+		DecisionTaskStartToCloseTimeout: time.Second * 10,
+		ExecutionStartToCloseTimeout:    time.Hour,
+	}
+	exec, err := w.cc.StartWorkflow(ctx, opts, BulkWorkflowName, input)
+	if err != nil {
+		switch err := err.(type) {
+		case *shared.WorkflowExecutionAlreadyStartedError:
+			return nil, goacollection.MakeNotAvailable(
+				fmt.Errorf("error starting bulk - operation is already in progress (workflowID=%s runID=%s)",
+					BulkWorkflowID, *err.RunId))
+		default:
+			w.logger.Info("error starting bulk", "err", err)
+			return nil, fmt.Errorf("error starting bulk")
+		}
+	}
+
+	return &collection.BulkResult{
+		WorkflowID: exec.ID,
+		RunID:      exec.RunID,
+	}, nil
+}
+
+func (w *goaWrapper) BulkStatus(ctx context.Context) (*goacollection.BulkStatusResult, error) {
+	result := &goacollection.BulkStatusResult{}
+
+	resp, err := w.cc.DescribeWorkflowExecution(ctx, BulkWorkflowID, "")
+	if err != nil {
+		switch err := err.(type) {
+		case *shared.EntityNotExistsError:
+			// We've never seen a workflow run before.
+			return result, nil
+		default:
+			w.logger.Info("error retrieving workflow", "err", err)
+			return nil, ErrBulkStatusUnavailable
+		}
+	}
+
+	if resp.WorkflowExecutionInfo == nil {
+		w.logger.Info("error retrieving workflow execution details")
+		return nil, ErrBulkStatusUnavailable
+	}
+
+	result.WorkflowID = resp.WorkflowExecutionInfo.Execution.WorkflowId
+	result.RunID = resp.WorkflowExecutionInfo.Execution.RunId
+
+	if resp.WorkflowExecutionInfo.StartTime != nil {
+		var t = time.Unix(0, *resp.WorkflowExecutionInfo.StartTime).Format(time.RFC3339)
+		result.StartedAt = &t
+	}
+
+	if resp.WorkflowExecutionInfo.CloseTime != nil {
+		var t = time.Unix(0, *resp.WorkflowExecutionInfo.CloseTime).Format(time.RFC3339)
+		result.ClosedAt = &t
+	}
+
+	// Workflow is not running!
+	if resp.WorkflowExecutionInfo.CloseStatus != nil {
+		var st = strings.ToLower(resp.WorkflowExecutionInfo.CloseStatus.String())
+		result.Status = &st
+
+		return result, nil
+	}
+
+	result.Running = true
+
+	// We can use the status property to communicate progress from heartbeats.
+	var length = len(resp.PendingActivities)
+	if length > 0 {
+		latest := resp.PendingActivities[length-1]
+		progress := &BulkProgress{}
+		if err := json.Unmarshal(latest.HeartbeatDetails, progress); err == nil {
+			status := fmt.Sprintf("Processing collection %d (done: %d)", progress.CurrentID, progress.Count)
+			result.Status = &status
+		}
+	}
+
+	return result, nil
 }

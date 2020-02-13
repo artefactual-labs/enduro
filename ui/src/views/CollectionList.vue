@@ -68,6 +68,9 @@
       </div>
 
       <template v-if="results.length > 0">
+        <p class="caption-menu text-right">
+          <router-link :to="{ name: 'collection-bulk' }" class="small">Bulk operation</router-link>
+        </p>
         <table class="table table-bordered table-hover table-sm">
           <thead class="thead">
             <tr>
@@ -293,6 +296,10 @@ export default class CollectionList extends Vue {
 
 .collection-field-select {
   max-width: 150px;
+}
+
+.caption-menu {
+  margin: 0;
 }
 
 </style>

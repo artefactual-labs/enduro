@@ -1,3 +1,11 @@
+/*
+Package design is the single source of truth of Enduro's API. It uses the Goa
+design language (https://goa.design) which is a Go DSL.
+
+We describe multiple services (collection, pipeline) which map to resources in
+REST or service declarations in gRPC. Services define their own methods, errors,
+etc...
+*/
 package design
 
 import (

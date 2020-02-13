@@ -1,3 +1,11 @@
+/*
+Package api contains the API server.
+
+HTTP is the only transport supported at the moment.
+
+The design package is the Goa design package while the gen package contains all
+the generated code produced with goa gen.
+*/
 package api
 
 import (

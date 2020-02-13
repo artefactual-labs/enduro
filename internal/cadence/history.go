@@ -15,7 +15,7 @@ func HistoryEvents(ctx context.Context, cc client.Client, exec *shared.WorkflowE
 	for iter.HasNext() {
 		event, err := iter.Next()
 		if err != nil {
-			return nil, fmt.Errorf("error looking up history events: %v", err)
+			return nil, fmt.Errorf("error looking up history events: %w", err)
 		}
 
 		events = append(events, event)
@@ -32,13 +32,13 @@ func FirstHistoryEvent(ctx context.Context, cc client.Client, exec *shared.Workf
 	const polling = false
 	iter := cc.GetWorkflowHistory(ctx, exec.GetWorkflowId(), exec.GetRunId(), polling, shared.HistoryEventFilterTypeAllEvent)
 
-	if !iter.HasNext() {
-		return nil, errors.New("error looking up history events: history is empty")
-	}
-
-	event, err = iter.Next()
-	if err != nil {
-		return nil, fmt.Errorf("error looking up history events: %v", err)
+	for iter.HasNext() {
+		event, err = iter.Next()
+		if err != nil {
+			return nil, fmt.Errorf("error looking up history events: %w", err)
+		} else {
+			break
+		}
 	}
 
 	return event, nil

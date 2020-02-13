@@ -214,7 +214,6 @@ func main() {
 		m := manager.NewManager(logger, colsvc, wsvc, pipelineRegistry, config.Hooks)
 
 		cadence.RegisterWorkflow(workflow.NewProcessingWorkflow(m).Execute, collection.ProcessingWorkflowName)
-
 		cadence.RegisterActivity(activities.NewAcquirePipelineActivity(m).Execute, activities.AcquirePipelineActivityName)
 		cadence.RegisterActivity(activities.NewDownloadActivity(m).Execute, activities.DownloadActivityName)
 		cadence.RegisterActivity(activities.NewBundleActivity().Execute, activities.BundleActivityName)
@@ -224,11 +223,12 @@ func main() {
 		cadence.RegisterActivity(activities.NewCleanUpActivity(m).Execute, activities.CleanUpActivityName)
 		cadence.RegisterActivity(activities.NewHidePackageActivity(m).Execute, activities.HidePackageActivityName)
 		cadence.RegisterActivity(activities.NewDeleteOriginalActivity(m).Execute, activities.DeleteOriginalActivityName)
-
 		cadence.RegisterActivity(workflow.NewAsyncCompletionActivity(m).Execute, workflow.AsyncCompletionActivityName)
-
 		cadence.RegisterActivity(nha_activities.NewUpdateHARIActivity(m).Execute, nha_activities.UpdateHARIActivityName)
 		cadence.RegisterActivity(nha_activities.NewUpdateProductionSystemActivity(m).Execute, nha_activities.UpdateProductionSystemActivityName)
+
+		cadence.RegisterWorkflow(collection.BulkWorkflow, collection.BulkWorkflowName)
+		cadence.RegisterActivity(collection.NewBulkActivity(colsvc).Execute, collection.BulkActivityName)
 
 		done := make(chan struct{})
 		w, err := cadence.NewWorker(zlogger.Named("cadence-worker"), appName, config.Cadence)
