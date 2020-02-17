@@ -15,7 +15,7 @@ require (
 	github.com/fsnotify/fsnotify v1.4.7
 	github.com/go-logr/logr v0.1.0
 	github.com/go-logr/zapr v0.1.1
-	github.com/go-redis/redis/v7 v7.0.0-beta.6
+	github.com/go-redis/redis/v7 v7.1.0
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/gogo/googleapis v1.2.0 // indirect
 	github.com/gogo/protobuf v1.3.1 // indirect
