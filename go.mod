@@ -57,7 +57,7 @@ require (
 	goa.design/goa v2.0.10+incompatible
 	goa.design/goa/v3 v3.0.10
 	goa.design/plugins/v3 v3.0.10
-	gocloud.dev v0.18.0
+	gocloud.dev v0.19.0
 	golang.org/x/lint v0.0.0-20200130185559-910be7a94367 // indirect
 	golang.org/x/net v0.0.0-20200202094626-16171245cfb2 // indirect
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
