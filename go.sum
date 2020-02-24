@@ -210,6 +210,8 @@ github.com/go-openapi/swag v0.19.5 h1:lTz6Ys4CmqqCQmZPBlbQENR1/GucA2bzYTE12Pw4tF
 github.com/go-openapi/swag v0.19.5/go.mod h1:POnQmlKehdgb5mhVOsnJFsivZCEZ/vjK9gh66Z9tfKk=
 github.com/go-redis/redis/v7 v7.0.0-beta.6 h1:ApjPvZNUF+/oVHwrTBQsVOwex5v/WapUUR4bOL2kMFA=
 github.com/go-redis/redis/v7 v7.0.0-beta.6/go.mod h1:JDNMw23GTyLNC4GZu9njt15ctBQVn7xjRfnwdHj/Dcg=
+github.com/go-redis/redis/v7 v7.2.0 h1:CrCexy/jYWZjW0AyVoHlcJUeZN19VWlbepTh1Vq6dJs=
+github.com/go-redis/redis/v7 v7.2.0/go.mod h1:JDNMw23GTyLNC4GZu9njt15ctBQVn7xjRfnwdHj/Dcg=
 github.com/go-sql-driver/mysql v1.4.1-0.20191001060945-14bb9c0fc20f h1:Ny8w8RFRlevl6jva0eFC5EWsZu+p3984zD77BNBPO2k=
 github.com/go-sql-driver/mysql v1.4.1-0.20191001060945-14bb9c0fc20f/go.mod h1:XIaZU7xtUgusUqDPXOOPcmC5Dyyw3F1pbh54fHzaehk=
 github.com/go-stack/stack v1.8.0 h1:5SgMzNM5HxrEjV0ww2lTmX6E2Izsfxas4+YHWRs3Lsk=
