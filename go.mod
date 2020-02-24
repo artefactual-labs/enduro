@@ -20,7 +20,7 @@ require (
 	github.com/gogo/googleapis v1.2.0 // indirect
 	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/gogo/status v1.1.0 // indirect
-	github.com/golang-migrate/migrate/v4 v4.8.0
+	github.com/golang-migrate/migrate/v4 v4.9.1
 	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e // indirect
 	github.com/golang/mock v1.4.0
 	github.com/google/uuid v1.1.1
