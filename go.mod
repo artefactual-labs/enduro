@@ -48,7 +48,7 @@ require (
 	github.com/uber/tchannel-go v1.16.0 // indirect
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
 	go.opencensus.io v0.22.3 // indirect
-	go.uber.org/cadence v0.10.5
+	go.uber.org/cadence v0.11.0
 	go.uber.org/multierr v1.4.0 // indirect
 	go.uber.org/net/metrics v1.3.0 // indirect
 	go.uber.org/thriftrw v1.22.0 // indirect
