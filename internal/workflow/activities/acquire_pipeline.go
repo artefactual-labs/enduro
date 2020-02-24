@@ -2,7 +2,7 @@ package activities
 
 import (
 	"context"
-	"time"
+	"errors"
 
 	wferrors "github.com/artefactual-labs/enduro/internal/workflow/errors"
 	"github.com/artefactual-labs/enduro/internal/workflow/manager"
@@ -24,8 +24,9 @@ func (a *AcquirePipelineActivity) Execute(ctx context.Context, pipelineName stri
 		return wferrors.NonRetryableError(err)
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, time.Second*4)
-	defer cancel()
+	if ok := p.TryAcquire(); !ok {
+		return errors.New("error acquiring pipeline")
+	}
 
-	return p.Acquire(ctx)
+	return nil
 }

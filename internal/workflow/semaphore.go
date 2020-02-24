@@ -21,6 +21,7 @@ func acquirePipeline(ctx workflow.Context, manager *manager.Manager, pipelineNam
 		ctx := workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
 			ScheduleToStartTimeout: forever,
 			StartToCloseTimeout:    time.Second * 5,
+			WaitForCancellation:    true,
 			RetryPolicy: &cadence.RetryPolicy{
 				InitialInterval:    time.Second * 2,
 				BackoffCoefficient: 1,
