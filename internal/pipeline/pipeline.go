@@ -138,8 +138,8 @@ func (p Pipeline) Config() *Config {
 	return p.config
 }
 
-func (p *Pipeline) Acquire(ctx context.Context) error {
-	return p.sem.Acquire(ctx, 1)
+func (p *Pipeline) TryAcquire() bool {
+	return p.sem.TryAcquire(1)
 }
 
 func (p *Pipeline) Release() {
