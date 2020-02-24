@@ -53,7 +53,7 @@ require (
 	go.uber.org/net/metrics v1.3.0 // indirect
 	go.uber.org/thriftrw v1.22.0 // indirect
 	go.uber.org/yarpc v1.42.1
-	go.uber.org/zap v1.13.0
+	go.uber.org/zap v1.14.0
 	goa.design/goa v2.0.10+incompatible
 	goa.design/goa/v3 v3.0.10
 	goa.design/plugins/v3 v3.0.10
