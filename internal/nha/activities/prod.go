@@ -2,7 +2,6 @@ package activities
 
 import (
 	"context"
-	"crypto/md5"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -48,7 +47,6 @@ func (a *UpdateProductionSystemActivity) Execute(ctx context.Context, params *Up
 
 	var basename = filepath.Join(receiptPath, fmt.Sprintf("Receipt_%s_%s", params.NameInfo.Identifier, params.StoredAt.Format(rfc3339forFilename)))
 	var jsonPath = basename + ".json"
-	var md5Path = basename + ".md5"
 	var mftPath = basename + ".mft"
 
 	// Create and open receipt file.
@@ -65,11 +63,6 @@ func (a *UpdateProductionSystemActivity) Execute(ctx context.Context, params *Up
 	// Seek to the beginning of the file.
 	if _, err = file.Seek(0, io.SeekStart); err != nil {
 		return wferrors.NonRetryableError(fmt.Errorf("error resetting receipt file cursor: %v", err))
-	}
-
-	// Create checksum file with ".md5" extension instead of ".json" extension.
-	if err := a.generateChecksum(file, mftPath, md5Path); err != nil {
-		return wferrors.NonRetryableError(fmt.Errorf("error writing checksum file: %v", err))
 	}
 
 	_ = file.Close()
@@ -95,29 +88,6 @@ func (a UpdateProductionSystemActivity) generateReceipt(params *UpdateProduction
 	enc.SetIndent("", "  ")
 	if err := enc.Encode(receipt); err != nil {
 		return fmt.Errorf("encoding failed: %v", err)
-	}
-
-	if err := file.Sync(); err != nil {
-		return fmt.Errorf("sync failed: %v", err)
-	}
-
-	return nil
-}
-
-func (a UpdateProductionSystemActivity) generateChecksum(r io.Reader, mftPath, md5Path string) error {
-	hasher := md5.New()
-	if _, err := io.Copy(hasher, r); err != nil {
-		return err
-	}
-
-	file, err := os.OpenFile(md5Path, os.O_WRONLY|os.O_CREATE, os.FileMode(0o644))
-	if err != nil {
-		return fmt.Errorf("open failed: %v", err)
-	}
-	defer file.Close()
-
-	if _, err := fmt.Fprintf(file, "%x  %s", hasher.Sum(nil), mftPath); err != nil {
-		return fmt.Errorf("write failed: %v", err)
 	}
 
 	if err := file.Sync(); err != nil {

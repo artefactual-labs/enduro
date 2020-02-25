@@ -30,11 +30,10 @@ func TestProdActivity(t *testing.T) {
 	defer os.RemoveAll(tmpdir)
 
 	tests := map[string]struct {
-		params       UpdateProductionSystemActivityParams
-		hookConfig   *map[string]interface{}
-		wantContent  string
-		wantChecksum string
-		wantErr      testutil.ActivityError
+		params      UpdateProductionSystemActivityParams
+		hookConfig  *map[string]interface{}
+		wantContent string
+		wantErr     testutil.ActivityError
 	}{
 		"Receipt is generated successfully with status 'done'": {
 			params: UpdateProductionSystemActivityParams{
@@ -53,7 +52,6 @@ func TestProdActivity(t *testing.T) {
   "timestamp": "2009-11-10T23:00:00Z"
 }
 `,
-			wantChecksum: "eed2dd4ee8a1dcf637b0708e616a4767",
 		},
 		"Missing receiptPath is rejected": {
 			params: UpdateProductionSystemActivityParams{
@@ -120,10 +118,6 @@ func TestProdActivity(t *testing.T) {
 					fs.WithFile(
 						base+".mft",
 						tc.wantContent,
-						fs.WithMode(os.FileMode(0o644))),
-					fs.WithFile(
-						base+".md5",
-						fmt.Sprintf("%s  %s", tc.wantChecksum, filepath.Join(tmpdir.Path(), base+".mft")),
 						fs.WithMode(os.FileMode(0o644))),
 				)))
 		})
