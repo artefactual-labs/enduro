@@ -53,6 +53,7 @@ func (w *ProcessingWorkflow) sendReceipts(ctx workflow.Context, params *sendRece
 			StoredAt:     params.StoredAt,
 			PipelineName: params.PipelineName,
 			NameInfo:     params.NameInfo,
+			FullPath:     params.FullPath,
 		}).Get(ctx, nil)
 
 		if err != nil {

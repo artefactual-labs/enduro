@@ -30,6 +30,7 @@ var hariClient = &http.Client{
 	},
 }
 
+// UpdateHARIActivity delivers a receipt to HARI.
 type UpdateHARIActivity struct {
 	manager *manager.Manager
 }
@@ -73,7 +74,18 @@ func (a UpdateHARIActivity) Execute(ctx context.Context, params *UpdateHARIActiv
 		return wferrors.NonRetryableError(fmt.Errorf("error reading AVLXML file: %v", err))
 	}
 
-	if err := a.sendRequest(ctx, blob, apiURL, params.NameInfo.Type, params); err != nil {
+	var parentID string
+	{
+		if params.NameInfo.Type != nha.TransferTypeAVLXML {
+			const idtype = "avleveringsidentifikator"
+			parentID, err = readIdentifier(params.FullPath, params.NameInfo.Type.String()+"/journal/avlxml.xml", idtype)
+			if err != nil {
+				return wferrors.NonRetryableError(fmt.Errorf("error looking up avleveringsidentifikator: %v", err))
+			}
+		}
+	}
+
+	if err := a.sendRequest(ctx, blob, apiURL, params.NameInfo.Type, parentID, params); err != nil {
 		return fmt.Errorf("error sending request: %v", err)
 	}
 
@@ -132,13 +144,14 @@ func (a UpdateHARIActivity) url() (string, error) {
 	return bu.ResolveReference(p).String(), nil
 }
 
-func (a UpdateHARIActivity) sendRequest(ctx context.Context, blob []byte, apiURL string, kind nha.TransferType, params *UpdateHARIActivityParams) error {
+func (a UpdateHARIActivity) sendRequest(ctx context.Context, blob []byte, apiURL string, kind nha.TransferType, parentID string, params *UpdateHARIActivityParams) error {
 	payload := &avlRequest{
 		XML:       blob,
 		Message:   fmt.Sprintf("AVLXML was processed by Archivematica pipeline %s", params.PipelineName),
 		Type:      kind.Lower(),
 		Timestamp: avlRequestTime{params.StoredAt},
 		AIPID:     params.SIPID,
+		Parent:    parentID,
 	}
 
 	var buffer bytes.Buffer
@@ -179,10 +192,14 @@ func (a UpdateHARIActivity) sendRequest(ctx context.Context, blob []byte, apiURL
 // buildMock returns a test server used when HARI's API is not available.
 func (a UpdateHARIActivity) buildMock() *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		a.manager.Logger.Info(
+		blob, _ := ioutil.ReadAll(r.Body)
+		defer r.Body.Close()
+
+		a.manager.Logger.V(1).Info(
 			"Request received",
 			"method", r.Method,
 			"path", r.URL.Path,
+			"body", string(blob),
 		)
 
 		w.WriteHeader(http.StatusOK)
@@ -190,12 +207,14 @@ func (a UpdateHARIActivity) buildMock() *httptest.Server {
 	}))
 }
 
+// avlRequest is the payload of the HTTP request delivered to HARI.
 type avlRequest struct {
-	XML       []byte         `json:"xml"`       // AVLXML document encoded using base64.
-	Message   string         `json:"message"`   // E.g.: "AVLXML was processed by DPJ Archivematica pipeline"
-	Type      string         `json:"type"`      // Lowercase. E.g.: "dpj", "epj", "other" or "avlxml".
-	Timestamp avlRequestTime `json:"timestamp"` // E.g.: "2018-11-12T20:20:39+00:00".
-	AIPID     string         `json:"aip_id"`
+	XML       []byte         `json:"xml"`              // AVLXML document encoded using base64.
+	Message   string         `json:"message"`          // E.g.: "AVLXML was processed by DPJ Archivematica pipeline"
+	Type      string         `json:"type"`             // Lowercase. E.g.: "dpj", "epj", "other" or "avlxml".
+	Timestamp avlRequestTime `json:"timestamp"`        // E.g.: "2018-11-12T20:20:39+00:00".
+	AIPID     string         `json:"aip_id"`           // Typically a UUID.
+	Parent    string         `json:"parent,omitempty"` // avleveringsidentifikator (only concerns DPJ and EPJ SIPs)
 }
 
 // avlRequestTime encodes time in JSON using the format expected by HARI.

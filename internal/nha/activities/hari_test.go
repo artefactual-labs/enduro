@@ -66,12 +66,33 @@ func TestHARIActivity(t *testing.T) {
 				},
 			},
 			hariConfig: map[string]interface{}{},
-			dirOpts:    []fs.PathOp{fs.WithDir("DPJ/journal"), fs.WithFile("DPJ/journal/avlxml.xml", "<xml/>")},
+			dirOpts: []fs.PathOp{
+				fs.WithDir("DPJ/journal"),
+				fs.WithFile("DPJ/journal/avlxml.xml", "<xml/>"),
+				fs.WithDir("metadata"),
+				fs.WithFile("metadata/identifiers.json", `[{
+					"file": "objects/DPJ/aFoobar.jpg",
+					"identifiers": [{
+						"identifierType": "organisasjonsnummer",
+						"identifier": "123456789"
+					}]
+				}, {
+					"file": "objects/DPJ/journal/avlxml.xml",
+					"identifiers": [{
+						"identifierType": "organisasjonsnummer",
+						"identifier": "123456789"
+					}, {
+						"identifierType": "avleveringsidentifikator",
+						"identifier": "12345"
+					}]
+				}]`),
+			},
 			wantReceipt: &avlRequest{
 				Message:   "AVLXML was processed by Archivematica pipeline zr-fig-pipe-001",
 				Type:      "dpj",
 				Timestamp: avlRequestTime{time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)},
 				AIPID:     "1db240cc-3cea-4e55-903c-6280562e1866",
+				Parent:    "12345",
 				XML:       []byte(`<xml/>`),
 			},
 		},
@@ -86,12 +107,24 @@ func TestHARIActivity(t *testing.T) {
 				},
 			},
 			hariConfig: map[string]interface{}{},
-			dirOpts:    []fs.PathOp{fs.WithDir("EPJ/journal"), fs.WithFile("EPJ/journal/avlxml.xml", "<xml/>")},
+			dirOpts: []fs.PathOp{
+				fs.WithDir("EPJ/journal"),
+				fs.WithFile("EPJ/journal/avlxml.xml", "<xml/>"),
+				fs.WithDir("metadata"),
+				fs.WithFile("metadata/identifiers.json", `[{
+					"file": "objects/EPJ/journal/avlxml.xml",
+					"identifiers": [{
+						"identifierType": "avleveringsidentifikator",
+						"identifier": "12345"
+					}]
+				}]`),
+			},
 			wantReceipt: &avlRequest{
 				Message:   "AVLXML was processed by Archivematica pipeline zr-fig-pipe-001",
 				Type:      "epj",
 				Timestamp: avlRequestTime{time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)},
 				AIPID:     "1db240cc-3cea-4e55-903c-6280562e1866",
+				Parent:    "12345",
 				XML:       []byte(`<xml/>`),
 			},
 		},
@@ -106,7 +139,10 @@ func TestHARIActivity(t *testing.T) {
 				},
 			},
 			hariConfig: map[string]interface{}{},
-			dirOpts:    []fs.PathOp{fs.WithDir("AVLXML/objekter"), fs.WithFile("AVLXML/objekter/avlxml-2.16.578.1.39.100.11.9876.4-20191104.xml", "<xml/>")},
+			dirOpts: []fs.PathOp{
+				fs.WithDir("AVLXML/objekter"),
+				fs.WithFile("AVLXML/objekter/avlxml-2.16.578.1.39.100.11.9876.4-20191104.xml", "<xml/>"),
+			},
 			wantReceipt: &avlRequest{
 				Message:   "AVLXML was processed by Archivematica pipeline zr-fig-pipe-001",
 				Type:      "avlxml",
@@ -126,7 +162,10 @@ func TestHARIActivity(t *testing.T) {
 				},
 			},
 			hariConfig: map[string]interface{}{},
-			dirOpts:    []fs.PathOp{fs.WithDir("AVLXML/objekter"), fs.WithFile("AVLXML/objekter/avlxml.xml", "<xml/>")},
+			dirOpts: []fs.PathOp{
+				fs.WithDir("AVLXML/objekter"),
+				fs.WithFile("AVLXML/objekter/avlxml.xml", "<xml/>"),
+			},
 			wantReceipt: &avlRequest{
 				Message:   "AVLXML was processed by Archivematica pipeline zr-fig-pipe-001",
 				Type:      "avlxml",
@@ -146,12 +185,24 @@ func TestHARIActivity(t *testing.T) {
 				},
 			},
 			hariConfig: map[string]interface{}{},
-			dirOpts:    []fs.PathOp{fs.WithDir("OTHER/journal"), fs.WithFile("OTHER/journal/avlxml.xml", "<xml/>")},
+			dirOpts: []fs.PathOp{
+				fs.WithDir("OTHER/journal"),
+				fs.WithFile("OTHER/journal/avlxml.xml", "<xml/>"),
+				fs.WithDir("metadata"),
+				fs.WithFile("metadata/identifiers.json", `[{
+					"file": "objects/OTHER/journal/avlxml.xml",
+					"identifiers": [{
+						"identifierType": "avleveringsidentifikator",
+						"identifier": "12345"
+					}]
+				}]`),
+			},
 			wantReceipt: &avlRequest{
 				Message:   "AVLXML was processed by Archivematica pipeline zr-fig-pipe-001",
 				Type:      "other",
 				Timestamp: avlRequestTime{time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)},
 				AIPID:     "1db240cc-3cea-4e55-903c-6280562e1866",
+				Parent:    "12345",
 				XML:       []byte(`<xml/>`),
 			},
 		},
@@ -166,12 +217,24 @@ func TestHARIActivity(t *testing.T) {
 				},
 			},
 			hariConfig: map[string]interface{}{},
-			dirOpts:    []fs.PathOp{fs.WithDir("DPJ/Journal"), fs.WithFile("DPJ/Journal/avlxml.xml", "<xml/>")},
+			dirOpts: []fs.PathOp{
+				fs.WithDir("DPJ/Journal"),
+				fs.WithFile("DPJ/Journal/avlxml.xml", "<xml/>"),
+				fs.WithDir("metadata"),
+				fs.WithFile("metadata/identifiers.json", `[{
+					"file": "objects/DPJ/Journal/avlxml.xml",
+					"identifiers": [{
+						"identifierType": "avleveringsidentifikator",
+						"identifier": "12345"
+					}]
+				}]`),
+			},
 			wantReceipt: &avlRequest{
 				Message:   "AVLXML was processed by Archivematica pipeline zr-fig-pipe-001",
 				Type:      "dpj",
 				Timestamp: avlRequestTime{time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)},
 				AIPID:     "1db240cc-3cea-4e55-903c-6280562e1866",
+				Parent:    "12345",
 				XML:       []byte(`<xml/>`),
 			},
 		},
@@ -186,12 +249,24 @@ func TestHARIActivity(t *testing.T) {
 				},
 			},
 			hariConfig: map[string]interface{}{},
-			dirOpts:    []fs.PathOp{fs.WithDir("DPJ/journal"), fs.WithFile("DPJ/journal/avlxml.xml", "<xml/>")},
+			dirOpts: []fs.PathOp{
+				fs.WithDir("DPJ/journal"),
+				fs.WithFile("DPJ/journal/avlxml.xml", "<xml/>"),
+				fs.WithDir("metadata"),
+				fs.WithFile("metadata/identifiers.json", `[{
+					"file": "objects/DPJ/journal/avlxml.xml",
+					"identifiers": [{
+						"identifierType": "avleveringsidentifikator",
+						"identifier": "12345"
+					}]
+				}]`),
+			},
 			wantReceipt: &avlRequest{
 				Message:   "AVLXML was processed by Archivematica pipeline zr-fig-pipe-001",
 				Type:      "dpj",
 				Timestamp: avlRequestTime{time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)},
 				AIPID:     "1db240cc-3cea-4e55-903c-6280562e1866",
+				Parent:    "12345",
 				XML:       []byte(`<xml/>`),
 			},
 		},
@@ -206,7 +281,65 @@ func TestHARIActivity(t *testing.T) {
 				},
 			},
 			hariConfig: map[string]interface{}{"mock": true},
-			dirOpts:    []fs.PathOp{fs.WithDir("DPJ/journal"), fs.WithFile("DPJ/journal/avlxml.xml", "<xml/>")},
+			dirOpts: []fs.PathOp{
+				fs.WithDir("DPJ/journal"),
+				fs.WithFile("DPJ/journal/avlxml.xml", "<xml/>"),
+				fs.WithDir("metadata"),
+				fs.WithFile("metadata/identifiers.json", `[{
+					"file": "objects/DPJ/journal/avlxml.xml",
+					"identifiers": [{
+						"identifierType": "avleveringsidentifikator",
+						"identifier": "12345"
+					}]
+				}]`),
+			},
+		},
+		"Failure when identifiers.json is missing (DPJ/EPJ/OTHER)": {
+			params: UpdateHARIActivityParams{
+				StoredAt:     time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
+				SIPID:        "1db240cc-3cea-4e55-903c-6280562e1866",
+				PipelineName: "zr-fig-pipe-001",
+				NameInfo: nha.NameInfo{
+					Identifier: "049d6a44-07d6-4aa9-9607-9347ec4d0b23",
+					Type:       nha.TransferTypeDPJ,
+				},
+			},
+			hariConfig: map[string]interface{}{},
+			dirOpts: []fs.PathOp{
+				fs.WithDir("DPJ/journal"),
+				fs.WithFile("DPJ/journal/avlxml.xml", "<xml/>"),
+			},
+			wantErr: testutil.ActivityError{
+				NRE: true,
+			},
+		},
+		"Failure when identifier cannot be found (DPJ/EPJ/OTHER)": {
+			params: UpdateHARIActivityParams{
+				StoredAt:     time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
+				SIPID:        "1db240cc-3cea-4e55-903c-6280562e1866",
+				PipelineName: "zr-fig-pipe-001",
+				NameInfo: nha.NameInfo{
+					Identifier: "049d6a44-07d6-4aa9-9607-9347ec4d0b23",
+					Type:       nha.TransferTypeDPJ,
+				},
+			},
+			hariConfig: map[string]interface{}{},
+			dirOpts: []fs.PathOp{
+				fs.WithDir("DPJ/journal"),
+				fs.WithFile("DPJ/journal/avlxml.xml", "<xml/>"),
+				fs.WithDir("metadata"),
+				fs.WithFile("metadata/identifiers.json", `[{
+					"file": "objects/DPJ/journal/avlxml.xml",
+					"identifiers": [{
+						"identifierType": "not-the-identifier-we-wanted",
+						"identifier": "12345"
+					}]
+				}]`),
+			},
+			wantErr: testutil.ActivityError{
+				Message: "error looking up avleveringsidentifikator: error reading identifier: not found",
+				NRE:     true,
+			},
 		},
 		"Failure when HARI returns a server error": {
 			params: UpdateHARIActivityParams{
@@ -218,14 +351,26 @@ func TestHARIActivity(t *testing.T) {
 					Type:       nha.TransferTypeDPJ,
 				},
 			},
-			hariConfig:   map[string]interface{}{},
-			dirOpts:      []fs.PathOp{fs.WithDir("DPJ/journal"), fs.WithFile("DPJ/journal/avlxml.xml", "<xml/>")},
+			hariConfig: map[string]interface{}{},
+			dirOpts: []fs.PathOp{
+				fs.WithDir("DPJ/journal"),
+				fs.WithFile("DPJ/journal/avlxml.xml", "<xml/>"),
+				fs.WithDir("metadata"),
+				fs.WithFile("metadata/identifiers.json", `[{
+					"file": "objects/DPJ/journal/avlxml.xml",
+					"identifiers": [{
+						"identifierType": "avleveringsidentifikator",
+						"identifier": "12345"
+					}]
+				}]`),
+			},
 			wantResponse: &serverResponse{code: 500, status: "Backend server not available, try again later."},
 			wantReceipt: &avlRequest{
 				Message:   "AVLXML was processed by Archivematica pipeline zr-fig-pipe-001",
 				Type:      "dpj",
 				Timestamp: avlRequestTime{time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)},
 				AIPID:     "1db240cc-3cea-4e55-903c-6280562e1866",
+				Parent:    "12345",
 				XML:       []byte(`<xml/>`),
 			},
 			wantErr: testutil.ActivityError{
@@ -243,7 +388,10 @@ func TestHARIActivity(t *testing.T) {
 				},
 			},
 			hariConfig: map[string]interface{}{"baseURL": "http://192.168.1.50:12345"},
-			dirOpts:    []fs.PathOp{fs.WithDir("DPJ/journal"), fs.WithFile("DPJ/journal/_____other_name_____.xml", "<xml/>")},
+			dirOpts: []fs.PathOp{
+				fs.WithDir("DPJ/journal"),
+				fs.WithFile("DPJ/journal/_____other_name_____.xml", "<xml/>"),
+			},
 			wantErr: testutil.ActivityError{
 				Message: "error reading AVLXML file: not found",
 				NRE:     true,
@@ -259,10 +407,12 @@ func TestHARIActivity(t *testing.T) {
 				},
 			},
 			hariConfig: map[string]interface{}{"baseURL": string([]byte{0x7f})},
-			dirOpts:    []fs.PathOp{fs.WithDir("DPJ/journal"), fs.WithFile("DPJ/journal/avlxml.xml", "<xml/>")},
+			dirOpts: []fs.PathOp{
+				fs.WithDir("DPJ/journal"),
+				fs.WithFile("DPJ/journal/avlxml.xml", "<xml/>"),
+			},
 			wantErr: testutil.ActivityError{
-				Message: fmt.Sprintf("error in URL construction: error looking up baseURL configuration attribute: parse %s/: net/url: invalid control character in URL", string(0x7f)),
-				NRE:     true,
+				NRE: true,
 			},
 		},
 	}

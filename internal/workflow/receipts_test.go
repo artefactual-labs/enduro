@@ -121,6 +121,7 @@ func TestSendReceipts(t *testing.T) {
 			StoredAt:     params.StoredAt,
 			PipelineName: params.PipelineName,
 			NameInfo:     params.NameInfo,
+			FullPath:     params.FullPath,
 		},
 	).Return(nil).Once()
 

@@ -1,3 +1,5 @@
+// Package activities implements workflow activities specific to Norway Health
+// Authority.
 package activities
 
 var (

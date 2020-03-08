@@ -32,6 +32,7 @@ func TestProdActivity(t *testing.T) {
 	tests := map[string]struct {
 		params      UpdateProductionSystemActivityParams
 		hookConfig  *map[string]interface{}
+		dirOpts     []fs.PathOp
 		wantContent string
 		wantErr     testutil.ActivityError
 	}{
@@ -44,9 +45,44 @@ func TestProdActivity(t *testing.T) {
 					Type:       nha.TransferTypeDPJ,
 				},
 			},
+			dirOpts: []fs.PathOp{
+				fs.WithDir("DPJ/journal"),
+				fs.WithFile("DPJ/journal/avlxml.xml", "<xml/>"),
+				fs.WithDir("metadata"),
+				fs.WithFile("metadata/identifiers.json", `[{
+					"file": "objects/DPJ/journal/avlxml.xml",
+					"identifiers": [{
+						"identifierType": "avleveringsidentifikator",
+						"identifier": "12345"
+					}]
+				}]`),
+			},
 			wantContent: `{
   "identifier": "aa1df25d-1477-4085-8be3-a17fed20f843",
   "type": "dpj",
+  "accepted": true,
+  "message": "Package was processed by Archivematica pipeline foo-bar-001",
+  "timestamp": "2009-11-10T23:00:00Z",
+  "parent": "12345"
+}
+`,
+		},
+		"Receipt does not include parentID in AVLXML SIP": {
+			params: UpdateProductionSystemActivityParams{
+				StoredAt:     time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
+				PipelineName: "foo-bar-001",
+				NameInfo: nha.NameInfo{
+					Identifier: "aa1df25d-1477-4085-8be3-a17fed20f843",
+					Type:       nha.TransferTypeAVLXML,
+				},
+			},
+			dirOpts: []fs.PathOp{
+				fs.WithDir("DPJ/journal"),
+				fs.WithFile("DPJ/journal/avlxml.xml", "<xml/>"),
+			},
+			wantContent: `{
+  "identifier": "aa1df25d-1477-4085-8be3-a17fed20f843",
+  "type": "avlxml",
   "accepted": true,
   "message": "Package was processed by Archivematica pipeline foo-bar-001",
   "timestamp": "2009-11-10T23:00:00Z"
@@ -92,6 +128,10 @@ func TestProdActivity(t *testing.T) {
 		name, tc := name, tc
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
+
+			transferDir := fs.NewDir(t, "enduro", tc.dirOpts...)
+			defer transferDir.Remove()
+			tc.params.FullPath = transferDir.Path()
 
 			tmpdir := fs.NewDir(t, "enduro")
 			defer tmpdir.Remove()

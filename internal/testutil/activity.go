@@ -85,5 +85,8 @@ func (ae ActivityError) assertNonRetryableError(t *testing.T, err error) {
 	var result string
 	perr := err.(*cadence.CustomError)
 	assert.NilError(t, perr.Details(&result))
-	assert.Equal(t, result, ae.message())
+
+	if ae.message() != "" {
+		assert.Equal(t, result, ae.message())
+	}
 }

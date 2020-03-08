@@ -31,6 +31,7 @@ type UpdateProductionSystemActivityParams struct {
 	StoredAt     time.Time
 	PipelineName string
 	NameInfo     nha.NameInfo
+	FullPath     string
 }
 
 func (a *UpdateProductionSystemActivity) Execute(ctx context.Context, params *UpdateProductionSystemActivityParams) error {
@@ -55,8 +56,19 @@ func (a *UpdateProductionSystemActivity) Execute(ctx context.Context, params *Up
 		return wferrors.NonRetryableError(fmt.Errorf("error creating receipt file: %v", err))
 	}
 
+	var parentID string
+	{
+		if params.NameInfo.Type != nha.TransferTypeAVLXML {
+			const idtype = "avleveringsidentifikator"
+			parentID, err = readIdentifier(params.FullPath, params.NameInfo.Type.String()+"/journal/avlxml.xml", idtype)
+			if err != nil {
+				return wferrors.NonRetryableError(fmt.Errorf("error looking up avleveringsidentifikator: %v", err))
+			}
+		}
+	}
+
 	// Write receipt contents.
-	if err := a.generateReceipt(params, file); err != nil {
+	if err := a.generateReceipt(params, file, parentID); err != nil {
 		return wferrors.NonRetryableError(fmt.Errorf("error writing receipt file: %v", err))
 	}
 
@@ -75,13 +87,14 @@ func (a *UpdateProductionSystemActivity) Execute(ctx context.Context, params *Up
 	return nil
 }
 
-func (a UpdateProductionSystemActivity) generateReceipt(params *UpdateProductionSystemActivityParams, file *os.File) error {
+func (a UpdateProductionSystemActivity) generateReceipt(params *UpdateProductionSystemActivityParams, file *os.File, parentID string) error {
 	receipt := prodSystemReceipt{
 		Identifier: params.NameInfo.Identifier,
 		Type:       params.NameInfo.Type.Lower(),
 		Accepted:   true,
 		Message:    fmt.Sprintf("Package was processed by Archivematica pipeline %s", params.PipelineName),
 		Timestamp:  params.StoredAt,
+		Parent:     parentID,
 	}
 
 	enc := json.NewEncoder(file)
@@ -98,9 +111,10 @@ func (a UpdateProductionSystemActivity) generateReceipt(params *UpdateProduction
 }
 
 type prodSystemReceipt struct {
-	Identifier string    `json:"identifier"` // Original identifier.
-	Type       string    `json:"type"`       // Lowercase. E.g. "dpj", "epj", "other" or "avlxml".
-	Accepted   bool      `json:"accepted"`   // Whether we have an error during processing.
-	Message    string    `json:"message"`    // E.g. "Package was processed by Archivematica pipeline am" or any other error message.
-	Timestamp  time.Time `json:"timestamp"`  // RFC3339, e.g. "2006-01-02T15:04:05Z07:00"
+	Identifier string    `json:"identifier"`       // Original identifier.
+	Type       string    `json:"type"`             // Lowercase. E.g. "dpj", "epj", "other" or "avlxml".
+	Accepted   bool      `json:"accepted"`         // Whether we have an error during processing.
+	Message    string    `json:"message"`          // E.g. "Package was processed by Archivematica pipeline am" or any other error message.
+	Timestamp  time.Time `json:"timestamp"`        // RFC3339, e.g. "2006-01-02T15:04:05Z07:00"
+	Parent     string    `json:"parent,omitempty"` // avleveringsidentifikator (only concerns DPJ and EPJ SIPs)
 }
