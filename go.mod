@@ -1,6 +1,6 @@
 module github.com/artefactual-labs/enduro
 
-go 1.13
+go 1.14
 
 require (
 	github.com/GeertJohan/go.rice v1.0.1-0.20190430230923-c880e3cd4dd8
