@@ -729,8 +729,11 @@ goa.design/goa v2.0.10+incompatible h1:X55idBal/uOw3yYuVl8D++/h81lZjdn++hQX4k1t+
 goa.design/goa v2.0.10+incompatible/go.mod h1:NnzBwdNktihbNek+pPiFMQP9PPFsUt8MMPPyo9opDSo=
 goa.design/goa/v3 v3.0.10 h1:abMivEGO5B6k4V+MBW9T93GPd+q96dDEPa+J4pDlhNY=
 goa.design/goa/v3 v3.0.10/go.mod h1:4dt1P/lcm5UQQ5U6hqVAgEHSrZApn0pvM0ro0BJK6jQ=
+goa.design/goa/v3 v3.1.1/go.mod h1:90w3IQQ3Itmh1yVz7mdLnG7owsHORPzWt1FYBGYPy2s=
 goa.design/plugins/v3 v3.0.10 h1:681oVQndEUiRrffJ0YYnrPThjuxjIo5IUXGqEpkMWXk=
 goa.design/plugins/v3 v3.0.10/go.mod h1:1WV+PAyNHszARnmAMoSnXOTj0Ed6GOLjWlc5VZShGWc=
+goa.design/plugins/v3 v3.1.1 h1:VjwRAiDeSEDkZ8M7Ygd/yroN2ST+15N2ctrWDdDfSCw=
+goa.design/plugins/v3 v3.1.1/go.mod h1:zmmedaVcj/nsuGkBn7px6SOcbhSAs05RUruZO3O0cbo=
 gocloud.dev v0.18.0 h1:HX6uFZYZs9tUP87jzoWgB8dl4ihsRpiAsBDKTthiApY=
 gocloud.dev v0.18.0/go.mod h1:lhLOb91+9tKB8RnNlsx+weJGEd0AHM94huK1bmrhPwM=
 gocloud.dev v0.19.0 h1:EDRyaRAnMGSq/QBto486gWFxMLczAfIYUmusV7XLNBM=
@@ -931,6 +934,7 @@ golang.org/x/tools v0.0.0-20200207183749-b753a1ba74fa/go.mod h1:TB2adYChydJhpapK
 golang.org/x/tools v0.0.0-20200212150539-ea181f53ac56/go.mod h1:TB2adYChydJhpapKDTa4BR/hXlZSLoq2Wpct/0txZ28=
 golang.org/x/tools v0.0.0-20200213224642-88e652f7a869/go.mod h1:TB2adYChydJhpapKDTa4BR/hXlZSLoq2Wpct/0txZ28=
 golang.org/x/tools v0.0.0-20200216192241-b320d3a0f5a2/go.mod h1:TB2adYChydJhpapKDTa4BR/hXlZSLoq2Wpct/0txZ28=
+golang.org/x/tools v0.0.0-20200228224639-71482053b885/go.mod h1:TB2adYChydJhpapKDTa4BR/hXlZSLoq2Wpct/0txZ28=
 golang.org/x/tools v0.0.0-20200308013534-11ec41452d41 h1:9Di9iYgOt9ThCipBxChBVhgNipDoE5mxO84rQV7D0FE=
 golang.org/x/tools v0.0.0-20200308013534-11ec41452d41/go.mod h1:o4KQGtdN14AW+yjsvvwRTJJuXz8XRtIHtEnmAXLyFUw=
 golang.org/x/xerrors v0.0.0-20190717185122-a985d3407aa7 h1:9zdDQZ7Thm29KFXgAX/+yaf3eVbP7djjWp/dXAppNCc=
