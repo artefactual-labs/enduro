@@ -56,7 +56,7 @@ require (
 	go.uber.org/yarpc v1.44.0
 	go.uber.org/zap v1.14.0
 	goa.design/goa v2.0.10+incompatible
-	goa.design/goa/v3 v3.0.10
+	goa.design/goa/v3 v3.1.1
 	goa.design/plugins/v3 v3.0.10
 	gocloud.dev v0.19.0
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b // indirect
