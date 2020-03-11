@@ -103,9 +103,14 @@ func (a UpdateHARIActivity) avlxml(path string, kind nha.TransferType) string {
 		return ""
 	}
 
+	var (
+		nhaType      = kind.String()
+		nhaTypeLower = strings.ToLower(nhaType)
+	)
+
 	if kind == nha.TransferTypeAVLXML {
 		const objekter = "objekter"
-		matches, err := filepath.Glob(filepath.Join(path, kind.String(), objekter, "avlxml-*.xml"))
+		matches, err := filepath.Glob(filepath.Join(path, nhaType, objekter, "avlxml-*.xml"))
 		if err != nil {
 			panic(err)
 		}
@@ -113,13 +118,16 @@ func (a UpdateHARIActivity) avlxml(path string, kind nha.TransferType) string {
 			return matches[0]
 		}
 		return firstMatch([]string{
-			filepath.Join(path, kind.String(), objekter, "avlxml.xml"),
+			filepath.Join(path, nhaType, objekter, "avlxml.xml"),
+			filepath.Join(path, nhaTypeLower, objekter, "avlxml.xml"),
 		})
 	}
 
 	return firstMatch([]string{
-		filepath.Join(path, kind.String(), "journal/avlxml.xml"),
-		filepath.Join(path, kind.String(), "Journal/avlxml.xml"),
+		filepath.Join(path, nhaType, "journal/avlxml.xml"),
+		filepath.Join(path, nhaType, "Journal/avlxml.xml"),
+		filepath.Join(path, nhaTypeLower, "journal/avlxml.xml"),
+		filepath.Join(path, nhaTypeLower, "Journal/avlxml.xml"),
 	})
 }
 
