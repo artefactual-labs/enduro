@@ -12,7 +12,7 @@ require (
 	github.com/dsnet/compress v0.0.1 // indirect
 	github.com/fatih/structtag v1.2.0 // indirect
 	github.com/frankban/quicktest v1.5.0 // indirect
-	github.com/fsnotify/fsnotify v1.4.7
+	github.com/fsnotify/fsnotify v1.4.9
 	github.com/go-logr/logr v0.1.0
 	github.com/go-logr/zapr v0.1.1
 	github.com/go-redis/redis/v7 v7.2.0
