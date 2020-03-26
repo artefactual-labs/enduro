@@ -16,7 +16,7 @@ import (
 	"github.com/artefactual-labs/enduro/ui"
 
 	"github.com/go-logr/logr"
-	"goa.design/goa/middleware"
+	"goa.design/goa/v3/middleware"
 	goahttp "goa.design/goa/v3/http"
 	goahttpmwr "goa.design/goa/v3/http/middleware"
 )

@@ -2,7 +2,7 @@ package api
 
 import (
 	"github.com/go-logr/logr"
-	"goa.design/goa/middleware"
+	"goa.design/goa/v3/middleware"
 )
 
 // adapter is a thin wrapper around logr.Logger that implements Goa's Logger.
