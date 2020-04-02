@@ -48,7 +48,7 @@
         <dt>Activity summary</dt>
         <dd>
           <b-list-group id="activity-summary">
-            <b-list-group-item v-for="(item, index) in activities" v-bind:key="index" :class="{ failed: item.status === 'error', local: item.local }">
+            <b-list-group-item v-for="(item, index) in activities" v-bind:key="index" :class="{ failed: item.status === 'error' || item.status === 'timed out', local: item.local }">
               <en-collection-status-badge class="float-right" :status="item.status"/>
               <span class="name" v-if="!item.local">{{ item.name }}</span>
               <span class="name" v-else>{{ item.name }} (local activity)</span>
@@ -192,6 +192,16 @@ export default class CollectionShowWorkflow extends Vue {
           item.completed = details.timestamp;
           item.duration = (item.completed - item.started) / 1000000000;
           item.duration = item.duration.toFixed(2);
+          if (item.name === 'async-completion-activity' && attrs.result) {
+            item.details = 'User selection: ' + window.atob(attrs.result) + '.';
+          }
+        }
+      } else if (event.type === 'ActivityTaskTimedOut') {
+        const attrs = details.activityTaskTimedOutEventAttributes;
+        if (attrs.scheduledEventId in this.activities) {
+          const item = this.activities[attrs.scheduledEventId];
+          item.status = 'timed out';
+          item.details = 'Timeout ' + attrs.timeoutType + '.';
         }
       } else if (event.type === 'WorkflowExecutionStarted') {
         this.startedAt = details.timestamp;
@@ -275,11 +285,13 @@ export default class CollectionShowWorkflow extends Vue {
       background-color: #ff000011;
     }
     .details {
-      border-top: 2px solid #ff4545;
       display: block;
       color: #666;
-      margin-top: .5rem;
       padding: 0.5rem 0;
+    }
+    .failed .details {
+      margin-top: .5rem;
+      border-top: 2px solid #ff4545;
     }
     .date, .duration {
       color: #999;
