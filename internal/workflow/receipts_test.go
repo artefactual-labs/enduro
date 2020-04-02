@@ -60,7 +60,7 @@ func TestSendReceiptsSequentialBehavior(t *testing.T) {
 			PipelineName: params.PipelineName,
 			NameInfo:     params.NameInfo,
 		},
-	).Return(errors.New("failed")).Times(4)
+	).Return(errors.New("failed")).Once()
 
 	env.OnActivity(
 		AsyncCompletionActivityName,
