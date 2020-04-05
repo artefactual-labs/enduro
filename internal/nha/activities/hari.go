@@ -21,7 +21,8 @@ import (
 )
 
 var hariClient = &http.Client{
-	Timeout: 10 * time.Second,
+	// Unusual high value but needed since the server seems to be doing the indexing work synchronously.
+	Timeout: 10 * time.Minute,
 	Transport: &http.Transport{
 		DialContext: (&net.Dialer{
 			Timeout: 5 * time.Second,
