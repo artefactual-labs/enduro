@@ -24,7 +24,7 @@ func (w *ProcessingWorkflow) sendReceipts(ctx workflow.Context, params *sendRece
 	if disabled, _ := manager.HookAttrBool(w.manager.Hooks, "hari", "disabled"); !disabled {
 		opts := workflow.ActivityOptions{
 			ScheduleToStartTimeout: forever,
-			StartToCloseTimeout:    time.Minute * 10,
+			StartToCloseTimeout:    time.Minute * 20,
 		}
 		err := executeActivityWithAsyncErrorHandling(ctx, w.manager.Collection, params.CollectionID, opts, nha_activities.UpdateHARIActivityName, &nha_activities.UpdateHARIActivityParams{
 			SIPID:        params.SIPID,
