@@ -11,7 +11,6 @@ import (
 	"github.com/artefactual-labs/enduro/internal/workflow/manager"
 
 	"github.com/go-logr/logr"
-	"go.uber.org/cadence"
 	"go.uber.org/cadence/workflow"
 )
 
@@ -20,16 +19,9 @@ func acquirePipeline(ctx workflow.Context, manager *manager.Manager, pipelineNam
 	{
 		ctx := workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
 			ScheduleToStartTimeout: forever,
-			StartToCloseTimeout:    time.Second * 5,
-			WaitForCancellation:    true,
-			RetryPolicy: &cadence.RetryPolicy{
-				InitialInterval:    time.Second * 2,
-				BackoffCoefficient: 1,
-				MaximumInterval:    time.Second * 2,
-				ExpirationInterval: forever,
-			},
+			StartToCloseTimeout:    forever,
+			HeartbeatTimeout:       time.Minute,
 		})
-
 		if err := workflow.ExecuteActivity(ctx, activities.AcquirePipelineActivityName, pipelineName).Get(ctx, nil); err != nil {
 			return fmt.Errorf("error acquiring pipeline: %w", err)
 		}

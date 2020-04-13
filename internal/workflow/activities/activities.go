@@ -1,3 +1,4 @@
+// Package activities implements Enduro's workflow activities.
 package activities
 
 const (

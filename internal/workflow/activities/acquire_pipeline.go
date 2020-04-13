@@ -2,10 +2,14 @@ package activities
 
 import (
 	"context"
-	"errors"
+	"fmt"
+	"time"
+
+	"go.uber.org/cadence/activity"
 
 	wferrors "github.com/artefactual-labs/enduro/internal/workflow/errors"
 	"github.com/artefactual-labs/enduro/internal/workflow/manager"
+	"github.com/cenkalti/backoff/v3"
 )
 
 // AcquirePipelineActivity acquires a lock in the weighted semaphore associated
@@ -24,9 +28,22 @@ func (a *AcquirePipelineActivity) Execute(ctx context.Context, pipelineName stri
 		return wferrors.NonRetryableError(err)
 	}
 
-	if ok := p.TryAcquire(); !ok {
-		return errors.New("error acquiring pipeline")
-	}
+	var errAcquirePipeline = fmt.Errorf("error acquring semaphore: busy")
 
-	return nil
+	err = backoff.RetryNotify(
+		func() (err error) {
+			ok := p.TryAcquire()
+			if !ok {
+				err = errAcquirePipeline
+			}
+
+			return err
+		},
+		backoff.WithContext(backoff.NewConstantBackOff(time.Second*5), ctx),
+		func(err error, duration time.Duration) {
+			activity.RecordHeartbeat(ctx)
+		},
+	)
+
+	return err
 }
