@@ -47,7 +47,7 @@ services:
       - "127.0.0.1:7440:8088"
 
   minio:
-    image: "minio/minio:latest"
+    image: "minio/minio:RELEASE.2019-08-29T00-25-01Z"
     command: "server /data"
     volumes:
       - "${PWD}/hack/minio-data:/data"
