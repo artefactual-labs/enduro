@@ -8,6 +8,7 @@ package workflow
 import (
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/artefactual-labs/enduro/internal/collection"
@@ -209,12 +210,11 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 
 			sessErr = w.SessionHandler(sessCtx, attempt, tinfo, nameInfo)
 
-			// When we want to start over again. Possible scenarios:
-			//
-			// A) Worker died (ErrSessionFailed) or wants to quit (ErrCanceled).
-			// B) Workflow is canceled (ErrCanceled).
-			//
-			if errors.Is(sessErr, workflow.ErrSessionFailed) || errors.Is(sessErr, workflow.ErrCanceled) {
+			// We want to retry the session if it has been canceled as a result
+			// of losing the worker but not otherwise. This scenario seems to be
+			// identifiable when we have an error but the root context has not
+			// been canceled.
+			if sessErr != nil && (errors.Is(sessErr, workflow.ErrSessionFailed) || errors.Is(sessErr, workflow.ErrCanceled) || strings.Contains(sessErr.Error(), "CanceledError")) {
 				// Root context canceled, hence workflow canceled.
 				if ctx.Err() == workflow.ErrCanceled {
 					return nil
