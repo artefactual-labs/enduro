@@ -45,7 +45,7 @@ require (
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
 	go.uber.org/cadence v0.11.2
 	go.uber.org/yarpc v1.44.0
-	go.uber.org/zap v1.14.1
+	go.uber.org/zap v1.15.0
 	goa.design/goa/v3 v3.1.1
 	goa.design/plugins/v3 v3.1.1
 	gocloud.dev v0.19.0
