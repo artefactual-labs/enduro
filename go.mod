@@ -46,7 +46,7 @@ require (
 	go.uber.org/cadence v0.11.2
 	go.uber.org/yarpc v1.44.0
 	go.uber.org/zap v1.14.1
-	goa.design/goa/v3 v3.1.1
+	goa.design/goa/v3 v3.1.2
 	goa.design/plugins/v3 v3.1.1
 	gocloud.dev v0.19.0
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b // indirect
