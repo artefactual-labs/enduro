@@ -19,6 +19,7 @@ type minioWatcher struct {
 	client   *redis.Client
 	sess     *session.Session
 	listName string
+	bucket   string
 	*commonWatcherImpl
 }
 
@@ -57,6 +58,7 @@ func NewMinioWatcher(ctx context.Context, config *MinioConfig) (*minioWatcher, e
 		client:   client,
 		sess:     sess,
 		listName: config.RedisList,
+		bucket:   config.Bucket,
 		commonWatcherImpl: &commonWatcherImpl{
 			name:             config.Name,
 			pipeline:         config.Pipeline,
@@ -67,11 +69,16 @@ func NewMinioWatcher(ctx context.Context, config *MinioConfig) (*minioWatcher, e
 }
 
 func (w *minioWatcher) Watch(ctx context.Context) (*BlobEvent, error) {
-	event, err := w.blpop(ctx)
-	if errors.Is(err, redis.Nil) {
-		return nil, ErrWatchTimeout
+	for {
+		event, err := w.blpop(ctx)
+		if errors.Is(err, redis.Nil) {
+			return nil, ErrWatchTimeout
+		}
+		if event.Bucket != w.bucket {
+			continue
+		}
+		return event, nil
 	}
-	return event, err
 }
 
 func (w *minioWatcher) blpop(ctx context.Context) (*BlobEvent, error) {

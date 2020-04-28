@@ -31,6 +31,7 @@ type MinioConfig struct {
 	Key          string
 	Secret       string
 	Token        string
+	Bucket       string
 
 	Pipeline         string
 	RetentionPeriod  *time.Duration
