@@ -23,6 +23,7 @@ pathStyle = true
 key = "36J9X8EZI4KEV1G7EHXA"
 secret = "ECk2uqOoNqvtJIMQ3WYugvmNPL_-zm3WcRqP5vUM"
 region = "us-west-1"
+bucket = "sips"
 pipeline = "am"
 retentionPeriod = "10s"
 stripTopLevelDir = true
