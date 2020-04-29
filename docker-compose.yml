@@ -58,3 +58,18 @@ services:
     image: "redis:5-alpine"
     ports:
       - "127.0.0.1:7470:6379"
+
+  elasticsearch:
+    image: "docker.elastic.co/elasticsearch/elasticsearch:6.5.4"
+    environment:
+      - "cluster.name=am-cluster"
+      - "node.name=am-node"
+      - "network.host=0.0.0.0"
+      - "bootstrap.memory_lock=true"
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    ports:
+      - "127.0.0.1:7480:9200"
