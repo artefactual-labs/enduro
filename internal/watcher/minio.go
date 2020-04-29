@@ -23,6 +23,11 @@ type minioWatcher struct {
 	*commonWatcherImpl
 }
 
+type MinioEventSet struct {
+	Event     []MinioEvent
+	EventTime string
+}
+
 var _ Watcher = (*minioWatcher)(nil)
 
 const redisPopTimeout = time.Second * 2
@@ -96,27 +101,22 @@ func (w *minioWatcher) blpop(ctx context.Context) (*BlobEvent, error) {
 }
 
 // event processes Minio-specific events delivered via Redis. We expect a
-// two-item array: 0 = time of the event, 1 = single-item array containing the
-// actual event.
+// single item array containing a map of {Event: ..., EvenTime: ...}
 func (w *minioWatcher) event(blob string) (*BlobEvent, error) {
 	container := []json.RawMessage{}
 	if err := json.Unmarshal([]byte(blob), &container); err != nil {
 		return nil, err
 	}
 
-	var (
-		_      = container[0]   // Event time.
-		events = container[1]   // Actual events.
-		evs    = []MinioEvent{} // We only expect one really.
-	)
-	if err := json.Unmarshal(events, &evs); err != nil {
+	var set MinioEventSet
+	if err := json.Unmarshal(container[0], &set); err != nil {
 		return nil, fmt.Errorf("error procesing item received from Redis list: %w", err)
 	}
-	if len(evs) == 0 {
+	if len(set.Event) == 0 {
 		return nil, fmt.Errorf("error processing item received from Redis list: empty event list")
 	}
 
-	return NewBlobEventWithBucket(w, evs[0].S3.Bucket.Name, evs[0].S3.Object.Key), nil
+	return NewBlobEventWithBucket(w, set.Event[0].S3.Bucket.Name, set.Event[0].S3.Object.Key), nil
 }
 
 func (w *minioWatcher) OpenBucket(ctx context.Context, event *BlobEvent) (*blob.Bucket, error) {
