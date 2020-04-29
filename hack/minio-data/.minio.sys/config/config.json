@@ -1,218 +1,723 @@
 {
-  "version": "33",
-  "credential": {
-      "accessKey": "36J9X8EZI4KEV1G7EHXA",
-      "secretKey": "ECk2uqOoNqvtJIMQ3WYugvmNPL_-zm3WcRqP5vUM",
-      "expiration": "1970-01-01T00:00:00Z",
-      "status": "enabled"
+  "api": {
+    "_": [
+      {
+        "key": "requests_max",
+        "value": "0"
+      },
+      {
+        "key": "requests_deadline",
+        "value": "10s"
+      }
+    ]
   },
-  "region": "",
-  "worm": "off",
-  "storageclass": {
-      "standard": "",
-      "rrs": ""
+  "audit_webhook": {
+    "_": [
+      {
+        "key": "enable",
+        "value": "off"
+      },
+      {
+        "key": "endpoint",
+        "value": ""
+      },
+      {
+        "key": "auth_token",
+        "value": ""
+      }
+    ]
   },
   "cache": {
-      "drives": [],
-      "expiry": 90,
-      "maxuse": 80,
-      "exclude": []
-  },
-  "kms": {
-      "vault": {
-          "endpoint": "",
-          "auth": {
-              "type": "",
-              "approle": {
-                  "id": "",
-                  "secret": ""
-              }
-          },
-          "key-id": {
-              "name": "",
-              "version": 0
-          }
+    "_": [
+      {
+        "key": "drives",
+        "value": ""
+      },
+      {
+        "key": "exclude",
+        "value": ""
+      },
+      {
+        "key": "expiry",
+        "value": "90"
+      },
+      {
+        "key": "quota",
+        "value": "80"
+      },
+      {
+        "key": "after",
+        "value": "0"
+      },
+      {
+        "key": "watermark_low",
+        "value": "70"
+      },
+      {
+        "key": "watermark_high",
+        "value": "80"
       }
+    ]
   },
-  "notify": {
-      "amqp": {
-          "1": {
-              "enable": false,
-              "url": "",
-              "exchange": "",
-              "routingKey": "",
-              "exchangeType": "",
-              "deliveryMode": 0,
-              "mandatory": false,
-              "immediate": false,
-              "durable": false,
-              "internal": false,
-              "noWait": false,
-              "autoDeleted": false,
-              "queueDir": "",
-              "queueLimit": 0
-          }
+  "compression": {
+    "_": [
+      {
+        "key": "enable",
+        "value": "off"
       },
-      "elasticsearch": {
-          "1": {
-              "enable": false,
-              "format": "",
-              "url": "",
-              "index": "",
-              "queueDir": "",
-              "queueLimit": 0
-          }
+      {
+        "key": "extensions",
+        "value": ".txt,.log,.csv,.json,.tar,.xml,.bin"
       },
-      "kafka": {
-          "1": {
-              "enable": false,
-              "brokers": null,
-              "topic": "",
-              "queueDir": "",
-              "queueLimit": 0,
-              "tls": {
-                  "enable": false,
-                  "skipVerify": false,
-                  "clientAuth": 0
-              },
-              "sasl": {
-                  "enable": false,
-                  "username": "",
-                  "password": ""
-              }
-          }
-      },
-      "mqtt": {
-          "1": {
-              "enable": false,
-              "broker": "",
-              "topic": "",
-              "qos": 0,
-              "username": "",
-              "password": "",
-              "reconnectInterval": 0,
-              "keepAliveInterval": 0,
-              "queueDir": "",
-              "queueLimit": 0
-          }
-      },
-      "mysql": {
-          "1": {
-              "enable": false,
-              "format": "",
-              "dsnString": "",
-              "table": "",
-              "host": "",
-              "port": "",
-              "user": "",
-              "password": "",
-              "database": "",
-              "queueDir": "",
-              "queueLimit": 0
-          }
-      },
-      "nats": {
-          "1": {
-              "enable": false,
-              "address": "",
-              "subject": "",
-              "username": "",
-              "password": "",
-              "token": "",
-              "secure": false,
-              "pingInterval": 0,
-              "queueDir": "",
-              "queueLimit": 0,
-              "streaming": {
-                  "enable": false,
-                  "clusterID": "",
-                  "async": false,
-                  "maxPubAcksInflight": 0
-              }
-          }
-      },
-      "nsq": {
-          "1": {
-              "enable": false,
-              "nsqdAddress": "",
-              "topic": "",
-              "tls": {
-                  "enable": false,
-                  "skipVerify": true
-              },
-              "queueDir": "",
-              "queueLimit": 0
-          }
-      },
-      "postgresql": {
-          "1": {
-              "enable": false,
-              "format": "",
-              "connectionString": "",
-              "table": "",
-              "host": "",
-              "port": "",
-              "user": "",
-              "password": "",
-              "database": "",
-              "queueDir": "",
-              "queueLimit": 0
-          }
-      },
-      "redis": {
-          "1": {
-              "enable": true,
-              "format": "access",
-              "address": "redis:6379",
-              "password": "",
-              "key": "minio-events",
-              "queueDir": "/tmp/events",
-              "queueLimit": 10000
-          }
-      },
-      "webhook": {
-          "1": {
-              "enable": false,
-              "endpoint": "",
-              "queueDir": "",
-              "queueLimit": 0
-          }
+      {
+        "key": "mime_types",
+        "value": "text/*,application/json,application/xml"
       }
+    ]
   },
-  "logger": {
-      "console": {
-          "enabled": true
+  "credentials": {
+    "_": [
+      {
+        "key": "access_key",
+        "value": "36J9X8EZI4KEV1G7EHXA"
       },
-      "http": {
-          "target1": {
-              "enabled": false,
-              "endpoint": "https://username:password@example.com/api"
-          }
+      {
+        "key": "secret_key",
+        "value": "ECk2uqOoNqvtJIMQ3WYugvmNPL_-zm3WcRqP5vUM"
       }
+    ]
   },
-  "compress": {
-      "enabled": false,
-      "extensions": [
-          ".txt",
-          ".log",
-          ".csv",
-          ".json"
-      ],
-      "mime-types": [
-          "text/csv",
-          "text/plain",
-          "application/json"
-      ]
-  },
-  "openid": {
-      "jwks": {
-          "url": null
+  "etcd": {
+    "_": [
+      {
+        "key": "endpoints",
+        "value": ""
+      },
+      {
+        "key": "path_prefix",
+        "value": ""
+      },
+      {
+        "key": "coredns_path",
+        "value": "/skydns"
+      },
+      {
+        "key": "client_cert",
+        "value": ""
+      },
+      {
+        "key": "client_cert_key",
+        "value": ""
       }
+    ]
   },
-  "policy": {
-      "opa": {
-          "url": null,
-          "authToken": ""
+  "identity_ldap": {
+    "_": [
+      {
+        "key": "server_addr",
+        "value": ""
+      },
+      {
+        "key": "username_format",
+        "value": ""
+      },
+      {
+        "key": "username_search_filter",
+        "value": ""
+      },
+      {
+        "key": "username_search_base_dn",
+        "value": ""
+      },
+      {
+        "key": "group_search_filter",
+        "value": ""
+      },
+      {
+        "key": "group_name_attribute",
+        "value": ""
+      },
+      {
+        "key": "group_search_base_dn",
+        "value": ""
+      },
+      {
+        "key": "sts_expiry",
+        "value": "1h"
+      },
+      {
+        "key": "tls_skip_verify",
+        "value": "off"
+      },
+      {
+        "key": "server_insecure",
+        "value": "off"
       }
+    ]
+  },
+  "identity_openid": {
+    "_": [
+      {
+        "key": "config_url",
+        "value": ""
+      },
+      {
+        "key": "client_id",
+        "value": ""
+      },
+      {
+        "key": "claim_name",
+        "value": "policy"
+      },
+      {
+        "key": "claim_prefix",
+        "value": ""
+      },
+      {
+        "key": "jwks_url",
+        "value": ""
+      }
+    ]
+  },
+  "kms_kes": {
+    "_": [
+      {
+        "key": "endpoint",
+        "value": ""
+      },
+      {
+        "key": "key_name",
+        "value": ""
+      },
+      {
+        "key": "cert_file",
+        "value": ""
+      },
+      {
+        "key": "key_file",
+        "value": ""
+      },
+      {
+        "key": "capath",
+        "value": ""
+      }
+    ]
+  },
+  "kms_vault": {
+    "_": [
+      {
+        "key": "endpoint",
+        "value": ""
+      },
+      {
+        "key": "key_name",
+        "value": ""
+      },
+      {
+        "key": "auth_type",
+        "value": "approle"
+      },
+      {
+        "key": "auth_approle_id",
+        "value": ""
+      },
+      {
+        "key": "auth_approle_secret",
+        "value": ""
+      },
+      {
+        "key": "capath",
+        "value": ""
+      },
+      {
+        "key": "key_version",
+        "value": ""
+      },
+      {
+        "key": "namespace",
+        "value": ""
+      }
+    ]
+  },
+  "logger_webhook": {
+    "_": [
+      {
+        "key": "enable",
+        "value": "off"
+      },
+      {
+        "key": "endpoint",
+        "value": ""
+      },
+      {
+        "key": "auth_token",
+        "value": ""
+      }
+    ]
+  },
+  "notify_amqp": {
+    "_": [
+      {
+        "key": "enable",
+        "value": "off"
+      },
+      {
+        "key": "url",
+        "value": ""
+      },
+      {
+        "key": "exchange",
+        "value": ""
+      },
+      {
+        "key": "exchange_type",
+        "value": ""
+      },
+      {
+        "key": "routing_key",
+        "value": ""
+      },
+      {
+        "key": "mandatory",
+        "value": "off"
+      },
+      {
+        "key": "durable",
+        "value": "off"
+      },
+      {
+        "key": "no_wait",
+        "value": "off"
+      },
+      {
+        "key": "internal",
+        "value": "off"
+      },
+      {
+        "key": "auto_deleted",
+        "value": "off"
+      },
+      {
+        "key": "delivery_mode",
+        "value": "0"
+      },
+      {
+        "key": "queue_limit",
+        "value": "0"
+      },
+      {
+        "key": "queue_dir",
+        "value": ""
+      }
+    ]
+  },
+  "notify_elasticsearch": {
+    "_": [
+      {
+        "key": "enable",
+        "value": "off"
+      },
+      {
+        "key": "url",
+        "value": ""
+      },
+      {
+        "key": "format",
+        "value": "namespace"
+      },
+      {
+        "key": "index",
+        "value": ""
+      },
+      {
+        "key": "queue_dir",
+        "value": ""
+      },
+      {
+        "key": "queue_limit",
+        "value": "0"
+      }
+    ]
+  },
+  "notify_kafka": {
+    "_": [
+      {
+        "key": "enable",
+        "value": "off"
+      },
+      {
+        "key": "topic",
+        "value": ""
+      },
+      {
+        "key": "brokers",
+        "value": ""
+      },
+      {
+        "key": "sasl_username",
+        "value": ""
+      },
+      {
+        "key": "sasl_password",
+        "value": ""
+      },
+      {
+        "key": "sasl_mechanism",
+        "value": "plain"
+      },
+      {
+        "key": "client_tls_cert",
+        "value": ""
+      },
+      {
+        "key": "client_tls_key",
+        "value": ""
+      },
+      {
+        "key": "tls_client_auth",
+        "value": "0"
+      },
+      {
+        "key": "sasl",
+        "value": "off"
+      },
+      {
+        "key": "tls",
+        "value": "off"
+      },
+      {
+        "key": "tls_skip_verify",
+        "value": "off"
+      },
+      {
+        "key": "queue_limit",
+        "value": "0"
+      },
+      {
+        "key": "queue_dir",
+        "value": ""
+      },
+      {
+        "key": "version",
+        "value": ""
+      }
+    ]
+  },
+  "notify_mqtt": {
+    "_": [
+      {
+        "key": "enable",
+        "value": "off"
+      },
+      {
+        "key": "broker",
+        "value": ""
+      },
+      {
+        "key": "topic",
+        "value": ""
+      },
+      {
+        "key": "password",
+        "value": ""
+      },
+      {
+        "key": "username",
+        "value": ""
+      },
+      {
+        "key": "qos",
+        "value": "0"
+      },
+      {
+        "key": "keep_alive_interval",
+        "value": "0s"
+      },
+      {
+        "key": "reconnect_interval",
+        "value": "0s"
+      },
+      {
+        "key": "queue_dir",
+        "value": ""
+      },
+      {
+        "key": "queue_limit",
+        "value": "0"
+      }
+    ]
+  },
+  "notify_mysql": {
+    "_": [
+      {
+        "key": "enable",
+        "value": "off"
+      },
+      {
+        "key": "format",
+        "value": "namespace"
+      },
+      {
+        "key": "dsn_string",
+        "value": ""
+      },
+      {
+        "key": "table",
+        "value": ""
+      },
+      {
+        "key": "queue_dir",
+        "value": ""
+      },
+      {
+        "key": "queue_limit",
+        "value": "0"
+      }
+    ]
+  },
+  "notify_nats": {
+    "_": [
+      {
+        "key": "enable",
+        "value": "off"
+      },
+      {
+        "key": "address",
+        "value": ""
+      },
+      {
+        "key": "subject",
+        "value": ""
+      },
+      {
+        "key": "username",
+        "value": ""
+      },
+      {
+        "key": "password",
+        "value": ""
+      },
+      {
+        "key": "token",
+        "value": ""
+      },
+      {
+        "key": "tls",
+        "value": "off"
+      },
+      {
+        "key": "tls_skip_verify",
+        "value": "off"
+      },
+      {
+        "key": "cert_authority",
+        "value": ""
+      },
+      {
+        "key": "client_cert",
+        "value": ""
+      },
+      {
+        "key": "client_key",
+        "value": ""
+      },
+      {
+        "key": "ping_interval",
+        "value": "0"
+      },
+      {
+        "key": "streaming",
+        "value": "off"
+      },
+      {
+        "key": "streaming_async",
+        "value": "off"
+      },
+      {
+        "key": "streaming_max_pub_acks_in_flight",
+        "value": "0"
+      },
+      {
+        "key": "streaming_cluster_id",
+        "value": ""
+      },
+      {
+        "key": "queue_dir",
+        "value": ""
+      },
+      {
+        "key": "queue_limit",
+        "value": "0"
+      }
+    ]
+  },
+  "notify_nsq": {
+    "_": [
+      {
+        "key": "enable",
+        "value": "off"
+      },
+      {
+        "key": "nsqd_address",
+        "value": ""
+      },
+      {
+        "key": "topic",
+        "value": ""
+      },
+      {
+        "key": "tls",
+        "value": "off"
+      },
+      {
+        "key": "tls_skip_verify",
+        "value": "off"
+      },
+      {
+        "key": "queue_dir",
+        "value": ""
+      },
+      {
+        "key": "queue_limit",
+        "value": "0"
+      }
+    ]
+  },
+  "notify_postgres": {
+    "_": [
+      {
+        "key": "enable",
+        "value": "off"
+      },
+      {
+        "key": "format",
+        "value": "namespace"
+      },
+      {
+        "key": "connection_string",
+        "value": ""
+      },
+      {
+        "key": "table",
+        "value": ""
+      },
+      {
+        "key": "queue_dir",
+        "value": ""
+      },
+      {
+        "key": "queue_limit",
+        "value": "0"
+      }
+    ]
+  },
+  "notify_redis": {
+    "1": [
+      {
+        "key": "enable",
+        "value": "on"
+      },
+      {
+        "key": "format",
+        "value": "access"
+      },
+      {
+        "key": "address",
+        "value": "redis:6379"
+      },
+      {
+        "key": "password",
+        "value": ""
+      },
+      {
+        "key": "key",
+        "value": "minio-events"
+      },
+      {
+        "key": "queue_dir",
+        "value": "/tmp/events"
+      },
+      {
+        "key": "queue_limit",
+        "value": "10000"
+      }
+    ],
+    "_": [
+      {
+        "key": "enable",
+        "value": "off"
+      },
+      {
+        "key": "format",
+        "value": "namespace"
+      },
+      {
+        "key": "address",
+        "value": ""
+      },
+      {
+        "key": "key",
+        "value": ""
+      },
+      {
+        "key": "password",
+        "value": ""
+      },
+      {
+        "key": "queue_dir",
+        "value": ""
+      },
+      {
+        "key": "queue_limit",
+        "value": "0"
+      }
+    ]
+  },
+  "notify_webhook": {
+    "_": [
+      {
+        "key": "enable",
+        "value": "off"
+      },
+      {
+        "key": "endpoint",
+        "value": ""
+      },
+      {
+        "key": "auth_token",
+        "value": ""
+      },
+      {
+        "key": "queue_limit",
+        "value": "0"
+      },
+      {
+        "key": "queue_dir",
+        "value": ""
+      }
+    ]
+  },
+  "policy_opa": {
+    "_": [
+      {
+        "key": "url",
+        "value": ""
+      },
+      {
+        "key": "auth_token",
+        "value": ""
+      }
+    ]
+  },
+  "region": {
+    "_": [
+      {
+        "key": "name",
+        "value": ""
+      }
+    ]
+  },
+  "storage_class": {
+    "_": null
   }
 }

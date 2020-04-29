@@ -6,6 +6,9 @@
 !/hack/minio-data/sips/archivematica.png
 /hack/minio-data/.minio.sys/buckets/sips/*
 !/hack/minio-data/.minio.sys/buckets/sips/archivematica.png/
+/hack/minio-data/.minio.sys/**/*.bin
+/hack/minio-data/.minio.sys/buckets/.minio.sys/
+/hack/minio-data/.minio.sys/buckets/.usage.json
 
 /hack/watched-dir/*
 /hack/production-system-interface/*
