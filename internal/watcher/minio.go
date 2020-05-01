@@ -74,16 +74,17 @@ func NewMinioWatcher(ctx context.Context, config *MinioConfig) (*minioWatcher, e
 }
 
 func (w *minioWatcher) Watch(ctx context.Context) (*BlobEvent, error) {
-	for {
-		event, err := w.blpop(ctx)
+	event, err := w.blpop(ctx)
+	if err != nil {
 		if errors.Is(err, redis.Nil) {
-			return nil, ErrWatchTimeout
+			err = ErrWatchTimeout
 		}
-		if event.Bucket != w.bucket {
-			continue
-		}
-		return event, nil
+		return nil, err
 	}
+	if event.Bucket != w.bucket {
+		return nil, ErrBucketMismatch
+	}
+	return event, nil
 }
 
 func (w *minioWatcher) blpop(ctx context.Context) (*BlobEvent, error) {
