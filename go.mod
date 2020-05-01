@@ -6,7 +6,7 @@ require (
 	github.com/GeertJohan/go.rice v1.0.1-0.20190430230923-c880e3cd4dd8
 	github.com/alicebob/miniredis/v2 v2.11.4
 	github.com/atrox/go-migrate-rice v1.0.1
-	github.com/aws/aws-sdk-go v1.29.34
+	github.com/aws/aws-sdk-go v1.30.18
 	github.com/cenkalti/backoff/v3 v3.2.2
 	github.com/daaku/go.zipexe v1.0.1 // indirect
 	github.com/dsnet/compress v0.0.1 // indirect
