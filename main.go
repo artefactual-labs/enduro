@@ -184,10 +184,10 @@ func main() {
 						default:
 							event, err := cur.Watch(ctx)
 							if err != nil {
-								if errors.Is(err, watcher.ErrWatchTimeout) {
-									continue
+								if !errors.Is(err, watcher.ErrWatchTimeout) {
+									logger.Error(err, "Error monitoring watcher interface.", "watcher", cur)
 								}
-								logger.Error(err, "Error monitoring watcher interface.")
+								continue
 							}
 							logger.V(1).Info("Starting new workflow", "watcher", event.WatcherName, "bucket", event.Bucket, "key", event.Key)
 							go func() {

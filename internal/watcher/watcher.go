@@ -12,6 +12,7 @@ import (
 )
 
 var ErrWatchTimeout = errors.New("watcher timed out")
+var ErrBucketMismatch = errors.New("bucket mismatch")
 
 type Watcher interface {
 	// Watch waits until a blob is dispatched.
@@ -77,6 +78,7 @@ func New(ctx context.Context, c *Config) (*serviceImpl, error) {
 	var watchers = map[string]Watcher{}
 
 	for _, item := range c.Minio {
+		item := item
 		w, err := NewMinioWatcher(ctx, item)
 		if err != nil {
 			return nil, err
@@ -86,6 +88,7 @@ func New(ctx context.Context, c *Config) (*serviceImpl, error) {
 	}
 
 	for _, item := range c.Filesystem {
+		item := item
 		w, err := NewFilesystemWatcher(ctx, item)
 		if err != nil {
 			return nil, err
@@ -107,6 +110,7 @@ func (svc *serviceImpl) Watchers() []Watcher {
 
 	var ww = []Watcher{}
 	for _, item := range svc.watchers {
+		item := item
 		ww = append(ww, item)
 	}
 
