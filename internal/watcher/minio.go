@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/url"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws/credentials"
@@ -117,7 +118,12 @@ func (w *minioWatcher) event(blob string) (*BlobEvent, error) {
 		return nil, fmt.Errorf("error processing item received from Redis list: empty event list")
 	}
 
-	return NewBlobEventWithBucket(w, set.Event[0].S3.Bucket.Name, set.Event[0].S3.Object.Key), nil
+	key, err := url.QueryUnescape(set.Event[0].S3.Object.Key)
+	if err != nil {
+		return nil, fmt.Errorf("error processing item received from Redis list: %w", err)
+	}
+
+	return NewBlobEventWithBucket(w, set.Event[0].S3.Bucket.Name, key), nil
 }
 
 func (w *minioWatcher) OpenBucket(ctx context.Context, event *BlobEvent) (*blob.Bucket, error) {
