@@ -250,3 +250,80 @@ func TestWatcherReturnsOnValidMessage(t *testing.T) {
 
 	poll.WaitOn(t, check, poll.WithTimeout(time.Second*3))
 }
+
+func TestWatcherReturnsDecodedObjectKey(t *testing.T) {
+	m, w := newWatcher(t)
+	defer cleanup(t, m)
+
+	// Message with an encoded object key
+	m.Lpush("minio-events", `[
+	{
+		"Event": [
+			{
+				"s3": {
+					"bucket": {
+						"name": "bucket"
+					},
+					"object": {
+						"key": "list+%C3%A9mail+draft.txt"
+					}
+				}
+			}
+		],
+		"EventTime": "2020-04-29T01:00:32Z"
+	}
+]`)
+
+	check := func(t poll.LogT) poll.Result {
+		event, err := w.Watch(context.Background())
+
+		if err != nil {
+			return poll.Error(fmt.Errorf("watcher return an error unexpectedly: %w", err))
+		}
+		if event.Key != "list émail draft.txt" {
+			return poll.Error(fmt.Errorf("received unexpected object key %s", event.Key))
+		}
+
+		return poll.Success()
+	}
+
+	poll.WaitOn(t, check, poll.WithTimeout(time.Second*3))
+}
+
+func TestWatcherReturnsErrOnInvalidObjectKey(t *testing.T) {
+	m, w := newWatcher(t)
+	defer cleanup(t, m)
+
+	// Message with an invalid encoded object key
+	m.Lpush("minio-events", `[
+	{
+		"Event": [
+			{
+				"s3": {
+					"bucket": {
+						"name": "bucket"
+					},
+					"object": {
+						"key": "list+%C 3%A9mail+draft.txt"
+					}
+				}
+			}
+		],
+		"EventTime": "2020-04-29T01:00:32Z"
+	}
+]`)
+
+	check := func(t poll.LogT) poll.Result {
+		_, err := w.Watch(context.Background())
+
+		if err == nil {
+			return poll.Error(errors.New("watched did not return an error"))
+		}
+
+		// TODO: Check for a custom decode error?
+
+		return poll.Success()
+	}
+
+	poll.WaitOn(t, check, poll.WithTimeout(time.Second*3))
+}
