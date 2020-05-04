@@ -27,15 +27,13 @@ lint:
 	golangci-lint run
 
 generate:
-	cd / && env GO111MODULE=off go get -u github.com/myitcv/gobin
-	gobin github.com/GeertJohan/go.rice/rice
 	find . -name fake -type d | xargs rm -rf
 	$(GOGEN) ./internal/...
 
 migrations:
 	$(GOGEN) ./internal/db
 
-bingen: tools-gen migrations ui
+bingen: migrations ui
 
 goagen:
 	goa gen github.com/artefactual-labs/enduro/internal/api/design -o internal/api
@@ -43,14 +41,9 @@ goagen:
 tools:
 	cd / && env GO111MODULE=off go get -u github.com/myitcv/gobin
 	gobin \
-		github.com/minio/mc \
 		github.com/golangci/golangci-lint/cmd/golangci-lint \
 		github.com/GeertJohan/go.rice/rice \
 		github.com/golang/mock/mockgen
-
-tools-gen:  # Install gen tools only used during builds (e.g. mockgen not included).
-	cd / && env GO111MODULE=off go get -u github.com/myitcv/gobin
-	gobin github.com/GeertJohan/go.rice/rice
 
 clean:
 	rm -rf ./build ./dist
