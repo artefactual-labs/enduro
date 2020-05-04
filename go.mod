@@ -31,7 +31,7 @@ require (
 	github.com/oklog/run v1.1.0
 	github.com/pelletier/go-toml v1.6.0 // indirect
 	github.com/pierrec/lz4 v2.4.1+incompatible // indirect
-	github.com/prometheus/client_golang v1.5.1
+	github.com/prometheus/client_golang v1.6.0
 	github.com/prometheus/procfs v0.0.11 // indirect
 	github.com/radovskyb/watcher v1.0.7
 	github.com/spf13/afero v1.2.2
