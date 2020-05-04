@@ -12,7 +12,7 @@ produces:
 - application/xml
 - application/gob
 paths:
-  /collection:
+  /collection/:
     get:
       tags:
       - collection
@@ -332,7 +332,7 @@ paths:
             $ref: '#/definitions/CollectionBulkNotAvailableResponseBody'
       schemes:
       - http
-  /pipeline:
+  /pipeline/:
     get:
       tags:
       - pipeline
