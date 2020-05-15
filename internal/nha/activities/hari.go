@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"encoding/xml"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -70,7 +71,7 @@ func (a UpdateHARIActivity) Execute(ctx context.Context, params *UpdateHARIActiv
 		return wferrors.NonRetryableError(fmt.Errorf("error reading AVLXML file: not found"))
 	}
 
-	blob, err := ioutil.ReadFile(path)
+	blob, err := a.slimDown(path)
 	if err != nil {
 		return wferrors.NonRetryableError(fmt.Errorf("error reading AVLXML file: %v", err))
 	}
@@ -130,6 +131,32 @@ func (a UpdateHARIActivity) avlxml(path string, kind nha.TransferType) string {
 		filepath.Join(path, nhaTypeLower, "journal/avlxml.xml"),
 		filepath.Join(path, nhaTypeLower, "Journal/avlxml.xml"),
 	})
+}
+
+// slimDown returns a trimmed version of the AVLXML document. This is our
+// first go focusing on meeting functional requirements. For large documents,
+// we could do much better by implementing a stream decoder that uses the
+// token iterator to avoid memory allocation when unnecessary.
+func (a UpdateHARIActivity) slimDown(path string) ([]byte, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, fmt.Errorf("error opening XML: %v", err)
+	}
+
+	doc := avlxml{}
+	dec := xml.NewDecoder(f)
+	if err := dec.Decode(&doc); err != nil {
+		return nil, fmt.Errorf("error decoding XML: %v", err)
+	}
+
+	blob, err := xml.Marshal(doc)
+	if err != nil {
+		return nil, fmt.Errorf("error encoding XML: %v", err)
+	}
+
+	blob = []byte(`<?xml version="1.0" encoding="UTF-8"?>` + "\n" + string(blob))
+
+	return blob, nil
 }
 
 // url returns the HARI URL of the API endpoint for AVLXML submission.
@@ -238,4 +265,37 @@ func (t avlRequestTime) MarshalJSON() ([]byte, error) {
 	const format = "2006-01-02T15:04:05-07:00"
 	var s = fmt.Sprintf("\"%s\"", t.Time.Format(format))
 	return []byte(s), nil
+}
+
+// avlxml is the trimmed version of AVLXML, not including `pasientjournal`.
+// Schemas here: https://github.com/arkivverket/schemas/tree/master/AVLXML/.
+type avlxml struct {
+	XMLName                  xml.Name
+	XSI                      XmlnsAttr `xml:"xsi,attr"`
+	SchemaLocation           XsiAttr   `xml:"schemaLocation,attr"`
+	Avlxmlversjon            string    `xml:"avlxmlversjon"`
+	Avleveringsidentifikator string    `xml:"avleveringsidentifikator"`
+	Avleveringsbeskrivelse   string    `xml:"avleveringsbeskrivelse"`
+	Arkivskaper              string    `xml:"arkivskaper"`
+	Avtale                   struct {
+		InnerXML string `xml:",innerxml"`
+	} `xml:"avtale"`
+}
+
+type XmlnsAttr string
+
+func (a XmlnsAttr) MarshalXMLAttr(n xml.Name) (xml.Attr, error) {
+	return xml.Attr{
+		Name:  xml.Name{Local: "xmlns:" + n.Local},
+		Value: string(a),
+	}, nil
+}
+
+type XsiAttr string
+
+func (a XsiAttr) MarshalXMLAttr(n xml.Name) (xml.Attr, error) {
+	return xml.Attr{
+		Name:  xml.Name{Local: "xsi:" + n.Local},
+		Value: string(a),
+	}, nil
 }

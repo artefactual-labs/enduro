@@ -10,17 +10,16 @@ import (
 	"testing"
 	"time"
 
-	logrt "github.com/go-logr/logr/testing"
-	"github.com/golang/mock/gomock"
-	"gotest.tools/v3/assert"
-	"gotest.tools/v3/fs"
-
 	collectionfake "github.com/artefactual-labs/enduro/internal/collection/fake"
 	"github.com/artefactual-labs/enduro/internal/nha"
 	"github.com/artefactual-labs/enduro/internal/pipeline"
 	"github.com/artefactual-labs/enduro/internal/testutil"
 	watcherfake "github.com/artefactual-labs/enduro/internal/watcher/fake"
 	"github.com/artefactual-labs/enduro/internal/workflow/manager"
+	logrt "github.com/go-logr/logr/testing"
+	"github.com/golang/mock/gomock"
+	"gotest.tools/v3/assert"
+	"gotest.tools/v3/fs"
 )
 
 type serverResponse struct {
@@ -33,6 +32,9 @@ func TestHARIActivity(t *testing.T) {
 
 	// Tweak the client so we don't have to wait for too long.
 	hariClient.Timeout = time.Second * 1
+
+	var emptyavlxml = []byte(`<?xml version="1.0" encoding="UTF-8"?>
+<avlxml xmlns:xsi="" xsi:schemaLocation=""><avlxmlversjon></avlxmlversjon><avleveringsidentifikator></avleveringsidentifikator><avleveringsbeskrivelse></avleveringsbeskrivelse><arkivskaper></arkivskaper><avtale></avtale></avlxml>`)
 
 	tests := map[string]struct {
 		// Activity parameters.
@@ -68,7 +70,8 @@ func TestHARIActivity(t *testing.T) {
 			hariConfig: map[string]interface{}{},
 			dirOpts: []fs.PathOp{
 				fs.WithDir("DPJ/journal"),
-				fs.WithFile("DPJ/journal/avlxml.xml", "<xml/>"),
+				// XML generated is a trimmed-down version, e.g. `pasientjournal` not included.
+				fs.WithFile("DPJ/journal/avlxml.xml", "<avlxml><pasientjournal>12345</pasientjournal></avlxml>"),
 				fs.WithDir("metadata"),
 				fs.WithFile("metadata/identifiers.json", `[{
 					"file": "objects/DPJ/aFoobar.jpg",
@@ -93,7 +96,7 @@ func TestHARIActivity(t *testing.T) {
 				Timestamp: avlRequestTime{time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)},
 				AIPID:     "1db240cc-3cea-4e55-903c-6280562e1866",
 				Parent:    "12345",
-				XML:       []byte(`<xml/>`),
+				XML:       emptyavlxml,
 			},
 		},
 		"Receipt is delivered successfully (EPJ)": {
@@ -109,7 +112,7 @@ func TestHARIActivity(t *testing.T) {
 			hariConfig: map[string]interface{}{},
 			dirOpts: []fs.PathOp{
 				fs.WithDir("EPJ/journal"),
-				fs.WithFile("EPJ/journal/avlxml.xml", "<xml/>"),
+				fs.WithFile("EPJ/journal/avlxml.xml", "<avlxml/>"),
 				fs.WithDir("metadata"),
 				fs.WithFile("metadata/identifiers.json", `[{
 					"file": "objects/EPJ/journal/avlxml.xml",
@@ -125,7 +128,7 @@ func TestHARIActivity(t *testing.T) {
 				Timestamp: avlRequestTime{time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)},
 				AIPID:     "1db240cc-3cea-4e55-903c-6280562e1866",
 				Parent:    "12345",
-				XML:       []byte(`<xml/>`),
+				XML:       emptyavlxml,
 			},
 		},
 		"Receipt is delivered successfully (AVLXML)": {
@@ -141,14 +144,14 @@ func TestHARIActivity(t *testing.T) {
 			hariConfig: map[string]interface{}{},
 			dirOpts: []fs.PathOp{
 				fs.WithDir("AVLXML/objekter"),
-				fs.WithFile("AVLXML/objekter/avlxml-2.16.578.1.39.100.11.9876.4-20191104.xml", "<xml/>"),
+				fs.WithFile("AVLXML/objekter/avlxml-2.16.578.1.39.100.11.9876.4-20191104.xml", "<avlxml/>"),
 			},
 			wantReceipt: &avlRequest{
 				Message:   "AVLXML was processed by Archivematica pipeline zr-fig-pipe-001",
 				Type:      "avlxml",
 				Timestamp: avlRequestTime{time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)},
 				AIPID:     "1db240cc-3cea-4e55-903c-6280562e1866",
-				XML:       []byte(`<xml/>`),
+				XML:       emptyavlxml,
 			},
 		},
 		"Receipt is delivered successfully (AVLXML alt.)": {
@@ -164,14 +167,14 @@ func TestHARIActivity(t *testing.T) {
 			hariConfig: map[string]interface{}{},
 			dirOpts: []fs.PathOp{
 				fs.WithDir("AVLXML/objekter"),
-				fs.WithFile("AVLXML/objekter/avlxml.xml", "<xml/>"),
+				fs.WithFile("AVLXML/objekter/avlxml.xml", "<avlxml/>"),
 			},
 			wantReceipt: &avlRequest{
 				Message:   "AVLXML was processed by Archivematica pipeline zr-fig-pipe-001",
 				Type:      "avlxml",
 				Timestamp: avlRequestTime{time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)},
 				AIPID:     "1db240cc-3cea-4e55-903c-6280562e1866",
-				XML:       []byte(`<xml/>`),
+				XML:       emptyavlxml,
 			},
 		},
 		"Receipt is delivered successfully (OTHER)": {
@@ -187,7 +190,7 @@ func TestHARIActivity(t *testing.T) {
 			hariConfig: map[string]interface{}{},
 			dirOpts: []fs.PathOp{
 				fs.WithDir("OTHER/journal"),
-				fs.WithFile("OTHER/journal/avlxml.xml", "<xml/>"),
+				fs.WithFile("OTHER/journal/avlxml.xml", "<avlxml/>"),
 				fs.WithDir("metadata"),
 				fs.WithFile("metadata/identifiers.json", `[{
 					"file": "objects/OTHER/journal/avlxml.xml",
@@ -203,7 +206,7 @@ func TestHARIActivity(t *testing.T) {
 				Timestamp: avlRequestTime{time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)},
 				AIPID:     "1db240cc-3cea-4e55-903c-6280562e1866",
 				Parent:    "12345",
-				XML:       []byte(`<xml/>`),
+				XML:       emptyavlxml,
 			},
 		},
 		"Capital letter in journal directory is reached": {
@@ -219,7 +222,7 @@ func TestHARIActivity(t *testing.T) {
 			hariConfig: map[string]interface{}{},
 			dirOpts: []fs.PathOp{
 				fs.WithDir("DPJ/Journal"),
-				fs.WithFile("DPJ/Journal/avlxml.xml", "<xml/>"),
+				fs.WithFile("DPJ/Journal/avlxml.xml", "<avlxml/>"),
 				fs.WithDir("metadata"),
 				fs.WithFile("metadata/identifiers.json", `[{
 					"file": "objects/DPJ/Journal/avlxml.xml",
@@ -235,7 +238,7 @@ func TestHARIActivity(t *testing.T) {
 				Timestamp: avlRequestTime{time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)},
 				AIPID:     "1db240cc-3cea-4e55-903c-6280562e1866",
 				Parent:    "12345",
-				XML:       []byte(`<xml/>`),
+				XML:       emptyavlxml,
 			},
 		},
 		"Lowercase kind attribute is handled successfully": {
@@ -251,7 +254,7 @@ func TestHARIActivity(t *testing.T) {
 			hariConfig: map[string]interface{}{},
 			dirOpts: []fs.PathOp{
 				fs.WithDir("DPJ/journal"),
-				fs.WithFile("DPJ/journal/avlxml.xml", "<xml/>"),
+				fs.WithFile("DPJ/journal/avlxml.xml", "<avlxml/>"),
 				fs.WithDir("metadata"),
 				fs.WithFile("metadata/identifiers.json", `[{
 					"file": "objects/DPJ/journal/avlxml.xml",
@@ -267,7 +270,7 @@ func TestHARIActivity(t *testing.T) {
 				Timestamp: avlRequestTime{time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)},
 				AIPID:     "1db240cc-3cea-4e55-903c-6280562e1866",
 				Parent:    "12345",
-				XML:       []byte(`<xml/>`),
+				XML:       emptyavlxml,
 			},
 		},
 		"Mock option is honoured": {
@@ -283,7 +286,7 @@ func TestHARIActivity(t *testing.T) {
 			hariConfig: map[string]interface{}{"mock": true},
 			dirOpts: []fs.PathOp{
 				fs.WithDir("DPJ/journal"),
-				fs.WithFile("DPJ/journal/avlxml.xml", "<xml/>"),
+				fs.WithFile("DPJ/journal/avlxml.xml", "<avlxml/>"),
 				fs.WithDir("metadata"),
 				fs.WithFile("metadata/identifiers.json", `[{
 					"file": "objects/DPJ/journal/avlxml.xml",
@@ -307,7 +310,7 @@ func TestHARIActivity(t *testing.T) {
 			hariConfig: map[string]interface{}{},
 			dirOpts: []fs.PathOp{
 				fs.WithDir("DPJ/journal"),
-				fs.WithFile("DPJ/journal/avlxml.xml", "<xml/>"),
+				fs.WithFile("DPJ/journal/avlxml.xml", "<avlxml/>"),
 			},
 			wantErr: testutil.ActivityError{
 				NRE: true,
@@ -326,7 +329,7 @@ func TestHARIActivity(t *testing.T) {
 			hariConfig: map[string]interface{}{},
 			dirOpts: []fs.PathOp{
 				fs.WithDir("DPJ/journal"),
-				fs.WithFile("DPJ/journal/avlxml.xml", "<xml/>"),
+				fs.WithFile("DPJ/journal/avlxml.xml", "<avlxml/>"),
 				fs.WithDir("metadata"),
 				fs.WithFile("metadata/identifiers.json", `[{
 					"file": "objects/DPJ/journal/avlxml.xml",
@@ -354,7 +357,7 @@ func TestHARIActivity(t *testing.T) {
 			hariConfig: map[string]interface{}{},
 			dirOpts: []fs.PathOp{
 				fs.WithDir("DPJ/journal"),
-				fs.WithFile("DPJ/journal/avlxml.xml", "<xml/>"),
+				fs.WithFile("DPJ/journal/avlxml.xml", "<avlxml/>"),
 				fs.WithDir("metadata"),
 				fs.WithFile("metadata/identifiers.json", `[{
 					"file": "objects/DPJ/journal/avlxml.xml",
@@ -371,7 +374,7 @@ func TestHARIActivity(t *testing.T) {
 				Timestamp: avlRequestTime{time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)},
 				AIPID:     "1db240cc-3cea-4e55-903c-6280562e1866",
 				Parent:    "12345",
-				XML:       []byte(`<xml/>`),
+				XML:       emptyavlxml,
 			},
 			wantErr: testutil.ActivityError{
 				Message: "error sending request: (unexpected response status: 500 Internal Server Error) - Backend server not available, try again later.\n",
@@ -390,7 +393,7 @@ func TestHARIActivity(t *testing.T) {
 			hariConfig: map[string]interface{}{"baseURL": "http://192.168.1.50:12345"},
 			dirOpts: []fs.PathOp{
 				fs.WithDir("DPJ/journal"),
-				fs.WithFile("DPJ/journal/_____other_name_____.xml", "<xml/>"),
+				fs.WithFile("DPJ/journal/_____other_name_____.xml", "<avlxml/>"),
 			},
 			wantErr: testutil.ActivityError{
 				Message: "error reading AVLXML file: not found",
@@ -409,7 +412,7 @@ func TestHARIActivity(t *testing.T) {
 			hariConfig: map[string]interface{}{"baseURL": string([]byte{0x7f})},
 			dirOpts: []fs.PathOp{
 				fs.WithDir("DPJ/journal"),
-				fs.WithFile("DPJ/journal/avlxml.xml", "<xml/>"),
+				fs.WithFile("DPJ/journal/avlxml.xml", "<avlxml/>"),
 			},
 			wantErr: testutil.ActivityError{
 				NRE: true,
