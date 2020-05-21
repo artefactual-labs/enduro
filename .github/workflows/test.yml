@@ -11,13 +11,7 @@ jobs:
         - 1.14.x
         platform:
         - ubuntu-latest
-        - windows-latest
-        experimental: [false]
-        include:
-        - platform: windows-latest
-          experimental: true
     runs-on: ${{ matrix.platform }}
-    continue-on-error: ${{ matrix.experimental }}
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
