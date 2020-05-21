@@ -10,10 +10,10 @@ The release process is automated via GitHub Actions.\
 See [`release.yml`][release-workflow] for more - we plan to develop it further.
 
 The artifacts associated with a release are automatically published after the
-git tag is submitted to the repository. For example:
+git tag is submitted to the repository. We use annotated tags. For example:
 
-    git tag v0.1.0-alpha.2
-    git push --tags
+    git tag -a "v0.20.0" -m "Enduro v0.20.0"
+    git push --follow-tags
 
 The `release` workflow is started as soon as the tag makes it to GitHub. The
 artifacts will start building right away and they will appear in the
