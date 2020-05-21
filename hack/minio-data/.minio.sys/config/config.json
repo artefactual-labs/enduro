@@ -79,11 +79,11 @@
     "_": [
       {
         "key": "access_key",
-        "value": "36J9X8EZI4KEV1G7EHXA"
+        "value": "minio"
       },
       {
         "key": "secret_key",
-        "value": "ECk2uqOoNqvtJIMQ3WYugvmNPL_-zm3WcRqP5vUM"
+        "value": "minio123"
       }
     ]
   },
