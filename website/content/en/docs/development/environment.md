@@ -52,6 +52,11 @@ We're ready to run our first build:
 
     make
 
+With Enduro running in the background, you should be able to access the web
+interface via http://127.0.0.1:9000/ or connect to the API, e.g.:
+
+    curl -v "127.0.0.1:9000/collection/"
+
 ## Set up MinIO for object storage
 
 MinIO is one of the services installed automatically with Docker Compose. You
@@ -113,7 +118,7 @@ we provide a couple of shortcuts that use our custom build directory and flags:
 
 If you are looking for a source-code editor, Visual Studio Code has great Go
 support. It uses the official language server, [gopls][gopls], which is it not
-stable yet - it is recommendable to read their docs and keep it up to date. It
+stable yet - it is recommendable to read their docs and keep it up to date.
 
 Other useful commands are `make lint` and `make test`. This project uses
 GolangCI-Lint, an aggregator of many linters. It is installed with `make tools`.
