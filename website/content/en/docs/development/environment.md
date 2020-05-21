@@ -14,38 +14,32 @@ dependencies as Docker containers.
 But for Enduro itself, we suggest to build it and run it locally because that
 makes thing much simpler during development.
 
-There are two main dependencies: [Go][go] and [Docker Compose][docker-compose].
-Follow the links if you want to know how to install them. Use Go 1.13 or newer.
+## Development dependencies
 
-[Yarn][yarn] is also needed to build the web interface. You can
-install it in Ubuntu like this:
+There are some dependencies that need to be installed:
 
-```
-curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
-sudo apt-get install -y nodejs
-curl -sL https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
-echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
-sudo apt-get update && sudo apt-get install yarn
-```
+* [Go][go],
+* [Docker Compose][docker-compose],
+* [Yarn][yarn], and
+* [GNU Make][make]
 
-Install `make` and `gcc` in your system and then run `make tools` to
-install some other local dependencies that you are going to need.
+## First steps
 
 Spin up the environment with the following command:
 
-    docker-compose up -d
+    docker-compose up --detach
 
 Cadence will crash right away because the database has not been set up properly.
 Run the following command to introduce the MySQL tables needed by Cadence:
 
     make cadence-seed
 
-After a few seconds, Cadence should be up again. Since Cadence is a multitenant
+In a minute or less, Cadence should be up again. Since Cadence is a multitenant
 service, we need to create a Cadence domain for Enduro:
 
     make cadence-domain
 
-Run the following command to have our build tools ready:
+Now we need to build some Go tools we're going to use during development:
 
     make tools
 
@@ -70,13 +64,23 @@ the following credentials:
 Alternatively, you can [install][mc] the MinIO command-line client (mc) and
 register the local instance with:
 
-    mc config host add enduro http://127.0.0.1:7460 minio minio123
+    $ mc config host add enduro http://127.0.0.1:7460 minio minio123
+    Added `enduro` successfully.
 
 We provide some default configuration so MinIO publishes events via our local
 Redis instance. Validate the configuration with:
 
-    mc admin config get enduro notify_redis
-    mc event list enduro/sips
+    $ mc admin config get enduro notify_redis
+    notify_redis:1 format=access address=redis:6379 password= key=minio-events queue_dir=/tmp/events queue_limit=10000
+    notify_redis enable=off format=namespace address= key= password= queue_dir= queue_limit=0
+
+    $ mc event list enduro/sips
+    arn:minio:sqs::1:redis   s3:ObjectCreated:*   Filter:
+
+List the bucket with:
+
+    $ mc ls enduro/sips
+    [2020-04-29 13:28:32 PDT]  4.6KiB archivematica.png
 
 ## Start a transfer
 
@@ -97,7 +101,6 @@ opening the following link: http://127.0.0.1:7440/domain/enduro/workflows/.
 
 You can use the standard Go build workflows such `go build` or `go install` but
 we provide a couple of shortcuts that use our custom build directory and flags:
-
 
     # Build the binary in ./build/enduro
     make enduro-dev
@@ -128,4 +131,5 @@ You can enable it in Visual Studio Code as follows:
 [mc]: https://docs.min.io/docs/minio-client-quickstart-guide.html
 [go]: https://golang.org/doc/install
 [gopls]: https://github.com/golang/tools/blob/master/gopls/README.md
-[yarn]: https://yarnpkg.com/
+[yarn]: https://classic.yarnpkg.com/en/docs/install/
+[make]: https://www.gnu.org/software/make/
