@@ -52,8 +52,8 @@ capacity = 3
 [[hooks."hari"]]
 baseURL = "" # E.g.: "https://192.168.1.50:8080/api"
 mock = true
-disabled = false
+disabled = true
 
 [[hooks."prod"]]
 receiptPath = "./hack/production-system-interface"
-disabled = false
+disabled = true
