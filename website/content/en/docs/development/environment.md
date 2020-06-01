@@ -23,6 +23,10 @@ There are some dependencies that need to be installed:
 * [Yarn][yarn], and
 * [GNU Make][make]
 
+This guide may not work for you if you manage Docker with `sudo`, see
+[issue #118][issue-118] for more. It is possible to manage Docker as a non-root
+user with some [extra configuration steps][docker-non-root].
+
 ## First steps
 
 Spin up the environment with the following command:
@@ -138,3 +142,5 @@ You can enable it in Visual Studio Code as follows:
 [gopls]: https://github.com/golang/tools/blob/master/gopls/README.md
 [yarn]: https://classic.yarnpkg.com/en/docs/install/
 [make]: https://www.gnu.org/software/make/
+[issue-118]: https://github.com/artefactual-labs/enduro/issues/118
+[docker-non-root]: https://docs.docker.com/engine/install/linux-postinstall/#manage-docker-as-a-non-root-user
