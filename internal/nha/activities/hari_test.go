@@ -33,6 +33,7 @@ func TestHARIActivity(t *testing.T) {
 	// Tweak the client so we don't have to wait for too long.
 	hariClient.Timeout = time.Second * 1
 
+	// When slimDown is used.
 	var emptyavlxml = []byte(`<?xml version="1.0" encoding="UTF-8"?>
 <avlxml xmlns:xsi="" xsi:schemaLocation=""><avlxmlversjon></avlxmlversjon><avleveringsidentifikator></avleveringsidentifikator><avleveringsbeskrivelse></avleveringsbeskrivelse><arkivskaper></arkivskaper><avtale></avtale></avlxml>`)
 
@@ -71,7 +72,7 @@ func TestHARIActivity(t *testing.T) {
 			dirOpts: []fs.PathOp{
 				fs.WithDir("DPJ/journal"),
 				// XML generated is a trimmed-down version, e.g. `pasientjournal` not included.
-				fs.WithFile("DPJ/journal/avlxml.xml", "<avlxml><pasientjournal>12345</pasientjournal></avlxml>"),
+				fs.WithFile("DPJ/journal/avlxml.xml", "<avlxml/>"),
 				fs.WithDir("metadata"),
 				fs.WithFile("metadata/identifiers.json", `[{
 					"file": "objects/DPJ/aFoobar.jpg",
@@ -96,7 +97,7 @@ func TestHARIActivity(t *testing.T) {
 				Timestamp: avlRequestTime{time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)},
 				AIPID:     "1db240cc-3cea-4e55-903c-6280562e1866",
 				Parent:    "12345",
-				XML:       emptyavlxml,
+				XML:       []byte("<avlxml/>"),
 			},
 		},
 		"Receipt is delivered successfully (EPJ)": {
@@ -128,7 +129,7 @@ func TestHARIActivity(t *testing.T) {
 				Timestamp: avlRequestTime{time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)},
 				AIPID:     "1db240cc-3cea-4e55-903c-6280562e1866",
 				Parent:    "12345",
-				XML:       emptyavlxml,
+				XML:       []byte("<avlxml/>"),
 			},
 		},
 		"Receipt is delivered successfully (AVLXML)": {
@@ -144,7 +145,11 @@ func TestHARIActivity(t *testing.T) {
 			hariConfig: map[string]interface{}{},
 			dirOpts: []fs.PathOp{
 				fs.WithDir("AVLXML/objekter"),
-				fs.WithFile("AVLXML/objekter/avlxml-2.16.578.1.39.100.11.9876.4-20191104.xml", "<avlxml/>"),
+				fs.WithFile(
+					// Including pasientjournal since we want to test that is removed.
+					"AVLXML/objekter/avlxml-2.16.578.1.39.100.11.9876.4-20191104.xml",
+					"<avlxml><pasientjournal>12345</pasientjournal></avlxml>",
+				),
 			},
 			wantReceipt: &avlRequest{
 				Message:   "AVLXML was processed by Archivematica pipeline zr-fig-pipe-001",
@@ -167,7 +172,11 @@ func TestHARIActivity(t *testing.T) {
 			hariConfig: map[string]interface{}{},
 			dirOpts: []fs.PathOp{
 				fs.WithDir("AVLXML/objekter"),
-				fs.WithFile("AVLXML/objekter/avlxml.xml", "<avlxml/>"),
+				fs.WithFile(
+					// Including pasientjournal since we want to test that is removed.
+					"AVLXML/objekter/avlxml-2.16.578.1.39.100.11.9876.4-20191104.xml",
+					"<avlxml><pasientjournal>12345</pasientjournal></avlxml>",
+				),
 			},
 			wantReceipt: &avlRequest{
 				Message:   "AVLXML was processed by Archivematica pipeline zr-fig-pipe-001",
@@ -206,7 +215,7 @@ func TestHARIActivity(t *testing.T) {
 				Timestamp: avlRequestTime{time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)},
 				AIPID:     "1db240cc-3cea-4e55-903c-6280562e1866",
 				Parent:    "12345",
-				XML:       emptyavlxml,
+				XML:       []byte("<avlxml/>"),
 			},
 		},
 		"Capital letter in journal directory is reached": {
@@ -238,7 +247,7 @@ func TestHARIActivity(t *testing.T) {
 				Timestamp: avlRequestTime{time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)},
 				AIPID:     "1db240cc-3cea-4e55-903c-6280562e1866",
 				Parent:    "12345",
-				XML:       emptyavlxml,
+				XML:       []byte("<avlxml/>"),
 			},
 		},
 		"Lowercase kind attribute is handled successfully": {
@@ -270,7 +279,7 @@ func TestHARIActivity(t *testing.T) {
 				Timestamp: avlRequestTime{time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)},
 				AIPID:     "1db240cc-3cea-4e55-903c-6280562e1866",
 				Parent:    "12345",
-				XML:       emptyavlxml,
+				XML:       []byte("<avlxml/>"),
 			},
 		},
 		"Mock option is honoured": {
@@ -374,7 +383,7 @@ func TestHARIActivity(t *testing.T) {
 				Timestamp: avlRequestTime{time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)},
 				AIPID:     "1db240cc-3cea-4e55-903c-6280562e1866",
 				Parent:    "12345",
-				XML:       emptyavlxml,
+				XML:       []byte("<avlxml/>"),
 			},
 			wantErr: testutil.ActivityError{
 				Message: "error sending request: (unexpected response status: 500 Internal Server Error) - Backend server not available, try again later.\n",
