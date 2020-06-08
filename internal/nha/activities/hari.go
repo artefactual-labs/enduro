@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -71,9 +72,22 @@ func (a UpdateHARIActivity) Execute(ctx context.Context, params *UpdateHARIActiv
 		return wferrors.NonRetryableError(fmt.Errorf("error reading AVLXML file: not found"))
 	}
 
-	blob, err := a.slimDown(path)
+	f, err := os.Open(path)
 	if err != nil {
-		return wferrors.NonRetryableError(fmt.Errorf("error reading AVLXML file: %v", err))
+		return fmt.Errorf("error opening AVLXML file: %v", err)
+	}
+	defer f.Close()
+
+	var blob []byte
+	{
+		if params.NameInfo.Type == nha.TransferTypeAVLXML {
+			blob, err = a.slimDown(f)
+		} else {
+			blob, err = ioutil.ReadAll(f)
+		}
+		if err != nil {
+			return wferrors.NonRetryableError(fmt.Errorf("error reading AVLXML file: %v", err))
+		}
 	}
 
 	var parentID string
@@ -137,12 +151,7 @@ func (a UpdateHARIActivity) avlxml(path string, kind nha.TransferType) string {
 // first go focusing on meeting functional requirements. For large documents,
 // we could do much better by implementing a stream decoder that uses the
 // token iterator to avoid memory allocation when unnecessary.
-func (a UpdateHARIActivity) slimDown(path string) ([]byte, error) {
-	f, err := os.Open(path)
-	if err != nil {
-		return nil, fmt.Errorf("error opening XML: %v", err)
-	}
-
+func (a UpdateHARIActivity) slimDown(f io.Reader) ([]byte, error) {
 	doc := avlxml{}
 	dec := xml.NewDecoder(f)
 	if err := dec.Decode(&doc); err != nil {
