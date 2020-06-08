@@ -7,7 +7,7 @@ require (
 	github.com/alicebob/miniredis/v2 v2.11.4
 	github.com/anmitsu/go-shlex v0.0.0-20200502080107-070676123096 // indirect
 	github.com/atrox/go-migrate-rice v1.0.1
-	github.com/aws/aws-sdk-go v1.31.3
+	github.com/aws/aws-sdk-go v1.31.12
 	github.com/cenkalti/backoff/v3 v3.2.2
 	github.com/daaku/go.zipexe v1.0.1 // indirect
 	github.com/dimfeld/httptreemux/v5 v5.2.2 // indirect
@@ -16,7 +16,7 @@ require (
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/go-logr/logr v0.1.0
 	github.com/go-logr/zapr v0.1.1
-	github.com/go-redis/redis/v7 v7.3.0
+	github.com/go-redis/redis/v7 v7.4.0
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/golang-migrate/migrate/v4 v4.11.0
 	github.com/golang/mock v1.4.3
@@ -26,41 +26,43 @@ require (
 	github.com/gorilla/schema v1.1.0
 	github.com/jmoiron/sqlx v1.2.0
 	github.com/mholt/archiver v3.1.1+incompatible
-	github.com/mitchellh/mapstructure v1.3.0 // indirect
+	github.com/mitchellh/mapstructure v1.3.2 // indirect
 	github.com/nwaples/rardecode v1.1.0 // indirect
 	github.com/oklog/run v1.1.0
 	github.com/pelletier/go-toml v1.8.0 // indirect
 	github.com/pierrec/lz4 v2.5.2+incompatible // indirect
 	github.com/prometheus/client_golang v1.6.0
 	github.com/prometheus/common v0.10.0 // indirect
+	github.com/prometheus/procfs v0.1.0 // indirect
 	github.com/radovskyb/watcher v1.0.7
 	github.com/spf13/afero v1.2.2
 	github.com/spf13/cast v1.3.1 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.7.0
-	github.com/stretchr/testify v1.5.1
-	github.com/uber-go/tally v3.3.16+incompatible
-	github.com/uber/tchannel-go v1.18.0 // indirect
+	github.com/stretchr/testify v1.6.1
+	github.com/uber-go/tally v3.3.17+incompatible
+	github.com/uber/tchannel-go v1.19.0 // indirect
 	github.com/ulikunitz/xz v0.5.7 // indirect
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
-	go.uber.org/cadence v0.12.0
+	go.uber.org/cadence v0.12.1
 	go.uber.org/thriftrw v1.23.0 // indirect
 	go.uber.org/yarpc v1.46.0
 	go.uber.org/zap v1.15.0
-	goa.design/goa/v3 v3.1.2
-	goa.design/plugins/v3 v3.1.2
+	goa.design/goa/v3 v3.1.3
+	goa.design/plugins/v3 v3.1.3
 	gocloud.dev v0.19.0
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b // indirect
 	golang.org/x/mod v0.3.0 // indirect
-	golang.org/x/net v0.0.0-20200520182314-0ba52f642ac2 // indirect
+	golang.org/x/net v0.0.0-20200602114024-627f9648deb9 // indirect
 	golang.org/x/sync v0.0.0-20200317015054-43a5402ce75a
-	golang.org/x/sys v0.0.0-20200519105757-fe76b779f299 // indirect
+	golang.org/x/sys v0.0.0-20200602225109-6fdc65e7d980 // indirect
 	golang.org/x/time v0.0.0-20200416051211-89c76fbcd5d1 // indirect
-	golang.org/x/tools v0.0.0-20200521155704-91d71f6c2f04 // indirect
-	google.golang.org/genproto v0.0.0-20200521103424-e9a78aa275b7 // indirect
+	golang.org/x/tools v0.0.0-20200608163737-5123702d8024 // indirect
+	google.golang.org/genproto v0.0.0-20200608115520-7c474a2e3482 // indirect
 	google.golang.org/grpc v1.29.1 // indirect
-	gopkg.in/ini.v1 v1.56.0 // indirect
+	gopkg.in/ini.v1 v1.57.0 // indirect
+	gopkg.in/yaml.v3 v3.0.0-20200605160147-a5ece683394c // indirect
 	gotest.tools/v3 v3.0.2
 	honnef.co/go/tools v0.0.1-2020.1.4 // indirect
 )
