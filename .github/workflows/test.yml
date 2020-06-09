@@ -20,7 +20,7 @@ jobs:
       with:
         go-version: ${{ matrix.go-version }}
     - name: Test
-      run: go test -race -coverprofile=covreport -covermode=atomic -v ./...
+      run: go test -race -coverprofile=covreport -covermode=atomic -coverpkg=$(./hack/coverpkgs.sh) -v ./...
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v1
       with:
