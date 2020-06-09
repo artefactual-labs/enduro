@@ -328,6 +328,22 @@ func (w *ProcessingWorkflow) SessionHandler(sessCtx workflow.Context, attempt in
 		}
 	}
 
+	// Validate transfer.
+	{
+		if tinfo.Bundle != (activities.BundleActivityResult{}) {
+			activityOpts := workflow.WithActivityOptions(sessCtx, workflow.ActivityOptions{
+				ScheduleToStartTimeout: forever,
+				StartToCloseTimeout:    time.Minute * 5,
+			})
+			err := workflow.ExecuteActivity(activityOpts, activities.ValidateTransferActivityName, &activities.ValidateTransferActivityParams{
+				Path: tinfo.Bundle.FullPath,
+			}).Get(activityOpts, nil)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
 	// Transfer.
 	{
 		if tinfo.TransferID == "" {
