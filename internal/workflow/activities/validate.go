@@ -6,18 +6,17 @@ import (
 	"github.com/artefactual-labs/enduro/internal/validation"
 )
 
-type ValidateTransferActivity struct {
-	Config validation.Config
-}
+type ValidateTransferActivity struct{}
 
-func NewValidateTransferActivity(config validation.Config) *ValidateTransferActivity {
-	return &ValidateTransferActivity{Config: config}
+func NewValidateTransferActivity() *ValidateTransferActivity {
+	return &ValidateTransferActivity{}
 }
 
 type ValidateTransferActivityParams struct {
-	Path string
+	Config validation.Config
+	Path   string
 }
 
 func (a *ValidateTransferActivity) Execute(ctx context.Context, params *ValidateTransferActivityParams) error {
-	return validation.ValidateTransfer(a.Config, params.Path)
+	return validation.ValidateTransfer(params.Config, params.Path)
 }

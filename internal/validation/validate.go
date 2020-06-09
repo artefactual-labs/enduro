@@ -2,8 +2,8 @@ package validation
 
 import (
 	"fmt"
-	"path"
 	"os"
+	"path"
 
 	"go.uber.org/multierr"
 )
@@ -47,7 +47,7 @@ func (v ChecksumExistsValidator) Valid() error {
 }
 
 func fileExists(name string) bool {
-    stat, err := os.Stat(name)
+	stat, err := os.Stat(name)
 	if err != nil {
 		return false
 	}

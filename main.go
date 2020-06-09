@@ -192,7 +192,7 @@ func main() {
 							}
 							logger.V(1).Info("Starting new workflow", "watcher", event.WatcherName, "bucket", event.Bucket, "key", event.Key)
 							go func() {
-								if err := collection.InitProcessingWorkflow(ctx, workflowClient, event); err != nil {
+								if err := collection.InitProcessingWorkflow(ctx, workflowClient, event, config.Validation); err != nil {
 									logger.Error(err, "Error initializing processing workflow.")
 								}
 							}()
@@ -218,7 +218,7 @@ func main() {
 		cadence.RegisterActivity(activities.NewAcquirePipelineActivity(m).Execute, activities.AcquirePipelineActivityName)
 		cadence.RegisterActivity(activities.NewDownloadActivity(m).Execute, activities.DownloadActivityName)
 		cadence.RegisterActivity(activities.NewBundleActivity().Execute, activities.BundleActivityName)
-		cadence.RegisterActivity(activities.NewValidateTransferActivity(config.Validation).Execute, activities.ValidateTransferActivityName)
+		cadence.RegisterActivity(activities.NewValidateTransferActivity().Execute, activities.ValidateTransferActivityName)
 		cadence.RegisterActivity(activities.NewTransferActivity(m).Execute, activities.TransferActivityName)
 		cadence.RegisterActivity(activities.NewPollTransferActivity(m).Execute, activities.PollTransferActivityName)
 		cadence.RegisterActivity(activities.NewPollIngestActivity(m).Execute, activities.PollIngestActivityName)

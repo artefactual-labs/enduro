@@ -15,6 +15,7 @@ import (
 	"github.com/artefactual-labs/enduro/internal/nha"
 	nha_activities "github.com/artefactual-labs/enduro/internal/nha/activities"
 	"github.com/artefactual-labs/enduro/internal/pipeline"
+	"github.com/artefactual-labs/enduro/internal/validation"
 	"github.com/artefactual-labs/enduro/internal/watcher"
 	"github.com/artefactual-labs/enduro/internal/workflow/activities"
 	"github.com/artefactual-labs/enduro/internal/workflow/manager"
@@ -208,7 +209,7 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 				return fmt.Errorf("error creating session: %v", err)
 			}
 
-			sessErr = w.SessionHandler(sessCtx, attempt, tinfo, nameInfo)
+			sessErr = w.SessionHandler(sessCtx, attempt, tinfo, nameInfo, req.ValidationConfig)
 
 			// We want to retry the session if it has been canceled as a result
 			// of losing the worker but not otherwise. This scenario seems to be
@@ -283,7 +284,7 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 }
 
 // SessionHandler runs activities that belong to the same session.
-func (w *ProcessingWorkflow) SessionHandler(sessCtx workflow.Context, attempt int, tinfo *TransferInfo, nameInfo nha.NameInfo) error {
+func (w *ProcessingWorkflow) SessionHandler(sessCtx workflow.Context, attempt int, tinfo *TransferInfo, nameInfo nha.NameInfo, validationConfig validation.Config) error {
 	defer func() {
 		_ = releasePipeline(sessCtx, w.manager, tinfo.Event.PipelineName)
 		workflow.CompleteSession(sessCtx)
@@ -330,13 +331,14 @@ func (w *ProcessingWorkflow) SessionHandler(sessCtx workflow.Context, attempt in
 
 	// Validate transfer.
 	{
-		if tinfo.Bundle != (activities.BundleActivityResult{}) {
+		if validationConfig.IsEnabled() && tinfo.Bundle != (activities.BundleActivityResult{}) {
 			activityOpts := workflow.WithActivityOptions(sessCtx, workflow.ActivityOptions{
 				ScheduleToStartTimeout: forever,
 				StartToCloseTimeout:    time.Minute * 5,
 			})
 			err := workflow.ExecuteActivity(activityOpts, activities.ValidateTransferActivityName, &activities.ValidateTransferActivityParams{
-				Path: tinfo.Bundle.FullPath,
+				Config: validationConfig,
+				Path:   tinfo.Bundle.FullPath,
 			}).Get(activityOpts, nil)
 			if err != nil {
 				return err
