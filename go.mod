@@ -24,6 +24,7 @@ require (
 	github.com/google/uuid v1.1.1
 	github.com/google/wire v0.4.0 // indirect
 	github.com/gorilla/schema v1.1.0
+	github.com/hashicorp/go-multierror v1.1.0
 	github.com/jmoiron/sqlx v1.2.0
 	github.com/mholt/archiver v3.1.1+incompatible
 	github.com/mitchellh/mapstructure v1.3.2 // indirect

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	cce "github.com/artefactual-labs/enduro/internal/cadence"
+	"github.com/artefactual-labs/enduro/internal/validation"
 	"github.com/artefactual-labs/enduro/internal/watcher"
 
 	"github.com/google/uuid"
@@ -32,12 +33,15 @@ type ProcessingWorkflowRequest struct {
 	// Captured by the watcher, the event contains information about the
 	// incoming dataset.
 	Event *watcher.BlobEvent
+
+	ValidationConfig validation.Config
 }
 
-func InitProcessingWorkflow(ctx context.Context, c client.Client, event *watcher.BlobEvent) error {
+func InitProcessingWorkflow(ctx context.Context, c client.Client, event *watcher.BlobEvent, validationConfig validation.Config) error {
 	req := &ProcessingWorkflowRequest{
-		WorkflowID: fmt.Sprintf("processing-workflow-%s", uuid.New().String()),
-		Event:      event,
+		WorkflowID:       fmt.Sprintf("processing-workflow-%s", uuid.New().String()),
+		Event:            event,
+		ValidationConfig: validationConfig,
 	}
 
 	return TriggerProcessingWorkflow(ctx, c, req)
