@@ -5,8 +5,15 @@ import (
 	"os"
 	"path"
 
-	"go.uber.org/multierr"
+	"github.com/hashicorp/go-multierror"
 )
+
+var checksumFiles = [4]string{
+	"checksum.md5",
+	"checksum.sha1",
+	"checksum.sha256",
+	"checksum.sha512",
+}
 
 func ValidateTransfer(c Config, path string) error {
 	var result error
@@ -14,7 +21,7 @@ func ValidateTransfer(c Config, path string) error {
 	if c.ChecksumsCheckEnabled {
 		v := ChecksumExistsValidator{path: path}
 		if err := v.Valid(); err != nil {
-			result = multierr.Append(result, err)
+			result = multierror.Append(result, err)
 		}
 	}
 
@@ -32,12 +39,6 @@ type ChecksumExistsValidator struct {
 }
 
 func (v ChecksumExistsValidator) Valid() error {
-	checksumFiles := [4]string{
-		"checksum.md5",
-		"checksum.sha1",
-		"checksum.sha256",
-		"checksum.sha512",
-	}
 	for _, checksum := range checksumFiles {
 		if fileExists(path.Join(v.path, "metadata", checksum)) {
 			return nil
