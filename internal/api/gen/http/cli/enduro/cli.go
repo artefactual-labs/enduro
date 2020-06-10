@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"os"
 
+	batchc "github.com/artefactual-labs/enduro/internal/api/gen/http/batch/client"
 	collectionc "github.com/artefactual-labs/enduro/internal/api/gen/http/collection/client"
 	pipelinec "github.com/artefactual-labs/enduro/internal/api/gen/http/pipeline/client"
 	goahttp "goa.design/goa/v3/http"
@@ -25,15 +26,19 @@ import (
 //    command (subcommand1|subcommand2|...)
 //
 func UsageCommands() string {
-	return `collection (list|show|delete|cancel|retry|workflow|download|decide|bulk|bulk-status)
+	return `batch (submit|status)
+collection (list|show|delete|cancel|retry|workflow|download|decide|bulk|bulk-status)
 pipeline (list|show)
 `
 }
 
 // UsageExamples produces an example of a valid invocation of the CLI tool.
 func UsageExamples() string {
-	return os.Args[0] + ` collection list --name "Neque possimus et sunt." --original-id "Ex aut." --transfer-id "A129B534-C1FC-F09D-BF29-3DA5781E0ECB" --aip-id "4CCDE767-7648-444F-D09F-4B4FFE4EB36B" --pipeline-id "0C589E55-99C1-3ED8-809A-1463C91242B6" --earliest-created-time "1978-07-01T23:54:38Z" --latest-created-time "1989-06-26T13:51:36Z" --status "pending" --cursor "In cum et quia."` + "\n" +
-		os.Args[0] + ` pipeline list --name "Est ut excepturi odio."` + "\n" +
+	return os.Args[0] + ` batch submit --body '{
+      "path": "Dolor sit quia eum excepturi asperiores."
+   }'` + "\n" +
+		os.Args[0] + ` collection list --name "Et sed esse." --original-id "Vel soluta sit porro impedit voluptatibus eaque." --transfer-id "A129B534-C1FC-F09D-BF29-3DA5781E0ECB" --aip-id "4CCDE767-7648-444F-D09F-4B4FFE4EB36B" --pipeline-id "0C589E55-99C1-3ED8-809A-1463C91242B6" --earliest-created-time "2001-02-11T20:51:40Z" --latest-created-time "1998-12-19T01:21:09Z" --status "unknown" --cursor "Eius ut enim."` + "\n" +
+		os.Args[0] + ` pipeline list --name "Sint et quae quisquam."` + "\n" +
 		""
 }
 
@@ -47,6 +52,13 @@ func ParseEndpoint(
 	restore bool,
 ) (goa.Endpoint, interface{}, error) {
 	var (
+		batchFlags = flag.NewFlagSet("batch", flag.ContinueOnError)
+
+		batchSubmitFlags    = flag.NewFlagSet("submit", flag.ExitOnError)
+		batchSubmitBodyFlag = batchSubmitFlags.String("body", "REQUIRED", "")
+
+		batchStatusFlags = flag.NewFlagSet("status", flag.ExitOnError)
+
 		collectionFlags = flag.NewFlagSet("collection", flag.ContinueOnError)
 
 		collectionListFlags                   = flag.NewFlagSet("list", flag.ExitOnError)
@@ -95,6 +107,10 @@ func ParseEndpoint(
 		pipelineShowFlags  = flag.NewFlagSet("show", flag.ExitOnError)
 		pipelineShowIDFlag = pipelineShowFlags.String("id", "REQUIRED", "Identifier of pipeline to show")
 	)
+	batchFlags.Usage = batchUsage
+	batchSubmitFlags.Usage = batchSubmitUsage
+	batchStatusFlags.Usage = batchStatusUsage
+
 	collectionFlags.Usage = collectionUsage
 	collectionListFlags.Usage = collectionListUsage
 	collectionShowFlags.Usage = collectionShowUsage
@@ -126,6 +142,8 @@ func ParseEndpoint(
 	{
 		svcn = flag.Arg(0)
 		switch svcn {
+		case "batch":
+			svcf = batchFlags
 		case "collection":
 			svcf = collectionFlags
 		case "pipeline":
@@ -145,6 +163,16 @@ func ParseEndpoint(
 	{
 		epn = svcf.Arg(0)
 		switch svcn {
+		case "batch":
+			switch epn {
+			case "submit":
+				epf = batchSubmitFlags
+
+			case "status":
+				epf = batchStatusFlags
+
+			}
+
 		case "collection":
 			switch epn {
 			case "list":
@@ -209,6 +237,16 @@ func ParseEndpoint(
 	)
 	{
 		switch svcn {
+		case "batch":
+			c := batchc.NewClient(scheme, host, doer, enc, dec, restore)
+			switch epn {
+			case "submit":
+				endpoint = c.Submit()
+				data, err = batchc.BuildSubmitPayload(*batchSubmitBodyFlag)
+			case "status":
+				endpoint = c.Status()
+				data = nil
+			}
 		case "collection":
 			c := collectionc.NewClient(scheme, host, doer, enc, dec, restore)
 			switch epn {
@@ -262,6 +300,43 @@ func ParseEndpoint(
 	return endpoint, data, nil
 }
 
+// batchUsage displays the usage of the batch command and its subcommands.
+func batchUsage() {
+	fmt.Fprintf(os.Stderr, `The batch service manages batches of collections.
+Usage:
+    %s [globalflags] batch COMMAND [flags]
+
+COMMAND:
+    submit: Submit a new batch
+    status: Retrieve status of current batch operation.
+
+Additional help:
+    %s batch COMMAND --help
+`, os.Args[0], os.Args[0])
+}
+func batchSubmitUsage() {
+	fmt.Fprintf(os.Stderr, `%s [flags] batch submit -body JSON
+
+Submit a new batch
+    -body JSON: 
+
+Example:
+    `+os.Args[0]+` batch submit --body '{
+      "path": "Dolor sit quia eum excepturi asperiores."
+   }'
+`, os.Args[0])
+}
+
+func batchStatusUsage() {
+	fmt.Fprintf(os.Stderr, `%s [flags] batch status
+
+Retrieve status of current batch operation.
+
+Example:
+    `+os.Args[0]+` batch status
+`, os.Args[0])
+}
+
 // collectionUsage displays the usage of the collection command and its
 // subcommands.
 func collectionUsage() {
@@ -300,7 +375,7 @@ List all stored collections
     -cursor STRING: 
 
 Example:
-    `+os.Args[0]+` collection list --name "Neque possimus et sunt." --original-id "Ex aut." --transfer-id "A129B534-C1FC-F09D-BF29-3DA5781E0ECB" --aip-id "4CCDE767-7648-444F-D09F-4B4FFE4EB36B" --pipeline-id "0C589E55-99C1-3ED8-809A-1463C91242B6" --earliest-created-time "1978-07-01T23:54:38Z" --latest-created-time "1989-06-26T13:51:36Z" --status "pending" --cursor "In cum et quia."
+    `+os.Args[0]+` collection list --name "Et sed esse." --original-id "Vel soluta sit porro impedit voluptatibus eaque." --transfer-id "A129B534-C1FC-F09D-BF29-3DA5781E0ECB" --aip-id "4CCDE767-7648-444F-D09F-4B4FFE4EB36B" --pipeline-id "0C589E55-99C1-3ED8-809A-1463C91242B6" --earliest-created-time "2001-02-11T20:51:40Z" --latest-created-time "1998-12-19T01:21:09Z" --status "unknown" --cursor "Eius ut enim."
 `, os.Args[0])
 }
 
@@ -311,7 +386,7 @@ Show collection by ID
     -id UINT: Identifier of collection to show
 
 Example:
-    `+os.Args[0]+` collection show --id 8051351490510170373
+    `+os.Args[0]+` collection show --id 2638588001612978071
 `, os.Args[0])
 }
 
@@ -322,7 +397,7 @@ Delete collection by ID
     -id UINT: Identifier of collection to delete
 
 Example:
-    `+os.Args[0]+` collection delete --id 2802088767362527743
+    `+os.Args[0]+` collection delete --id 6342605530892906982
 `, os.Args[0])
 }
 
@@ -333,7 +408,7 @@ Cancel collection processing by ID
     -id UINT: Identifier of collection to remove
 
 Example:
-    `+os.Args[0]+` collection cancel --id 9153290315792347469
+    `+os.Args[0]+` collection cancel --id 8239678287528605060
 `, os.Args[0])
 }
 
@@ -344,7 +419,7 @@ Retry collection processing by ID
     -id UINT: Identifier of collection to retry
 
 Example:
-    `+os.Args[0]+` collection retry --id 16485831467066386148
+    `+os.Args[0]+` collection retry --id 10916720185593198763
 `, os.Args[0])
 }
 
@@ -355,7 +430,7 @@ Retrieve workflow status by ID
     -id UINT: Identifier of collection to look up
 
 Example:
-    `+os.Args[0]+` collection workflow --id 6600600312516747591
+    `+os.Args[0]+` collection workflow --id 11768774466193469344
 `, os.Args[0])
 }
 
@@ -366,7 +441,7 @@ Download collection by ID
     -id UINT: Identifier of collection to look up
 
 Example:
-    `+os.Args[0]+` collection download --id 8609244776313237956
+    `+os.Args[0]+` collection download --id 7492766997664921023
 `, os.Args[0])
 }
 
@@ -379,8 +454,8 @@ Make decision for a pending collection by ID
 
 Example:
     `+os.Args[0]+` collection decide --body '{
-      "option": "Recusandae laudantium quidem consequatur ducimus excepturi perferendis."
-   }' --id 14968097700807042938
+      "option": "Dolor eos qui adipisci."
+   }' --id 2451772761998767668
 `, os.Args[0])
 }
 
@@ -393,8 +468,8 @@ Bulk operations (retry, cancel...).
 Example:
     `+os.Args[0]+` collection bulk --body '{
       "operation": "cancel",
-      "size": 4963086957530573892,
-      "status": "unknown"
+      "size": 2751979900145192295,
+      "status": "done"
    }'
 `, os.Args[0])
 }
@@ -430,7 +505,7 @@ List all known pipelines
     -name STRING: 
 
 Example:
-    `+os.Args[0]+` pipeline list --name "Est ut excepturi odio."
+    `+os.Args[0]+` pipeline list --name "Sint et quae quisquam."
 `, os.Args[0])
 }
 

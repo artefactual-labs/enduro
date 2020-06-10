@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/artefactual-labs/enduro/internal/api"
+	"github.com/artefactual-labs/enduro/internal/batch"
 	"github.com/artefactual-labs/enduro/internal/cadence"
 	"github.com/artefactual-labs/enduro/internal/collection"
 	"github.com/artefactual-labs/enduro/internal/db"
@@ -136,6 +137,12 @@ func main() {
 		pipesvc = pipeline.NewService(logger.WithName("pipeline"), pipelineRegistry)
 	}
 
+	// Set up the batch service.
+	var batchsvc batch.Service
+	{
+		batchsvc = batch.NewService(logger.WithName("batch"), workflowClient)
+	}
+
 	// Set up the collection service.
 	var colsvc collection.Service
 	{
@@ -160,7 +167,7 @@ func main() {
 
 		g.Add(
 			func() error {
-				srv = api.HTTPServer(logger, &config.API, pipesvc, colsvc)
+				srv = api.HTTPServer(logger, &config.API, pipesvc, batchsvc, colsvc)
 				return srv.ListenAndServe()
 			},
 			func(err error) {

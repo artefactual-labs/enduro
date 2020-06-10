@@ -85,7 +85,7 @@ var (
 	// EnduroStoredCollectionMap is a map of attribute names in result type
 	// EnduroStoredCollection indexed by view name.
 	EnduroStoredCollectionMap = map[string][]string{
-		"default": []string{
+		"default": {
 			"id",
 			"name",
 			"status",
@@ -103,7 +103,7 @@ var (
 	// EnduroCollectionWorkflowStatusMap is a map of attribute names in result type
 	// EnduroCollectionWorkflowStatus indexed by view name.
 	EnduroCollectionWorkflowStatusMap = map[string][]string{
-		"default": []string{
+		"default": {
 			"status",
 			"history",
 		},
@@ -111,7 +111,7 @@ var (
 	// EnduroCollectionWorkflowHistoryCollectionMap is a map of attribute names in
 	// result type EnduroCollectionWorkflowHistoryCollection indexed by view name.
 	EnduroCollectionWorkflowHistoryCollectionMap = map[string][]string{
-		"default": []string{
+		"default": {
 			"id",
 			"type",
 			"details",
@@ -120,7 +120,7 @@ var (
 	// EnduroCollectionWorkflowHistoryMap is a map of attribute names in result
 	// type EnduroCollectionWorkflowHistory indexed by view name.
 	EnduroCollectionWorkflowHistoryMap = map[string][]string{
-		"default": []string{
+		"default": {
 			"id",
 			"type",
 			"details",
