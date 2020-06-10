@@ -19,8 +19,8 @@ const (
 
 	// Maximum duration of the processing workflow. Cadence does not support
 	// workflows with infinite duration for now, but high values are fine.
-	// We consider a week more than enough.
-	ProcessingWorkflowStartToCloseTimeout = time.Hour * 24 * 7
+	// Ten years is the timeout we also use in activities (policies.go).
+	ProcessingWorkflowStartToCloseTimeout = time.Hour * 24 * 365 * 10
 )
 
 type ProcessingWorkflowRequest struct {
