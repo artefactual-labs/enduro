@@ -4,7 +4,7 @@ go 1.14
 
 require (
 	github.com/GeertJohan/go.rice v1.0.1-0.20190430230923-c880e3cd4dd8
-	github.com/alicebob/miniredis/v2 v2.11.4
+	github.com/alicebob/miniredis/v2 v2.12.0
 	github.com/anmitsu/go-shlex v0.0.0-20200502080107-070676123096 // indirect
 	github.com/atrox/go-migrate-rice v1.0.1
 	github.com/aws/aws-sdk-go v1.31.12
