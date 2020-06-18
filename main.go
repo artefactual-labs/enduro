@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/artefactual-labs/enduro/internal/api"
+	"github.com/artefactual-labs/enduro/internal/bucket"
 	"github.com/artefactual-labs/enduro/internal/cadence"
 	"github.com/artefactual-labs/enduro/internal/collection"
 	"github.com/artefactual-labs/enduro/internal/db"
@@ -142,6 +143,16 @@ func main() {
 		colsvc = collection.NewService(logger.WithName("collection"), database, workflowClient, pipelineRegistry)
 	}
 
+	// Set up the bucket service.
+	var bsvc bucket.Service
+	{
+		bsvc, err = bucket.New(ctx, &config.Bucket)
+		if err != nil {
+			logger.Error(err, "Error setting up buckets.")
+			os.Exit(1)
+		}
+	}
+
 	// Set up the watcher service.
 	var wsvc watcher.Service
 	{
@@ -212,7 +223,7 @@ func main() {
 		// TODO: this is a temporary workaround for dependency injection until we
 		// figure out what's the depdencency tree is going to look like after POC.
 		// The share-everything pattern should be avoided.
-		m := manager.NewManager(logger, colsvc, wsvc, pipelineRegistry, config.Hooks)
+		m := manager.NewManager(logger, colsvc, wsvc, bsvc, pipelineRegistry, config.Hooks)
 
 		cadence.RegisterWorkflow(workflow.NewProcessingWorkflow(m).Execute, collection.ProcessingWorkflowName)
 		cadence.RegisterActivity(activities.NewAcquirePipelineActivity(m).Execute, activities.AcquirePipelineActivityName)
@@ -329,6 +340,7 @@ type configuration struct {
 	Watcher     watcher.Config
 	Pipeline    []pipeline.Config
 	Validation  validation.Config
+	Bucket      bucket.Config
 
 	// This is a workaround for client-specific functionality.
 	// Simple mechanism to support an arbitrary number of hooks and parameters.

@@ -14,6 +14,23 @@ debug = false
 [database]
 dsn = "enduro:enduro123@tcp(127.0.0.1:7450)/enduro"
 
+[[bucket.minio]]
+name = "sips-bucket"
+endpoint = "http://127.0.0.1:7460"
+pathStyle = true
+key = "minio"
+secret = "minio123"
+region = "us-west-1"
+bucket = "sips"
+retentionPeriod = "10s"
+stripTopLevelDir = true
+
+[[bucket.fs]]
+name = "watched-dir"
+path = "./hack/watched-dir"
+retentionPeriod = "11s"
+stripTopLevelDir = true
+
 [[watcher.minio]]
 name = "dev-minio"
 redisAddress = "redis://127.0.0.1:7470"

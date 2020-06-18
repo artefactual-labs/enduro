@@ -3,6 +3,7 @@ package manager
 import (
 	"fmt"
 
+	"github.com/artefactual-labs/enduro/internal/bucket"
 	"github.com/artefactual-labs/enduro/internal/collection"
 	"github.com/artefactual-labs/enduro/internal/pipeline"
 	"github.com/artefactual-labs/enduro/internal/watcher"
@@ -15,16 +16,18 @@ type Manager struct {
 	Logger     logr.Logger
 	Collection collection.Service
 	Watcher    watcher.Service
+	Buckets    bucket.Service
 	Pipelines  *pipeline.Registry
 	Hooks      map[string]map[string]interface{}
 }
 
 // NewManager returns a pointer to a new Manager.
-func NewManager(logger logr.Logger, colsvc collection.Service, wsvc watcher.Service, pipelines *pipeline.Registry, hooks map[string]map[string]interface{}) *Manager {
+func NewManager(logger logr.Logger, colsvc collection.Service, wsvc watcher.Service, bsvc bucket.Service, pipelines *pipeline.Registry, hooks map[string]map[string]interface{}) *Manager {
 	return &Manager{
 		Logger:     logger,
 		Collection: colsvc,
 		Watcher:    wsvc,
+		Buckets:    bsvc,
 		Pipelines:  pipelines,
 		Hooks:      hooks,
 	}
