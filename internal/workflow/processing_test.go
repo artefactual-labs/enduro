@@ -9,7 +9,6 @@ import (
 	collectionfake "github.com/artefactual-labs/enduro/internal/collection/fake"
 	nha_activities "github.com/artefactual-labs/enduro/internal/nha/activities"
 	"github.com/artefactual-labs/enduro/internal/pipeline"
-	"github.com/artefactual-labs/enduro/internal/watcher"
 	watcherfake "github.com/artefactual-labs/enduro/internal/watcher/fake"
 	"github.com/artefactual-labs/enduro/internal/workflow/manager"
 
@@ -74,16 +73,12 @@ func (s *ProcessingWorkflowTestSuite) TestParseErrorIsIgnored() {
 
 	retentionPeriod := time.Second
 	s.env.ExecuteWorkflow(s.workflow, &collection.ProcessingWorkflowRequest{
-		CollectionID: 0,
-		Event: &watcher.BlobEvent{
-			WatcherName:      "watcher",
-			PipelineName:     "pipeline",
-			RetentionPeriod:  &retentionPeriod,
-			StripTopLevelDir: true,
-			Key:              "key",
-			Bucket:           "bucket",
-		},
-		Key: "key",
+		CollectionID:     0,
+		WatcherName:      "watcher",
+		PipelineName:     "pipeline",
+		RetentionPeriod:  &retentionPeriod,
+		StripTopLevelDir: true,
+		Key:              "key",
 	})
 
 	s.True(s.env.IsWorkflowCompleted())
@@ -114,16 +109,12 @@ func (s *ProcessingWorkflowTestSuite) TestParseError() {
 
 	retentionPeriod := time.Second
 	s.env.ExecuteWorkflow(s.workflow, &collection.ProcessingWorkflowRequest{
-		CollectionID: 0,
-		Event: &watcher.BlobEvent{
-			WatcherName:      "watcher",
-			PipelineName:     "pipeline",
-			RetentionPeriod:  &retentionPeriod,
-			StripTopLevelDir: true,
-			Key:              "key",
-			Bucket:           "bucket",
-		},
-		Key: "key",
+		CollectionID:     0,
+		WatcherName:      "watcher",
+		PipelineName:     "pipeline",
+		RetentionPeriod:  &retentionPeriod,
+		StripTopLevelDir: true,
+		Key:              "key",
 	})
 
 	s.True(s.env.IsWorkflowCompleted())

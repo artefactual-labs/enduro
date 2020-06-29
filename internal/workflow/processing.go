@@ -16,7 +16,6 @@ import (
 	nha_activities "github.com/artefactual-labs/enduro/internal/nha/activities"
 	"github.com/artefactual-labs/enduro/internal/pipeline"
 	"github.com/artefactual-labs/enduro/internal/validation"
-	"github.com/artefactual-labs/enduro/internal/watcher"
 	"github.com/artefactual-labs/enduro/internal/workflow/activities"
 	"github.com/artefactual-labs/enduro/internal/workflow/manager"
 
@@ -56,11 +55,6 @@ type TransferInfo struct {
 	//
 	// It is populated via the workflow request or createPackageLocalActivity.
 	CollectionID uint
-
-	// Original watcher event.
-	//
-	// It is populated via the workflow request.
-	Event *watcher.BlobEvent
 
 	// Name of the watcher that received this blob.
 	//
@@ -129,7 +123,6 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 
 		tinfo = &TransferInfo{
 			CollectionID:     req.CollectionID,
-			Event:            req.Event,
 			WatcherName:      req.WatcherName,
 			PipelineName:     req.PipelineName,
 			RetentionPeriod:  req.RetentionPeriod,
@@ -306,7 +299,8 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 		"Workflow completed successfully!",
 		zap.Uint("collectionID", tinfo.CollectionID),
 		zap.String("pipeline", tinfo.PipelineName),
-		zap.String("event", tinfo.Event.String()),
+		zap.String("watcher", tinfo.WatcherName),
+		zap.String("key", tinfo.Key),
 		zap.String("status", status.String()),
 	)
 

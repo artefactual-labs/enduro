@@ -7,7 +7,6 @@ import (
 
 	cce "github.com/artefactual-labs/enduro/internal/cadence"
 	"github.com/artefactual-labs/enduro/internal/validation"
-	"github.com/artefactual-labs/enduro/internal/watcher"
 
 	"github.com/google/uuid"
 	"go.uber.org/cadence/client"
@@ -30,10 +29,6 @@ type ProcessingWorkflowRequest struct {
 	// an existing collection in retries.
 	CollectionID uint
 
-	// Captured by the watcher, the event contains information about the
-	// incoming dataset.
-	Event *watcher.BlobEvent
-
 	WatcherName string
 
 	PipelineName string
@@ -47,10 +42,9 @@ type ProcessingWorkflowRequest struct {
 	ValidationConfig validation.Config
 }
 
-func InitProcessingWorkflow(ctx context.Context, c client.Client, event *watcher.BlobEvent, watcherName, pipelineName string, retentionPeriod *time.Duration, stripTopLevelDir bool, key string, validationConfig validation.Config) error {
+func InitProcessingWorkflow(ctx context.Context, c client.Client, watcherName, pipelineName string, retentionPeriod *time.Duration, stripTopLevelDir bool, key string, validationConfig validation.Config) error {
 	req := &ProcessingWorkflowRequest{
 		WorkflowID:       fmt.Sprintf("processing-workflow-%s", uuid.New().String()),
-		Event:            event,
 		WatcherName:      watcherName,
 		PipelineName:     pipelineName,
 		RetentionPeriod:  retentionPeriod,
