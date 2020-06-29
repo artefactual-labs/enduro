@@ -46,7 +46,7 @@ require (
 	github.com/uber/tchannel-go v1.19.0 // indirect
 	github.com/ulikunitz/xz v0.5.7 // indirect
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
-	go.uber.org/cadence v0.12.1
+	go.uber.org/cadence v0.12.2
 	go.uber.org/thriftrw v1.23.0 // indirect
 	go.uber.org/yarpc v1.46.0
 	go.uber.org/zap v1.15.0
