@@ -83,6 +83,7 @@ func (s *ProcessingWorkflowTestSuite) TestParseErrorIsIgnored() {
 			Key:              "key",
 			Bucket:           "bucket",
 		},
+		Key: "key",
 	})
 
 	s.True(s.env.IsWorkflowCompleted())
@@ -122,6 +123,7 @@ func (s *ProcessingWorkflowTestSuite) TestParseError() {
 			Key:              "key",
 			Bucket:           "bucket",
 		},
+		Key: "key",
 	})
 
 	s.True(s.env.IsWorkflowCompleted())

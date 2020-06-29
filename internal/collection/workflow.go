@@ -40,10 +40,12 @@ type ProcessingWorkflowRequest struct {
 
 	StripTopLevelDir bool
 
+	Key string
+
 	ValidationConfig validation.Config
 }
 
-func InitProcessingWorkflow(ctx context.Context, c client.Client, event *watcher.BlobEvent, pipelineName string, retentionPeriod *time.Duration, stripTopLevelDir bool, validationConfig validation.Config) error {
+func InitProcessingWorkflow(ctx context.Context, c client.Client, event *watcher.BlobEvent, pipelineName string, retentionPeriod *time.Duration, stripTopLevelDir bool, key string, validationConfig validation.Config) error {
 	req := &ProcessingWorkflowRequest{
 		WorkflowID:       fmt.Sprintf("processing-workflow-%s", uuid.New().String()),
 		Event:            event,
@@ -51,6 +53,7 @@ func InitProcessingWorkflow(ctx context.Context, c client.Client, event *watcher
 		RetentionPeriod:  retentionPeriod,
 		StripTopLevelDir: stripTopLevelDir,
 		ValidationConfig: validationConfig,
+		Key:              key,
 	}
 
 	return TriggerProcessingWorkflow(ctx, c, req)
