@@ -56,7 +56,7 @@ func (a *BatchActivity) Execute(ctx context.Context, params BatchWorkflowInput) 
 		return wferrors.NonRetryableError(err)
 	}
 	for _, key := range keys {
-		a.batchsvc.InitProcessingWorkflow(ctx, params.Path, key, params.PipelineName)
+		_ = a.batchsvc.InitProcessingWorkflow(ctx, params.Path, key, params.PipelineName)
 	}
 	return nil
 }
