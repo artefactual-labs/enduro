@@ -239,6 +239,9 @@ func main() {
 		cadence.RegisterWorkflow(collection.BulkWorkflow, collection.BulkWorkflowName)
 		cadence.RegisterActivity(collection.NewBulkActivity(colsvc).Execute, collection.BulkActivityName)
 
+		cadence.RegisterWorkflow(batch.BatchWorkflow, batch.BatchWorkflowName)
+		cadence.RegisterActivity(batch.NewBatchActivity(batchsvc).Execute, batch.BatchActivityName)
+
 		done := make(chan struct{})
 		w, err := cadence.NewWorker(zlogger.Named("cadence-worker"), appName, config.Cadence)
 		if err != nil {

@@ -2,11 +2,19 @@ package batch
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"strings"
+	"time"
 
 	goabatch "github.com/artefactual-labs/enduro/internal/api/gen/batch"
+	"github.com/artefactual-labs/enduro/internal/cadence"
 	"github.com/go-logr/logr"
+	"go.uber.org/cadence/.gen/go/shared"
 	cadenceclient "go.uber.org/cadence/client"
 )
+
+var ErrBatchStatusUnavailable = errors.New("batch status unavailable")
 
 //go:generate mockgen  -destination=./fake/mock_batch.go -package=fake github.com/artefactual-labs/enduro/internal/batch Service
 
@@ -30,16 +38,64 @@ func NewService(logger logr.Logger, cc cadenceclient.Client) *batchImpl {
 }
 
 func (s *batchImpl) Submit(ctx context.Context, payload *goabatch.SubmitPayload) (*goabatch.BatchResult, error) {
-	// business logic
-	// - implicit service dependencies, e.g. s.cc, s.logger...
-	// - inputs (payload)
-	// - outputs (*goabatch.BatchResult)
-	// - errors (error), see e.g. `goacollection.MakeNotAvailable`
-	return nil, nil
+	var pipelineName string
+	if payload.Pipeline != nil {
+		pipelineName = *payload.Pipeline
+	}
+	input := BatchWorkflowInput{
+		Path:         payload.Path,
+		PipelineName: pipelineName,
+	}
+	opts := cadenceclient.StartWorkflowOptions{
+		ID:                              BatchWorkflowID,
+		WorkflowIDReusePolicy:           cadenceclient.WorkflowIDReusePolicyAllowDuplicate,
+		TaskList:                        cadence.GlobalTaskListName,
+		DecisionTaskStartToCloseTimeout: time.Second * 10,
+		ExecutionStartToCloseTimeout:    time.Hour,
+	}
+	exec, err := s.cc.StartWorkflow(ctx, opts, BatchWorkflowName, input)
+	if err != nil {
+		switch err := err.(type) {
+		case *shared.WorkflowExecutionAlreadyStartedError:
+			return nil, goabatch.MakeNotAvailable(
+				fmt.Errorf("error starting batch - operation is already in progress (workflowID=%s runID=%s)",
+					BatchWorkflowID, *err.RunId))
+		default:
+			s.logger.Info("error starting batch", "err", err)
+			return nil, fmt.Errorf("error starting batch")
+		}
+	}
+	result := &goabatch.BatchResult{
+		WorkflowID: exec.ID,
+		RunID:      exec.RunID,
+	}
+	return result, nil
 }
 
 func (s *batchImpl) Status(ctx context.Context) (*goabatch.BatchStatusResult, error) {
-	// business logic
-	// s.cc
-	return nil, nil
+	result := &goabatch.BatchStatusResult{}
+	resp, err := s.cc.DescribeWorkflowExecution(ctx, BatchWorkflowID, "")
+	if err != nil {
+		switch err := err.(type) {
+		case *shared.EntityNotExistsError:
+			return result, nil
+		default:
+			s.logger.Info("error retrieving workflow", "err", err)
+			return nil, ErrBatchStatusUnavailable
+		}
+	}
+	if resp.WorkflowExecutionInfo == nil {
+		s.logger.Info("error retrieving workflow execution details")
+		return nil, ErrBatchStatusUnavailable
+	}
+	result.WorkflowID = resp.WorkflowExecutionInfo.Execution.WorkflowId
+	result.RunID = resp.WorkflowExecutionInfo.Execution.RunId
+	if resp.WorkflowExecutionInfo.CloseStatus != nil {
+		var st = strings.ToLower(resp.WorkflowExecutionInfo.CloseStatus.String())
+		result.Status = &st
+		return result, nil
+	}
+	result.Running = true
+	// TODO: implement heartbeat status
+	return result, nil
 }
