@@ -33,7 +33,7 @@ var (
 	// EnduroStoredPipelineMap is a map of attribute names in result type
 	// EnduroStoredPipeline indexed by view name.
 	EnduroStoredPipelineMap = map[string][]string{
-		"default": {
+		"default": []string{
 			"id",
 			"name",
 		},

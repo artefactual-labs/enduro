@@ -35,9 +35,10 @@ pipeline (list|show)
 // UsageExamples produces an example of a valid invocation of the CLI tool.
 func UsageExamples() string {
 	return os.Args[0] + ` batch submit --body '{
-      "path": "Dolor sit quia eum excepturi asperiores."
+      "path": "Dolor sit quia eum excepturi asperiores.",
+      "pipeline": "Mollitia velit quaerat quae."
    }'` + "\n" +
-		os.Args[0] + ` collection list --name "Et sed esse." --original-id "Vel soluta sit porro impedit voluptatibus eaque." --transfer-id "A129B534-C1FC-F09D-BF29-3DA5781E0ECB" --aip-id "4CCDE767-7648-444F-D09F-4B4FFE4EB36B" --pipeline-id "0C589E55-99C1-3ED8-809A-1463C91242B6" --earliest-created-time "2001-02-11T20:51:40Z" --latest-created-time "1998-12-19T01:21:09Z" --status "unknown" --cursor "Eius ut enim."` + "\n" +
+		os.Args[0] + ` collection list --name "Vel soluta sit porro impedit voluptatibus eaque." --original-id "Illum quasi." --transfer-id "A129B534-C1FC-F09D-BF29-3DA5781E0ECB" --aip-id "4CCDE767-7648-444F-D09F-4B4FFE4EB36B" --pipeline-id "0C589E55-99C1-3ED8-809A-1463C91242B6" --earliest-created-time "2001-02-11T20:51:40Z" --latest-created-time "1998-12-19T01:21:09Z" --status "unknown" --cursor "Eius ut enim."` + "\n" +
 		os.Args[0] + ` pipeline list --name "Sint et quae quisquam."` + "\n" +
 		""
 }
@@ -322,7 +323,8 @@ Submit a new batch
 
 Example:
     `+os.Args[0]+` batch submit --body '{
-      "path": "Dolor sit quia eum excepturi asperiores."
+      "path": "Dolor sit quia eum excepturi asperiores.",
+      "pipeline": "Mollitia velit quaerat quae."
    }'
 `, os.Args[0])
 }
@@ -375,7 +377,7 @@ List all stored collections
     -cursor STRING: 
 
 Example:
-    `+os.Args[0]+` collection list --name "Et sed esse." --original-id "Vel soluta sit porro impedit voluptatibus eaque." --transfer-id "A129B534-C1FC-F09D-BF29-3DA5781E0ECB" --aip-id "4CCDE767-7648-444F-D09F-4B4FFE4EB36B" --pipeline-id "0C589E55-99C1-3ED8-809A-1463C91242B6" --earliest-created-time "2001-02-11T20:51:40Z" --latest-created-time "1998-12-19T01:21:09Z" --status "unknown" --cursor "Eius ut enim."
+    `+os.Args[0]+` collection list --name "Vel soluta sit porro impedit voluptatibus eaque." --original-id "Illum quasi." --transfer-id "A129B534-C1FC-F09D-BF29-3DA5781E0ECB" --aip-id "4CCDE767-7648-444F-D09F-4B4FFE4EB36B" --pipeline-id "0C589E55-99C1-3ED8-809A-1463C91242B6" --earliest-created-time "2001-02-11T20:51:40Z" --latest-created-time "1998-12-19T01:21:09Z" --status "unknown" --cursor "Eius ut enim."
 `, os.Args[0])
 }
 

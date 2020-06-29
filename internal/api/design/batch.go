@@ -13,6 +13,7 @@ var _ = Service("batch", func() {
 		Description("Submit a new batch")
 		Payload(func() {
 			Attribute("path", String)
+			Attribute("pipeline", String)
 			Required("path")
 		})
 		Result(BatchResult)

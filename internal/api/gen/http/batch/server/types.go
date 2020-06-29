@@ -16,7 +16,8 @@ import (
 // SubmitRequestBody is the type of the "batch" service "submit" endpoint HTTP
 // request body.
 type SubmitRequestBody struct {
-	Path *string `form:"path,omitempty" json:"path,omitempty" xml:"path,omitempty"`
+	Path     *string `form:"path,omitempty" json:"path,omitempty" xml:"path,omitempty"`
+	Pipeline *string `form:"pipeline,omitempty" json:"pipeline,omitempty" xml:"pipeline,omitempty"`
 }
 
 // SubmitResponseBody is the type of the "batch" service "submit" endpoint HTTP
@@ -124,7 +125,8 @@ func NewSubmitNotValidResponseBody(res *goa.ServiceError) *SubmitNotValidRespons
 // NewSubmitPayload builds a batch service submit endpoint payload.
 func NewSubmitPayload(body *SubmitRequestBody) *batch.SubmitPayload {
 	v := &batch.SubmitPayload{
-		Path: *body.Path,
+		Path:     *body.Path,
+		Pipeline: body.Pipeline,
 	}
 
 	return v
