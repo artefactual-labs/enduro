@@ -291,7 +291,7 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 
 	// Schedule deletion of the original in the watched data source.
 	{
-		if status == collection.StatusDone && tinfo.RetentionPeriod != nil {
+		if tinfo.WatcherName != "" && status == collection.StatusDone && tinfo.RetentionPeriod != nil {
 			err := workflow.NewTimer(ctx, *tinfo.RetentionPeriod).Get(ctx, nil)
 			if err != nil {
 				logger.Warn("Retention policy timer failed", zap.Error(err))
@@ -334,7 +334,7 @@ func (w *ProcessingWorkflow) SessionHandler(sessCtx workflow.Context, attempt in
 		// locally available in disk, just in case we're in the context of a
 		// session retry where a different working is doing the work. In that
 		// case, the activity whould be executed again.
-		if tinfo.TempFile == "" {
+		if tinfo.WatcherName != "" && tinfo.TempFile == "" {
 			activityOpts := withActivityOptsForLongLivedRequest(sessCtx)
 			err := workflow.ExecuteActivity(activityOpts, activities.DownloadActivityName, tinfo.PipelineName, tinfo.WatcherName, tinfo.Key).Get(activityOpts, &tinfo.TempFile)
 			if err != nil {
