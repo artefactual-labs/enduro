@@ -72,6 +72,11 @@ type TransferInfo struct {
 	// It is populated via the workflow request.
 	RetentionPeriod *time.Duration
 
+	// Whether the top-level directory is meant to be stripped.
+	//
+	// It is populated via the workflow request.
+	StripTopLevelDir bool
+
 	// StoredAt is the time when the AIP is stored.
 	//
 	// It is populated by PollIngestActivity as long as Ingest completes.
@@ -113,10 +118,11 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 		logger = workflow.GetLogger(ctx)
 
 		tinfo = &TransferInfo{
-			CollectionID:    req.CollectionID,
-			Event:           req.Event,
-			PipelineName:    req.PipelineName,
-			RetentionPeriod: req.RetentionPeriod,
+			CollectionID:     req.CollectionID,
+			Event:            req.Event,
+			PipelineName:     req.PipelineName,
+			RetentionPeriod:  req.RetentionPeriod,
+			StripTopLevelDir: req.StripTopLevelDir,
 		}
 
 		// Attributes inferred from the name of the transfer. Populated by parseNameLocalActivity.
@@ -333,7 +339,7 @@ func (w *ProcessingWorkflow) SessionHandler(sessCtx workflow.Context, attempt in
 				TransferDir:      tinfo.PipelineConfig.TransferDir,
 				Key:              tinfo.Event.Key,
 				TempFile:         tinfo.TempFile,
-				StripTopLevelDir: tinfo.Event.StripTopLevelDir,
+				StripTopLevelDir: tinfo.StripTopLevelDir,
 			}).Get(activityOpts, &tinfo.Bundle)
 			if err != nil {
 				return err
