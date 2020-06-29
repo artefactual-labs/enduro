@@ -34,13 +34,16 @@ type ProcessingWorkflowRequest struct {
 	// incoming dataset.
 	Event *watcher.BlobEvent
 
+	PipelineName string
+
 	ValidationConfig validation.Config
 }
 
-func InitProcessingWorkflow(ctx context.Context, c client.Client, event *watcher.BlobEvent, validationConfig validation.Config) error {
+func InitProcessingWorkflow(ctx context.Context, c client.Client, event *watcher.BlobEvent, pipelineName string, validationConfig validation.Config) error {
 	req := &ProcessingWorkflowRequest{
 		WorkflowID:       fmt.Sprintf("processing-workflow-%s", uuid.New().String()),
 		Event:            event,
+		PipelineName:     pipelineName,
 		ValidationConfig: validationConfig,
 	}
 

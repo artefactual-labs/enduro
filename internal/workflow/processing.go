@@ -62,6 +62,11 @@ type TransferInfo struct {
 	// It is populated via the workflow request.
 	Event *watcher.BlobEvent
 
+	// Pipeline name.
+	//
+	// It is populated via the workflow request.
+	PipelineName string
+
 	// StoredAt is the time when the AIP is stored.
 	//
 	// It is populated by PollIngestActivity as long as Ingest completes.
@@ -105,6 +110,7 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 		tinfo = &TransferInfo{
 			CollectionID: req.CollectionID,
 			Event:        req.Event,
+			PipelineName: req.PipelineName,
 		}
 
 		// Attributes inferred from the name of the transfer. Populated by parseNameLocalActivity.
@@ -185,7 +191,7 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 	// Load pipeline configuration and hooks.
 	{
 		activityOpts := withLocalActivityWithoutRetriesOpts(ctx)
-		err := workflow.ExecuteLocalActivity(activityOpts, loadConfigLocalActivity, w.manager, req.Event.PipelineName, tinfo).Get(activityOpts, &tinfo)
+		err := workflow.ExecuteLocalActivity(activityOpts, loadConfigLocalActivity, w.manager, tinfo.PipelineName, tinfo).Get(activityOpts, &tinfo)
 		if err != nil {
 			return fmt.Errorf("error loading configuration: %v", err)
 		}
@@ -251,8 +257,8 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 		if status == collection.StatusDone {
 			futures := []workflow.Future{}
 			activityOpts := withActivityOptsForRequest(ctx)
-			futures = append(futures, workflow.ExecuteActivity(activityOpts, activities.HidePackageActivityName, tinfo.TransferID, "transfer", tinfo.Event.PipelineName))
-			futures = append(futures, workflow.ExecuteActivity(activityOpts, activities.HidePackageActivityName, tinfo.SIPID, "ingest", tinfo.Event.PipelineName))
+			futures = append(futures, workflow.ExecuteActivity(activityOpts, activities.HidePackageActivityName, tinfo.TransferID, "transfer", tinfo.PipelineName))
+			futures = append(futures, workflow.ExecuteActivity(activityOpts, activities.HidePackageActivityName, tinfo.SIPID, "ingest", tinfo.PipelineName))
 			for _, f := range futures {
 				_ = f.Get(activityOpts, nil)
 			}
@@ -275,7 +281,7 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 	logger.Info(
 		"Workflow completed successfully!",
 		zap.Uint("collectionID", tinfo.CollectionID),
-		zap.String("pipeline", tinfo.Event.PipelineName),
+		zap.String("pipeline", tinfo.PipelineName),
 		zap.String("event", tinfo.Event.String()),
 		zap.String("status", status.String()),
 	)
@@ -286,14 +292,14 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 // SessionHandler runs activities that belong to the same session.
 func (w *ProcessingWorkflow) SessionHandler(sessCtx workflow.Context, attempt int, tinfo *TransferInfo, nameInfo nha.NameInfo, validationConfig validation.Config) error {
 	defer func() {
-		_ = releasePipeline(sessCtx, w.manager, tinfo.Event.PipelineName)
+		_ = releasePipeline(sessCtx, w.manager, tinfo.PipelineName)
 		workflow.CompleteSession(sessCtx)
 	}()
 
 	// Block until pipeline semaphore is acquired. The collection status is set
 	// to in-progress as soon as the operation succeeds.
 	{
-		if err := acquirePipeline(sessCtx, w.manager, tinfo.Event.PipelineName, tinfo.CollectionID); err != nil {
+		if err := acquirePipeline(sessCtx, w.manager, tinfo.PipelineName, tinfo.CollectionID); err != nil {
 			return err
 		}
 	}
@@ -306,7 +312,7 @@ func (w *ProcessingWorkflow) SessionHandler(sessCtx workflow.Context, attempt in
 		// case, the activity whould be executed again.
 		if tinfo.TempFile == "" {
 			activityOpts := withActivityOptsForLongLivedRequest(sessCtx)
-			err := workflow.ExecuteActivity(activityOpts, activities.DownloadActivityName, tinfo.Event.PipelineName, tinfo.Event.WatcherName, tinfo.Event.Key).Get(activityOpts, &tinfo.TempFile)
+			err := workflow.ExecuteActivity(activityOpts, activities.DownloadActivityName, tinfo.PipelineName, tinfo.Event.WatcherName, tinfo.Event.Key).Get(activityOpts, &tinfo.TempFile)
 			if err != nil {
 				return err
 			}
@@ -353,7 +359,7 @@ func (w *ProcessingWorkflow) SessionHandler(sessCtx workflow.Context, attempt in
 
 			activityOpts := withActivityOptsForRequest(sessCtx)
 			err := workflow.ExecuteActivity(activityOpts, activities.TransferActivityName, &activities.TransferActivityParams{
-				PipelineName:       tinfo.Event.PipelineName,
+				PipelineName:       tinfo.PipelineName,
 				TransferLocationID: tinfo.PipelineConfig.TransferLocationID,
 				RelPath:            tinfo.Bundle.RelPath,
 				Name:               tinfo.Event.Key,
@@ -386,7 +392,7 @@ func (w *ProcessingWorkflow) SessionHandler(sessCtx workflow.Context, attempt in
 		if tinfo.SIPID == "" {
 			activityOpts := withActivityOptsForHeartbeatedRequest(sessCtx, time.Minute)
 			err := workflow.ExecuteActivity(activityOpts, activities.PollTransferActivityName, &activities.PollTransferActivityParams{
-				PipelineName: tinfo.Event.PipelineName,
+				PipelineName: tinfo.PipelineName,
 				TransferID:   tinfo.TransferID,
 			}).Get(activityOpts, &tinfo.SIPID)
 			if err != nil {
@@ -413,7 +419,7 @@ func (w *ProcessingWorkflow) SessionHandler(sessCtx workflow.Context, attempt in
 		if tinfo.StoredAt.IsZero() {
 			activityOpts := withActivityOptsForHeartbeatedRequest(sessCtx, time.Minute)
 			err := workflow.ExecuteActivity(activityOpts, activities.PollIngestActivityName, &activities.PollIngestActivityParams{
-				PipelineName: tinfo.Event.PipelineName,
+				PipelineName: tinfo.PipelineName,
 				SIPID:        tinfo.SIPID,
 			}).Get(activityOpts, &tinfo.StoredAt)
 			if err != nil {
@@ -428,7 +434,7 @@ func (w *ProcessingWorkflow) SessionHandler(sessCtx workflow.Context, attempt in
 			SIPID:        tinfo.SIPID,
 			StoredAt:     tinfo.StoredAt,
 			FullPath:     tinfo.Bundle.FullPath,
-			PipelineName: tinfo.Event.PipelineName,
+			PipelineName: tinfo.PipelineName,
 			NameInfo:     nameInfo,
 			CollectionID: tinfo.CollectionID,
 		})
