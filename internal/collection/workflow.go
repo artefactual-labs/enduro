@@ -39,10 +39,12 @@ type ProcessingWorkflowRequest struct {
 
 	Key string
 
+	BatchDir string
+
 	ValidationConfig validation.Config
 }
 
-func InitProcessingWorkflow(ctx context.Context, c client.Client, watcherName, pipelineName string, retentionPeriod *time.Duration, stripTopLevelDir bool, key string, validationConfig validation.Config) error {
+func InitProcessingWorkflow(ctx context.Context, c client.Client, watcherName, pipelineName string, retentionPeriod *time.Duration, stripTopLevelDir bool, key, batchDir string, validationConfig validation.Config) error {
 	req := &ProcessingWorkflowRequest{
 		WorkflowID:       fmt.Sprintf("processing-workflow-%s", uuid.New().String()),
 		WatcherName:      watcherName,
@@ -51,6 +53,7 @@ func InitProcessingWorkflow(ctx context.Context, c client.Client, watcherName, p
 		StripTopLevelDir: stripTopLevelDir,
 		ValidationConfig: validationConfig,
 		Key:              key,
+		BatchDir:         batchDir,
 	}
 
 	return TriggerProcessingWorkflow(ctx, c, req)

@@ -2,7 +2,10 @@ package batch
 
 import (
 	"context"
+	"os"
 	"time"
+
+	wferrors "github.com/artefactual-labs/enduro/internal/workflow/errors"
 
 	"go.uber.org/cadence/workflow"
 )
@@ -44,5 +47,16 @@ func NewBatchActivity(batchsvc Service) *BatchActivity {
 }
 
 func (a *BatchActivity) Execute(ctx context.Context, params BatchWorkflowInput) error {
+	ff, err := os.Open(params.Path)
+	if err != nil {
+		return wferrors.NonRetryableError(err)
+	}
+	keys, err := ff.Readdirnames(0)
+	if err != nil {
+		return wferrors.NonRetryableError(err)
+	}
+	for _, key := range keys {
+		a.batchsvc.InitProcessingWorkflow(ctx, params.Path, key, params.PipelineName)
+	}
 	return nil
 }

@@ -9,6 +9,8 @@ import (
 
 	goabatch "github.com/artefactual-labs/enduro/internal/api/gen/batch"
 	"github.com/artefactual-labs/enduro/internal/cadence"
+	"github.com/artefactual-labs/enduro/internal/collection"
+	"github.com/artefactual-labs/enduro/internal/validation"
 	"github.com/go-logr/logr"
 	"go.uber.org/cadence/.gen/go/shared"
 	cadenceclient "go.uber.org/cadence/client"
@@ -21,6 +23,7 @@ var ErrBatchStatusUnavailable = errors.New("batch status unavailable")
 type Service interface {
 	Submit(context.Context, *goabatch.SubmitPayload) (res *goabatch.BatchResult, err error)
 	Status(context.Context) (res *goabatch.BatchStatusResult, err error)
+	InitProcessingWorkflow(ctx context.Context, batchDir, key, pipelineName string) error
 }
 
 type batchImpl struct {
@@ -98,4 +101,12 @@ func (s *batchImpl) Status(ctx context.Context) (*goabatch.BatchStatusResult, er
 	result.Running = true
 	// TODO: implement heartbeat status
 	return result, nil
+}
+
+func (s *batchImpl) InitProcessingWorkflow(ctx context.Context, batchDir, key, pipelineName string) error {
+	err := collection.InitProcessingWorkflow(ctx, s.cc, "", pipelineName, nil, false, key, batchDir, validation.Config{})
+	if err != nil {
+		s.logger.Error(err, "Error initializing processing workflow.")
+	}
+	return err
 }

@@ -81,6 +81,11 @@ type TransferInfo struct {
 	// It is populated via the workflow request.
 	Key string
 
+	// Batch directory that contains the blob.
+	//
+	// It is populated via the workflow request.
+	BatchDir string
+
 	// StoredAt is the time when the AIP is stored.
 	//
 	// It is populated by PollIngestActivity as long as Ingest completes.
@@ -128,6 +133,7 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 			RetentionPeriod:  req.RetentionPeriod,
 			StripTopLevelDir: req.StripTopLevelDir,
 			Key:              req.Key,
+			BatchDir:         req.BatchDir,
 		}
 
 		// Attributes inferred from the name of the transfer. Populated by parseNameLocalActivity.
@@ -300,6 +306,7 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 		zap.Uint("collectionID", tinfo.CollectionID),
 		zap.String("pipeline", tinfo.PipelineName),
 		zap.String("watcher", tinfo.WatcherName),
+		zap.String("batchDir", tinfo.BatchDir),
 		zap.String("key", tinfo.Key),
 		zap.String("status", status.String()),
 	)
@@ -346,6 +353,7 @@ func (w *ProcessingWorkflow) SessionHandler(sessCtx workflow.Context, attempt in
 				Key:              tinfo.Key,
 				TempFile:         tinfo.TempFile,
 				StripTopLevelDir: tinfo.StripTopLevelDir,
+				BatchDir:         tinfo.BatchDir,
 			}).Get(activityOpts, &tinfo.Bundle)
 			if err != nil {
 				return err
