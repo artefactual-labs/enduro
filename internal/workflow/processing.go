@@ -62,6 +62,11 @@ type TransferInfo struct {
 	// It is populated via the workflow request.
 	Event *watcher.BlobEvent
 
+	// Name of the watcher that received this blob.
+	//
+	// It is populated via the workflow request.
+	WatcherName string
+
 	// Pipeline name.
 	//
 	// It is populated via the workflow request.
@@ -125,6 +130,7 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 		tinfo = &TransferInfo{
 			CollectionID:     req.CollectionID,
 			Event:            req.Event,
+			WatcherName:      req.WatcherName,
 			PipelineName:     req.PipelineName,
 			RetentionPeriod:  req.RetentionPeriod,
 			StripTopLevelDir: req.StripTopLevelDir,
@@ -291,7 +297,7 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 				logger.Warn("Retention policy timer failed", zap.Error(err))
 			} else {
 				activityOpts := withActivityOptsForRequest(ctx)
-				_ = workflow.ExecuteActivity(activityOpts, activities.DeleteOriginalActivityName, tinfo.Event.WatcherName, tinfo.Key).Get(activityOpts, nil)
+				_ = workflow.ExecuteActivity(activityOpts, activities.DeleteOriginalActivityName, tinfo.WatcherName, tinfo.Key).Get(activityOpts, nil)
 			}
 		}
 	}
@@ -330,7 +336,7 @@ func (w *ProcessingWorkflow) SessionHandler(sessCtx workflow.Context, attempt in
 		// case, the activity whould be executed again.
 		if tinfo.TempFile == "" {
 			activityOpts := withActivityOptsForLongLivedRequest(sessCtx)
-			err := workflow.ExecuteActivity(activityOpts, activities.DownloadActivityName, tinfo.PipelineName, tinfo.Event.WatcherName, tinfo.Key).Get(activityOpts, &tinfo.TempFile)
+			err := workflow.ExecuteActivity(activityOpts, activities.DownloadActivityName, tinfo.PipelineName, tinfo.WatcherName, tinfo.Key).Get(activityOpts, &tinfo.TempFile)
 			if err != nil {
 				return err
 			}

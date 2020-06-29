@@ -34,6 +34,8 @@ type ProcessingWorkflowRequest struct {
 	// incoming dataset.
 	Event *watcher.BlobEvent
 
+	WatcherName string
+
 	PipelineName string
 
 	RetentionPeriod *time.Duration
@@ -45,10 +47,11 @@ type ProcessingWorkflowRequest struct {
 	ValidationConfig validation.Config
 }
 
-func InitProcessingWorkflow(ctx context.Context, c client.Client, event *watcher.BlobEvent, pipelineName string, retentionPeriod *time.Duration, stripTopLevelDir bool, key string, validationConfig validation.Config) error {
+func InitProcessingWorkflow(ctx context.Context, c client.Client, event *watcher.BlobEvent, watcherName, pipelineName string, retentionPeriod *time.Duration, stripTopLevelDir bool, key string, validationConfig validation.Config) error {
 	req := &ProcessingWorkflowRequest{
 		WorkflowID:       fmt.Sprintf("processing-workflow-%s", uuid.New().String()),
 		Event:            event,
+		WatcherName:      watcherName,
 		PipelineName:     pipelineName,
 		RetentionPeriod:  retentionPeriod,
 		StripTopLevelDir: stripTopLevelDir,
