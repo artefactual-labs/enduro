@@ -19,7 +19,7 @@ type Watcher interface {
 	Watch(ctx context.Context) (*BlobEvent, error)
 
 	// OpenBucket returns the bucket where the blobs can be found.
-	OpenBucket(ctx context.Context, event *BlobEvent) (*blob.Bucket, error)
+	OpenBucket(ctx context.Context) (*blob.Bucket, error)
 
 	// Every watcher targets a pipeline.
 	Pipeline() string
@@ -61,10 +61,10 @@ type Service interface {
 	Watchers() []Watcher
 
 	// Download blob given an event.
-	Download(ctx context.Context, w io.Writer, e *BlobEvent) error
+	Download(ctx context.Context, w io.Writer, watcherName, key string) error
 
 	// Delete blob given an event.
-	Delete(ctx context.Context, e *BlobEvent) error
+	Delete(ctx context.Context, watcherName, key string) error
 }
 
 type serviceImpl struct {
@@ -129,19 +129,19 @@ func (svc *serviceImpl) watcher(name string) (Watcher, error) {
 	return w, nil
 }
 
-func (svc *serviceImpl) Download(ctx context.Context, writer io.Writer, event *BlobEvent) error {
-	w, err := svc.watcher(event.WatcherName)
+func (svc *serviceImpl) Download(ctx context.Context, writer io.Writer, watcherName, key string) error {
+	w, err := svc.watcher(watcherName)
 	if err != nil {
 		return err
 	}
 
-	bucket, err := w.OpenBucket(ctx, event)
+	bucket, err := w.OpenBucket(ctx)
 	if err != nil {
 		return fmt.Errorf("error opening bucket: %w", err)
 	}
 	defer bucket.Close()
 
-	reader, err := bucket.NewReader(ctx, event.Key, nil)
+	reader, err := bucket.NewReader(ctx, key, nil)
 	if err != nil {
 		return fmt.Errorf("error creating reader: %w", err)
 	}
@@ -154,17 +154,17 @@ func (svc *serviceImpl) Download(ctx context.Context, writer io.Writer, event *B
 	return nil
 }
 
-func (svc *serviceImpl) Delete(ctx context.Context, event *BlobEvent) error {
-	w, err := svc.watcher(event.WatcherName)
+func (svc *serviceImpl) Delete(ctx context.Context, watcherName, key string) error {
+	w, err := svc.watcher(watcherName)
 	if err != nil {
 		return err
 	}
 
-	bucket, err := w.OpenBucket(ctx, event)
+	bucket, err := w.OpenBucket(ctx)
 	if err != nil {
 		return fmt.Errorf("error opening bucket: %w", err)
 	}
 	defer bucket.Close()
 
-	return bucket.Delete(ctx, event.Key)
+	return bucket.Delete(ctx, key)
 }

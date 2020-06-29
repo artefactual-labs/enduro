@@ -267,7 +267,7 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 				logger.Warn("Retention policy timer failed", zap.Error(err))
 			} else {
 				activityOpts := withActivityOptsForRequest(ctx)
-				_ = workflow.ExecuteActivity(activityOpts, activities.DeleteOriginalActivityName, tinfo.Event).Get(activityOpts, nil)
+				_ = workflow.ExecuteActivity(activityOpts, activities.DeleteOriginalActivityName, tinfo.Event.WatcherName, tinfo.Event.Key).Get(activityOpts, nil)
 			}
 		}
 	}
@@ -306,7 +306,7 @@ func (w *ProcessingWorkflow) SessionHandler(sessCtx workflow.Context, attempt in
 		// case, the activity whould be executed again.
 		if tinfo.TempFile == "" {
 			activityOpts := withActivityOptsForLongLivedRequest(sessCtx)
-			err := workflow.ExecuteActivity(activityOpts, activities.DownloadActivityName, tinfo.Event).Get(activityOpts, &tinfo.TempFile)
+			err := workflow.ExecuteActivity(activityOpts, activities.DownloadActivityName, tinfo.Event.PipelineName, tinfo.Event.WatcherName, tinfo.Event.Key).Get(activityOpts, &tinfo.TempFile)
 			if err != nil {
 				return err
 			}

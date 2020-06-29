@@ -2,10 +2,8 @@ package activities
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
-	"github.com/artefactual-labs/enduro/internal/watcher"
 	wferrors "github.com/artefactual-labs/enduro/internal/workflow/errors"
 	"github.com/artefactual-labs/enduro/internal/workflow/manager"
 )
@@ -19,11 +17,8 @@ func NewDownloadActivity(m *manager.Manager) *DownloadActivity {
 	return &DownloadActivity{manager: m}
 }
 
-func (a *DownloadActivity) Execute(ctx context.Context, event *watcher.BlobEvent) (string, error) {
-	if event == nil {
-		return "", wferrors.NonRetryableError(errors.New("error reading parameters"))
-	}
-	p, err := a.manager.Pipelines.ByName(event.PipelineName)
+func (a *DownloadActivity) Execute(ctx context.Context, pipelineName, watcherName, key string) (string, error) {
+	p, err := a.manager.Pipelines.ByName(pipelineName)
 	if err != nil {
 		return "", wferrors.NonRetryableError(err)
 	}
@@ -34,7 +29,7 @@ func (a *DownloadActivity) Execute(ctx context.Context, event *watcher.BlobEvent
 	}
 	defer file.Close()
 
-	if err := a.manager.Watcher.Download(ctx, file, event); err != nil {
+	if err := a.manager.Watcher.Download(ctx, file, watcherName, key); err != nil {
 		return "", wferrors.NonRetryableError(fmt.Errorf("error downloading blob: %v", err))
 	}
 

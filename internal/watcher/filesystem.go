@@ -120,6 +120,6 @@ func (w *filesystemWatcher) Watch(ctx context.Context) (*BlobEvent, error) {
 	return NewBlobEvent(w, rel), nil
 }
 
-func (w *filesystemWatcher) OpenBucket(context.Context, *BlobEvent) (*blob.Bucket, error) {
+func (w *filesystemWatcher) OpenBucket(context.Context) (*blob.Bucket, error) {
 	return fileblob.OpenBucket(w.path, nil)
 }

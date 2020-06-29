@@ -126,6 +126,6 @@ func (w *minioWatcher) event(blob string) (*BlobEvent, error) {
 	return NewBlobEventWithBucket(w, set.Event[0].S3.Bucket.Name, key), nil
 }
 
-func (w *minioWatcher) OpenBucket(ctx context.Context, event *BlobEvent) (*blob.Bucket, error) {
-	return s3blob.OpenBucket(ctx, w.sess, event.Bucket, nil)
+func (w *minioWatcher) OpenBucket(ctx context.Context) (*blob.Bucket, error) {
+	return s3blob.OpenBucket(ctx, w.sess, w.bucket, nil)
 }
