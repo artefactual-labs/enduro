@@ -67,6 +67,11 @@ type TransferInfo struct {
 	// It is populated via the workflow request.
 	PipelineName string
 
+	// Retention period.
+	//
+	// It is populated via the workflow request.
+	RetentionPeriod *time.Duration
+
 	// StoredAt is the time when the AIP is stored.
 	//
 	// It is populated by PollIngestActivity as long as Ingest completes.
@@ -108,9 +113,10 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 		logger = workflow.GetLogger(ctx)
 
 		tinfo = &TransferInfo{
-			CollectionID: req.CollectionID,
-			Event:        req.Event,
-			PipelineName: req.PipelineName,
+			CollectionID:    req.CollectionID,
+			Event:           req.Event,
+			PipelineName:    req.PipelineName,
+			RetentionPeriod: req.RetentionPeriod,
 		}
 
 		// Attributes inferred from the name of the transfer. Populated by parseNameLocalActivity.
@@ -267,8 +273,8 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 
 	// Schedule deletion of the original in the watched data source.
 	{
-		if status == collection.StatusDone && tinfo.Event.RetentionPeriod != nil {
-			err := workflow.NewTimer(ctx, *tinfo.Event.RetentionPeriod).Get(ctx, nil)
+		if status == collection.StatusDone && tinfo.RetentionPeriod != nil {
+			err := workflow.NewTimer(ctx, *tinfo.RetentionPeriod).Get(ctx, nil)
 			if err != nil {
 				logger.Warn("Retention policy timer failed", zap.Error(err))
 			} else {

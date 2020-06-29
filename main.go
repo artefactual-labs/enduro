@@ -199,7 +199,7 @@ func main() {
 							}
 							logger.V(1).Info("Starting new workflow", "watcher", event.WatcherName, "bucket", event.Bucket, "key", event.Key)
 							go func() {
-								if err := collection.InitProcessingWorkflow(ctx, workflowClient, event, event.PipelineName, config.Validation); err != nil {
+								if err := collection.InitProcessingWorkflow(ctx, workflowClient, event, event.PipelineName, event.RetentionPeriod, config.Validation); err != nil {
 									logger.Error(err, "Error initializing processing workflow.")
 								}
 							}()

@@ -36,14 +36,17 @@ type ProcessingWorkflowRequest struct {
 
 	PipelineName string
 
+	RetentionPeriod *time.Duration
+
 	ValidationConfig validation.Config
 }
 
-func InitProcessingWorkflow(ctx context.Context, c client.Client, event *watcher.BlobEvent, pipelineName string, validationConfig validation.Config) error {
+func InitProcessingWorkflow(ctx context.Context, c client.Client, event *watcher.BlobEvent, pipelineName string, retentionPeriod *time.Duration, validationConfig validation.Config) error {
 	req := &ProcessingWorkflowRequest{
 		WorkflowID:       fmt.Sprintf("processing-workflow-%s", uuid.New().String()),
 		Event:            event,
 		PipelineName:     pipelineName,
+		RetentionPeriod:  retentionPeriod,
 		ValidationConfig: validationConfig,
 	}
 
