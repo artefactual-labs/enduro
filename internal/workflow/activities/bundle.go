@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/artefactual-labs/enduro/internal/amclient/bundler"
 	wferrors "github.com/artefactual-labs/enduro/internal/workflow/errors"
@@ -34,6 +35,18 @@ type BundleActivityResult struct {
 	FullPathBeforeStrip string // Same as FullPath but includes the top-level dir even when stripped.
 }
 
+func isSubPath(path, subPath string) (bool, error) {
+	up := ".." + string(os.PathSeparator)
+	rel, err := filepath.Rel(path, subPath)
+	if err != nil {
+		return false, err
+	}
+	if !strings.HasPrefix(rel, up) && rel != ".." {
+		return true, nil
+	}
+	return false, nil
+}
+
 func (a *BundleActivity) Execute(ctx context.Context, params *BundleActivityParams) (*BundleActivityResult, error) {
 	var (
 		res = &BundleActivityResult{}
@@ -47,7 +60,17 @@ func (a *BundleActivity) Execute(ctx context.Context, params *BundleActivityPara
 	}()
 
 	if params.BatchDir != "" {
-		res.FullPath, res.FullPathBeforeStrip, err = a.Copy(ctx, params.TransferDir, params.BatchDir, params.Key, params.StripTopLevelDir)
+		batchDirIsInTransferDir, err := isSubPath(params.TransferDir, params.BatchDir)
+		if err != nil {
+			return nil, wferrors.NonRetryableError(err)
+		}
+		if batchDirIsInTransferDir {
+			res.FullPath = filepath.Join(params.BatchDir, params.Key)
+			// This makes the workflow not to delete the original content in the transfer directory
+			res.FullPathBeforeStrip = ""
+		} else {
+			res.FullPath, res.FullPathBeforeStrip, err = a.Copy(ctx, params.TransferDir, params.BatchDir, params.Key, params.StripTopLevelDir)
+		}
 	} else {
 		unar := a.Unarchiver(params.Key, params.TempFile)
 		if unar == nil {
