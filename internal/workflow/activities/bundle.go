@@ -60,7 +60,8 @@ func (a *BundleActivity) Execute(ctx context.Context, params *BundleActivityPara
 	}()
 
 	if params.BatchDir != "" {
-		batchDirIsInTransferDir, err := isSubPath(params.TransferDir, params.BatchDir)
+		var batchDirIsInTransferDir bool
+		batchDirIsInTransferDir, err = isSubPath(params.TransferDir, params.BatchDir)
 		if err != nil {
 			return nil, wferrors.NonRetryableError(err)
 		}
