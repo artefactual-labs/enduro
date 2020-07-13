@@ -1,6 +1,8 @@
 import Vue from 'vue';
 import Router from 'vue-router';
 
+import Batch from './views/Batch.vue';
+
 import Collections from './views/Collections.vue';
 import CollectionList from './views/CollectionList.vue';
 import Collection from './views/Collection.vue';
@@ -72,6 +74,17 @@ export default new Router({
           path: '/pipelines/:id',
           name: 'pipeline',
           component: Pipeline,
+        },
+      ],
+    },
+    {
+      path: '/batch',
+      component: Batch,
+      children: [
+        {
+          path: '',
+          name: 'batch',
+          component: Batch,
         },
       ],
     },
