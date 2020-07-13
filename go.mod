@@ -10,7 +10,6 @@ require (
 	github.com/aws/aws-sdk-go v1.31.12
 	github.com/cenkalti/backoff/v3 v3.2.2
 	github.com/daaku/go.zipexe v1.0.1 // indirect
-	github.com/dimfeld/httptreemux/v5 v5.2.2 // indirect
 	github.com/dsnet/compress v0.0.1 // indirect
 	github.com/frankban/quicktest v1.5.0 // indirect
 	github.com/fsnotify/fsnotify v1.4.9
@@ -20,7 +19,6 @@ require (
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/golang-migrate/migrate/v4 v4.11.0
 	github.com/golang/mock v1.4.3
-	github.com/golang/protobuf v1.4.2 // indirect
 	github.com/google/uuid v1.1.1
 	github.com/google/wire v0.4.0 // indirect
 	github.com/gorilla/schema v1.1.0
@@ -50,18 +48,12 @@ require (
 	go.uber.org/thriftrw v1.23.0 // indirect
 	go.uber.org/yarpc v1.46.0
 	go.uber.org/zap v1.15.0
-	goa.design/goa/v3 v3.1.3
+	goa.design/goa/v3 v3.2.0
 	goa.design/plugins/v3 v3.1.3
 	gocloud.dev v0.19.0
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b // indirect
-	golang.org/x/mod v0.3.0 // indirect
-	golang.org/x/net v0.0.0-20200602114024-627f9648deb9 // indirect
-	golang.org/x/sync v0.0.0-20200317015054-43a5402ce75a
-	golang.org/x/sys v0.0.0-20200602225109-6fdc65e7d980 // indirect
+	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
 	golang.org/x/time v0.0.0-20200416051211-89c76fbcd5d1 // indirect
-	golang.org/x/tools v0.0.0-20200608163737-5123702d8024 // indirect
-	google.golang.org/genproto v0.0.0-20200608115520-7c474a2e3482 // indirect
-	google.golang.org/grpc v1.29.1 // indirect
 	gopkg.in/ini.v1 v1.57.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20200605160147-a5ece683394c // indirect
 	gotest.tools/v3 v3.0.2
