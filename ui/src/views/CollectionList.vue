@@ -67,10 +67,10 @@
         </b-form>
       </div>
 
+      <p class="caption-menu text-right">
+        <router-link :to="{ name: 'batch' }" class="small">Batch operation</router-link>
+      </p>
       <template v-if="results.length > 0">
-        <p class="caption-menu text-right">
-          <router-link :to="{ name: 'batch' }" class="small">Batch operation</router-link>
-        </p>
         <p class="caption-menu text-right">
           <router-link :to="{ name: 'collection-bulk' }" class="small">Bulk operation</router-link>
         </p>
