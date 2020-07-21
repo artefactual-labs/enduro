@@ -33,6 +33,8 @@ type ProcessingWorkflowRequest struct {
 
 	PipelineName string
 
+	// Period of time to schedule the deletion of the original blob from the
+	// watched data source. nil means no deletion.
 	RetentionPeriod *time.Duration
 
 	StripTopLevelDir bool
