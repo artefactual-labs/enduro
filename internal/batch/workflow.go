@@ -13,7 +13,6 @@ import (
 const (
 	BatchWorkflowName              = "batch-workflow"
 	BatchWorkflowID                = "batch-workflow"
-	BatchWorkflowStateQueryHandler = "batch-state"
 	BatchActivityName              = "batch-activity"
 )
 
