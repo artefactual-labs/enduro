@@ -41,6 +41,11 @@ func NewService(logger logr.Logger, cc cadenceclient.Client) *batchImpl {
 }
 
 func (s *batchImpl) Submit(ctx context.Context, payload *goabatch.SubmitPayload) (*goabatch.BatchResult, error) {
+	if payload.Path == "" {
+		return nil, goabatch.MakeNotAvailable(
+			fmt.Errorf("error starting batch - path is empty"),
+		)
+	}
 	var pipelineName string
 	if payload.Pipeline != nil {
 		pipelineName = *payload.Pipeline
