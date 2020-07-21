@@ -11,9 +11,9 @@ import (
 )
 
 const (
-	BatchWorkflowName              = "batch-workflow"
-	BatchWorkflowID                = "batch-workflow"
-	BatchActivityName              = "batch-activity"
+	BatchWorkflowName = "batch-workflow"
+	BatchWorkflowID   = "batch-workflow"
+	BatchActivityName = "batch-activity"
 )
 
 type BatchProgress struct {
