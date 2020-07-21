@@ -104,7 +104,6 @@ func (s *batchImpl) Status(ctx context.Context) (*goabatch.BatchStatusResult, er
 		return result, nil
 	}
 	result.Running = true
-	// TODO: implement heartbeat status
 	return result, nil
 }
 

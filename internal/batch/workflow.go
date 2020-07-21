@@ -31,7 +31,6 @@ func BatchWorkflow(ctx workflow.Context, params BatchWorkflowInput) error {
 		ScheduleToStartTimeout: time.Hour * 24 * 365,
 		StartToCloseTimeout:    time.Hour * 24 * 365,
 		WaitForCancellation:    true,
-		HeartbeatTimeout:       time.Second * 5,
 	})
 	return workflow.ExecuteActivity(opts, BatchActivityName, params).Get(opts, nil)
 }
