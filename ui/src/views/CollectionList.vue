@@ -68,7 +68,7 @@
       </div>
 
       <p class="caption-menu text-right">
-        <router-link :to="{ name: 'batch' }" class="small">Batch operation</router-link>
+        <router-link :to="{ name: 'batch' }" class="small">Batch import</router-link>
       </p>
       <template v-if="results.length > 0">
         <p class="caption-menu text-right">
