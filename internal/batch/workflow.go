@@ -2,7 +2,7 @@ package batch
 
 import (
 	"context"
-	"os"
+	"io/ioutil"
 	"time"
 
 	wferrors "github.com/artefactual-labs/enduro/internal/workflow/errors"
@@ -45,16 +45,12 @@ func NewBatchActivity(batchsvc Service) *BatchActivity {
 }
 
 func (a *BatchActivity) Execute(ctx context.Context, params BatchWorkflowInput) error {
-	ff, err := os.Open(params.Path)
+	files, err := ioutil.ReadDir(params.Path)
 	if err != nil {
 		return wferrors.NonRetryableError(err)
 	}
-	keys, err := ff.Readdirnames(0)
-	if err != nil {
-		return wferrors.NonRetryableError(err)
-	}
-	for _, key := range keys {
-		_ = a.batchsvc.InitProcessingWorkflow(ctx, params.Path, key, params.PipelineName)
+	for _, file := range files {
+		_ = a.batchsvc.InitProcessingWorkflow(ctx, params.Path, file.Name(), params.PipelineName)
 	}
 	return nil
 }
