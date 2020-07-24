@@ -51,7 +51,7 @@ func TestBatchActivityFailsWithBogusBatchPath(t *testing.T) {
 
 	// Execute the activity passing a bogus path.
 	err := a.Execute(ctx, BatchWorkflowInput{
-		Path:         "/non/existant/path",
+		Path:         "/non/existent/path",
 		PipelineName: "am",
 	})
 	assert.Error(t, err, "non retryable error")
