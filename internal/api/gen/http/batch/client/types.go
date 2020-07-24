@@ -16,8 +16,8 @@ import (
 // SubmitRequestBody is the type of the "batch" service "submit" endpoint HTTP
 // request body.
 type SubmitRequestBody struct {
-	Path     string  `form:"path" json:"path" xml:"path"`
-	Pipeline *string `form:"pipeline,omitempty" json:"pipeline,omitempty" xml:"pipeline,omitempty"`
+	Path     string `form:"path" json:"path" xml:"path"`
+	Pipeline string `form:"pipeline" json:"pipeline" xml:"pipeline"`
 }
 
 // SubmitResponseBody is the type of the "batch" service "submit" endpoint HTTP

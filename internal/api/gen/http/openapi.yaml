@@ -42,6 +42,7 @@ paths:
           $ref: '#/definitions/BatchSubmitRequestBody'
           required:
           - path
+          - pipeline
       responses:
         "202":
           description: Accepted response.
@@ -568,6 +569,7 @@ definitions:
       pipeline: Ut labore aut.
     required:
     - path
+    - pipeline
   BatchSubmitResponseBody:
     title: BatchSubmitResponseBody
     type: object

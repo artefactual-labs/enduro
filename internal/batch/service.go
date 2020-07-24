@@ -46,13 +46,14 @@ func (s *batchImpl) Submit(ctx context.Context, payload *goabatch.SubmitPayload)
 			fmt.Errorf("error starting batch - path is empty"),
 		)
 	}
-	var pipelineName string
-	if payload.Pipeline != nil {
-		pipelineName = *payload.Pipeline
+	if payload.Pipeline == "" {
+		return nil, goabatch.MakeNotAvailable(
+			fmt.Errorf("error starting batch - pipeline is empty"),
+		)
 	}
 	input := BatchWorkflowInput{
 		Path:         payload.Path,
-		PipelineName: pipelineName,
+		PipelineName: payload.Pipeline,
 	}
 	opts := cadenceclient.StartWorkflowOptions{
 		ID:                              BatchWorkflowID,

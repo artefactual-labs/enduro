@@ -14,7 +14,7 @@ var _ = Service("batch", func() {
 		Payload(func() {
 			Attribute("path", String)
 			Attribute("pipeline", String)
-			Required("path")
+			Required("path", "pipeline")
 		})
 		Result(BatchResult)
 		Error("not_available")
