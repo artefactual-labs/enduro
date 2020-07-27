@@ -29,20 +29,26 @@ type ProcessingWorkflowRequest struct {
 	// an existing collection in retries.
 	CollectionID uint
 
+	// Name of the watcher that received this blob.
 	WatcherName string
 
+	// Pipeline name.
 	PipelineName string
 
 	// Period of time to schedule the deletion of the original blob from the
 	// watched data source. nil means no deletion.
 	RetentionPeriod *time.Duration
 
+	// Whether the top-level directory is meant to be stripped.
 	StripTopLevelDir bool
 
+	// Key of the blob.
 	Key string
 
+	// Batch directory that contains the blob.
 	BatchDir string
 
+	// Configuration for the validating the transfer.
 	ValidationConfig validation.Config
 }
 

@@ -52,6 +52,8 @@ type TransferInfo struct {
 	SIPID string
 
 	// Enduro internal collection ID.
+	// The zero value represents a new collection. It can be used to indicate
+	// an existing collection in retries.
 	//
 	// It is populated via the workflow request or createPackageLocalActivity.
 	CollectionID uint
@@ -67,6 +69,8 @@ type TransferInfo struct {
 	PipelineName string
 
 	// Retention period.
+	// Period of time to schedule the deletion of the original blob from the
+	// watched data source. nil means no deletion.
 	//
 	// It is populated via the workflow request.
 	RetentionPeriod *time.Duration
