@@ -6,11 +6,13 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/artefactual-labs/enduro/internal/amclient/bundler"
 	wferrors "github.com/artefactual-labs/enduro/internal/workflow/errors"
 
 	"github.com/mholt/archiver"
+	"github.com/otiai10/copy"
 )
 
 type BundleActivity struct{}
@@ -24,12 +26,25 @@ type BundleActivityParams struct {
 	Key              string
 	TempFile         string
 	StripTopLevelDir bool
+	BatchDir         string
 }
 
 type BundleActivityResult struct {
 	RelPath             string // Path of the transfer relative to the transfer directory.
 	FullPath            string // Full path to the transfer in the worker running the session.
 	FullPathBeforeStrip string // Same as FullPath but includes the top-level dir even when stripped.
+}
+
+func isSubPath(path, subPath string) (bool, error) {
+	up := ".." + string(os.PathSeparator)
+	rel, err := filepath.Rel(path, subPath)
+	if err != nil {
+		return false, err
+	}
+	if !strings.HasPrefix(rel, up) && rel != ".." {
+		return true, nil
+	}
+	return false, nil
 }
 
 func (a *BundleActivity) Execute(ctx context.Context, params *BundleActivityParams) (*BundleActivityResult, error) {
@@ -44,12 +59,27 @@ func (a *BundleActivity) Execute(ctx context.Context, params *BundleActivityPara
 		}
 	}()
 
-	unar := a.Unarchiver(params.Key, params.TempFile)
-	if unar == nil {
-		res.FullPath, err = a.SingleFile(ctx, params.TransferDir, params.Key, params.TempFile)
-		res.FullPathBeforeStrip = res.FullPath
+	if params.BatchDir != "" {
+		var batchDirIsInTransferDir bool
+		batchDirIsInTransferDir, err = isSubPath(params.TransferDir, params.BatchDir)
+		if err != nil {
+			return nil, wferrors.NonRetryableError(err)
+		}
+		if batchDirIsInTransferDir {
+			res.FullPath = filepath.Join(params.BatchDir, params.Key)
+			// This makes the workflow not to delete the original content in the transfer directory
+			res.FullPathBeforeStrip = ""
+		} else {
+			res.FullPath, res.FullPathBeforeStrip, err = a.Copy(ctx, params.TransferDir, params.BatchDir, params.Key, params.StripTopLevelDir)
+		}
 	} else {
-		res.FullPath, res.FullPathBeforeStrip, err = a.Bundle(ctx, unar, params.TransferDir, params.Key, params.TempFile, params.StripTopLevelDir)
+		unar := a.Unarchiver(params.Key, params.TempFile)
+		if unar == nil {
+			res.FullPath, err = a.SingleFile(ctx, params.TransferDir, params.Key, params.TempFile)
+			res.FullPathBeforeStrip = res.FullPath
+		} else {
+			res.FullPath, res.FullPathBeforeStrip, err = a.Bundle(ctx, unar, params.TransferDir, params.Key, params.TempFile, params.StripTopLevelDir)
+		}
 	}
 	if err != nil {
 		return nil, wferrors.NonRetryableError(err)
@@ -148,6 +178,41 @@ func (a *BundleActivity) Bundle(ctx context.Context, unar archiver.Unarchiver, t
 
 	// Delete the archive. We still have a copy in the watched source.
 	_ = os.Remove(tempFile)
+
+	return tempDir, tempDirBeforeStrip, nil
+}
+
+func (a *BundleActivity) Copy(ctx context.Context, transferDir, batchDir, key string, stripTopLevelDir bool) (string, string, error) {
+	const prefix = "enduro"
+	tempDir, err := ioutil.TempDir(transferDir, prefix)
+	if err != nil {
+		return "", "", fmt.Errorf("error creating temporary directory: %s", err)
+	}
+	_ = os.Chmod(tempDir, os.FileMode(0o755))
+
+	if err := copy.Copy(filepath.Join(batchDir, key), tempDir); err != nil {
+		return "", "", fmt.Errorf("error copying transfer: %v", err)
+	}
+
+	var tempDirBeforeStrip = tempDir
+	if stripTopLevelDir {
+		const errPrefix = "error stripping top-level dir"
+		ff, err := os.Open(tempDir)
+		if err != nil {
+			return "", "", fmt.Errorf("%s: error opening dir: %v", errPrefix, err)
+		}
+		fis, err := ff.Readdir(2)
+		if err != nil {
+			return "", "", fmt.Errorf("%s: error reading dir: %v", errPrefix, err)
+		}
+		if len(fis) != 1 {
+			return "", "", fmt.Errorf("%s: unexpected number of items were found in the archive", errPrefix)
+		}
+		if !fis[0].IsDir() {
+			return "", "", fmt.Errorf("%s: top-level item is not a directory", errPrefix)
+		}
+		tempDir = filepath.Join(tempDir, fis[0].Name())
+	}
 
 	return tempDir, tempDirBeforeStrip, nil
 }

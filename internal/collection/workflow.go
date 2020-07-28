@@ -7,7 +7,6 @@ import (
 
 	cce "github.com/artefactual-labs/enduro/internal/cadence"
 	"github.com/artefactual-labs/enduro/internal/validation"
-	"github.com/artefactual-labs/enduro/internal/watcher"
 
 	"github.com/google/uuid"
 	"go.uber.org/cadence/client"
@@ -30,18 +29,39 @@ type ProcessingWorkflowRequest struct {
 	// an existing collection in retries.
 	CollectionID uint
 
-	// Captured by the watcher, the event contains information about the
-	// incoming dataset.
-	Event *watcher.BlobEvent
+	// Name of the watcher that received this blob.
+	WatcherName string
 
+	// Pipeline name.
+	PipelineName string
+
+	// Period of time to schedule the deletion of the original blob from the
+	// watched data source. nil means no deletion.
+	RetentionPeriod *time.Duration
+
+	// Whether the top-level directory is meant to be stripped.
+	StripTopLevelDir bool
+
+	// Key of the blob.
+	Key string
+
+	// Batch directory that contains the blob.
+	BatchDir string
+
+	// Configuration for the validating the transfer.
 	ValidationConfig validation.Config
 }
 
-func InitProcessingWorkflow(ctx context.Context, c client.Client, event *watcher.BlobEvent, validationConfig validation.Config) error {
+func InitProcessingWorkflow(ctx context.Context, c client.Client, watcherName, pipelineName string, retentionPeriod *time.Duration, stripTopLevelDir bool, key, batchDir string, validationConfig validation.Config) error {
 	req := &ProcessingWorkflowRequest{
 		WorkflowID:       fmt.Sprintf("processing-workflow-%s", uuid.New().String()),
-		Event:            event,
+		WatcherName:      watcherName,
+		PipelineName:     pipelineName,
+		RetentionPeriod:  retentionPeriod,
+		StripTopLevelDir: stripTopLevelDir,
 		ValidationConfig: validationConfig,
+		Key:              key,
+		BatchDir:         batchDir,
 	}
 
 	return TriggerProcessingWorkflow(ctx, c, req)

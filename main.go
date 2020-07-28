@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/artefactual-labs/enduro/internal/api"
+	"github.com/artefactual-labs/enduro/internal/batch"
 	"github.com/artefactual-labs/enduro/internal/cadence"
 	"github.com/artefactual-labs/enduro/internal/collection"
 	"github.com/artefactual-labs/enduro/internal/db"
@@ -136,6 +137,12 @@ func main() {
 		pipesvc = pipeline.NewService(logger.WithName("pipeline"), pipelineRegistry)
 	}
 
+	// Set up the batch service.
+	var batchsvc batch.Service
+	{
+		batchsvc = batch.NewService(logger.WithName("batch"), workflowClient)
+	}
+
 	// Set up the collection service.
 	var colsvc collection.Service
 	{
@@ -160,7 +167,7 @@ func main() {
 
 		g.Add(
 			func() error {
-				srv = api.HTTPServer(logger, &config.API, pipesvc, colsvc)
+				srv = api.HTTPServer(logger, &config.API, pipesvc, batchsvc, colsvc)
 				return srv.ListenAndServe()
 			},
 			func(err error) {
@@ -192,7 +199,7 @@ func main() {
 							}
 							logger.V(1).Info("Starting new workflow", "watcher", event.WatcherName, "bucket", event.Bucket, "key", event.Key)
 							go func() {
-								if err := collection.InitProcessingWorkflow(ctx, workflowClient, event, config.Validation); err != nil {
+								if err := collection.InitProcessingWorkflow(ctx, workflowClient, event.WatcherName, event.PipelineName, event.RetentionPeriod, event.StripTopLevelDir, event.Key, "", config.Validation); err != nil {
 									logger.Error(err, "Error initializing processing workflow.")
 								}
 							}()
@@ -231,6 +238,9 @@ func main() {
 
 		cadence.RegisterWorkflow(collection.BulkWorkflow, collection.BulkWorkflowName)
 		cadence.RegisterActivity(collection.NewBulkActivity(colsvc).Execute, collection.BulkActivityName)
+
+		cadence.RegisterWorkflow(batch.BatchWorkflow, batch.BatchWorkflowName)
+		cadence.RegisterActivity(batch.NewBatchActivity(batchsvc).Execute, batch.BatchActivityName)
 
 		done := make(chan struct{})
 		w, err := cadence.NewWorker(zlogger.Named("cadence-worker"), appName, config.Cadence)

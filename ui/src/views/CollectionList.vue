@@ -67,10 +67,11 @@
         </b-form>
       </div>
 
+      <b-nav pills align="right" small>
+        <b-nav-item :to="{ name: 'batch' }">Batch import</b-nav-item>
+        <b-nav-item :to="{ name: 'collection-bulk' }" v-if="results.length > 0">Bulk operation</b-nav-item>
+      </b-nav>
       <template v-if="results.length > 0">
-        <p class="caption-menu text-right">
-          <router-link :to="{ name: 'collection-bulk' }" class="small">Bulk operation</router-link>
-        </p>
         <table class="table table-bordered table-hover table-sm">
           <thead class="thead">
             <tr>
@@ -300,6 +301,22 @@ export default class CollectionList extends Vue {
 
 .caption-menu {
   margin: 0;
+}
+
+.nav {
+  margin-bottom: 5px;
+
+  .nav-link {
+    color: $white;
+    background: $secondary;
+    margin-left: .1rem;
+    padding: .1rem .5rem;
+
+    &:hover,
+    &:focus {
+      background: #5a6268;
+    }
+  }
 }
 
 </style>

@@ -252,7 +252,7 @@ func BuildDecidePayload(collectionDecideBody string, collectionDecideID string) 
 	{
 		err = json.Unmarshal([]byte(collectionDecideBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, example of valid JSON:\n%s", "'{\n      \"option\": \"Recusandae laudantium quidem consequatur ducimus excepturi perferendis.\"\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, example of valid JSON:\n%s", "'{\n      \"option\": \"Dolor eos qui adipisci.\"\n   }'")
 		}
 	}
 	var id uint
@@ -281,7 +281,7 @@ func BuildBulkPayload(collectionBulkBody string) (*collection.BulkPayload, error
 	{
 		err = json.Unmarshal([]byte(collectionBulkBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, example of valid JSON:\n%s", "'{\n      \"operation\": \"cancel\",\n      \"size\": 4963086957530573892,\n      \"status\": \"unknown\"\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, example of valid JSON:\n%s", "'{\n      \"operation\": \"cancel\",\n      \"size\": 2751979900145192295,\n      \"status\": \"done\"\n   }'")
 		}
 		if !(body.Operation == "retry" || body.Operation == "cancel" || body.Operation == "abandon") {
 			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.operation", body.Operation, []interface{}{"retry", "cancel", "abandon"}))
