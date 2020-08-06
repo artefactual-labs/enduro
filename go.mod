@@ -20,7 +20,6 @@ require (
 	github.com/golang-migrate/migrate/v4 v4.12.2
 	github.com/golang/mock v1.4.4
 	github.com/google/uuid v1.1.1
-	github.com/google/wire v0.4.0 // indirect
 	github.com/gorilla/schema v1.1.0
 	github.com/hashicorp/go-multierror v1.1.0
 	github.com/jmoiron/sqlx v1.2.0
@@ -49,7 +48,7 @@ require (
 	go.uber.org/zap v1.15.0
 	goa.design/goa/v3 v3.2.0
 	goa.design/plugins/v3 v3.2.0
-	gocloud.dev v0.19.0
+	gocloud.dev v0.20.0
 	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
 	gopkg.in/ini.v1 v1.57.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20200605160147-a5ece683394c // indirect
