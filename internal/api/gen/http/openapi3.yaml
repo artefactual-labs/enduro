@@ -1,0 +1,1137 @@
+openapi: 3.0.3
+info:
+  title: Enduro API
+  version: "1.0"
+servers:
+- url: localhost:9000
+paths:
+  /batch:
+    get:
+      tags:
+      - batch
+      summary: status batch
+      description: Retrieve status of current batch operation.
+      operationId: batch#status
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchStatusResult'
+              example:
+                run_id: Et sed esse.
+                running: false
+                status: Quod odio nulla.
+                workflow_id: Rerum voluptatem voluptatem labore.
+    post:
+      tags:
+      - batch
+      summary: submit batch
+      description: Submit a new batch
+      operationId: batch#submit
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmitRequestBody'
+            example:
+              path: Dolor sit quia eum excepturi asperiores.
+              pipeline: Mollitia velit quaerat quae.
+      responses:
+        "202":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchResult'
+              example:
+                run_id: Et rem ipsum qui explicabo qui.
+                workflow_id: Perferendis et corrupti harum nisi.
+        "400":
+          description: ""
+          content:
+            application/vnd.goa.error:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                fault: true
+                id: 123abc
+                message: parameter 'p' must be an integer
+                name: bad_request
+                temporary: false
+                timeout: false
+        "409":
+          description: ""
+          content:
+            application/vnd.goa.error:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                fault: true
+                id: 123abc
+                message: parameter 'p' must be an integer
+                name: bad_request
+                temporary: true
+                timeout: true
+  /collection:
+    get:
+      tags:
+      - collection
+      summary: list collection
+      description: List all stored collections
+      operationId: collection#list
+      parameters:
+      - name: name
+        in: query
+        allowEmptyValue: true
+        schema:
+          type: string
+          example: Possimus id et cumque.
+        example: Earum amet deleniti temporibus ut.
+      - name: original_id
+        in: query
+        allowEmptyValue: true
+        schema:
+          type: string
+          example: Nesciunt aliquam necessitatibus.
+        example: Est soluta facere iste.
+      - name: transfer_id
+        in: query
+        allowEmptyValue: true
+        schema:
+          type: string
+          example: 33BA2D68-933B-28F0-E7F4-6D58CB4790FA
+          format: uuid
+        example: 03F4110E-C4A6-ECD1-6EE0-B074CA2B3425
+      - name: aip_id
+        in: query
+        allowEmptyValue: true
+        schema:
+          type: string
+          example: D27B2E95-C7AA-5857-EDCE-8F7D36361F87
+          format: uuid
+        example: 911E76DE-4702-489B-4E65-C8542C813C48
+      - name: pipeline_id
+        in: query
+        allowEmptyValue: true
+        schema:
+          type: string
+          example: B6C43FB7-3F0C-5200-5A8D-F20ADE09BC16
+          format: uuid
+        example: 829FA833-90F0-ADA3-B91B-13E44809B08B
+      - name: earliest_created_time
+        in: query
+        allowEmptyValue: true
+        schema:
+          type: string
+          example: "1980-12-22T21:38:14Z"
+          format: date-time
+        example: "1982-02-21T18:20:57Z"
+      - name: latest_created_time
+        in: query
+        allowEmptyValue: true
+        schema:
+          type: string
+          example: "2007-06-15T15:07:34Z"
+          format: date-time
+        example: "1987-07-26T21:48:39Z"
+      - name: status
+        in: query
+        allowEmptyValue: true
+        schema:
+          type: string
+          example: abandoned
+          enum:
+          - new
+          - in progress
+          - done
+          - error
+          - unknown
+          - queued
+          - pending
+          - abandoned
+        example: abandoned
+      - name: cursor
+        in: query
+        description: Pagination cursor
+        allowEmptyValue: true
+        schema:
+          type: string
+          description: Pagination cursor
+          example: Blanditiis quae voluptates facere.
+        example: Ut explicabo voluptatem mollitia vitae amet.
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListResponseBody'
+              example:
+                items:
+                - aip_id: 2C91774A-6D4A-67B6-DC43-6AED849DACC1
+                  completed_at: "1997-03-16T23:52:00Z"
+                  created_at: "1992-11-05T20:18:50Z"
+                  id: 11298461603816854458
+                  name: Accusantium dolor molestias.
+                  original_id: Nihil recusandae.
+                  pipeline_id: 773F4E7F-A748-DF6D-4355-233071D2534A
+                  run_id: 74C53540-E974-ABFF-2565-6BF99F9017B2
+                  started_at: "2008-06-17T22:56:20Z"
+                  status: abandoned
+                  transfer_id: FB1E8AC6-4FA4-C883-ED5A-54960E88F5FE
+                  workflow_id: 77EB7E77-465C-FCC6-CEC6-11F6C8938D24
+                - aip_id: 2C91774A-6D4A-67B6-DC43-6AED849DACC1
+                  completed_at: "1997-03-16T23:52:00Z"
+                  created_at: "1992-11-05T20:18:50Z"
+                  id: 11298461603816854458
+                  name: Accusantium dolor molestias.
+                  original_id: Nihil recusandae.
+                  pipeline_id: 773F4E7F-A748-DF6D-4355-233071D2534A
+                  run_id: 74C53540-E974-ABFF-2565-6BF99F9017B2
+                  started_at: "2008-06-17T22:56:20Z"
+                  status: abandoned
+                  transfer_id: FB1E8AC6-4FA4-C883-ED5A-54960E88F5FE
+                  workflow_id: 77EB7E77-465C-FCC6-CEC6-11F6C8938D24
+                next_cursor: Repellat iusto est libero ut.
+  /collection/{id}:
+    delete:
+      tags:
+      - collection
+      summary: delete collection
+      description: Delete collection by ID
+      operationId: collection#delete
+      parameters:
+      - name: id
+        in: path
+        description: Identifier of collection to delete
+        required: true
+        schema:
+          type: integer
+          description: Identifier of collection to delete
+          example: 6637879626105950462
+        example: 14732111595377136819
+      responses:
+        "204":
+          description: ""
+          content:
+            application/json:
+              example: {}
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              example:
+                id: 2527394757024271777
+                message: Porro velit deserunt vel reiciendis.
+    get:
+      tags:
+      - collection
+      summary: show collection
+      description: Show collection by ID
+      operationId: collection#show
+      parameters:
+      - name: id
+        in: path
+        description: Identifier of collection to show
+        required: true
+        schema:
+          type: integer
+          description: Identifier of collection to show
+          example: 14892226023289384775
+        example: 16670709606729443558
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnduroStoredCollection'
+              example:
+                aip_id: E31B6C92-4A10-2D9D-2B43-B3362900308F
+                completed_at: "1985-08-19T04:00:31Z"
+                created_at: "2003-04-10T06:28:56Z"
+                id: 12449777957699011964
+                name: Sint aut veritatis ut quo.
+                original_id: Assumenda soluta nihil enim omnis optio voluptatem.
+                pipeline_id: EA2D3703-2B9D-E7C0-35B9-DB753C364369
+                run_id: F25C441B-B3AA-5871-1077-53EACA084D5A
+                started_at: "1976-01-09T01:29:02Z"
+                status: abandoned
+                transfer_id: E058AD50-5D7F-E9A8-E010-D33044724992
+                workflow_id: CEF3CAF7-AB82-083A-2F08-9497BE6B7488
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              example:
+                id: 2168493507218143098
+                message: Iure perspiciatis provident placeat id quia.
+  /collection/{id}/cancel:
+    post:
+      tags:
+      - collection
+      summary: cancel collection
+      description: Cancel collection processing by ID
+      operationId: collection#cancel
+      parameters:
+      - name: id
+        in: path
+        description: Identifier of collection to remove
+        required: true
+        schema:
+          type: integer
+          description: Identifier of collection to remove
+          example: 17276621612670827821
+        example: 10447695724278724003
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              example: {}
+        "400":
+          description: ""
+          content:
+            application/vnd.goa.error:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                fault: true
+                id: 123abc
+                message: parameter 'p' must be an integer
+                name: bad_request
+                temporary: false
+                timeout: false
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              example:
+                id: 6249856683643440275
+                message: Recusandae laudantium quidem consequatur ducimus excepturi perferendis.
+  /collection/{id}/decision:
+    post:
+      tags:
+      - collection
+      summary: decide collection
+      description: Make decision for a pending collection by ID
+      operationId: collection#decide
+      parameters:
+      - name: id
+        in: path
+        description: Identifier of collection to look up
+        required: true
+        schema:
+          type: integer
+          description: Identifier of collection to look up
+          example: 1435772494281193013
+        example: 12475084977748662530
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                option:
+                  type: string
+                  description: Decision option to proceed with
+                  example: Expedita voluptatum.
+              example:
+                option: Nemo necessitatibus impedit iure id recusandae.
+            example:
+              option: Explicabo placeat voluptatem aut.
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              example: {}
+        "400":
+          description: ""
+          content:
+            application/vnd.goa.error:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                fault: true
+                id: 123abc
+                message: parameter 'p' must be an integer
+                name: bad_request
+                temporary: false
+                timeout: false
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              example:
+                id: 7529745733278009952
+                message: Ut qui voluptatum labore et voluptatem.
+  /collection/{id}/download:
+    get:
+      tags:
+      - collection
+      summary: download collection
+      description: Download collection by ID
+      operationId: collection#download
+      parameters:
+      - name: id
+        in: path
+        description: Identifier of collection to look up
+        required: true
+        schema:
+          type: integer
+          description: Identifier of collection to look up
+          example: 12098715864266581887
+        example: 13843919557982438648
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: string
+                example:
+                - 83
+                - 117
+                - 115
+                - 99
+                - 105
+                - 112
+                - 105
+                - 116
+                - 32
+                - 105
+                - 108
+                - 108
+                - 111
+                - 32
+                - 99
+                - 117
+                - 109
+                - 113
+                - 117
+                - 101
+                - 32
+                - 115
+                - 105
+                - 116
+                - 46
+                format: binary
+              example:
+              - 72
+              - 105
+              - 99
+              - 32
+              - 100
+              - 101
+              - 98
+              - 105
+              - 116
+              - 105
+              - 115
+              - 32
+              - 97
+              - 100
+              - 32
+              - 97
+              - 110
+              - 105
+              - 109
+              - 105
+              - 32
+              - 113
+              - 117
+              - 105
+              - 97
+              - 32
+              - 117
+              - 116
+              - 32
+              - 99
+              - 117
+              - 108
+              - 112
+              - 97
+              - 46
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              example:
+                id: 18157397634821487954
+                message: Itaque soluta sed et.
+  /collection/{id}/retry:
+    post:
+      tags:
+      - collection
+      summary: retry collection
+      description: Retry collection processing by ID
+      operationId: collection#retry
+      parameters:
+      - name: id
+        in: path
+        description: Identifier of collection to retry
+        required: true
+        schema:
+          type: integer
+          description: Identifier of collection to retry
+          example: 17938132740731816623
+        example: 15523070697073655530
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              example: {}
+        "400":
+          description: ""
+          content:
+            application/vnd.goa.error:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                fault: false
+                id: 123abc
+                message: parameter 'p' must be an integer
+                name: bad_request
+                temporary: true
+                timeout: false
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              example:
+                id: 10364407959241353442
+                message: Nihil eius fugit natus iste.
+  /collection/{id}/workflow:
+    get:
+      tags:
+      - collection
+      summary: workflow collection
+      description: Retrieve workflow status by ID
+      operationId: collection#workflow
+      parameters:
+      - name: id
+        in: path
+        description: Identifier of collection to look up
+        required: true
+        schema:
+          type: integer
+          description: Identifier of collection to look up
+          example: 10185585136924236988
+        example: 7351783235052544585
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnduroCollectionWorkflowStatus'
+              example:
+                history:
+                - details: Odio eos laboriosam rerum amet.
+                  id: 3305209720667027557
+                  type: Sapiente ea aut dicta.
+                - details: Odio eos laboriosam rerum amet.
+                  id: 3305209720667027557
+                  type: Sapiente ea aut dicta.
+                - details: Odio eos laboriosam rerum amet.
+                  id: 3305209720667027557
+                  type: Sapiente ea aut dicta.
+                status: Ipsam quia eius vitae praesentium commodi voluptas.
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              example:
+                id: 9569705239864435356
+                message: Aut sint.
+  /collection/bulk:
+    get:
+      tags:
+      - collection
+      summary: bulk_status collection
+      description: Retrieve status of current bulk operation.
+      operationId: collection#bulk_status
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkStatusResult'
+              example:
+                closed_at: "1972-11-09T07:56:27Z"
+                run_id: Distinctio dolorem cum optio non a.
+                running: true
+                started_at: "2012-03-16T00:25:28Z"
+                status: Tempore et qui dolor.
+                workflow_id: Fugiat officia repellat.
+    post:
+      tags:
+      - collection
+      summary: bulk collection
+      description: Bulk operations (retry, cancel...).
+      operationId: collection#bulk
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkRequestBody'
+            example:
+              operation: cancel
+              size: 2751979900145192295
+              status: done
+      responses:
+        "202":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchResult'
+              example:
+                run_id: Sed dolores occaecati aut quo.
+                workflow_id: Consequuntur ut possimus architecto praesentium.
+        "400":
+          description: ""
+          content:
+            application/vnd.goa.error:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                fault: true
+                id: 123abc
+                message: parameter 'p' must be an integer
+                name: bad_request
+                temporary: false
+                timeout: false
+        "409":
+          description: ""
+          content:
+            application/vnd.goa.error:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                fault: false
+                id: 123abc
+                message: parameter 'p' must be an integer
+                name: bad_request
+                temporary: false
+                timeout: false
+  /pipeline:
+    get:
+      tags:
+      - pipeline
+      summary: list pipeline
+      description: List all known pipelines
+      operationId: pipeline#list
+      parameters:
+      - name: name
+        in: query
+        allowEmptyValue: true
+        schema:
+          type: string
+          example: Sunt est quae est.
+        example: Veniam aut qui blanditiis provident.
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EnduroStoredPipeline'
+                example:
+                - id: 95545D09-3153-0F17-09F7-7FEB1545D780
+                  name: Doloribus ut amet.
+                - id: 95545D09-3153-0F17-09F7-7FEB1545D780
+                  name: Doloribus ut amet.
+                - id: 95545D09-3153-0F17-09F7-7FEB1545D780
+                  name: Doloribus ut amet.
+                - id: 95545D09-3153-0F17-09F7-7FEB1545D780
+                  name: Doloribus ut amet.
+              example:
+              - id: 95545D09-3153-0F17-09F7-7FEB1545D780
+                name: Doloribus ut amet.
+              - id: 95545D09-3153-0F17-09F7-7FEB1545D780
+                name: Doloribus ut amet.
+  /pipeline/{id}:
+    get:
+      tags:
+      - pipeline
+      summary: show pipeline
+      description: Show pipeline by ID
+      operationId: pipeline#show
+      parameters:
+      - name: id
+        in: path
+        description: Identifier of pipeline to show
+        required: true
+        schema:
+          type: string
+          description: Identifier of pipeline to show
+          example: 1950F5A3-DD57-36ED-FC7A-02434F6D102C
+          format: uuid
+        example: 17130190-1B4F-4068-0538-3D42B488D22B
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnduroStoredPipeline'
+              example:
+                id: 6E989AEF-9C11-4862-D8B1-5CFC4F6414E0
+                name: Dolor animi aspernatur sed assumenda ea.
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              example:
+                id: 9292983799343016043
+                message: Voluptatibus consequatur in quaerat dolorum.
+  /swagger/swagger.json:
+    get:
+      tags:
+      - swagger
+      summary: Download internal/api/gen/http/openapi.json
+      description: JSON document containing the API swagger definition.
+      operationId: swagger#/swagger/swagger.json
+      responses:
+        "200":
+          description: File downloaded
+components:
+  schemas:
+    BatchResult:
+      type: object
+      properties:
+        run_id:
+          type: string
+          example: Id doloremque aut et ullam officia.
+        workflow_id:
+          type: string
+          example: Voluptas sed rerum ipsam dicta.
+      example:
+        run_id: Ipsa vitae autem dolor.
+        workflow_id: Non commodi et repellat.
+      required:
+      - workflow_id
+      - run_id
+    BatchStatusResult:
+      type: object
+      properties:
+        run_id:
+          type: string
+          example: Est est quo adipisci provident.
+        running:
+          type: boolean
+          example: false
+        status:
+          type: string
+          example: Eaque vel deleniti.
+        workflow_id:
+          type: string
+          example: Fugiat et porro eum ut quod.
+      example:
+        run_id: Molestiae alias.
+        running: false
+        status: Dolorem repellat et.
+        workflow_id: Blanditiis libero nobis error voluptatem ab numquam.
+      required:
+      - running
+    BulkRequestBody:
+      type: object
+      properties:
+        operation:
+          type: string
+          example: cancel
+          enum:
+          - retry
+          - cancel
+          - abandon
+        size:
+          type: integer
+          default: 100
+          example: 1027599952854376228
+        status:
+          type: string
+          example: done
+          enum:
+          - new
+          - in progress
+          - done
+          - error
+          - unknown
+          - queued
+          - pending
+          - abandoned
+      example:
+        operation: cancel
+        size: 3066511338508296959
+        status: error
+      required:
+      - operation
+      - status
+    BulkStatusResult:
+      type: object
+      properties:
+        closed_at:
+          type: string
+          example: "1999-08-05T00:56:40Z"
+          format: date-time
+        run_id:
+          type: string
+          example: Corporis omnis molestias velit praesentium.
+        running:
+          type: boolean
+          example: false
+        started_at:
+          type: string
+          example: "1990-04-25T00:19:02Z"
+          format: date-time
+        status:
+          type: string
+          example: Sed voluptas nihil earum quidem et.
+        workflow_id:
+          type: string
+          example: Corporis cumque qui omnis corporis.
+      example:
+        closed_at: "2008-02-07T20:33:01Z"
+        run_id: Aut vel non ad non qui expedita.
+        running: false
+        started_at: "1977-08-07T01:23:02Z"
+        status: Et nihil.
+        workflow_id: Sequi quae incidunt.
+      required:
+      - running
+    EnduroCollectionWorkflowHistory:
+      type: object
+      properties:
+        details:
+          type: string
+          description: Contents of the event
+          example: Libero quasi et similique est.
+          format: binary
+        id:
+          type: integer
+          description: Identifier of collection
+          example: 16019650542386041247
+        type:
+          type: string
+          description: Type of the event
+          example: Qui assumenda suscipit sit.
+      description: WorkflowHistoryEvent describes a history event in Cadence.
+      example:
+        details: Dolores ea voluptatum unde laborum temporibus voluptas.
+        id: 12804837024206468649
+        type: Consequuntur est autem quam.
+    EnduroCollectionWorkflowHistoryCollection:
+      type: array
+      items:
+        $ref: '#/components/schemas/EnduroCollectionWorkflowHistory'
+      example:
+      - details: Odio eos laboriosam rerum amet.
+        id: 3305209720667027557
+        type: Sapiente ea aut dicta.
+      - details: Odio eos laboriosam rerum amet.
+        id: 3305209720667027557
+        type: Sapiente ea aut dicta.
+    EnduroCollectionWorkflowStatus:
+      type: object
+      properties:
+        history:
+          $ref: '#/components/schemas/EnduroCollectionWorkflowHistoryCollection'
+        status:
+          type: string
+          example: Alias aut dolore.
+      example:
+        history:
+        - details: Odio eos laboriosam rerum amet.
+          id: 3305209720667027557
+          type: Sapiente ea aut dicta.
+        - details: Odio eos laboriosam rerum amet.
+          id: 3305209720667027557
+          type: Sapiente ea aut dicta.
+        - details: Odio eos laboriosam rerum amet.
+          id: 3305209720667027557
+          type: Sapiente ea aut dicta.
+        status: Sint voluptate consequatur.
+    EnduroStoredCollection:
+      type: object
+      properties:
+        aip_id:
+          type: string
+          description: Identifier of Archivematica AIP
+          example: 369C6341-CBF4-32C5-3AB9-B7CDCB864A1F
+          format: uuid
+        completed_at:
+          type: string
+          description: Completion datetime
+          example: "1974-11-27T05:05:27Z"
+          format: date-time
+        created_at:
+          type: string
+          description: Creation datetime
+          example: "1991-10-27T21:27:57Z"
+          format: date-time
+        id:
+          type: integer
+          description: Identifier of collection
+          example: 1455040596339617069
+        name:
+          type: string
+          description: Name of the collection
+          example: Et amet.
+        original_id:
+          type: string
+          description: Identifier provided by the client
+          example: Quidem voluptatum aut quia recusandae architecto.
+        pipeline_id:
+          type: string
+          description: Identifier of Archivematica pipeline
+          example: 027F6A13-2527-4BB7-A500-146C0F61C2A5
+          format: uuid
+        run_id:
+          type: string
+          description: Identifier of latest processing workflow run
+          example: FDCA5323-C4C9-FB10-0E70-1125891ABDEE
+          format: uuid
+        started_at:
+          type: string
+          description: Start datetime
+          example: "2004-04-23T10:26:38Z"
+          format: date-time
+        status:
+          type: string
+          description: Status of the collection
+          default: new
+          example: done
+          enum:
+          - new
+          - in progress
+          - done
+          - error
+          - unknown
+          - queued
+          - pending
+          - abandoned
+        transfer_id:
+          type: string
+          description: Identifier of Archivematica transfer
+          example: B79E857E-CE20-97AA-CE10-8106502AEA86
+          format: uuid
+        workflow_id:
+          type: string
+          description: Identifier of processing workflow
+          example: 9CEC8109-7649-F74C-CDA6-D8C4434F6E6F
+          format: uuid
+      description: StoredPipeline describes a collection retrieved by the service.
+      example:
+        aip_id: 2AFA4466-554C-3755-3A53-AAE48068F107
+        completed_at: "1998-08-06T16:02:36Z"
+        created_at: "2003-09-17T21:17:48Z"
+        id: 15229699763835497718
+        name: Tenetur dolorum error aut.
+        original_id: Aperiam est.
+        pipeline_id: 495DB94F-824E-E732-0B4B-502305E4ABA4
+        run_id: A13A475B-75EC-600D-B2A2-9CE1E9B83061
+        started_at: "2003-10-13T05:04:40Z"
+        status: error
+        transfer_id: 5302BA4C-20B9-0AB1-5F6C-C15DC5934EBF
+        workflow_id: 7EC4180F-77B0-231F-0AA8-EE62B537358D
+      required:
+      - id
+      - status
+      - created_at
+    EnduroStoredCollectionCollection:
+      type: array
+      items:
+        $ref: '#/components/schemas/EnduroStoredCollection'
+      example:
+      - aip_id: 2C91774A-6D4A-67B6-DC43-6AED849DACC1
+        completed_at: "1997-03-16T23:52:00Z"
+        created_at: "1992-11-05T20:18:50Z"
+        id: 11298461603816854458
+        name: Accusantium dolor molestias.
+        original_id: Nihil recusandae.
+        pipeline_id: 773F4E7F-A748-DF6D-4355-233071D2534A
+        run_id: 74C53540-E974-ABFF-2565-6BF99F9017B2
+        started_at: "2008-06-17T22:56:20Z"
+        status: abandoned
+        transfer_id: FB1E8AC6-4FA4-C883-ED5A-54960E88F5FE
+        workflow_id: 77EB7E77-465C-FCC6-CEC6-11F6C8938D24
+      - aip_id: 2C91774A-6D4A-67B6-DC43-6AED849DACC1
+        completed_at: "1997-03-16T23:52:00Z"
+        created_at: "1992-11-05T20:18:50Z"
+        id: 11298461603816854458
+        name: Accusantium dolor molestias.
+        original_id: Nihil recusandae.
+        pipeline_id: 773F4E7F-A748-DF6D-4355-233071D2534A
+        run_id: 74C53540-E974-ABFF-2565-6BF99F9017B2
+        started_at: "2008-06-17T22:56:20Z"
+        status: abandoned
+        transfer_id: FB1E8AC6-4FA4-C883-ED5A-54960E88F5FE
+        workflow_id: 77EB7E77-465C-FCC6-CEC6-11F6C8938D24
+      - aip_id: 2C91774A-6D4A-67B6-DC43-6AED849DACC1
+        completed_at: "1997-03-16T23:52:00Z"
+        created_at: "1992-11-05T20:18:50Z"
+        id: 11298461603816854458
+        name: Accusantium dolor molestias.
+        original_id: Nihil recusandae.
+        pipeline_id: 773F4E7F-A748-DF6D-4355-233071D2534A
+        run_id: 74C53540-E974-ABFF-2565-6BF99F9017B2
+        started_at: "2008-06-17T22:56:20Z"
+        status: abandoned
+        transfer_id: FB1E8AC6-4FA4-C883-ED5A-54960E88F5FE
+        workflow_id: 77EB7E77-465C-FCC6-CEC6-11F6C8938D24
+    EnduroStoredPipeline:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Name of the collection
+          example: 751556FB-5B96-05F5-4890-014C4C315530
+          format: uuid
+        name:
+          type: string
+          description: Name of the collection
+          example: A quia quia quo.
+      description: StoredPipeline describes a pipeline retrieved by this service.
+      example:
+        id: AFE55386-F5B6-467C-35B0-2117A9683AF1
+        name: Voluptas autem aut quis reiciendis corporis.
+      required:
+      - name
+    Error:
+      type: object
+      properties:
+        fault:
+          type: boolean
+          description: Is the error a server-side fault?
+          example: false
+        id:
+          type: string
+          description: ID is a unique identifier for this particular occurrence of the problem.
+          example: 123abc
+        message:
+          type: string
+          description: Message is a human-readable explanation specific to this occurrence of the problem.
+          example: parameter 'p' must be an integer
+        name:
+          type: string
+          description: Name is the name of this class of errors.
+          example: bad_request
+        temporary:
+          type: boolean
+          description: Is the error temporary?
+          example: false
+        timeout:
+          type: boolean
+          description: Is the error a timeout?
+          example: false
+      example:
+        fault: true
+        id: 123abc
+        message: parameter 'p' must be an integer
+        name: bad_request
+        temporary: false
+        timeout: false
+      required:
+      - name
+      - id
+      - message
+      - temporary
+      - timeout
+      - fault
+    ListResponseBody:
+      type: object
+      properties:
+        items:
+          $ref: '#/components/schemas/EnduroStoredCollectionCollection'
+        next_cursor:
+          type: string
+          example: Consectetur sint aperiam suscipit nisi quos.
+      example:
+        items:
+        - aip_id: 2C91774A-6D4A-67B6-DC43-6AED849DACC1
+          completed_at: "1997-03-16T23:52:00Z"
+          created_at: "1992-11-05T20:18:50Z"
+          id: 11298461603816854458
+          name: Accusantium dolor molestias.
+          original_id: Nihil recusandae.
+          pipeline_id: 773F4E7F-A748-DF6D-4355-233071D2534A
+          run_id: 74C53540-E974-ABFF-2565-6BF99F9017B2
+          started_at: "2008-06-17T22:56:20Z"
+          status: abandoned
+          transfer_id: FB1E8AC6-4FA4-C883-ED5A-54960E88F5FE
+          workflow_id: 77EB7E77-465C-FCC6-CEC6-11F6C8938D24
+        - aip_id: 2C91774A-6D4A-67B6-DC43-6AED849DACC1
+          completed_at: "1997-03-16T23:52:00Z"
+          created_at: "1992-11-05T20:18:50Z"
+          id: 11298461603816854458
+          name: Accusantium dolor molestias.
+          original_id: Nihil recusandae.
+          pipeline_id: 773F4E7F-A748-DF6D-4355-233071D2534A
+          run_id: 74C53540-E974-ABFF-2565-6BF99F9017B2
+          started_at: "2008-06-17T22:56:20Z"
+          status: abandoned
+          transfer_id: FB1E8AC6-4FA4-C883-ED5A-54960E88F5FE
+          workflow_id: 77EB7E77-465C-FCC6-CEC6-11F6C8938D24
+        next_cursor: Explicabo est aliquid.
+      required:
+      - items
+    NotFound:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Identifier of missing collection
+          example: 2135324167707328023
+        message:
+          type: string
+          description: Message of error
+          example: Et autem adipisci et occaecati quaerat.
+      description: Collection not found
+      example:
+        id: 11276450690720251243
+        message: Ab pariatur.
+      required:
+      - message
+      - id
+    SubmitRequestBody:
+      type: object
+      properties:
+        path:
+          type: string
+          example: Ex eius.
+        pipeline:
+          type: string
+          example: Soluta mollitia.
+      example:
+        path: Similique quisquam voluptas libero.
+        pipeline: Libero neque quam repudiandae adipisci quis dolores.
+      required:
+      - path
+      - pipeline
