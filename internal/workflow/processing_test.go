@@ -14,12 +14,10 @@ import (
 
 	logrtesting "github.com/go-logr/logr/testing"
 	"github.com/golang/mock/gomock"
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/cadence"
 	cadencetestsuite "go.uber.org/cadence/testsuite"
-	cadenceworkflow "go.uber.org/cadence/workflow"
 )
 
 type ProcessingWorkflowTestSuite struct {
@@ -31,15 +29,13 @@ type ProcessingWorkflowTestSuite struct {
 	manager *manager.Manager
 
 	// Each test registers the workflow with a different name to avoid dups.
-	workflow string
+	workflow *ProcessingWorkflow
 }
 
 func (s *ProcessingWorkflowTestSuite) SetupTest() {
 	s.env = s.NewTestWorkflowEnvironment()
 	s.manager = buildManager(s.T(), gomock.NewController(s.T()))
-
-	s.workflow = uuid.New().String()
-	cadenceworkflow.RegisterWithOptions(NewProcessingWorkflow(s.manager).Execute, cadenceworkflow.RegisterOptions{Name: s.workflow})
+	s.workflow = NewProcessingWorkflow(s.manager)
 }
 
 func (s *ProcessingWorkflowTestSuite) AfterTest(suiteName, testName string) {
@@ -72,7 +68,7 @@ func (s *ProcessingWorkflowTestSuite) TestParseErrorIsIgnored() {
 	}).Return(nil).Once()
 
 	retentionPeriod := time.Second
-	s.env.ExecuteWorkflow(s.workflow, &collection.ProcessingWorkflowRequest{
+	s.env.ExecuteWorkflow(s.workflow.Execute, &collection.ProcessingWorkflowRequest{
 		CollectionID:     0,
 		WatcherName:      "watcher",
 		PipelineName:     "pipeline",
@@ -108,7 +104,7 @@ func (s *ProcessingWorkflowTestSuite) TestParseError() {
 	}).Return(nil).Once()
 
 	retentionPeriod := time.Second
-	s.env.ExecuteWorkflow(s.workflow, &collection.ProcessingWorkflowRequest{
+	s.env.ExecuteWorkflow(s.workflow.Execute, &collection.ProcessingWorkflowRequest{
 		CollectionID:     0,
 		WatcherName:      "watcher",
 		PipelineName:     "pipeline",

@@ -32,7 +32,9 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
+	cadenceactivity "go.uber.org/cadence/activity"
 	"go.uber.org/cadence/client"
+	cadenceworkflow "go.uber.org/cadence/workflow"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -221,33 +223,34 @@ func main() {
 		// The share-everything pattern should be avoided.
 		m := manager.NewManager(logger, colsvc, wsvc, pipelineRegistry, config.Hooks)
 
-		cadence.RegisterWorkflow(workflow.NewProcessingWorkflow(m).Execute, collection.ProcessingWorkflowName)
-		cadence.RegisterActivity(activities.NewAcquirePipelineActivity(m).Execute, activities.AcquirePipelineActivityName)
-		cadence.RegisterActivity(activities.NewDownloadActivity(m).Execute, activities.DownloadActivityName)
-		cadence.RegisterActivity(activities.NewBundleActivity().Execute, activities.BundleActivityName)
-		cadence.RegisterActivity(activities.NewValidateTransferActivity().Execute, activities.ValidateTransferActivityName)
-		cadence.RegisterActivity(activities.NewTransferActivity(m).Execute, activities.TransferActivityName)
-		cadence.RegisterActivity(activities.NewPollTransferActivity(m).Execute, activities.PollTransferActivityName)
-		cadence.RegisterActivity(activities.NewPollIngestActivity(m).Execute, activities.PollIngestActivityName)
-		cadence.RegisterActivity(activities.NewCleanUpActivity(m).Execute, activities.CleanUpActivityName)
-		cadence.RegisterActivity(activities.NewHidePackageActivity(m).Execute, activities.HidePackageActivityName)
-		cadence.RegisterActivity(activities.NewDeleteOriginalActivity(m).Execute, activities.DeleteOriginalActivityName)
-		cadence.RegisterActivity(workflow.NewAsyncCompletionActivity(m).Execute, workflow.AsyncCompletionActivityName)
-		cadence.RegisterActivity(nha_activities.NewUpdateHARIActivity(m).Execute, nha_activities.UpdateHARIActivityName)
-		cadence.RegisterActivity(nha_activities.NewUpdateProductionSystemActivity(m).Execute, nha_activities.UpdateProductionSystemActivityName)
-
-		cadence.RegisterWorkflow(collection.BulkWorkflow, collection.BulkWorkflowName)
-		cadence.RegisterActivity(collection.NewBulkActivity(colsvc).Execute, collection.BulkActivityName)
-
-		cadence.RegisterWorkflow(batch.BatchWorkflow, batch.BatchWorkflowName)
-		cadence.RegisterActivity(batch.NewBatchActivity(batchsvc).Execute, batch.BatchActivityName)
-
 		done := make(chan struct{})
 		w, err := cadence.NewWorker(zlogger.Named("cadence-worker"), appName, config.Cadence)
 		if err != nil {
 			logger.Error(err, "Error creating Cadence worker.")
 			os.Exit(1)
 		}
+
+		w.RegisterWorkflowWithOptions(workflow.NewProcessingWorkflow(m).Execute, cadenceworkflow.RegisterOptions{Name: collection.ProcessingWorkflowName})
+		w.RegisterActivityWithOptions(activities.NewAcquirePipelineActivity(m).Execute, cadenceactivity.RegisterOptions{Name: activities.AcquirePipelineActivityName})
+		w.RegisterActivityWithOptions(activities.NewDownloadActivity(m).Execute, cadenceactivity.RegisterOptions{Name: activities.DownloadActivityName})
+		w.RegisterActivityWithOptions(activities.NewBundleActivity().Execute, cadenceactivity.RegisterOptions{Name: activities.BundleActivityName})
+		w.RegisterActivityWithOptions(activities.NewValidateTransferActivity().Execute, cadenceactivity.RegisterOptions{Name: activities.ValidateTransferActivityName})
+		w.RegisterActivityWithOptions(activities.NewTransferActivity(m).Execute, cadenceactivity.RegisterOptions{Name: activities.TransferActivityName})
+		w.RegisterActivityWithOptions(activities.NewPollTransferActivity(m).Execute, cadenceactivity.RegisterOptions{Name: activities.PollTransferActivityName})
+		w.RegisterActivityWithOptions(activities.NewPollIngestActivity(m).Execute, cadenceactivity.RegisterOptions{Name: activities.PollIngestActivityName})
+		w.RegisterActivityWithOptions(activities.NewCleanUpActivity(m).Execute, cadenceactivity.RegisterOptions{Name: activities.CleanUpActivityName})
+		w.RegisterActivityWithOptions(activities.NewHidePackageActivity(m).Execute, cadenceactivity.RegisterOptions{Name: activities.HidePackageActivityName})
+		w.RegisterActivityWithOptions(activities.NewDeleteOriginalActivity(m).Execute, cadenceactivity.RegisterOptions{Name: activities.DeleteOriginalActivityName})
+
+		w.RegisterActivityWithOptions(workflow.NewAsyncCompletionActivity(m).Execute, cadenceactivity.RegisterOptions{Name: workflow.AsyncCompletionActivityName})
+		w.RegisterActivityWithOptions(nha_activities.NewUpdateHARIActivity(m).Execute, cadenceactivity.RegisterOptions{Name: nha_activities.UpdateHARIActivityName})
+		w.RegisterActivityWithOptions(nha_activities.NewUpdateProductionSystemActivity(m).Execute, cadenceactivity.RegisterOptions{Name: nha_activities.UpdateProductionSystemActivityName})
+
+		w.RegisterWorkflowWithOptions(collection.BulkWorkflow, cadenceworkflow.RegisterOptions{Name: collection.BulkWorkflowName})
+		w.RegisterActivityWithOptions(collection.NewBulkActivity(colsvc).Execute, cadenceactivity.RegisterOptions{Name: collection.BulkActivityName})
+
+		w.RegisterWorkflowWithOptions(batch.BatchWorkflow, cadenceworkflow.RegisterOptions{Name: batch.BatchWorkflowName})
+		w.RegisterActivityWithOptions(batch.NewBatchActivity(batchsvc).Execute, cadenceactivity.RegisterOptions{Name: batch.BatchActivityName})
 
 		g.Add(
 			func() error {
