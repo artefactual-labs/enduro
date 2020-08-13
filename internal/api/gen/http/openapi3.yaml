@@ -3,7 +3,7 @@ info:
   title: Enduro API
   version: "1.0"
 servers:
-- url: localhost:9000
+- url: http://localhost:9000
 paths:
   /batch:
     get:

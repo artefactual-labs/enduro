@@ -7,7 +7,7 @@ require (
 	github.com/alicebob/miniredis/v2 v2.13.1
 	github.com/anmitsu/go-shlex v0.0.0-20200502080107-070676123096 // indirect
 	github.com/atrox/go-migrate-rice v1.0.1
-	github.com/aws/aws-sdk-go v1.33.20
+	github.com/aws/aws-sdk-go v1.34.3
 	github.com/cenkalti/backoff/v3 v3.2.2
 	github.com/daaku/go.zipexe v1.0.1 // indirect
 	github.com/dsnet/compress v0.0.1 // indirect
@@ -20,40 +20,48 @@ require (
 	github.com/golang-migrate/migrate/v4 v4.12.2
 	github.com/golang/mock v1.4.4
 	github.com/google/uuid v1.1.1
-	github.com/google/wire v0.4.0 // indirect
 	github.com/gorilla/schema v1.1.0
 	github.com/hashicorp/go-multierror v1.1.0
 	github.com/jmoiron/sqlx v1.2.0
 	github.com/mholt/archiver v3.1.1+incompatible
-	github.com/mitchellh/mapstructure v1.3.2 // indirect
+	github.com/mitchellh/mapstructure v1.3.3 // indirect
 	github.com/nwaples/rardecode v1.1.0 // indirect
 	github.com/oklog/run v1.1.0
+	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	github.com/otiai10/copy v1.2.0
 	github.com/pelletier/go-toml v1.8.0 // indirect
 	github.com/pierrec/lz4 v2.5.2+incompatible // indirect
 	github.com/prometheus/client_golang v1.7.1
+	github.com/prometheus/common v0.11.1 // indirect
 	github.com/radovskyb/watcher v1.0.7
-	github.com/spf13/afero v1.3.3
+	github.com/spf13/afero v1.3.4
 	github.com/spf13/cast v1.3.1 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.7.1
+	github.com/stretchr/objx v0.3.0 // indirect
 	github.com/stretchr/testify v1.6.1
 	github.com/uber-go/tally v3.3.17+incompatible
-	github.com/uber/tchannel-go v1.19.0 // indirect
+	github.com/uber/tchannel-go v1.19.1 // indirect
 	github.com/ulikunitz/xz v0.5.7 // indirect
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
-	go.uber.org/cadence v0.12.1
-	go.uber.org/thriftrw v1.23.0 // indirect
+	go.uber.org/cadence v0.13.4
+	go.uber.org/thriftrw v1.24.0 // indirect
 	go.uber.org/yarpc v1.46.0
 	go.uber.org/zap v1.15.0
-	goa.design/goa/v3 v3.2.0
-	goa.design/plugins/v3 v3.2.0
-	gocloud.dev v0.19.0
+	goa.design/goa/v3 v3.2.2
+	goa.design/plugins/v3 v3.2.2
+	gocloud.dev v0.20.0
 	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
+	golang.org/x/sys v0.0.0-20200812155832-6a926be9bd1d // indirect
+	golang.org/x/tools v0.0.0-20200812231640-9176cd30088c // indirect
+	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
+	google.golang.org/genproto v0.0.0-20200813001606-1ccf2a5ae4fd // indirect
+	google.golang.org/grpc v1.31.0 // indirect
 	gopkg.in/ini.v1 v1.57.0 // indirect
-	gopkg.in/yaml.v3 v3.0.0-20200605160147-a5ece683394c // indirect
+	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776 // indirect
 	gotest.tools/v3 v3.0.2
+	honnef.co/go/tools v0.0.1-2020.1.5 // indirect
 )
 
 // "go.uber.org/cadence" requires it but "go mod" selects "v0.12.0".
