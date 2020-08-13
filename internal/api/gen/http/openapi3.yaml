@@ -3,7 +3,7 @@ info:
   title: Enduro API
   version: "1.0"
 servers:
-- url: http://localhost:9000
+- url: localhost:9000
 paths:
   /batch:
     get:
@@ -947,7 +947,7 @@ components:
           description: Identifier of processing workflow
           example: 9CEC8109-7649-F74C-CDA6-D8C4434F6E6F
           format: uuid
-      description: StoredPipeline describes a collection retrieved by the service.
+      description: StoredCollection describes a collection retrieved by the service.
       example:
         aip_id: 2AFA4466-554C-3755-3A53-AAE48068F107
         completed_at: "1998-08-06T16:02:36Z"

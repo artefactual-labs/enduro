@@ -189,16 +189,6 @@ var _ = Service("collection", func() {
 	})
 })
 
-var _ = Service("swagger", func() {
-	Description("The swagger service serves the API swagger definition.")
-	HTTP(func() {
-		Path("/swagger")
-	})
-	Files("/swagger.json", "internal/api/gen/http/openapi.json", func() {
-		Description("JSON document containing the API swagger definition.")
-	})
-})
-
 var EnumCollectionStatus = func() {
 	Enum("new", "in progress", "done", "error", "unknown", "queued", "pending", "abandoned")
 }
@@ -239,7 +229,7 @@ var Collection = Type("Collection", func() {
 })
 
 var StoredCollection = ResultType("application/vnd.enduro.stored-collection", func() {
-	Description("StoredPipeline describes a collection retrieved by the service.")
+	Description("StoredCollection describes a collection retrieved by the service.")
 	Reference(Collection)
 	Attributes(func() {
 		Attribute("id", UInt, "Identifier of collection")

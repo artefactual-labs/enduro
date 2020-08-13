@@ -49,8 +49,8 @@ require (
 	go.uber.org/thriftrw v1.24.0 // indirect
 	go.uber.org/yarpc v1.46.0
 	go.uber.org/zap v1.15.0
-	goa.design/goa/v3 v3.2.2
-	goa.design/plugins/v3 v3.2.2
+	goa.design/goa/v3 v3.2.0
+	goa.design/plugins/v3 v3.2.0
 	gocloud.dev v0.20.0
 	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
 	golang.org/x/sys v0.0.0-20200812155832-6a926be9bd1d // indirect
@@ -67,6 +67,3 @@ require (
 // "go.uber.org/cadence" requires it but "go mod" selects "v0.12.0".
 // I suspect the problem is in that Thrift tags are not using the "v" prefix.
 replace github.com/apache/thrift => github.com/apache/thrift v0.0.0-20161221203622-b2a4d4ae21c7
-
-// v1.5.0 not released yet!
-replace github.com/go-sql-driver/mysql => github.com/go-sql-driver/mysql v1.4.1-0.20191001060945-14bb9c0fc20f

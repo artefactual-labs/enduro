@@ -1279,7 +1279,7 @@ definitions:
         description: Identifier of processing workflow
         example: 8B791A71-1C43-AB9B-4366-12192353E1A2
         format: uuid
-    description: StoredPipeline describes a collection retrieved by the service. (default view)
+    description: StoredCollection describes a collection retrieved by the service. (default view)
     example:
       aip_id: 84858054-1B69-3E9A-C82B-BF11FF33B1D8
       completed_at: "1984-11-25T01:56:07Z"
