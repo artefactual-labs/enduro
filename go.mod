@@ -49,7 +49,7 @@ require (
 	go.uber.org/cadence v0.13.4
 	go.uber.org/thriftrw v1.24.0 // indirect
 	go.uber.org/yarpc v1.46.0
-	go.uber.org/zap v1.15.0
+	go.uber.org/zap v1.16.0
 	goa.design/goa/v3 v3.2.3
 	goa.design/plugins/v3 v3.2.3
 	gocloud.dev v0.20.0
