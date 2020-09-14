@@ -68,6 +68,7 @@ func NewMinioWatcher(ctx context.Context, config *MinioConfig) (*minioWatcher, e
 		commonWatcherImpl: &commonWatcherImpl{
 			name:             config.Name,
 			pipeline:         config.Pipeline,
+			transferType:     config.TransferType,
 			retentionPeriod:  config.RetentionPeriod,
 			stripTopLevelDir: config.StripTopLevelDir,
 		},

@@ -19,6 +19,9 @@ type BlobEvent struct {
 	// Name of the pipeline that the watcher targets.
 	PipelineName string
 
+	// Type of transfer.
+	TransferType string
+
 	// Retention period for this blob.
 	RetentionPeriod *time.Duration
 
@@ -36,6 +39,7 @@ func NewBlobEvent(w Watcher, key string) *BlobEvent {
 	return &BlobEvent{
 		WatcherName:      w.String(),
 		PipelineName:     w.Pipeline(),
+		TransferType:     w.TransferType(),
 		RetentionPeriod:  w.RetentionPeriod(),
 		StripTopLevelDir: w.StripTopLevelDir(),
 		Key:              key,

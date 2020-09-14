@@ -25,6 +25,7 @@ secret = "minio123"
 region = "us-west-1"
 bucket = "sips"
 pipeline = "am"
+transferType = "standard"
 retentionPeriod = "10s"
 stripTopLevelDir = true
 
@@ -33,6 +34,7 @@ name = "dev-fs"
 path = "./hack/watched-dir"
 inotify = false
 pipeline = "am"
+transferType = "standard"
 retentionPeriod = "11s"
 ignore = "^*\\.mft$"
 stripTopLevelDir = true

@@ -24,6 +24,9 @@ type Watcher interface {
 	// Every watcher targets a pipeline.
 	Pipeline() string
 
+	// Type of transfers started from this watcher.
+	TransferType() string
+
 	RetentionPeriod() *time.Duration
 
 	StripTopLevelDir() bool
@@ -34,6 +37,7 @@ type Watcher interface {
 type commonWatcherImpl struct {
 	name             string
 	pipeline         string
+	transferType     string
 	retentionPeriod  *time.Duration
 	stripTopLevelDir bool
 }
@@ -44,6 +48,13 @@ func (w *commonWatcherImpl) String() string {
 
 func (w *commonWatcherImpl) Pipeline() string {
 	return w.pipeline
+}
+
+func (w *commonWatcherImpl) TransferType() string {
+	if w.transferType == "" {
+		return "standard"
+	}
+	return w.transferType
 }
 
 func (w *commonWatcherImpl) RetentionPeriod() *time.Duration {

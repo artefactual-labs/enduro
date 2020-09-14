@@ -9,10 +9,11 @@ type Config struct {
 
 // See filesystem.go for more.
 type FilesystemConfig struct {
-	Name    string
-	Path    string
-	Inotify bool
-	Ignore  string
+	Name         string
+	Path         string
+	Inotify      bool
+	Ignore       string
+	TransferType string
 
 	Pipeline         string
 	RetentionPeriod  *time.Duration
@@ -32,6 +33,7 @@ type MinioConfig struct {
 	Secret       string
 	Token        string
 	Bucket       string
+	TransferType string
 
 	Pipeline         string
 	RetentionPeriod  *time.Duration

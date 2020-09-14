@@ -109,7 +109,7 @@ func (s *batchImpl) Status(ctx context.Context) (*goabatch.BatchStatusResult, er
 }
 
 func (s *batchImpl) InitProcessingWorkflow(ctx context.Context, batchDir, key, pipelineName string) error {
-	err := collection.InitProcessingWorkflow(ctx, s.cc, "", pipelineName, nil, false, key, batchDir, validation.Config{})
+	err := collection.InitProcessingWorkflow(ctx, s.cc, "", pipelineName, "standard", nil, false, key, batchDir, validation.Config{})
 	if err != nil {
 		s.logger.Error(err, "Error initializing processing workflow.")
 	}

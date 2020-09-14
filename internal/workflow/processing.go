@@ -242,7 +242,7 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 				return fmt.Errorf("error creating session: %v", err)
 			}
 
-			sessErr = w.SessionHandler(sessCtx, attempt, tinfo, nameInfo, req.ValidationConfig)
+			sessErr = w.SessionHandler(sessCtx, attempt, tinfo, nameInfo, req.ValidationConfig, req.TransferType)
 
 			// We want to retry the session if it has been canceled as a result
 			// of losing the worker but not otherwise. This scenario seems to be
@@ -319,7 +319,7 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 }
 
 // SessionHandler runs activities that belong to the same session.
-func (w *ProcessingWorkflow) SessionHandler(sessCtx workflow.Context, attempt int, tinfo *TransferInfo, nameInfo nha.NameInfo, validationConfig validation.Config) error {
+func (w *ProcessingWorkflow) SessionHandler(sessCtx workflow.Context, attempt int, tinfo *TransferInfo, nameInfo nha.NameInfo, validationConfig validation.Config, transferType string) error {
 	defer func() {
 		_ = releasePipeline(sessCtx, w.manager, tinfo.PipelineName)
 		workflow.CompleteSession(sessCtx)
@@ -390,6 +390,7 @@ func (w *ProcessingWorkflow) SessionHandler(sessCtx workflow.Context, attempt in
 			activityOpts := withActivityOptsForRequest(sessCtx)
 			err := workflow.ExecuteActivity(activityOpts, activities.TransferActivityName, &activities.TransferActivityParams{
 				PipelineName:       tinfo.PipelineName,
+				TransferType:       transferType,
 				TransferLocationID: tinfo.PipelineConfig.TransferLocationID,
 				RelPath:            tinfo.Bundle.RelPath,
 				Name:               tinfo.Key,

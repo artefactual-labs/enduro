@@ -35,6 +35,9 @@ type ProcessingWorkflowRequest struct {
 	// Pipeline name.
 	PipelineName string
 
+	// Type of transfer.
+	TransferType string
+
 	// Period of time to schedule the deletion of the original blob from the
 	// watched data source. nil means no deletion.
 	RetentionPeriod *time.Duration
@@ -52,11 +55,12 @@ type ProcessingWorkflowRequest struct {
 	ValidationConfig validation.Config
 }
 
-func InitProcessingWorkflow(ctx context.Context, c client.Client, watcherName, pipelineName string, retentionPeriod *time.Duration, stripTopLevelDir bool, key, batchDir string, validationConfig validation.Config) error {
+func InitProcessingWorkflow(ctx context.Context, c client.Client, watcherName, pipelineName, transferType string, retentionPeriod *time.Duration, stripTopLevelDir bool, key, batchDir string, validationConfig validation.Config) error {
 	req := &ProcessingWorkflowRequest{
 		WorkflowID:       fmt.Sprintf("processing-workflow-%s", uuid.New().String()),
 		WatcherName:      watcherName,
 		PipelineName:     pipelineName,
+		TransferType:     transferType,
 		RetentionPeriod:  retentionPeriod,
 		StripTopLevelDir: stripTopLevelDir,
 		ValidationConfig: validationConfig,
