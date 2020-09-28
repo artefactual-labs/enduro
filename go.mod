@@ -50,8 +50,8 @@ require (
 	go.uber.org/thriftrw v1.24.0 // indirect
 	go.uber.org/yarpc v1.46.0
 	go.uber.org/zap v1.15.0
-	goa.design/goa/v3 v3.2.3
-	goa.design/plugins/v3 v3.2.3
+	goa.design/goa/v3 v3.2.4
+	goa.design/plugins/v3 v3.2.4
 	gocloud.dev v0.20.0
 	golang.org/x/net v0.0.0-20200813134508-3edf25e44fcc // indirect
 	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
