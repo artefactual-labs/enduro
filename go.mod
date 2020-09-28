@@ -47,8 +47,7 @@ require (
 	github.com/ulikunitz/xz v0.5.7 // indirect
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
 	go.uber.org/cadence v0.13.4
-	go.uber.org/thriftrw v1.24.0 // indirect
-	go.uber.org/yarpc v1.46.0
+	go.uber.org/yarpc v1.47.2
 	go.uber.org/zap v1.15.0
 	goa.design/goa/v3 v3.2.3
 	goa.design/plugins/v3 v3.2.3

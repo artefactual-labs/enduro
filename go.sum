@@ -921,12 +921,16 @@ go.uber.org/thriftrw v1.20.2/go.mod h1:a0+HZMaS9tmHDCPyrrx1GjYWFRK02xzxnrK1Nl9Li
 go.uber.org/thriftrw v1.22.0/go.mod h1:IcIfSeZgc59AlYb0xr0DlDKIdD7SgjnFpG9BXCPyy9g=
 go.uber.org/thriftrw v1.24.0 h1:vGEJA6CxTkCEshA4o0RP8dWHttkH+fu0lJ3z8cJfkj0=
 go.uber.org/thriftrw v1.24.0/go.mod h1:IcIfSeZgc59AlYb0xr0DlDKIdD7SgjnFpG9BXCPyy9g=
+go.uber.org/thriftrw v1.25.0 h1:x0Omju0vwFn4JniYUqB0w1nycxjE42wNptB7DAtZG/Y=
+go.uber.org/thriftrw v1.25.0/go.mod h1:IcIfSeZgc59AlYb0xr0DlDKIdD7SgjnFpG9BXCPyy9g=
 go.uber.org/tools v0.0.0-20190430173459-422a61c266e1/go.mod h1:vJERXedbb3MVM5f9Ejo0C68/HhF8uaILCdgjnY+goOA=
 go.uber.org/tools v0.0.0-20190618225709-2cfd321de3ee h1:0mgffUl7nfd+FpvXMVz4IDEaUSmT1ysygQC7qYo7sG4=
 go.uber.org/tools v0.0.0-20190618225709-2cfd321de3ee/go.mod h1:vJERXedbb3MVM5f9Ejo0C68/HhF8uaILCdgjnY+goOA=
 go.uber.org/yarpc v1.42.0/go.mod h1:5wt+WtAfoQh3yGyup7479I35hUobLqCfb0oewxC58jE=
 go.uber.org/yarpc v1.46.0 h1:TEn9ACKGLF1WpihcdrFqsvzLAYpS8EkMrZ+BswX1w0g=
 go.uber.org/yarpc v1.46.0/go.mod h1:KlD7dl1BHPRRO3Eyw/rqaTeOjJl2IJ5UkBKyXqa/bBc=
+go.uber.org/yarpc v1.47.2 h1:VzPknwVZybPi1gmjYB6Jpl3oo7wH10yI6QYKFC49n/M=
+go.uber.org/yarpc v1.47.2/go.mod h1:ARD/r1yc+dxNXjZ049Z1NpdzWxRrqCn6IR2we7CPxXs=
 go.uber.org/zap v1.8.0/go.mod h1:vwi/ZaCAaUcBkycHslxD9B2zi4UTXhF60s6SWpuDF0Q=
 go.uber.org/zap v1.9.1/go.mod h1:vwi/ZaCAaUcBkycHslxD9B2zi4UTXhF60s6SWpuDF0Q=
 go.uber.org/zap v1.10.0/go.mod h1:vwi/ZaCAaUcBkycHslxD9B2zi4UTXhF60s6SWpuDF0Q=
