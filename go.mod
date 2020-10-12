@@ -65,7 +65,7 @@ require (
 	google.golang.org/grpc v1.32.0 // indirect
 	gopkg.in/ini.v1 v1.61.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776 // indirect
-	gotest.tools/v3 v3.0.2
+	gotest.tools/v3 v3.0.3
 	honnef.co/go/tools v0.0.1-2020.1.5 // indirect
 )
 
