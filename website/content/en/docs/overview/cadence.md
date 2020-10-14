@@ -1,7 +1,7 @@
 ---
 title: "Cadence"
 linkTitle: "Cadence"
-weight: 1
+weight: 3
 description: >
   How we use Cadence to build Enduro.
 ---
