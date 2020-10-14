@@ -35,7 +35,7 @@ handle (its capacity), etc.
 to decide if we can send a new one.
 
 1. **setStatusInProgressLocalActivity** updates the collection marking
-it as “in progress”.
+it as "in progress".
 
 1. **download-activity** copies the original file from the watched
 source into a temporary file in the pipeline's processing directory.
