@@ -35,7 +35,7 @@ require (
 	github.com/pborman/uuid v1.2.1 // indirect
 	github.com/pelletier/go-toml v1.8.1 // indirect
 	github.com/pierrec/lz4 v2.5.2+incompatible // indirect
-	github.com/prometheus/client_golang v1.7.1
+	github.com/prometheus/client_golang v1.8.0
 	github.com/prometheus/common v0.14.0 // indirect
 	github.com/prometheus/procfs v0.2.0 // indirect
 	github.com/radovskyb/watcher v1.0.7
@@ -59,7 +59,6 @@ require (
 	gocloud.dev v0.20.0
 	golang.org/x/net v0.0.0-20200930145003-4acb6c075d10 // indirect
 	golang.org/x/sync v0.0.0-20200930132711-30421366ff76
-	golang.org/x/sys v0.0.0-20200930185726-fdedc70b468f // indirect
 	golang.org/x/tools v0.0.0-20201002161817-08f19738fac6 // indirect
 	google.golang.org/genproto v0.0.0-20201002142447-3860012362da // indirect
 	google.golang.org/grpc v1.32.0 // indirect
