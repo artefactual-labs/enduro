@@ -54,8 +54,8 @@ require (
 	go.uber.org/multierr v1.6.0 // indirect
 	go.uber.org/yarpc v1.47.2
 	go.uber.org/zap v1.16.0
-	goa.design/goa/v3 v3.2.4
-	goa.design/plugins/v3 v3.2.4
+	goa.design/goa/v3 v3.2.5
+	goa.design/plugins/v3 v3.2.5
 	gocloud.dev v0.20.0
 	golang.org/x/net v0.0.0-20200930145003-4acb6c075d10 // indirect
 	golang.org/x/sync v0.0.0-20200930132711-30421366ff76
