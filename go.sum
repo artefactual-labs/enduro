@@ -958,6 +958,7 @@ go.uber.org/zap v1.16.0 h1:uFRZXykJGK9lLY4HtgSw44DnIcAM+kRBP7x5m+NpAOM=
 go.uber.org/zap v1.16.0/go.mod h1:MA8QOfq0BHJwdXa996Y4dYkAqRKB8/1K1QMMZVaNZjQ=
 goa.design/goa/v3 v3.2.4 h1:tDQbHqDxWiOIedW8Gh4kmPbouXMV9PejFUdWJGVBlEw=
 goa.design/goa/v3 v3.2.4/go.mod h1:zspZv889wl5SCkCDKyfKApbZJ3IewsbUnh3Evln/UmI=
+goa.design/goa/v3 v3.2.5/go.mod h1:zspZv889wl5SCkCDKyfKApbZJ3IewsbUnh3Evln/UmI=
 goa.design/plugins/v3 v3.2.4 h1:mthyC4uHC8F4JDXewmnqGC+EeTSVkWzg0e5OAcCSHNU=
 goa.design/plugins/v3 v3.2.4/go.mod h1:8cN7sfJg76DA1fSbfh2+bsMsVQpar68XekIgYfUu1bs=
 gocloud.dev v0.20.0 h1:mbEKMfnyPV7W1Rj35R1xXfjszs9dXkwSOq2KoFr25g8=
