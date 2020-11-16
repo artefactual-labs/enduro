@@ -7,7 +7,7 @@ require (
 	github.com/alicebob/miniredis/v2 v2.13.1
 	github.com/anmitsu/go-shlex v0.0.0-20200502080107-070676123096 // indirect
 	github.com/atrox/go-migrate-rice v1.0.1
-	github.com/aws/aws-sdk-go v1.35.1
+	github.com/aws/aws-sdk-go v1.35.28
 	github.com/cenkalti/backoff/v3 v3.2.2
 	github.com/daaku/go.zipexe v1.0.1 // indirect
 	github.com/dsnet/compress v0.0.1 // indirect
