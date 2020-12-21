@@ -54,15 +54,10 @@ require (
 	go.uber.org/multierr v1.6.0 // indirect
 	go.uber.org/yarpc v1.47.2
 	go.uber.org/zap v1.16.0
-	goa.design/goa/v3 v3.2.4
-	goa.design/plugins/v3 v3.2.4
+	goa.design/goa/v3 v3.2.6
+	goa.design/plugins/v3 v3.2.6
 	gocloud.dev v0.20.0
-	golang.org/x/net v0.0.0-20200930145003-4acb6c075d10 // indirect
-	golang.org/x/sync v0.0.0-20200930132711-30421366ff76
-	golang.org/x/sys v0.0.0-20200930185726-fdedc70b468f // indirect
-	golang.org/x/tools v0.0.0-20201002161817-08f19738fac6 // indirect
-	google.golang.org/genproto v0.0.0-20201002142447-3860012362da // indirect
-	google.golang.org/grpc v1.32.0 // indirect
+	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9
 	gopkg.in/ini.v1 v1.61.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776 // indirect
 	gotest.tools/v3 v3.0.2
