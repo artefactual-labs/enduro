@@ -52,7 +52,7 @@ require (
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
 	go.uber.org/cadence v0.14.1
 	go.uber.org/multierr v1.6.0 // indirect
-	go.uber.org/yarpc v1.47.2
+	go.uber.org/yarpc v1.51.0
 	go.uber.org/zap v1.16.0
 	goa.design/goa/v3 v3.2.4
 	goa.design/plugins/v3 v3.2.4
