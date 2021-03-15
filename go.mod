@@ -7,7 +7,7 @@ require (
 	github.com/alicebob/miniredis/v2 v2.13.1
 	github.com/anmitsu/go-shlex v0.0.0-20200502080107-070676123096 // indirect
 	github.com/atrox/go-migrate-rice v1.0.1
-	github.com/aws/aws-sdk-go v1.35.1
+	github.com/aws/aws-sdk-go v1.37.30
 	github.com/cenkalti/backoff/v3 v3.2.2
 	github.com/daaku/go.zipexe v1.0.1 // indirect
 	github.com/dsnet/compress v0.0.1 // indirect
@@ -57,7 +57,6 @@ require (
 	goa.design/goa/v3 v3.2.4
 	goa.design/plugins/v3 v3.2.4
 	gocloud.dev v0.20.0
-	golang.org/x/net v0.0.0-20200930145003-4acb6c075d10 // indirect
 	golang.org/x/sync v0.0.0-20200930132711-30421366ff76
 	golang.org/x/sys v0.0.0-20200930185726-fdedc70b468f // indirect
 	golang.org/x/tools v0.0.0-20201002161817-08f19738fac6 // indirect
