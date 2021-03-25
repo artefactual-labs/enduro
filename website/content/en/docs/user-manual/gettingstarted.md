@@ -36,4 +36,5 @@ This is the Enduro Collections dashboard, the default landing page for the appli
 
 * Return to the Collections page. You will see a set of new transfers, likely with a status of QUEUED or IN PROGRESS. 
 * As each transfer is processed into an AIP and placed in archival storage, its status will change to DONE. Congratulations! You have just used Enduro to perform batch processing! 
+* NOTE: Enduro will automatically used the "automated" processing configuration file in the selected Archivematica pipeline for each transfer.
 * NOTE: If you have your Archivematica dashboard open you will see the transfers appearing in the Archivematica transfer tab and then in the ingest tab. Once the transfers have finished processing and the AIP has been placed in archival storage, however, the transfers will no longer be visible in the transfer and ingest tabs. Enduro has cleared them out of those tabs in order to ensure that the tabs don't get cluttered. However, if an error has occurred and the Enduro Collections tab shows a status of ERROR, the failed transfer remains visible in the transfer and/or ingest tabs (depending on which micro-service failed).
