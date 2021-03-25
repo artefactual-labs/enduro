@@ -85,10 +85,12 @@ func HTTPServer(
 	}
 
 	return &http.Server{
-		Addr:         config.Listen,
-		Handler:      handler,
-		ReadTimeout:  time.Second * 5,
-		WriteTimeout: time.Second * 10,
+		Addr:        config.Listen,
+		Handler:     handler,
+		ReadTimeout: time.Second * 5,
+		// WriteTimeout is set to 0 because we have streaming endpoints.
+		// https://github.com/golang/go/issues/16100#issuecomment-285573480
+		WriteTimeout: 0,
 		IdleTimeout:  time.Second * 120,
 	}
 }

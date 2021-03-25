@@ -72,7 +72,7 @@ func (dp *downloadReverseProxy) modifyResponse(r *http.Response) error {
 func (dp *downloadReverseProxy) errorHandler(rw http.ResponseWriter, req *http.Request, err error) {
 	rw.WriteHeader(http.StatusInternalServerError)
 	fmt.Fprintf(rw, `{"message": "The operation failed unexpectedly. Contact the administrator for more details."}`)
-	dp.logger.Info("Download from Storage Service failed", "msg", err)
+	dp.logger.Info("Download from Storage Service failed", "msg", err.Error())
 }
 
 func (p *downloadReverseProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
