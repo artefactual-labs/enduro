@@ -15,7 +15,7 @@ This is the Enduro Collections dashboard, the default landing page for the appli
 * ERROR: The transfer was ingested into Archivematica but an error prevented it from being packaged into an AIP and/or
  placed in archival storage.
 
-![Capture3](https://user-images.githubusercontent.com/14101311/112519120-48eb8d80-8d57-11eb-832a-be5db75cae44.PNG)
+![Enduro_dashboard](https://user-images.githubusercontent.com/14101311/112544758-a510da80-8d74-11eb-887d-00d34e3e3786.PNG)
 
 ## Preparing transfers for batch import
 
