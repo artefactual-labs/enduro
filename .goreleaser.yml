@@ -2,7 +2,7 @@ project_name: enduro
 
 before:
   hooks:
-  - make tools bingen
+  - make tools ui
 
 changelog:
   sort: asc

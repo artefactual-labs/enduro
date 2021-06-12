@@ -1,6 +1,10 @@
 .DS_Store
 node_modules
-/dist
+
+# Empty dist directory
+# go:embed needs this directory to always exist.
+/dist/*
+!/dist/.keep
 
 # local env files
 .env.local

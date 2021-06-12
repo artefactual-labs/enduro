@@ -35,15 +35,9 @@ $(HUGO): $(BINGO_DIR)/hugo.mod
 	@echo "(re)installing $(GOBIN)/hugo-v0.83.1"
 	@cd $(BINGO_DIR) && CGO_ENABLED=1 $(GO) build -tags=extended -mod=mod -modfile=hugo.mod -o=$(GOBIN)/hugo-v0.83.1 "github.com/gohugoio/hugo"
 
-MOCKGEN := $(GOBIN)/mockgen-v1.5.0
+MOCKGEN := $(GOBIN)/mockgen-v1.6.0
 $(MOCKGEN): $(BINGO_DIR)/mockgen.mod
 	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
-	@echo "(re)installing $(GOBIN)/mockgen-v1.5.0"
-	@cd $(BINGO_DIR) && $(GO) build -mod=mod -modfile=mockgen.mod -o=$(GOBIN)/mockgen-v1.5.0 "github.com/golang/mock/mockgen"
-
-RICE := $(GOBIN)/rice-v1.0.2
-$(RICE): $(BINGO_DIR)/rice.mod
-	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
-	@echo "(re)installing $(GOBIN)/rice-v1.0.2"
-	@cd $(BINGO_DIR) && $(GO) build -mod=mod -modfile=rice.mod -o=$(GOBIN)/rice-v1.0.2 "github.com/GeertJohan/go.rice/rice"
+	@echo "(re)installing $(GOBIN)/mockgen-v1.6.0"
+	@cd $(BINGO_DIR) && $(GO) build -mod=mod -modfile=mockgen.mod -o=$(GOBIN)/mockgen-v1.6.0 "github.com/golang/mock/mockgen"
 

@@ -3,25 +3,23 @@ module github.com/artefactual-labs/enduro
 go 1.16
 
 require (
-	github.com/GeertJohan/go.rice v1.0.2
 	github.com/alicebob/miniredis/v2 v2.14.5
 	github.com/anmitsu/go-shlex v0.0.0-20200502080107-070676123096 // indirect
-	github.com/atrox/go-migrate-rice v1.0.1
 	github.com/aws/aws-sdk-go v1.38.60
 	github.com/cenkalti/backoff/v4 v4.1.1
-	github.com/daaku/go.zipexe v1.0.1 // indirect
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/go-logr/logr v0.4.0
 	github.com/go-logr/zapr v0.4.0
 	github.com/go-redis/redis/v8 v8.10.0
 	github.com/go-sql-driver/mysql v1.6.0
-	github.com/golang-migrate/migrate/v4 v4.14.1
+	github.com/golang-migrate/migrate/v4 v4.14.2-0.20201125065321-a53e6fc42574
 	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.2.0
 	github.com/gorilla/schema v1.2.0
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/jmoiron/sqlx v1.3.4
+	github.com/johejo/golang-migrate-extra v0.0.0-20210217013041-51a992e50d16
 	github.com/magiconair/properties v1.8.4 // indirect
 	github.com/mholt/archiver/v3 v3.5.0
 	github.com/oklog/run v1.1.0

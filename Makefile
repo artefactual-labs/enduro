@@ -8,6 +8,8 @@ GO_FLAGS= -ldflags=$(LD_FLAGS)
 
 export PATH:=$(GOBIN):$(PATH)
 
+.DEFAULT_GOAL := run
+
 tools:
 	$(GO) get github.com/bwplotka/bingo
 
@@ -29,8 +31,6 @@ goagen:
 
 clean:
 	rm -rf ./build ./dist
-	find . -name fake -type d | xargs rm -rf
-	find . -name rice-box.go -delete
 
 release-test-config:
 	goreleaser --snapshot --skip-publish --rm-dist
@@ -44,13 +44,9 @@ website:
 ui:
 	yarn --cwd ui install
 	yarn --cwd ui build
-	make ui-gen
 
 ui-dev:
 	yarn --cwd ui serve
-
-ui-gen:
-	$(GO) generate -v ./ui
 
 ui-client:
 	@rm -rf $(CURDIR)/ui/src/client
@@ -88,8 +84,6 @@ flush:
 	docker-compose exec --user=root mysql mysql -hlocalhost -uroot -proot123 -e "drop database enduro"
 	docker-compose exec --user=root mysql mysql -hlocalhost -uroot -proot123 -e "create database enduro"
 
-bingen: gen-ui gen-migrations
-
 gen-mock:
 	$(MOCKGEN) -destination=./internal/batch/fake/mock_batch.go -package=fake github.com/artefactual-labs/enduro/internal/batch Service
 	$(MOCKGEN) -destination=./internal/collection/fake/mock_collection.go -package=fake github.com/artefactual-labs/enduro/internal/collection Service
@@ -101,11 +95,5 @@ gen-mock:
 	$(MOCKGEN) -destination=./internal/amclient/fake/mock_v2_jobs.go -package=fake github.com/artefactual-labs/enduro/internal/amclient JobsService
 	$(MOCKGEN) -destination=./internal/amclient/fake/mock_v2_package.go -package=fake github.com/artefactual-labs/enduro/internal/amclient PackageService
 	$(MOCKGEN) -destination=./internal/amclient/fake/mock_v2_task.go -package=fake github.com/artefactual-labs/enduro/internal/amclient TaskService
-
-gen-ui:
-	cd ui/ && $(RICE) embed-go
-
-gen-migrations:
-	cd internal/db && $(RICE) embed-go
 
 .PHONY: *

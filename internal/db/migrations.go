@@ -1,9 +1,15 @@
 package db
 
-import rice "github.com/GeertJohan/go.rice"
+import (
+	"embed"
 
-//go:generate make -C ../../ gen-migrations
+	"github.com/golang-migrate/migrate/v4/source"
+	"github.com/johejo/golang-migrate-extra/source/iofs"
+)
 
-func migrations() (*rice.Box, error) {
-	return rice.FindBox("migrations")
+//go:embed migrations/*.sql
+var fs embed.FS
+
+func sourceDriver() (source.Driver, error) {
+	return iofs.New(fs, "migrations")
 }
