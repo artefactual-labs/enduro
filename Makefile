@@ -39,7 +39,7 @@ release-test:
 	goreleaser --skip-publish
 
 website:
-	hugo serve --source=website/
+	$(HUGO) serve --source=website/
 
 ui:
 	yarn --cwd ui install
