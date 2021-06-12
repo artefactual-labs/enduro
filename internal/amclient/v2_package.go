@@ -8,8 +8,6 @@ import (
 
 const packageBasePath = "api/v2beta/package"
 
-//go:generate mockgen  -destination=./fake/mock_v2_package.go -package=fake github.com/artefactual-labs/enduro/internal/amclient PackageService
-
 type PackageService interface {
 	Create(context.Context, *PackageCreateRequest) (*PackageCreateResponse, *Response, error)
 }
@@ -43,7 +41,7 @@ func (s *PackageServiceOp) Create(ctx context.Context, r *PackageCreateRequest) 
 		r.Type = standardTransferType
 	}
 	if r.AutoApprove == nil {
-		var approve = true
+		approve := true
 		r.AutoApprove = &approve
 	}
 	r.Path = base64.StdEncoding.EncodeToString([]byte(r.Path))

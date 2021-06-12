@@ -6,36 +6,37 @@ package fake
 
 import (
 	context "context"
-	watcher "github.com/artefactual-labs/enduro/internal/watcher"
-	gomock "github.com/golang/mock/gomock"
 	io "io"
 	reflect "reflect"
+
+	watcher "github.com/artefactual-labs/enduro/internal/watcher"
+	gomock "github.com/golang/mock/gomock"
 )
 
-// MockService is a mock of Service interface
+// MockService is a mock of Service interface.
 type MockService struct {
 	ctrl     *gomock.Controller
 	recorder *MockServiceMockRecorder
 }
 
-// MockServiceMockRecorder is the mock recorder for MockService
+// MockServiceMockRecorder is the mock recorder for MockService.
 type MockServiceMockRecorder struct {
 	mock *MockService
 }
 
-// NewMockService creates a new mock instance
+// NewMockService creates a new mock instance.
 func NewMockService(ctrl *gomock.Controller) *MockService {
 	mock := &MockService{ctrl: ctrl}
 	mock.recorder = &MockServiceMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockService) EXPECT() *MockServiceMockRecorder {
 	return m.recorder
 }
 
-// Delete mocks base method
+// Delete mocks base method.
 func (m *MockService) Delete(arg0 context.Context, arg1, arg2 string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Delete", arg0, arg1, arg2)
@@ -43,13 +44,13 @@ func (m *MockService) Delete(arg0 context.Context, arg1, arg2 string) error {
 	return ret0
 }
 
-// Delete indicates an expected call of Delete
+// Delete indicates an expected call of Delete.
 func (mr *MockServiceMockRecorder) Delete(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockService)(nil).Delete), arg0, arg1, arg2)
 }
 
-// Download mocks base method
+// Download mocks base method.
 func (m *MockService) Download(arg0 context.Context, arg1 io.Writer, arg2, arg3 string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Download", arg0, arg1, arg2, arg3)
@@ -57,13 +58,13 @@ func (m *MockService) Download(arg0 context.Context, arg1 io.Writer, arg2, arg3 
 	return ret0
 }
 
-// Download indicates an expected call of Download
+// Download indicates an expected call of Download.
 func (mr *MockServiceMockRecorder) Download(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Download", reflect.TypeOf((*MockService)(nil).Download), arg0, arg1, arg2, arg3)
 }
 
-// Watchers mocks base method
+// Watchers mocks base method.
 func (m *MockService) Watchers() []watcher.Watcher {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Watchers")
@@ -71,7 +72,7 @@ func (m *MockService) Watchers() []watcher.Watcher {
 	return ret0
 }
 
-// Watchers indicates an expected call of Watchers
+// Watchers indicates an expected call of Watchers.
 func (mr *MockServiceMockRecorder) Watchers() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Watchers", reflect.TypeOf((*MockService)(nil).Watchers))

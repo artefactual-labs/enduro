@@ -6,35 +6,36 @@ package fake
 
 import (
 	context "context"
+	reflect "reflect"
+
 	pipeline "github.com/artefactual-labs/enduro/internal/api/gen/pipeline"
 	gomock "github.com/golang/mock/gomock"
-	reflect "reflect"
 )
 
-// MockService is a mock of Service interface
+// MockService is a mock of Service interface.
 type MockService struct {
 	ctrl     *gomock.Controller
 	recorder *MockServiceMockRecorder
 }
 
-// MockServiceMockRecorder is the mock recorder for MockService
+// MockServiceMockRecorder is the mock recorder for MockService.
 type MockServiceMockRecorder struct {
 	mock *MockService
 }
 
-// NewMockService creates a new mock instance
+// NewMockService creates a new mock instance.
 func NewMockService(ctrl *gomock.Controller) *MockService {
 	mock := &MockService{ctrl: ctrl}
 	mock.recorder = &MockServiceMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockService) EXPECT() *MockServiceMockRecorder {
 	return m.recorder
 }
 
-// List mocks base method
+// List mocks base method.
 func (m *MockService) List(arg0 context.Context, arg1 *pipeline.ListPayload) ([]*pipeline.EnduroStoredPipeline, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "List", arg0, arg1)
@@ -43,13 +44,13 @@ func (m *MockService) List(arg0 context.Context, arg1 *pipeline.ListPayload) ([]
 	return ret0, ret1
 }
 
-// List indicates an expected call of List
+// List indicates an expected call of List.
 func (mr *MockServiceMockRecorder) List(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockService)(nil).List), arg0, arg1)
 }
 
-// Show mocks base method
+// Show mocks base method.
 func (m *MockService) Show(arg0 context.Context, arg1 *pipeline.ShowPayload) (*pipeline.EnduroStoredPipeline, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Show", arg0, arg1)
@@ -58,7 +59,7 @@ func (m *MockService) Show(arg0 context.Context, arg1 *pipeline.ShowPayload) (*p
 	return ret0, ret1
 }
 
-// Show indicates an expected call of Show
+// Show indicates an expected call of Show.
 func (mr *MockServiceMockRecorder) Show(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Show", reflect.TypeOf((*MockService)(nil).Show), arg0, arg1)

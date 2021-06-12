@@ -7,8 +7,6 @@ import (
 
 const ingestBasePath = "api/ingest"
 
-//go:generate mockgen  -destination=./fake/mock_ingest.go -package=fake github.com/artefactual-labs/enduro/internal/amclient IngestService
-
 // Ingest is an interface for interfacing with the Ingest endpoints of the
 // Dashboard API.
 type IngestService interface {

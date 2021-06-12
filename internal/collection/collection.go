@@ -16,8 +16,6 @@ import (
 	goahttp "goa.design/goa/v3/http"
 )
 
-//go:generate mockgen  -destination=./fake/mock_collection.go -package=fake github.com/artefactual-labs/enduro/internal/collection Service
-
 type Service interface {
 	// Goa returns an implementation of the goacollection Service.
 	Goa() goacollection.Service
@@ -68,8 +66,8 @@ func (svc *collectionImpl) Goa() goacollection.Service {
 }
 
 func (svc *collectionImpl) Create(ctx context.Context, col *Collection) error {
-	var query = `INSERT INTO collection (name, workflow_id, run_id, transfer_id, aip_id, original_id, pipeline_id, decision_token, status) VALUES ((?), (?), (?), (?), (?), (?), (?), (?), (?))`
-	var args = []interface{}{
+	query := `INSERT INTO collection (name, workflow_id, run_id, transfer_id, aip_id, original_id, pipeline_id, decision_token, status) VALUES ((?), (?), (?), (?), (?), (?), (?), (?), (?))`
+	args := []interface{}{
 		col.Name,
 		col.WorkflowID,
 		col.RunID,
@@ -99,7 +97,7 @@ func (svc *collectionImpl) Create(ctx context.Context, col *Collection) error {
 
 func (svc *collectionImpl) UpdateWorkflowStatus(ctx context.Context, ID uint, name string, workflowID, runID, transferID, aipID, pipelineID string, status Status, storedAt time.Time) error {
 	// Ensure that storedAt is reset during retries.
-	var completedAt = &storedAt
+	completedAt := &storedAt
 	if status == StatusInProgress {
 		completedAt = nil
 	}
@@ -107,8 +105,8 @@ func (svc *collectionImpl) UpdateWorkflowStatus(ctx context.Context, ID uint, na
 		completedAt = nil
 	}
 
-	var query = `UPDATE collection SET name = (?), workflow_id = (?), run_id = (?), transfer_id = (?), aip_id = (?), pipeline_id = (?), status = (?), completed_at = (?) WHERE id = (?)`
-	var args = []interface{}{
+	query := `UPDATE collection SET name = (?), workflow_id = (?), run_id = (?), transfer_id = (?), aip_id = (?), pipeline_id = (?), status = (?), completed_at = (?) WHERE id = (?)`
+	args := []interface{}{
 		name,
 		workflowID,
 		runID,
@@ -126,8 +124,8 @@ func (svc *collectionImpl) UpdateWorkflowStatus(ctx context.Context, ID uint, na
 }
 
 func (svc *collectionImpl) SetStatus(ctx context.Context, ID uint, status Status) error {
-	var query = `UPDATE collection SET status = (?) WHERE id = (?)`
-	var args = []interface{}{
+	query := `UPDATE collection SET status = (?) WHERE id = (?)`
+	args := []interface{}{
 		status,
 		ID,
 	}
@@ -139,7 +137,7 @@ func (svc *collectionImpl) SetStatus(ctx context.Context, ID uint, status Status
 
 func (svc *collectionImpl) SetStatusInProgress(ctx context.Context, ID uint, startedAt time.Time) error {
 	var query string
-	var args = []interface{}{StatusInProgress}
+	args := []interface{}{StatusInProgress}
 
 	if !startedAt.IsZero() {
 		query = `UPDATE collection SET status = (?), started_at = (?) WHERE id = (?)`
@@ -155,8 +153,8 @@ func (svc *collectionImpl) SetStatusInProgress(ctx context.Context, ID uint, sta
 }
 
 func (svc *collectionImpl) SetStatusPending(ctx context.Context, ID uint, taskToken []byte) error {
-	var query = `UPDATE collection SET status = (?), decision_token = (?) WHERE id = (?)`
-	var args = []interface{}{
+	query := `UPDATE collection SET status = (?), decision_token = (?) WHERE id = (?)`
+	args := []interface{}{
 		StatusPending,
 		taskToken,
 		ID,
@@ -168,8 +166,8 @@ func (svc *collectionImpl) SetStatusPending(ctx context.Context, ID uint, taskTo
 }
 
 func (svc *collectionImpl) SetOriginalID(ctx context.Context, ID uint, originalID string) error {
-	var query = `UPDATE collection SET original_id = (?) WHERE id = (?)`
-	var args = []interface{}{
+	query := `UPDATE collection SET original_id = (?) WHERE id = (?)`
+	args := []interface{}{
 		originalID,
 		ID,
 	}
@@ -195,9 +193,9 @@ func (svc *collectionImpl) updateRow(ctx context.Context, query string, args []i
 }
 
 func (svc *collectionImpl) read(ctx context.Context, ID uint) (*Collection, error) {
-	var query = "SELECT id, name, workflow_id, run_id, transfer_id, aip_id, original_id, pipeline_id, decision_token, status, CONVERT_TZ(created_at, @@session.time_zone, '+00:00') AS created_at, CONVERT_TZ(started_at, @@session.time_zone, '+00:00') AS started_at, CONVERT_TZ(completed_at, @@session.time_zone, '+00:00') AS completed_at FROM collection WHERE id = (?)"
-	var args = []interface{}{ID}
-	var c = Collection{}
+	query := "SELECT id, name, workflow_id, run_id, transfer_id, aip_id, original_id, pipeline_id, decision_token, status, CONVERT_TZ(created_at, @@session.time_zone, '+00:00') AS created_at, CONVERT_TZ(started_at, @@session.time_zone, '+00:00') AS started_at, CONVERT_TZ(completed_at, @@session.time_zone, '+00:00') AS completed_at FROM collection WHERE id = (?)"
+	args := []interface{}{ID}
+	c := Collection{}
 
 	query = svc.db.Rebind(query)
 	if err := svc.db.GetContext(ctx, &c, query, args...); err != nil {

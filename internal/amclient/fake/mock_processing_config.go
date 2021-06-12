@@ -6,35 +6,36 @@ package fake
 
 import (
 	context "context"
+	reflect "reflect"
+
 	amclient "github.com/artefactual-labs/enduro/internal/amclient"
 	gomock "github.com/golang/mock/gomock"
-	reflect "reflect"
 )
 
-// MockProcessingConfigService is a mock of ProcessingConfigService interface
+// MockProcessingConfigService is a mock of ProcessingConfigService interface.
 type MockProcessingConfigService struct {
 	ctrl     *gomock.Controller
 	recorder *MockProcessingConfigServiceMockRecorder
 }
 
-// MockProcessingConfigServiceMockRecorder is the mock recorder for MockProcessingConfigService
+// MockProcessingConfigServiceMockRecorder is the mock recorder for MockProcessingConfigService.
 type MockProcessingConfigServiceMockRecorder struct {
 	mock *MockProcessingConfigService
 }
 
-// NewMockProcessingConfigService creates a new mock instance
+// NewMockProcessingConfigService creates a new mock instance.
 func NewMockProcessingConfigService(ctrl *gomock.Controller) *MockProcessingConfigService {
 	mock := &MockProcessingConfigService{ctrl: ctrl}
 	mock.recorder = &MockProcessingConfigServiceMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockProcessingConfigService) EXPECT() *MockProcessingConfigServiceMockRecorder {
 	return m.recorder
 }
 
-// Get mocks base method
+// Get mocks base method.
 func (m *MockProcessingConfigService) Get(arg0 context.Context, arg1 string) (*amclient.ProcessingConfig, *amclient.Response, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Get", arg0, arg1)
@@ -44,7 +45,7 @@ func (m *MockProcessingConfigService) Get(arg0 context.Context, arg1 string) (*a
 	return ret0, ret1, ret2
 }
 
-// Get indicates an expected call of Get
+// Get indicates an expected call of Get.
 func (mr *MockProcessingConfigServiceMockRecorder) Get(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockProcessingConfigService)(nil).Get), arg0, arg1)

@@ -6,35 +6,36 @@ package fake
 
 import (
 	context "context"
+	reflect "reflect"
+
 	amclient "github.com/artefactual-labs/enduro/internal/amclient"
 	gomock "github.com/golang/mock/gomock"
-	reflect "reflect"
 )
 
-// MockTransferService is a mock of TransferService interface
+// MockTransferService is a mock of TransferService interface.
 type MockTransferService struct {
 	ctrl     *gomock.Controller
 	recorder *MockTransferServiceMockRecorder
 }
 
-// MockTransferServiceMockRecorder is the mock recorder for MockTransferService
+// MockTransferServiceMockRecorder is the mock recorder for MockTransferService.
 type MockTransferServiceMockRecorder struct {
 	mock *MockTransferService
 }
 
-// NewMockTransferService creates a new mock instance
+// NewMockTransferService creates a new mock instance.
 func NewMockTransferService(ctrl *gomock.Controller) *MockTransferService {
 	mock := &MockTransferService{ctrl: ctrl}
 	mock.recorder = &MockTransferServiceMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockTransferService) EXPECT() *MockTransferServiceMockRecorder {
 	return m.recorder
 }
 
-// Approve mocks base method
+// Approve mocks base method.
 func (m *MockTransferService) Approve(arg0 context.Context, arg1 *amclient.TransferApproveRequest) (*amclient.TransferApproveResponse, *amclient.Response, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Approve", arg0, arg1)
@@ -44,13 +45,13 @@ func (m *MockTransferService) Approve(arg0 context.Context, arg1 *amclient.Trans
 	return ret0, ret1, ret2
 }
 
-// Approve indicates an expected call of Approve
+// Approve indicates an expected call of Approve.
 func (mr *MockTransferServiceMockRecorder) Approve(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Approve", reflect.TypeOf((*MockTransferService)(nil).Approve), arg0, arg1)
 }
 
-// Hide mocks base method
+// Hide mocks base method.
 func (m *MockTransferService) Hide(arg0 context.Context, arg1 string) (*amclient.TransferHideResponse, *amclient.Response, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Hide", arg0, arg1)
@@ -60,13 +61,13 @@ func (m *MockTransferService) Hide(arg0 context.Context, arg1 string) (*amclient
 	return ret0, ret1, ret2
 }
 
-// Hide indicates an expected call of Hide
+// Hide indicates an expected call of Hide.
 func (mr *MockTransferServiceMockRecorder) Hide(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Hide", reflect.TypeOf((*MockTransferService)(nil).Hide), arg0, arg1)
 }
 
-// Start mocks base method
+// Start mocks base method.
 func (m *MockTransferService) Start(arg0 context.Context, arg1 *amclient.TransferStartRequest) (*amclient.TransferStartResponse, *amclient.Response, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Start", arg0, arg1)
@@ -76,13 +77,13 @@ func (m *MockTransferService) Start(arg0 context.Context, arg1 *amclient.Transfe
 	return ret0, ret1, ret2
 }
 
-// Start indicates an expected call of Start
+// Start indicates an expected call of Start.
 func (mr *MockTransferServiceMockRecorder) Start(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Start", reflect.TypeOf((*MockTransferService)(nil).Start), arg0, arg1)
 }
 
-// Status mocks base method
+// Status mocks base method.
 func (m *MockTransferService) Status(arg0 context.Context, arg1 string) (*amclient.TransferStatusResponse, *amclient.Response, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Status", arg0, arg1)
@@ -92,13 +93,13 @@ func (m *MockTransferService) Status(arg0 context.Context, arg1 string) (*amclie
 	return ret0, ret1, ret2
 }
 
-// Status indicates an expected call of Status
+// Status indicates an expected call of Status.
 func (mr *MockTransferServiceMockRecorder) Status(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Status", reflect.TypeOf((*MockTransferService)(nil).Status), arg0, arg1)
 }
 
-// Unapproved mocks base method
+// Unapproved mocks base method.
 func (m *MockTransferService) Unapproved(arg0 context.Context, arg1 *amclient.TransferUnapprovedRequest) (*amclient.TransferUnapprovedResponse, *amclient.Response, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Unapproved", arg0, arg1)
@@ -108,7 +109,7 @@ func (m *MockTransferService) Unapproved(arg0 context.Context, arg1 *amclient.Tr
 	return ret0, ret1, ret2
 }
 
-// Unapproved indicates an expected call of Unapproved
+// Unapproved indicates an expected call of Unapproved.
 func (mr *MockTransferServiceMockRecorder) Unapproved(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Unapproved", reflect.TypeOf((*MockTransferService)(nil).Unapproved), arg0, arg1)

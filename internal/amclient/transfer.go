@@ -10,8 +10,6 @@ import (
 
 const transferBasePath = "api/transfer"
 
-//go:generate mockgen  -destination=./fake/mock_transfer.go -package=fake github.com/artefactual-labs/enduro/internal/amclient TransferService
-
 // TransferService is an interface for interfacing with the Transfer endpoints
 // of the Dashboard API.
 type TransferService interface {

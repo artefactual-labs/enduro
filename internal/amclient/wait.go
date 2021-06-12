@@ -37,7 +37,6 @@ func WaitUntilStored(ctx context.Context, c *Client, transferID string) (SIPID s
 	ctxBackoff := backoff.WithContext(expBackoff, ctx)
 
 	err = backoff.Retry(func() error {
-
 		ctx, cancel := context.WithTimeout(ctx, time.Duration(time.Second*1))
 		defer cancel()
 
@@ -69,7 +68,7 @@ func WaitUntilStored(ctx context.Context, c *Client, transferID string) (SIPID s
 				break
 			}
 		}
-		var notStoredYetErr = errors.New("AIP not stored yet")
+		notStoredYetErr := errors.New("AIP not stored yet")
 		if match == nil {
 			return notStoredYetErr
 		}
@@ -81,7 +80,6 @@ func WaitUntilStored(ctx context.Context, c *Client, transferID string) (SIPID s
 		default:
 			return notStoredYetErr
 		}
-
 	}, ctxBackoff)
 
 	return SIPID, err
