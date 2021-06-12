@@ -8,8 +8,6 @@ import (
 
 const processingConfigBasePath = "api/processing-configuration"
 
-//go:generate mockgen  -destination=./fake/mock_processing_config.go -package=fake github.com/artefactual-labs/enduro/internal/amclient ProcessingConfigService
-
 // ProcessingConfigService is an interface for interfacing with the processing
 // configuration endpoints of the Dashboard API.
 type ProcessingConfigService interface {

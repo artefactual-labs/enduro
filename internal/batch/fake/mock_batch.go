@@ -6,35 +6,36 @@ package fake
 
 import (
 	context "context"
+	reflect "reflect"
+
 	batch "github.com/artefactual-labs/enduro/internal/api/gen/batch"
 	gomock "github.com/golang/mock/gomock"
-	reflect "reflect"
 )
 
-// MockService is a mock of Service interface
+// MockService is a mock of Service interface.
 type MockService struct {
 	ctrl     *gomock.Controller
 	recorder *MockServiceMockRecorder
 }
 
-// MockServiceMockRecorder is the mock recorder for MockService
+// MockServiceMockRecorder is the mock recorder for MockService.
 type MockServiceMockRecorder struct {
 	mock *MockService
 }
 
-// NewMockService creates a new mock instance
+// NewMockService creates a new mock instance.
 func NewMockService(ctrl *gomock.Controller) *MockService {
 	mock := &MockService{ctrl: ctrl}
 	mock.recorder = &MockServiceMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockService) EXPECT() *MockServiceMockRecorder {
 	return m.recorder
 }
 
-// InitProcessingWorkflow mocks base method
+// InitProcessingWorkflow mocks base method.
 func (m *MockService) InitProcessingWorkflow(arg0 context.Context, arg1, arg2, arg3 string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "InitProcessingWorkflow", arg0, arg1, arg2, arg3)
@@ -42,13 +43,13 @@ func (m *MockService) InitProcessingWorkflow(arg0 context.Context, arg1, arg2, a
 	return ret0
 }
 
-// InitProcessingWorkflow indicates an expected call of InitProcessingWorkflow
+// InitProcessingWorkflow indicates an expected call of InitProcessingWorkflow.
 func (mr *MockServiceMockRecorder) InitProcessingWorkflow(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InitProcessingWorkflow", reflect.TypeOf((*MockService)(nil).InitProcessingWorkflow), arg0, arg1, arg2, arg3)
 }
 
-// Status mocks base method
+// Status mocks base method.
 func (m *MockService) Status(arg0 context.Context) (*batch.BatchStatusResult, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Status", arg0)
@@ -57,13 +58,13 @@ func (m *MockService) Status(arg0 context.Context) (*batch.BatchStatusResult, er
 	return ret0, ret1
 }
 
-// Status indicates an expected call of Status
+// Status indicates an expected call of Status.
 func (mr *MockServiceMockRecorder) Status(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Status", reflect.TypeOf((*MockService)(nil).Status), arg0)
 }
 
-// Submit mocks base method
+// Submit mocks base method.
 func (m *MockService) Submit(arg0 context.Context, arg1 *batch.SubmitPayload) (*batch.BatchResult, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Submit", arg0, arg1)
@@ -72,7 +73,7 @@ func (m *MockService) Submit(arg0 context.Context, arg1 *batch.SubmitPayload) (*
 	return ret0, ret1
 }
 
-// Submit indicates an expected call of Submit
+// Submit indicates an expected call of Submit.
 func (mr *MockServiceMockRecorder) Submit(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Submit", reflect.TypeOf((*MockService)(nil).Submit), arg0, arg1)

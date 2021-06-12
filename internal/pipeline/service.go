@@ -7,8 +7,6 @@ import (
 	"github.com/go-logr/logr"
 )
 
-//go:generate mockgen  -destination=./fake/mock_pipeline.go -package=fake github.com/artefactual-labs/enduro/internal/pipeline Service
-
 type Service interface {
 	List(context.Context, *goapipeline.ListPayload) (res []*goapipeline.EnduroStoredPipeline, err error)
 	Show(context.Context, *goapipeline.ShowPayload) (res *goapipeline.EnduroStoredPipeline, err error)

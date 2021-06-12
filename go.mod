@@ -3,7 +3,7 @@ module github.com/artefactual-labs/enduro
 go 1.16
 
 require (
-	github.com/GeertJohan/go.rice v1.0.1-0.20190430230923-c880e3cd4dd8
+	github.com/GeertJohan/go.rice v1.0.2
 	github.com/alicebob/miniredis/v2 v2.13.1
 	github.com/anmitsu/go-shlex v0.0.0-20200502080107-070676123096 // indirect
 	github.com/atrox/go-migrate-rice v1.0.1
@@ -18,7 +18,7 @@ require (
 	github.com/go-redis/redis/v7 v7.4.0
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/golang-migrate/migrate/v4 v4.13.0
-	github.com/golang/mock v1.4.4
+	github.com/golang/mock v1.5.0
 	github.com/golang/snappy v0.0.2 // indirect
 	github.com/google/uuid v1.1.2
 	github.com/gorilla/schema v1.2.0

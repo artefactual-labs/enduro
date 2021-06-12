@@ -6,39 +6,40 @@ package fake
 
 import (
 	context "context"
+	http0 "net/http"
+	reflect "reflect"
+	time "time"
+
 	collection "github.com/artefactual-labs/enduro/internal/api/gen/collection"
 	collection0 "github.com/artefactual-labs/enduro/internal/collection"
 	gomock "github.com/golang/mock/gomock"
 	http "goa.design/goa/v3/http"
-	http0 "net/http"
-	reflect "reflect"
-	time "time"
 )
 
-// MockService is a mock of Service interface
+// MockService is a mock of Service interface.
 type MockService struct {
 	ctrl     *gomock.Controller
 	recorder *MockServiceMockRecorder
 }
 
-// MockServiceMockRecorder is the mock recorder for MockService
+// MockServiceMockRecorder is the mock recorder for MockService.
 type MockServiceMockRecorder struct {
 	mock *MockService
 }
 
-// NewMockService creates a new mock instance
+// NewMockService creates a new mock instance.
 func NewMockService(ctrl *gomock.Controller) *MockService {
 	mock := &MockService{ctrl: ctrl}
 	mock.recorder = &MockServiceMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockService) EXPECT() *MockServiceMockRecorder {
 	return m.recorder
 }
 
-// Create mocks base method
+// Create mocks base method.
 func (m *MockService) Create(arg0 context.Context, arg1 *collection0.Collection) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Create", arg0, arg1)
@@ -46,13 +47,13 @@ func (m *MockService) Create(arg0 context.Context, arg1 *collection0.Collection)
 	return ret0
 }
 
-// Create indicates an expected call of Create
+// Create indicates an expected call of Create.
 func (mr *MockServiceMockRecorder) Create(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockService)(nil).Create), arg0, arg1)
 }
 
-// Goa mocks base method
+// Goa mocks base method.
 func (m *MockService) Goa() collection.Service {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Goa")
@@ -60,13 +61,13 @@ func (m *MockService) Goa() collection.Service {
 	return ret0
 }
 
-// Goa indicates an expected call of Goa
+// Goa indicates an expected call of Goa.
 func (mr *MockServiceMockRecorder) Goa() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Goa", reflect.TypeOf((*MockService)(nil).Goa))
 }
 
-// HTTPDownload mocks base method
+// HTTPDownload mocks base method.
 func (m *MockService) HTTPDownload(arg0 http.Muxer, arg1 func(*http0.Request) http.Decoder) http0.HandlerFunc {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "HTTPDownload", arg0, arg1)
@@ -74,13 +75,13 @@ func (m *MockService) HTTPDownload(arg0 http.Muxer, arg1 func(*http0.Request) ht
 	return ret0
 }
 
-// HTTPDownload indicates an expected call of HTTPDownload
+// HTTPDownload indicates an expected call of HTTPDownload.
 func (mr *MockServiceMockRecorder) HTTPDownload(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HTTPDownload", reflect.TypeOf((*MockService)(nil).HTTPDownload), arg0, arg1)
 }
 
-// SetOriginalID mocks base method
+// SetOriginalID mocks base method.
 func (m *MockService) SetOriginalID(arg0 context.Context, arg1 uint, arg2 string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SetOriginalID", arg0, arg1, arg2)
@@ -88,13 +89,13 @@ func (m *MockService) SetOriginalID(arg0 context.Context, arg1 uint, arg2 string
 	return ret0
 }
 
-// SetOriginalID indicates an expected call of SetOriginalID
+// SetOriginalID indicates an expected call of SetOriginalID.
 func (mr *MockServiceMockRecorder) SetOriginalID(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetOriginalID", reflect.TypeOf((*MockService)(nil).SetOriginalID), arg0, arg1, arg2)
 }
 
-// SetStatus mocks base method
+// SetStatus mocks base method.
 func (m *MockService) SetStatus(arg0 context.Context, arg1 uint, arg2 collection0.Status) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SetStatus", arg0, arg1, arg2)
@@ -102,13 +103,13 @@ func (m *MockService) SetStatus(arg0 context.Context, arg1 uint, arg2 collection
 	return ret0
 }
 
-// SetStatus indicates an expected call of SetStatus
+// SetStatus indicates an expected call of SetStatus.
 func (mr *MockServiceMockRecorder) SetStatus(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetStatus", reflect.TypeOf((*MockService)(nil).SetStatus), arg0, arg1, arg2)
 }
 
-// SetStatusInProgress mocks base method
+// SetStatusInProgress mocks base method.
 func (m *MockService) SetStatusInProgress(arg0 context.Context, arg1 uint, arg2 time.Time) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SetStatusInProgress", arg0, arg1, arg2)
@@ -116,13 +117,13 @@ func (m *MockService) SetStatusInProgress(arg0 context.Context, arg1 uint, arg2 
 	return ret0
 }
 
-// SetStatusInProgress indicates an expected call of SetStatusInProgress
+// SetStatusInProgress indicates an expected call of SetStatusInProgress.
 func (mr *MockServiceMockRecorder) SetStatusInProgress(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetStatusInProgress", reflect.TypeOf((*MockService)(nil).SetStatusInProgress), arg0, arg1, arg2)
 }
 
-// SetStatusPending mocks base method
+// SetStatusPending mocks base method.
 func (m *MockService) SetStatusPending(arg0 context.Context, arg1 uint, arg2 []byte) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SetStatusPending", arg0, arg1, arg2)
@@ -130,13 +131,13 @@ func (m *MockService) SetStatusPending(arg0 context.Context, arg1 uint, arg2 []b
 	return ret0
 }
 
-// SetStatusPending indicates an expected call of SetStatusPending
+// SetStatusPending indicates an expected call of SetStatusPending.
 func (mr *MockServiceMockRecorder) SetStatusPending(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetStatusPending", reflect.TypeOf((*MockService)(nil).SetStatusPending), arg0, arg1, arg2)
 }
 
-// UpdateWorkflowStatus mocks base method
+// UpdateWorkflowStatus mocks base method.
 func (m *MockService) UpdateWorkflowStatus(arg0 context.Context, arg1 uint, arg2, arg3, arg4, arg5, arg6, arg7 string, arg8 collection0.Status, arg9 time.Time) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateWorkflowStatus", arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9)
@@ -144,7 +145,7 @@ func (m *MockService) UpdateWorkflowStatus(arg0 context.Context, arg1 uint, arg2
 	return ret0
 }
 
-// UpdateWorkflowStatus indicates an expected call of UpdateWorkflowStatus
+// UpdateWorkflowStatus indicates an expected call of UpdateWorkflowStatus.
 func (mr *MockServiceMockRecorder) UpdateWorkflowStatus(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateWorkflowStatus", reflect.TypeOf((*MockService)(nil).UpdateWorkflowStatus), arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9)

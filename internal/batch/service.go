@@ -18,8 +18,6 @@ import (
 
 var ErrBatchStatusUnavailable = errors.New("batch status unavailable")
 
-//go:generate mockgen  -destination=./fake/mock_batch.go -package=fake github.com/artefactual-labs/enduro/internal/batch Service
-
 type Service interface {
 	Submit(context.Context, *goabatch.SubmitPayload) (res *goabatch.BatchResult, err error)
 	Status(context.Context) (res *goabatch.BatchStatusResult, err error)
@@ -100,7 +98,7 @@ func (s *batchImpl) Status(ctx context.Context) (*goabatch.BatchStatusResult, er
 	result.WorkflowID = resp.WorkflowExecutionInfo.Execution.WorkflowId
 	result.RunID = resp.WorkflowExecutionInfo.Execution.RunId
 	if resp.WorkflowExecutionInfo.CloseStatus != nil {
-		var st = strings.ToLower(resp.WorkflowExecutionInfo.CloseStatus.String())
+		st := strings.ToLower(resp.WorkflowExecutionInfo.CloseStatus.String())
 		result.Status = &st
 		return result, nil
 	}

@@ -1,49 +1,31 @@
+include .bingo/Variables.mk
+
 SHELL=/bin/bash
 BUILD_TIME=$(shell date -u +%Y-%m-%dT%T%z)
 GIT_COMMIT=$(shell git rev-parse --short HEAD)
 LD_FLAGS= '-X "main.buildTime=$(BUILD_TIME)" -X main.gitCommit=$(GIT_COMMIT)'
 GO_FLAGS= -ldflags=$(LD_FLAGS)
-GOPATH=$(shell go env GOPATH)
-GOBIN=$(GOPATH)/bin
-GOCMD=go
-GOBUILD=$(GOCMD) build
-GOINSTALL=$(GOCMD) install
-GOTEST=$(GOCMD) test
-GOGEN=$(GOCMD) generate
 
 export PATH:=$(GOBIN):$(PATH)
+
+tools:
+	$(GO) get github.com/bwplotka/bingo
 
 run: enduro-dev
 	./build/enduro
 
 enduro-dev:
 	mkdir -p ./build
-	$(GOBUILD) -trimpath -o build/enduro $(GO_FLAGS) -v
+	$(GO) build -trimpath -o build/enduro $(GO_FLAGS) -v
 
 test:
-	$(GOTEST) -race -v ./...
+	$(GO) test -race -v ./...
 
 lint:
-	golangci-lint run
-
-generate:
-	find . -name fake -type d | xargs rm -rf
-	$(GOGEN) ./internal/...
-
-migrations:
-	$(GOGEN) ./internal/db
-
-bingen: migrations ui
+	$(GOLANGCI_LINT) run
 
 goagen:
-	goa gen github.com/artefactual-labs/enduro/internal/api/design -o internal/api
-
-tools:
-	cd / && env GO111MODULE=off go get -u github.com/myitcv/gobin
-	gobin \
-		github.com/golangci/golangci-lint/cmd/golangci-lint \
-		github.com/GeertJohan/go.rice/rice \
-		github.com/golang/mock/mockgen
+	$(GOA) gen github.com/artefactual-labs/enduro/internal/api/design -o internal/api
 
 clean:
 	rm -rf ./build ./dist
@@ -68,9 +50,7 @@ ui-dev:
 	yarn --cwd ui serve
 
 ui-gen:
-	cd / && env GO111MODULE=off go get -u github.com/myitcv/gobin
-	gobin github.com/GeertJohan/go.rice/rice
-	$(GOGEN) -v ./ui
+	$(GO) generate -v ./ui
 
 ui-client:
 	@rm -rf $(CURDIR)/ui/src/client
@@ -107,5 +87,25 @@ db:
 flush:
 	docker-compose exec --user=root mysql mysql -hlocalhost -uroot -proot123 -e "drop database enduro"
 	docker-compose exec --user=root mysql mysql -hlocalhost -uroot -proot123 -e "create database enduro"
+
+bingen: gen-ui gen-migrations
+
+gen-mock:
+	$(MOCKGEN) -destination=./internal/batch/fake/mock_batch.go -package=fake github.com/artefactual-labs/enduro/internal/batch Service
+	$(MOCKGEN) -destination=./internal/collection/fake/mock_collection.go -package=fake github.com/artefactual-labs/enduro/internal/collection Service
+	$(MOCKGEN) -destination=./internal/pipeline/fake/mock_pipeline.go -package=fake github.com/artefactual-labs/enduro/internal/pipeline Service
+	$(MOCKGEN) -destination=./internal/watcher/fake/mock_watcher.go -package=fake github.com/artefactual-labs/enduro/internal/watcher Service
+	$(MOCKGEN) -destination=./internal/amclient/fake/mock_ingest.go -package=fake github.com/artefactual-labs/enduro/internal/amclient IngestService
+	$(MOCKGEN) -destination=./internal/amclient/fake/mock_processing_config.go -package=fake github.com/artefactual-labs/enduro/internal/amclient ProcessingConfigService
+	$(MOCKGEN) -destination=./internal/amclient/fake/mock_transfer.go -package=fake github.com/artefactual-labs/enduro/internal/amclient TransferService
+	$(MOCKGEN) -destination=./internal/amclient/fake/mock_v2_jobs.go -package=fake github.com/artefactual-labs/enduro/internal/amclient JobsService
+	$(MOCKGEN) -destination=./internal/amclient/fake/mock_v2_package.go -package=fake github.com/artefactual-labs/enduro/internal/amclient PackageService
+	$(MOCKGEN) -destination=./internal/amclient/fake/mock_v2_task.go -package=fake github.com/artefactual-labs/enduro/internal/amclient TaskService
+
+gen-ui:
+	cd ui/ && $(RICE) embed-go
+
+gen-migrations:
+	cd internal/db && $(RICE) embed-go
 
 .PHONY: *
