@@ -29,6 +29,12 @@ $(GOLANGCI_LINT): $(BINGO_DIR)/golangci-lint.mod
 	@echo "(re)installing $(GOBIN)/golangci-lint-v1.40.1"
 	@cd $(BINGO_DIR) && $(GO) build -mod=mod -modfile=golangci-lint.mod -o=$(GOBIN)/golangci-lint-v1.40.1 "github.com/golangci/golangci-lint/cmd/golangci-lint"
 
+HUGO := $(GOBIN)/hugo-v0.72.0
+$(HUGO): $(BINGO_DIR)/hugo.mod
+	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
+	@echo "(re)installing $(GOBIN)/hugo-v0.72.0"
+	@cd $(BINGO_DIR) && CGO_ENABLED=1 $(GO) build -tags=extended -mod=mod -modfile=hugo.mod -o=$(GOBIN)/hugo-v0.72.0 "github.com/gohugoio/hugo"
+
 MOCKGEN := $(GOBIN)/mockgen-v1.5.0
 $(MOCKGEN): $(BINGO_DIR)/mockgen.mod
 	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
