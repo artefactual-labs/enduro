@@ -6,7 +6,6 @@ import (
 	"os"
 	"time"
 
-	migraterice "github.com/atrox/go-migrate-rice"
 	mysqldriver "github.com/go-sql-driver/mysql"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/mysql"
@@ -72,17 +71,12 @@ func newMigrate(db *sql.DB) (*migrate.Migrate, error) {
 		return nil, fmt.Errorf("error creating migrate driver: %w", err)
 	}
 
-	box, err := migrations()
+	sourceInstance, err := sourceDriver()
 	if err != nil {
-		return nil, fmt.Errorf("error opening embedded migrations: %w", err)
+		return nil, fmt.Errorf("error creating source driver: %v", err)
 	}
 
-	sourceDriver, err := migraterice.WithInstance(box)
-	if err != nil {
-		return nil, fmt.Errorf("error creating migrage source driver: %w", err)
-	}
-
-	m, err := migrate.NewWithInstance("go-bindata", sourceDriver, "mysql", driver)
+	m, err := migrate.NewWithInstance("iofs", sourceInstance, "mysql", driver)
 	if err != nil {
 		return nil, fmt.Errorf("error creating migrate instance: %w", err)
 	}
