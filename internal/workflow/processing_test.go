@@ -12,7 +12,7 @@ import (
 	watcherfake "github.com/artefactual-labs/enduro/internal/watcher/fake"
 	"github.com/artefactual-labs/enduro/internal/workflow/manager"
 
-	logrtesting "github.com/go-logr/logr/testing"
+	"github.com/go-logr/logr"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
@@ -125,7 +125,7 @@ func buildManager(t *testing.T, ctrl *gomock.Controller) *manager.Manager {
 	t.Helper()
 
 	return manager.NewManager(
-		logrtesting.NullLogger{},
+		logr.Discard(),
 		collectionfake.NewMockService(ctrl),
 		watcherfake.NewMockService(ctrl),
 		&pipeline.Registry{},

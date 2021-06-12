@@ -16,7 +16,7 @@ import (
 	"github.com/artefactual-labs/enduro/internal/testutil"
 	watcherfake "github.com/artefactual-labs/enduro/internal/watcher/fake"
 	"github.com/artefactual-labs/enduro/internal/workflow/manager"
-	logrt "github.com/go-logr/logr/testing"
+	"github.com/go-logr/logr"
 	"github.com/golang/mock/gomock"
 	"gotest.tools/v3/assert"
 	"gotest.tools/v3/fs"
@@ -495,7 +495,7 @@ func createHariActivity(t *testing.T, hariConfig map[string]interface{}) *Update
 	}
 
 	manager := manager.NewManager(
-		logrt.NullLogger{},
+		logr.Discard(),
 		collectionfake.NewMockService(ctrl),
 		watcherfake.NewMockService(ctrl),
 		&pipeline.Registry{},

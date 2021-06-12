@@ -18,7 +18,7 @@ import (
 	"gotest.tools/v3/assert"
 	"gotest.tools/v3/fs"
 
-	logrt "github.com/go-logr/logr/testing"
+	"github.com/go-logr/logr"
 	"github.com/golang/mock/gomock"
 )
 
@@ -170,7 +170,7 @@ func createProdActivity(t *testing.T, hookConfig map[string]interface{}) *Update
 	ctrl := gomock.NewController(t)
 
 	manager := manager.NewManager(
-		logrt.NullLogger{},
+		logr.Discard(),
 		collectionfake.NewMockService(ctrl),
 		watcherfake.NewMockService(ctrl),
 		&pipeline.Registry{},

@@ -173,6 +173,7 @@ func (w *goaWrapper) Cancel(ctx context.Context, payload *goacollection.CancelPa
 		case *shared.InternalServiceError:
 		case *shared.BadRequestError:
 		case *shared.EntityNotExistsError:
+		case *shared.WorkflowExecutionAlreadyCompletedError:
 			// TODO: return custom errors
 		}
 		return err

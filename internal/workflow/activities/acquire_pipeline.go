@@ -9,7 +9,7 @@ import (
 
 	wferrors "github.com/artefactual-labs/enduro/internal/workflow/errors"
 	"github.com/artefactual-labs/enduro/internal/workflow/manager"
-	"github.com/cenkalti/backoff/v3"
+	"github.com/cenkalti/backoff/v4"
 )
 
 // AcquirePipelineActivity acquires a lock in the weighted semaphore associated

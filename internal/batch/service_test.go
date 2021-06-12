@@ -6,7 +6,7 @@ import (
 
 	goabatch "github.com/artefactual-labs/enduro/internal/api/gen/batch"
 
-	logrtesting "github.com/go-logr/logr/testing"
+	"github.com/go-logr/logr"
 	"github.com/stretchr/testify/mock"
 	cadencemocks "go.uber.org/cadence/mocks"
 	"go.uber.org/cadence/workflow"
@@ -15,7 +15,7 @@ import (
 
 func TestBatchServiceSubmitFailsWithEmptyParameters(t *testing.T) {
 	ctx := context.Background()
-	logger := logrtesting.NullLogger{}
+	logger := logr.Discard()
 	client := &cadencemocks.Client{}
 
 	batchsvc := NewService(logger, client)
@@ -28,7 +28,7 @@ func TestBatchServiceSubmitFailsWithEmptyParameters(t *testing.T) {
 
 func TestBatchServiceSubmit(t *testing.T) {
 	ctx := context.Background()
-	logger := logrtesting.NullLogger{}
+	logger := logr.Discard()
 	client := &cadencemocks.Client{}
 
 	client.On("StartWorkflow", mock.Anything, mock.Anything, "batch-workflow", BatchWorkflowInput{Path: "/some/path", PipelineName: "am"}).Return(&workflow.Execution{ID: "batch-workflow", RunID: "some-run-id"}, nil)
