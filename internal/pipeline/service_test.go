@@ -5,13 +5,13 @@ import (
 	"testing"
 
 	goapipeline "github.com/artefactual-labs/enduro/internal/api/gen/pipeline"
-	logrtesting "github.com/go-logr/logr/testing"
+	"github.com/go-logr/logr"
 	"gotest.tools/v3/assert"
 )
 
 func TestService(t *testing.T) {
 	ctx := context.Background()
-	logger := logrtesting.NullLogger{}
+	logger := logr.Discard()
 
 	registry, _ := NewPipelineRegistry(
 		logger,

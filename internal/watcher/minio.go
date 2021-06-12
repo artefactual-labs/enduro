@@ -10,7 +10,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/go-redis/redis/v7"
+	"github.com/go-redis/redis/v8"
 	"gocloud.dev/blob"
 	"gocloud.dev/blob/s3blob"
 )
@@ -89,7 +89,7 @@ func (w *minioWatcher) Watch(ctx context.Context) (*BlobEvent, error) {
 }
 
 func (w *minioWatcher) blpop(ctx context.Context) (*BlobEvent, error) {
-	val, err := w.client.BLPop(redisPopTimeout, w.listName).Result()
+	val, err := w.client.BLPop(ctx, redisPopTimeout, w.listName).Result()
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving from Redis list: %w", err)
 	}

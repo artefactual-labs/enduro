@@ -11,7 +11,7 @@ import (
 	"github.com/artefactual-labs/enduro/internal/amclient/bundler"
 	wferrors "github.com/artefactual-labs/enduro/internal/workflow/errors"
 
-	"github.com/mholt/archiver"
+	"github.com/mholt/archiver/v3"
 	"github.com/otiai10/copy"
 )
 

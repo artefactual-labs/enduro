@@ -17,11 +17,11 @@ GO     ?= $(shell which go)
 #	@echo "Running goa"
 #	@$(GOA) <flags/args..>
 #
-GOA := $(GOBIN)/goa-v3.2.4
+GOA := $(GOBIN)/goa-v3.4.3
 $(GOA): $(BINGO_DIR)/goa.mod
 	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
-	@echo "(re)installing $(GOBIN)/goa-v3.2.4"
-	@cd $(BINGO_DIR) && $(GO) build -mod=mod -modfile=goa.mod -o=$(GOBIN)/goa-v3.2.4 "goa.design/goa/v3/cmd/goa"
+	@echo "(re)installing $(GOBIN)/goa-v3.4.3"
+	@cd $(BINGO_DIR) && $(GO) build -mod=mod -modfile=goa.mod -o=$(GOBIN)/goa-v3.4.3 "goa.design/goa/v3/cmd/goa"
 
 GOLANGCI_LINT := $(GOBIN)/golangci-lint-v1.40.1
 $(GOLANGCI_LINT): $(BINGO_DIR)/golangci-lint.mod

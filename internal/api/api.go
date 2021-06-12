@@ -63,7 +63,7 @@ func HTTPServer(
 	collectionsvr.Mount(mux, collectionServer)
 
 	// Swagger service.
-	var swaggerService *swaggersvr.Server = swaggersvr.New(nil, nil, nil, nil, nil, nil)
+	var swaggerService *swaggersvr.Server = swaggersvr.New(nil, nil, nil, nil, nil, nil, nil)
 	swaggersvr.Mount(mux, swaggerService)
 
 	// Web handler.
