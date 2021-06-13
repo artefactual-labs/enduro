@@ -10,8 +10,14 @@ export PATH:=$(GOBIN):$(PATH)
 
 .DEFAULT_GOAL := run
 
-tools:
-	$(GO) get github.com/bwplotka/bingo
+$(GOBIN)/bingo:
+	$(GO) install github.com/bwplotka/bingo@latest
+
+bingo: $(GOBIN)/bingo
+
+tools: bingo
+	bingo get
+	bingo list
 
 run: enduro-dev
 	./build/enduro
@@ -24,7 +30,7 @@ test:
 	$(GO) test -race -v ./...
 
 lint:
-	$(GOLANGCI_LINT) run
+	$(GOLANGCI_LINT) run -v --timeout=5m
 
 goagen:
 	$(GOA) gen github.com/artefactual-labs/enduro/internal/api/design -o internal/api
@@ -33,10 +39,10 @@ clean:
 	rm -rf ./build ./dist
 
 release-test-config:
-	goreleaser --snapshot --skip-publish --rm-dist
+	$(GORELEASER) --snapshot --skip-publish --rm-dist
 
 release-test:
-	goreleaser --skip-publish
+	$(GORELEASER) --skip-publish
 
 website:
 	$(HUGO) serve --source=website/
