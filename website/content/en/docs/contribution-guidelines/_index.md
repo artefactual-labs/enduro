@@ -1,7 +1,7 @@
 ---
 title: "Contribution Guidelines"
 linkTitle: "Contribution Guidelines"
-weight: 5
+weight: 6
 description: >
   How to contribute to Enduro.
 ---

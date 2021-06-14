@@ -1,7 +1,7 @@
 ---
 title: "API Reference"
 linkTitle: "API Reference"
-weight: 3
+weight: 4
 type: swagger
 description: >
   Enduro API described with OpenAPI.

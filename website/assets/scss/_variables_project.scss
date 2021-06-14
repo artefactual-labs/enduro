@@ -18,6 +18,11 @@ $light: #D3F3EE;
 // Extra variables.
 $e-gray: #888;
 
+// Enduro colors.
+$enduro-c1: #5e2750;
+$enduro-c2: lighten(#5e2750, 10%);
+$enduro-c3: lighten(#5e2750, 15%);
+
 // Make headings smaller.
 $font-size-base: 1rem; // Typically 16px.
 h1 { font-size: $font-size-base * 1.75 !important; }
@@ -101,4 +106,21 @@ form.td-sidebar__search {
 }
 .td-toc #TableOfContents a.active:before {
   background-color: $primary;
+}
+
+// Smaller font size in figure captions.
+figure h4 {
+  font-size: 0.75rem !important;
+}
+
+// Apply colors in Enduro.
+.td-navbar {
+  background-color: $enduro-c1 !important;
+}
+
+footer.bg-dark {
+  background-color: #f5f5f5 !important;
+  small {
+    color: #333 !important;
+  }
 }

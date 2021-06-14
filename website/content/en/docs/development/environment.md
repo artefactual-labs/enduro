@@ -47,19 +47,18 @@ Now we need to build some Go tools we're going to use during development:
 
     make tools
 
-To build our first binary succesfully, we need to generate the database
-migrations and the web interface with:
+Build the web-based user interface:
 
-    make migrations ui
+    make ui
 
-We're ready to run our first build:
+Finall, build and run Enduro with:
 
     make
 
 With Enduro running in the background, you should be able to access the web
 interface via http://127.0.0.1:9000/ or connect to the API, e.g.:
 
-    curl -v "127.0.0.1:9000/collection/"
+    curl -v 127.0.0.1:9000/collection
 
 ## Set up MinIO for object storage
 
