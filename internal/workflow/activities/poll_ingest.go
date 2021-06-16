@@ -32,15 +32,36 @@ func (a *PollIngestActivity) Execute(ctx context.Context, params *PollIngestActi
 	}
 	amc := p.Client()
 
-	var backoffStrategy = backoff.WithContext(backoff.NewConstantBackOff(time.Second*5), ctx)
+	deadline := defaultMaxElapsedTime
+	if retryDeadline := p.Config().RetryDeadline; retryDeadline != nil {
+		deadline = *retryDeadline
+	}
+
+	backoffStrategy := backoff.WithContext(backoffStrategy, ctx)
+	lastRetryableError := time.Time{}
 
 	err = backoff.RetryNotify(
 		func() (err error) {
 			ctx, cancel := context.WithTimeout(ctx, time.Second*10)
 			defer cancel()
 
-			err = pipeline.IngestStatus(ctx, amc, params.SIPID)
+			err = pipeline.IngestStatus(ctx, amc.Ingest, params.SIPID)
+
+			// Abandon when we see a non-retryable error.
 			if errors.Is(err, pipeline.ErrStatusNonRetryable) {
+				return backoff.Permanent(wferrors.NonRetryableError(err))
+			}
+
+			// Looking good, keep polling.
+			if errors.Is(err, pipeline.ErrStatusInProgress) {
+				lastRetryableError = time.Time{} // Reset.
+				return err
+			}
+
+			// Retry unless the deadline was exceeded.
+			if lastRetryableError.IsZero() {
+				lastRetryableError = clock.Now()
+			} else if clock.Since(lastRetryableError) > deadline {
 				return backoff.Permanent(wferrors.NonRetryableError(err))
 			}
 
@@ -52,5 +73,5 @@ func (a *PollIngestActivity) Execute(ctx context.Context, params *PollIngestActi
 		},
 	)
 
-	return time.Now().UTC(), err
+	return clock.Now().UTC(), err
 }

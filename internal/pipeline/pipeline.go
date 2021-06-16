@@ -30,6 +30,7 @@ type Config struct {
 	ProcessingConfig   string
 	StorageServiceURL  string
 	Capacity           uint64
+	RetryDeadline      *time.Duration
 }
 
 type Pipeline struct {

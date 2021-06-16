@@ -15,23 +15,41 @@ var (
 	ErrStatusInProgress   = errors.New("waitable error")
 )
 
+// processStatusError enriches errors returned by Transfer.Status and
+// Ingest.Status and determines whether they should be retried.
+func processStatusError(err error) error {
+	if err == nil {
+		return nil
+	}
+
+	if errors.Is(err, context.DeadlineExceeded) {
+		return fmt.Errorf("%v (%w)", err, ErrStatusRetryable)
+	}
+
+	if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
+		return fmt.Errorf("network error (%w): %v", ErrStatusRetryable, netErr)
+	}
+
+	if amErr, ok := err.(*amclient.ErrorResponse); ok {
+		switch {
+		case amErr.Response.StatusCode == 400:
+			fallthrough // Server error that Archivematica masks as a 400.
+		case amErr.Response.StatusCode >= 500:
+			return fmt.Errorf("server error (%w): %v (%d)", ErrStatusRetryable, err, amErr.Response.StatusCode)
+		case amErr.Response.StatusCode >= 401 && amErr.Response.StatusCode < 500:
+			return fmt.Errorf("server error (%w): %v (%d)", ErrStatusNonRetryable, err, amErr.Response.StatusCode)
+		}
+	}
+
+	return fmt.Errorf("unknown error (%w): %v (%T)", ErrStatusNonRetryable, err, err)
+}
+
 // TransferStatus returns a non-nil error when the transfer is not fully transferred.
-func TransferStatus(ctx context.Context, client *amclient.Client, ID string) (string, error) {
-	status, _, err := client.Transfer.Status(ctx, ID)
-	if err != nil {
-		if errors.Is(err, context.DeadlineExceeded) {
-			return "", fmt.Errorf("error checking transfer status (%w): %v", ErrStatusRetryable, err)
-		}
-		if amErr, ok := err.(*amclient.ErrorResponse); ok {
-			if amErr.Response.StatusCode >= 400 {
-				return "", fmt.Errorf("error checking transfer status (%w): %v (%d)", ErrStatusRetryable, err, amErr.Response.StatusCode)
-			} else {
-				return "", fmt.Errorf("error checking transfer status (%w): %v (%d)", ErrStatusNonRetryable, err, amErr.Response.StatusCode)
-			}
-		} else if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
-			return "", fmt.Errorf("error checking transfer status (%w): %v", ErrStatusRetryable, netErr)
-		}
-		return "", fmt.Errorf("error checking transfer status (%w): %v (%T)", ErrStatusNonRetryable, err, err)
+func TransferStatus(ctx context.Context, transferService amclient.TransferService, ID string) (string, error) {
+	status, _, err := transferService.Status(ctx, ID)
+
+	if err := processStatusError(err); err != nil {
+		return "", fmt.Errorf("error checking transfer status: %w", err)
 	}
 
 	if status.Status == "" {
@@ -69,22 +87,11 @@ func TransferStatus(ctx context.Context, client *amclient.Client, ID string) (st
 }
 
 // IngestStatus returns a non-nil error when the SIP is not fully ingested.
-func IngestStatus(ctx context.Context, client *amclient.Client, ID string) error {
-	status, _, err := client.Ingest.Status(ctx, ID)
-	if err != nil {
-		if errors.Is(err, context.DeadlineExceeded) {
-			return fmt.Errorf("error checking ingest status (%w): %v", ErrStatusRetryable, err)
-		}
-		if amErr, ok := err.(*amclient.ErrorResponse); ok {
-			if amErr.Response.StatusCode >= 400 {
-				return fmt.Errorf("error checking ingest status (%w): %v (%d)", ErrStatusRetryable, err, amErr.Response.StatusCode)
-			} else {
-				return fmt.Errorf("error checking ingest status (%w): %v (%d)", ErrStatusNonRetryable, err, amErr.Response.StatusCode)
-			}
-		} else if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
-			return fmt.Errorf("error checking ingest status (%w): %v", ErrStatusRetryable, netErr)
-		}
-		return fmt.Errorf("error checking ingest status (%w): %v (%T)", ErrStatusNonRetryable, err, err)
+func IngestStatus(ctx context.Context, ingestService amclient.IngestService, ID string) error {
+	status, _, err := ingestService.Status(ctx, ID)
+
+	if err := processStatusError(err); err != nil {
+		return fmt.Errorf("error checking ingest status: %w", err)
 	}
 
 	if status.Status == "" {
