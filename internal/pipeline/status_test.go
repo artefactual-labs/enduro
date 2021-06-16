@@ -36,7 +36,33 @@ func TestTransferStatus(t *testing.T) {
 			},
 			wantErr: ErrStatusRetryable,
 		},
-		"It returns a ErrStatusRetryable when the server returns a 4xx/5xx error, e.g. 401 Unauthorized": {
+		"It returns a ErrStatusRetryable when a network timeout error is detected": {
+			fakefn: func(tsfake *amclientfake.MockTransferService) {
+				tsfake.
+					EXPECT().
+					Status(gomock.Eq(ctx), gomock.Eq(tid)).
+					Return(
+						nil,
+						nil,
+						fakeTimeoutError{},
+					)
+			},
+			wantErr: ErrStatusRetryable,
+		},
+		"It returns a ErrStatusRetryable when the server returns a 400 error (Status API server error)": {
+			fakefn: func(tsfake *amclientfake.MockTransferService) {
+				tsfake.
+					EXPECT().
+					Status(gomock.Eq(ctx), gomock.Eq(tid)).
+					Return(
+						nil,
+						&amclient.Response{Response: &http.Response{StatusCode: 400}},
+						&amclient.ErrorResponse{Response: &http.Response{StatusCode: 400}},
+					)
+			},
+			wantErr: ErrStatusRetryable,
+		},
+		"It returns a ErrStatusNonRetryable when the server returns a 4xx error, e.g. 401 Unauthorized": {
 			fakefn: func(tsfake *amclientfake.MockTransferService) {
 				tsfake.
 					EXPECT().
@@ -45,6 +71,19 @@ func TestTransferStatus(t *testing.T) {
 						nil,
 						&amclient.Response{Response: &http.Response{StatusCode: 401}},
 						&amclient.ErrorResponse{Response: &http.Response{StatusCode: 401}},
+					)
+			},
+			wantErr: ErrStatusNonRetryable,
+		},
+		"It returns a ErrStatusRetryable when the server returns a 503 error, e.g. 503 Bad Gateway": {
+			fakefn: func(tsfake *amclientfake.MockTransferService) {
+				tsfake.
+					EXPECT().
+					Status(gomock.Eq(ctx), gomock.Eq(tid)).
+					Return(
+						nil,
+						&amclient.Response{Response: &http.Response{StatusCode: 503}},
+						&amclient.ErrorResponse{Response: &http.Response{StatusCode: 503}},
 					)
 			},
 			wantErr: ErrStatusRetryable,
@@ -186,13 +225,10 @@ func TestTransferStatus(t *testing.T) {
 
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
-			tsfake := amclientfake.NewMockTransferService(ctrl)
-			amc := amclient.NewClient(nil, "", "", "")
-			amc.Transfer = tsfake
+			transferFake := amclientfake.NewMockTransferService(ctrl)
+			tc.fakefn(transferFake)
 
-			tc.fakefn(tsfake)
-
-			sid, err := TransferStatus(ctx, amc, tid)
+			sid, err := TransferStatus(ctx, transferFake, tid)
 
 			if tc.wantSID != nil {
 				assert.Equal(t, sid, *tc.wantSID)
@@ -226,7 +262,33 @@ func TestIngestStatus(t *testing.T) {
 			},
 			wantErr: ErrStatusRetryable,
 		},
-		"It returns a ErrStatusRetryable when the server returns a 4xx/5xx error, e.g. 401 Unauthorized": {
+		"It returns a ErrStatusRetryable when a network timeout error is detected": {
+			fakefn: func(tsfake *amclientfake.MockIngestService) {
+				tsfake.
+					EXPECT().
+					Status(gomock.Eq(ctx), gomock.Eq(sid)).
+					Return(
+						nil,
+						nil,
+						fakeTimeoutError{},
+					)
+			},
+			wantErr: ErrStatusRetryable,
+		},
+		"It returns a ErrStatusRetryable when the server returns a 400 error (Status API server error)": {
+			fakefn: func(isfake *amclientfake.MockIngestService) {
+				isfake.
+					EXPECT().
+					Status(gomock.Eq(ctx), gomock.Eq(sid)).
+					Return(
+						nil,
+						&amclient.Response{Response: &http.Response{StatusCode: 400}},
+						&amclient.ErrorResponse{Response: &http.Response{StatusCode: 400}},
+					)
+			},
+			wantErr: ErrStatusRetryable,
+		},
+		"It returns a ErrStatusNonRetryable when the server returns a 4xx error, e.g. 401 Unauthorized": {
 			fakefn: func(isfake *amclientfake.MockIngestService) {
 				isfake.
 					EXPECT().
@@ -235,6 +297,19 @@ func TestIngestStatus(t *testing.T) {
 						nil,
 						&amclient.Response{Response: &http.Response{StatusCode: 401}},
 						&amclient.ErrorResponse{Response: &http.Response{StatusCode: 401}},
+					)
+			},
+			wantErr: ErrStatusNonRetryable,
+		},
+		"It returns a ErrStatusRetryable when the server returns a 5xx error, e.g. 503 Service Unavailable": {
+			fakefn: func(isfake *amclientfake.MockIngestService) {
+				isfake.
+					EXPECT().
+					Status(gomock.Eq(ctx), gomock.Eq(sid)).
+					Return(
+						nil,
+						&amclient.Response{Response: &http.Response{StatusCode: 503}},
+						&amclient.ErrorResponse{Response: &http.Response{StatusCode: 503}},
 					)
 			},
 			wantErr: ErrStatusRetryable,
@@ -353,13 +428,10 @@ func TestIngestStatus(t *testing.T) {
 
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
-			isfake := amclientfake.NewMockIngestService(ctrl)
-			amc := amclient.NewClient(nil, "", "", "")
-			amc.Ingest = isfake
+			ingestFake := amclientfake.NewMockIngestService(ctrl)
+			tc.fakefn(ingestFake)
 
-			tc.fakefn(isfake)
-
-			err := IngestStatus(ctx, amc, sid)
+			err := IngestStatus(ctx, ingestFake, sid)
 
 			assert.Equal(t, errors.Is(err, tc.wantErr), true)
 		})
@@ -369,3 +441,9 @@ func TestIngestStatus(t *testing.T) {
 func strPtr(str string) *string {
 	return &str
 }
+
+type fakeTimeoutError struct{}
+
+func (fakeTimeoutError) Timeout() bool   { return true }
+func (fakeTimeoutError) Temporary() bool { return true }
+func (fakeTimeoutError) Error() string   { return "fake timeout error" }

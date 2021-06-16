@@ -20,6 +20,7 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/jmoiron/sqlx v1.3.4
 	github.com/johejo/golang-migrate-extra v0.0.0-20210217013041-51a992e50d16
+	github.com/jonboulle/clockwork v0.2.2
 	github.com/kr/pretty v0.2.1 // indirect
 	github.com/magiconair/properties v1.8.4 // indirect
 	github.com/mholt/archiver/v3 v3.5.0
