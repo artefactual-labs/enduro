@@ -97,11 +97,11 @@ func (s *Weighted) TryAcquire(n int64) bool {
 // Release releases the semaphore with a weight of n.
 func (s *Weighted) Release(n int64) {
 	s.mu.Lock()
-	s.cur -= n
-	if s.cur < 0 {
+	if s.cur < 1 {
 		s.mu.Unlock()
-		panic("semaphore: released more than held")
+		panic("semaphore: can't release more than is held")
 	}
+	s.cur -= n
 	s.notifyWaiters()
 	s.mu.Unlock()
 }

@@ -43,4 +43,22 @@ func TestPipelineSemaphore(t *testing.T) {
 			p.Release()
 		}
 	})
+
+	t.Run("Weight cannot go below zero", func(t *testing.T) {
+		t.Parallel()
+
+		p, _ := NewPipeline(logr.Discard(), Config{Capacity: 3})
+
+		for i := 0; i < 50; i++ {
+			p.Release()
+		}
+
+		tries := []bool{}
+		tries = append(tries, p.TryAcquire())
+		tries = append(tries, p.TryAcquire())
+		tries = append(tries, p.TryAcquire())
+		tries = append(tries, p.TryAcquire())
+
+		assert.DeepEqual(t, tries, []bool{true, true, true, false})
+	})
 }
