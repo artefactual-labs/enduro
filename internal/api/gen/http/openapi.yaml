@@ -475,7 +475,7 @@ definitions:
       fault:
         type: boolean
         description: Is the error a server-side fault?
-        example: false
+        example: true
       id:
         type: string
         description: ID is a unique identifier for this particular occurrence of the
@@ -493,19 +493,19 @@ definitions:
       temporary:
         type: boolean
         description: Is the error temporary?
-        example: true
+        example: false
       timeout:
         type: boolean
         description: Is the error a timeout?
         example: false
     description: submit_not_available_response_body result type (default view)
     example:
-      fault: true
+      fault: false
       id: 123abc
       message: parameter 'p' must be an integer
       name: bad_request
-      temporary: false
-      timeout: true
+      temporary: true
+      timeout: false
     required:
     - name
     - id
@@ -538,18 +538,18 @@ definitions:
       temporary:
         type: boolean
         description: Is the error temporary?
-        example: true
+        example: false
       timeout:
         type: boolean
         description: Is the error a timeout?
-        example: false
+        example: true
     description: submit_not_valid_response_body result type (default view)
     example:
       fault: true
       id: 123abc
       message: parameter 'p' must be an integer
       name: bad_request
-      temporary: false
+      temporary: true
       timeout: false
     required:
     - name
@@ -564,7 +564,7 @@ definitions:
     properties:
       path:
         type: string
-        example: Repellendus et qui.
+        example: Nemo pariatur mollitia repellendus et qui.
       pipeline:
         type: string
         example: Esse qui voluptatibus rerum necessitatibus.
@@ -580,13 +580,13 @@ definitions:
     properties:
       run_id:
         type: string
-        example: Voluptatibus consequatur in quaerat dolorum.
+        example: Assumenda ea similique voluptatibus consequatur in.
       workflow_id:
         type: string
-        example: Dolor animi aspernatur sed assumenda ea.
+        example: Id repudiandae voluptatum dolor animi aspernatur.
     example:
-      run_id: Ex velit.
-      workflow_id: Sed iure mollitia nisi et deserunt voluptate.
+      run_id: Deserunt voluptate.
+      workflow_id: Dolorum quis sed iure mollitia nisi.
     required:
     - workflow_id
     - run_id
@@ -1373,6 +1373,16 @@ definitions:
     title: 'Mediatype identifier: application/vnd.enduro.stored-pipeline; view=default'
     type: object
     properties:
+      capacity:
+        type: integer
+        description: Maximum concurrent transfers
+        example: 8769718247971263825
+        format: int64
+      current:
+        type: integer
+        description: Current transfers
+        example: 8185763432186060898
+        format: int64
       id:
         type: string
         description: Name of the collection
@@ -1385,8 +1395,10 @@ definitions:
     description: StoredPipeline describes a pipeline retrieved by this service. (default
       view)
     example:
+      capacity: 4481162409625316468
+      current: 1011067622530601184
       id: 1095F969-DBFE-8193-4547-7A48A06CFFA1
-      name: Hic voluptatibus doloribus aut.
+      name: Aut voluptatibus.
     required:
     - name
   PipelineShowNotFoundResponseBody:
@@ -1396,16 +1408,16 @@ definitions:
       id:
         type: integer
         description: Identifier of missing collection
-        example: 10540020550757333940
+        example: 6350382046348924297
         format: int64
       message:
         type: string
         description: Message of error
-        example: Consequatur aut adipisci doloribus quas sit vitae.
+        example: Doloribus quas.
     description: Collection not found
     example:
-      id: 819612404962920325
-      message: Fugiat quam iste velit explicabo ut.
+      id: 15868237352038662824
+      message: Beatae quia fugiat quam iste velit explicabo.
     required:
     - message
     - id
@@ -1413,6 +1425,16 @@ definitions:
     title: 'Mediatype identifier: application/vnd.enduro.stored-pipeline; view=default'
     type: object
     properties:
+      capacity:
+        type: integer
+        description: Maximum concurrent transfers
+        example: 6847007091960452877
+        format: int64
+      current:
+        type: integer
+        description: Current transfers
+        example: 3143202457039915320
+        format: int64
       id:
         type: string
         description: Name of the collection
@@ -1421,10 +1443,12 @@ definitions:
       name:
         type: string
         description: Name of the collection
-        example: Nisi recusandae est autem et expedita distinctio.
+        example: Est autem et expedita distinctio voluptatem.
     description: ShowResponseBody result type (default view)
     example:
+      capacity: 3612883446679952892
+      current: 328198139570181523
       id: 73C3FFFF-5E99-6BB1-43A8-61CBFDE01330
-      name: Ab nihil magni.
+      name: Magni nobis.
     required:
     - name

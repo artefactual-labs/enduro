@@ -161,6 +161,10 @@ func (p *Pipeline) Release() {
 	p.sem.Release(1)
 }
 
+func (p *Pipeline) Capacity() (size, cur int64) {
+	return p.sem.Capacity()
+}
+
 func httpClient() *http.Client {
 	const (
 		dialTimeout      = 5 * time.Second

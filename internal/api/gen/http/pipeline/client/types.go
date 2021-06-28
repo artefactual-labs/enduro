@@ -25,6 +25,10 @@ type ShowResponseBody struct {
 	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
 	// Name of the collection
 	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
+	// Maximum concurrent transfers
+	Capacity *int64 `form:"capacity,omitempty" json:"capacity,omitempty" xml:"capacity,omitempty"`
+	// Current transfers
+	Current *int64 `form:"current,omitempty" json:"current,omitempty" xml:"current,omitempty"`
 }
 
 // ShowNotFoundResponseBody is the type of the "pipeline" service "show"
@@ -42,6 +46,10 @@ type EnduroStoredPipelineResponse struct {
 	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
 	// Name of the collection
 	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
+	// Maximum concurrent transfers
+	Capacity *int64 `form:"capacity,omitempty" json:"capacity,omitempty" xml:"capacity,omitempty"`
+	// Current transfers
+	Current *int64 `form:"current,omitempty" json:"current,omitempty" xml:"current,omitempty"`
 }
 
 // NewListEnduroStoredPipelineOK builds a "pipeline" service "list" endpoint
@@ -59,8 +67,10 @@ func NewListEnduroStoredPipelineOK(body []*EnduroStoredPipelineResponse) []*pipe
 // result from a HTTP "OK" response.
 func NewShowEnduroStoredPipelineOK(body *ShowResponseBody) *pipelineviews.EnduroStoredPipelineView {
 	v := &pipelineviews.EnduroStoredPipelineView{
-		ID:   body.ID,
-		Name: body.Name,
+		ID:       body.ID,
+		Name:     body.Name,
+		Capacity: body.Capacity,
+		Current:  body.Current,
 	}
 
 	return v

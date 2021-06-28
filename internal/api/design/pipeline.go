@@ -43,6 +43,8 @@ var Pipeline = Type("Pipeline", func() {
 	Description("Pipeline describes an Archivematica pipeline.")
 	Attribute("id", String, "Name of the collection", func() { Format(FormatUUID) })
 	Attribute("name", String, "Name of the collection")
+	Attribute("capacity", Int64, "Maximum concurrent transfers")
+	Attribute("current", Int64, "Current transfers")
 	Required("name")
 })
 
@@ -52,10 +54,14 @@ var StoredPipeline = ResultType("application/vnd.enduro.stored-pipeline", func()
 	Attributes(func() {
 		Attribute("id")
 		Attribute("name")
+		Attribute("capacity")
+		Attribute("current")
 	})
 	View("default", func() {
 		Attribute("id")
 		Attribute("name")
+		Attribute("capacity")
+		Attribute("current")
 	})
 	Required("name")
 })

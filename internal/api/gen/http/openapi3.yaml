@@ -37,8 +37,8 @@ paths:
             schema:
               $ref: '#/components/schemas/SubmitRequestBody'
             example:
-              path: Dolor sit quia eum excepturi asperiores.
-              pipeline: Mollitia velit quaerat quae.
+              path: Sit quia eum excepturi asperiores quidem mollitia.
+              pipeline: Quaerat quae.
       responses:
         "202":
           description: Accepted response.
@@ -82,15 +82,15 @@ paths:
         allowEmptyValue: true
         schema:
           type: string
-          example: Possimus id et cumque.
-        example: Earum amet deleniti temporibus ut.
+          example: Cumque fugiat earum amet deleniti.
+        example: Ut excepturi nesciunt.
       - name: original_id
         in: query
         allowEmptyValue: true
         schema:
           type: string
-          example: Nesciunt aliquam necessitatibus.
-        example: Est soluta facere iste.
+          example: Necessitatibus odit.
+        example: Soluta facere.
       - name: transfer_id
         in: query
         allowEmptyValue: true
@@ -630,18 +630,26 @@ paths:
                 items:
                   $ref: '#/components/schemas/EnduroStoredPipeline'
                 example:
-                - id: 95545D09-3153-0F17-09F7-7FEB1545D780
+                - capacity: 3997658147680631204
+                  current: 3062239339411382149
+                  id: 95545D09-3153-0F17-09F7-7FEB1545D780
                   name: Doloribus ut amet.
-                - id: 95545D09-3153-0F17-09F7-7FEB1545D780
+                - capacity: 3997658147680631204
+                  current: 3062239339411382149
+                  id: 95545D09-3153-0F17-09F7-7FEB1545D780
                   name: Doloribus ut amet.
-                - id: 95545D09-3153-0F17-09F7-7FEB1545D780
-                  name: Doloribus ut amet.
-                - id: 95545D09-3153-0F17-09F7-7FEB1545D780
+                - capacity: 3997658147680631204
+                  current: 3062239339411382149
+                  id: 95545D09-3153-0F17-09F7-7FEB1545D780
                   name: Doloribus ut amet.
               example:
-              - id: 95545D09-3153-0F17-09F7-7FEB1545D780
+              - capacity: 3997658147680631204
+                current: 3062239339411382149
+                id: 95545D09-3153-0F17-09F7-7FEB1545D780
                 name: Doloribus ut amet.
-              - id: 95545D09-3153-0F17-09F7-7FEB1545D780
+              - capacity: 3997658147680631204
+                current: 3062239339411382149
+                id: 95545D09-3153-0F17-09F7-7FEB1545D780
                 name: Doloribus ut amet.
   /pipeline/{id}:
     get:
@@ -669,6 +677,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/EnduroStoredPipeline'
               example:
+                capacity: 2650663896130677790
+                current: 1342993257746649898
                 id: 6E989AEF-9C11-4862-D8B1-5CFC4F6414E0
                 name: Sit vitae.
         "404":
@@ -678,8 +688,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/NotFound'
               example:
-                id: 11362776853798551359
-                message: Quasi similique iure nulla voluptatem omnis id.
+                id: 14723063796807392145
+                message: Iure nulla.
   /swagger/swagger.json:
     get:
       tags:
@@ -977,6 +987,16 @@ components:
     EnduroStoredPipeline:
       type: object
       properties:
+        capacity:
+          type: integer
+          description: Maximum concurrent transfers
+          example: 4089329370384657908
+          format: int64
+        current:
+          type: integer
+          description: Current transfers
+          example: 4441636196990788758
+          format: int64
         id:
           type: string
           description: Name of the collection
@@ -988,8 +1008,10 @@ components:
           example: A quia quia quo.
       description: StoredPipeline describes a pipeline retrieved by this service.
       example:
+        capacity: 2489451650693769094
+        current: 6584335927151446400
         id: AFE55386-F5B6-467C-35B0-2117A9683AF1
-        name: Voluptas autem aut quis reiciendis corporis.
+        name: Aut quis reiciendis corporis recusandae.
       required:
       - name
     Error:
@@ -1092,7 +1114,7 @@ components:
       properties:
         path:
           type: string
-          example: Ex eius.
+          example: Consequatur ex eius.
         pipeline:
           type: string
           example: Soluta mollitia.

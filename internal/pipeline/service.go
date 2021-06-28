@@ -32,8 +32,11 @@ func (w *pipelineImpl) List(ctx context.Context, payload *goapipeline.ListPayloa
 
 	for _, p := range pipelines {
 		c := p.Config()
+		size, cur := p.Capacity()
 		r := &goapipeline.EnduroStoredPipeline{
-			Name: c.Name,
+			Name:     c.Name,
+			Capacity: &size,
+			Current:  &cur,
 		}
 		if p.ID != "" {
 			r.ID = &p.ID
@@ -51,9 +54,12 @@ func (w *pipelineImpl) Show(ctx context.Context, payload *goapipeline.ShowPayloa
 	}
 
 	c := pipeline.Config()
+	size, cur := pipeline.Capacity()
 
 	return &goapipeline.EnduroStoredPipeline{
-		ID:   &pipeline.ID,
-		Name: c.Name,
+		ID:       &pipeline.ID,
+		Name:     c.Name,
+		Capacity: &size,
+		Current:  &cur,
 	}, nil
 }

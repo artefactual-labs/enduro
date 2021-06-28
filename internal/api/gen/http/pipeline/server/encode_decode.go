@@ -114,8 +114,10 @@ func EncodeShowError(encoder func(context.Context, http.ResponseWriter) goahttp.
 // *pipeline.EnduroStoredPipeline.
 func marshalPipelineEnduroStoredPipelineToEnduroStoredPipelineResponse(v *pipeline.EnduroStoredPipeline) *EnduroStoredPipelineResponse {
 	res := &EnduroStoredPipelineResponse{
-		ID:   v.ID,
-		Name: v.Name,
+		ID:       v.ID,
+		Name:     v.Name,
+		Capacity: v.Capacity,
+		Current:  v.Current,
 	}
 
 	return res

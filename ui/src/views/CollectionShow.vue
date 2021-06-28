@@ -84,7 +84,8 @@
         <b-card-title v-else>Pipeline</b-card-title>
 
         <b-card-text v-if="collection.pipelineId">
-          {{ collection.pipelineId }}
+          {{ collection.pipelineId }}<br />
+          <small>Usage: {{ pipeline.current }} of {{ pipeline.capacity }} slots.</small>
         </b-card-text>
         <b-card-text v-else>
           Not identified yet.

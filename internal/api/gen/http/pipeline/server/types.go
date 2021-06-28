@@ -24,6 +24,10 @@ type ShowResponseBody struct {
 	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
 	// Name of the collection
 	Name string `form:"name" json:"name" xml:"name"`
+	// Maximum concurrent transfers
+	Capacity *int64 `form:"capacity,omitempty" json:"capacity,omitempty" xml:"capacity,omitempty"`
+	// Current transfers
+	Current *int64 `form:"current,omitempty" json:"current,omitempty" xml:"current,omitempty"`
 }
 
 // ShowNotFoundResponseBody is the type of the "pipeline" service "show"
@@ -41,6 +45,10 @@ type EnduroStoredPipelineResponse struct {
 	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
 	// Name of the collection
 	Name string `form:"name" json:"name" xml:"name"`
+	// Maximum concurrent transfers
+	Capacity *int64 `form:"capacity,omitempty" json:"capacity,omitempty" xml:"capacity,omitempty"`
+	// Current transfers
+	Current *int64 `form:"current,omitempty" json:"current,omitempty" xml:"current,omitempty"`
 }
 
 // NewListResponseBody builds the HTTP response body from the result of the
@@ -57,8 +65,10 @@ func NewListResponseBody(res []*pipeline.EnduroStoredPipeline) ListResponseBody 
 // "show" endpoint of the "pipeline" service.
 func NewShowResponseBody(res *pipelineviews.EnduroStoredPipelineView) *ShowResponseBody {
 	body := &ShowResponseBody{
-		ID:   res.ID,
-		Name: *res.Name,
+		ID:       res.ID,
+		Name:     *res.Name,
+		Capacity: res.Capacity,
+		Current:  res.Current,
 	}
 	return body
 }

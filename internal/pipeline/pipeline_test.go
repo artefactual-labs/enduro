@@ -15,19 +15,26 @@ func TestPipelineSemaphore(t *testing.T) {
 
 	tries := []bool{}
 
+	testCapacity(t, p, 3, 0)
+
 	// These three should succeed right away.
 	tries = append(tries, p.TryAcquire())
+	testCapacity(t, p, 3, 1)
 	tries = append(tries, p.TryAcquire())
+	testCapacity(t, p, 3, 2)
 	tries = append(tries, p.TryAcquire())
+	testCapacity(t, p, 3, 3)
 
 	// And the one too because we've released once.
 	p.Release()
+	testCapacity(t, p, 3, 2)
 	tries = append(tries, p.TryAcquire())
 
 	// But this will fail because all the slots are taken.
 	tries = append(tries, p.TryAcquire())
 
 	assert.DeepEqual(t, tries, []bool{true, true, true, true, false})
+	testCapacity(t, p, 3, 3)
 
 	t.Run("Release panics are gracefully managed", func(t *testing.T) {
 		t.Parallel()
@@ -60,5 +67,17 @@ func TestPipelineSemaphore(t *testing.T) {
 		tries = append(tries, p.TryAcquire())
 
 		assert.DeepEqual(t, tries, []bool{true, true, true, false})
+		testCapacity(t, p, 3, 3)
 	})
+}
+
+func testCapacity(t *testing.T, p *Pipeline, s, c int64) {
+	t.Helper()
+
+	size, cur := p.Capacity()
+
+	got := []int64{size, cur}
+	want := []int64{s, c}
+
+	assert.DeepEqual(t, got, want)
 }
