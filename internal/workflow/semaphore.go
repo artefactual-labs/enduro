@@ -14,36 +14,39 @@ import (
 	"go.uber.org/cadence/workflow"
 )
 
-func acquirePipeline(ctx workflow.Context, manager *manager.Manager, pipelineName string, colID uint) error {
+func acquirePipeline(ctx workflow.Context, manager *manager.Manager, pipelineName string, colID uint) (bool, error) {
+	var acquired bool
+
 	// Acquire the pipeline semaphore.
 	{
 		ctx := workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
 			ScheduleToStartTimeout: forever,
 			StartToCloseTimeout:    forever,
 			HeartbeatTimeout:       time.Minute,
+			WaitForCancellation:    false,
 		})
 		if err := workflow.ExecuteActivity(ctx, activities.AcquirePipelineActivityName, pipelineName).Get(ctx, nil); err != nil {
-			return fmt.Errorf("error acquiring pipeline: %w", err)
+			return acquired, fmt.Errorf("error acquiring pipeline: %w", err)
 		}
 	}
+
+	acquired = true
 
 	// Set in-progress status.
 	{
 		ctx := withLocalActivityOpts(ctx)
 		err := workflow.ExecuteLocalActivity(ctx, setStatusInProgressLocalActivity, manager.Collection, colID, time.Now().UTC()).Get(ctx, nil)
 		if err != nil {
-			return fmt.Errorf("error updating collection status: %w", err)
+			return acquired, fmt.Errorf("error updating collection status: %w", err)
 		}
 	}
 
-	return nil
+	return acquired, nil
 }
 
 func releasePipeline(ctx workflow.Context, manager *manager.Manager, pipelineName string) error {
-	// Not using a disconnected workflow because the semaphore is local and we
-	// don't want to release when the process is back up. We just need a real
-	// semaphore.
 	ctx = withLocalActivityWithoutRetriesOpts(ctx)
+	ctx, _ = workflow.NewDisconnectedContext(ctx)
 
 	err := workflow.ExecuteLocalActivity(ctx, releasePipelineLocalActivity, manager.Logger, manager.Pipelines, pipelineName).Get(ctx, nil)
 	if err != nil {

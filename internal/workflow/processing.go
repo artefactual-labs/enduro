@@ -149,7 +149,7 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 
 	// Persist collection as early as possible.
 	{
-		var activityOpts = withLocalActivityOpts(ctx)
+		activityOpts := withLocalActivityOpts(ctx)
 		var err error
 
 		if req.CollectionID == 0 {
@@ -184,8 +184,8 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 		}
 
 		// Use disconnected context so it also runs after cancellation.
-		var dctx, _ = workflow.NewDisconnectedContext(ctx)
-		var activityOpts = withLocalActivityOpts(dctx)
+		dctx, _ := workflow.NewDisconnectedContext(ctx)
+		activityOpts := withLocalActivityOpts(dctx)
 		_ = workflow.ExecuteLocalActivity(activityOpts, updatePackageLocalActivity, w.manager.Logger, w.manager.Collection, &updatePackageLocalActivityParams{
 			CollectionID: tinfo.CollectionID,
 			Key:          tinfo.Key,
@@ -199,7 +199,7 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 
 	// Extract details from transfer name.
 	{
-		var activityOpts = withLocalActivityWithoutRetriesOpts(ctx)
+		activityOpts := withLocalActivityWithoutRetriesOpts(ctx)
 		err := workflow.ExecuteLocalActivity(activityOpts, nha_activities.ParseNameLocalActivity, tinfo.Key).Get(activityOpts, &nameInfo)
 
 		// An error should only stop the workflow if hari/prod activities are enabled.
@@ -227,7 +227,7 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 	// Activities running within a session.
 	{
 		var sessErr error
-		var maxAttempts = 5
+		maxAttempts := 5
 
 		for attempt := 1; attempt <= maxAttempts; attempt++ {
 			activityOpts := workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
@@ -320,15 +320,18 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 
 // SessionHandler runs activities that belong to the same session.
 func (w *ProcessingWorkflow) SessionHandler(sessCtx workflow.Context, attempt int, tinfo *TransferInfo, nameInfo nha.NameInfo, validationConfig validation.Config) error {
-	defer func() {
-		_ = releasePipeline(sessCtx, w.manager, tinfo.PipelineName)
-		workflow.CompleteSession(sessCtx)
-	}()
+	defer workflow.CompleteSession(sessCtx)
 
 	// Block until pipeline semaphore is acquired. The collection status is set
 	// to in-progress as soon as the operation succeeds.
 	{
-		if err := acquirePipeline(sessCtx, w.manager, tinfo.PipelineName, tinfo.CollectionID); err != nil {
+		acquired, err := acquirePipeline(sessCtx, w.manager, tinfo.PipelineName, tinfo.CollectionID)
+		if acquired {
+			defer func() {
+				_ = releasePipeline(sessCtx, w.manager, tinfo.PipelineName)
+			}()
+		}
+		if err != nil {
 			return err
 		}
 	}
@@ -385,7 +388,7 @@ func (w *ProcessingWorkflow) SessionHandler(sessCtx workflow.Context, attempt in
 	// Transfer.
 	{
 		if tinfo.TransferID == "" {
-			var transferResponse = activities.TransferActivityResponse{}
+			transferResponse := activities.TransferActivityResponse{}
 
 			activityOpts := withActivityOptsForRequest(sessCtx)
 			err := workflow.ExecuteActivity(activityOpts, activities.TransferActivityName, &activities.TransferActivityParams{
