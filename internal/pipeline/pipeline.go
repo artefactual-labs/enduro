@@ -14,8 +14,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-logr/logr"
+
 	"github.com/artefactual-labs/enduro/internal/amclient"
-	"golang.org/x/sync/semaphore"
+	"github.com/artefactual-labs/enduro/internal/pipeline/sync/semaphore"
 )
 
 type Config struct {
@@ -34,6 +36,8 @@ type Config struct {
 }
 
 type Pipeline struct {
+	logger logr.Logger
+
 	// ID (UUID) of the pipeline. This is not provided by the user but loaded
 	// on demand once we have access to the pipeline API.
 	ID string
@@ -48,11 +52,12 @@ type Pipeline struct {
 	client *http.Client
 }
 
-func NewPipeline(config Config) (*Pipeline, error) {
+func NewPipeline(logger logr.Logger, config Config) (*Pipeline, error) {
 	config.TransferDir = expandPath(config.TransferDir)
 	config.ProcessingDir = expandPath(config.ProcessingDir)
 
 	p := &Pipeline{
+		logger: logger,
 		sem:    semaphore.NewWeighted(int64(config.Capacity)),
 		config: &config,
 		client: httpClient(),
@@ -144,6 +149,15 @@ func (p *Pipeline) TryAcquire() bool {
 }
 
 func (p *Pipeline) Release() {
+	defer func() {
+		// sem.Release panics if we release more than is held which is expected
+		// to happen when the workflow continues processing after a process
+		// kill where state is lost.
+		if err := recover(); err != nil {
+			p.logger.Info("Pipeline lock release failed", "err", err)
+		}
+	}()
+
 	p.sem.Release(1)
 }
 

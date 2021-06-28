@@ -59,14 +59,6 @@ func releasePipelineLocalActivity(ctx context.Context, logger logr.Logger, regis
 		return wferrors.NonRetryableError(err)
 	}
 
-	// It's possible that we're trying to release more than is held by
-	// the semaphore, since the semaphore is volatile and local!
-	defer func() {
-		if err := recover(); err != nil {
-			logger.WithName("releasePipelineLocalActivity").Info("Pipeline lock release failed", "err", err)
-		}
-	}()
-
 	p.Release()
 
 	return nil
