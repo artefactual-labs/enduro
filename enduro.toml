@@ -34,7 +34,7 @@ path = "./hack/watched-dir"
 inotify = false
 pipeline = "am"
 retentionPeriod = "11s"
-ignore = "^*\\.mft$"
+ignore = '(^\.)|(^\.gitkeep)|(^*\.mft)$'
 stripTopLevelDir = true
 
 [[pipeline]]
