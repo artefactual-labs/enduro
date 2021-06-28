@@ -3,13 +3,14 @@ package pipeline
 import (
 	"testing"
 
+	"github.com/go-logr/logr"
 	"gotest.tools/v3/assert"
 )
 
 func TestPipelineSemaphore(t *testing.T) {
 	t.Parallel()
 
-	p, err := NewPipeline(Config{Capacity: 3})
+	p, err := NewPipeline(logr.Discard(), Config{Capacity: 3})
 	assert.ErrorContains(t, err, "error during pipeline identification")
 
 	tries := []bool{}
@@ -27,4 +28,19 @@ func TestPipelineSemaphore(t *testing.T) {
 	tries = append(tries, p.TryAcquire())
 
 	assert.DeepEqual(t, tries, []bool{true, true, true, true, false})
+
+	t.Run("Release panics are gracefully managed", func(t *testing.T) {
+		t.Parallel()
+
+		p, _ := NewPipeline(logr.Discard(), Config{Capacity: 3})
+
+		defer func() {
+			err := recover()
+			assert.Equal(t, err, nil)
+		}()
+
+		for i := 0; i < 10; i++ {
+			p.Release()
+		}
+	})
 }

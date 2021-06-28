@@ -19,7 +19,8 @@ func NewPipelineRegistry(logger logr.Logger, configs []Config) (*Registry, error
 	var err error
 	pipelines := map[string]*Pipeline{}
 	for _, config := range configs {
-		pipelines[config.Name], err = NewPipeline(config)
+		logger := logger.WithValues("pipeline", config.Name)
+		pipelines[config.Name], err = NewPipeline(logger, config)
 		if err != nil {
 			logger.Error(err, "Error connecting to pipeline", "name", config.Name)
 		}
