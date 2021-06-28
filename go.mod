@@ -22,20 +22,16 @@ require (
 	github.com/johejo/golang-migrate-extra v0.0.0-20210217013041-51a992e50d16
 	github.com/jonboulle/clockwork v0.2.2
 	github.com/kr/pretty v0.2.1 // indirect
-	github.com/magiconair/properties v1.8.4 // indirect
 	github.com/mholt/archiver/v3 v3.5.0
 	github.com/oklog/run v1.1.0
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	github.com/otiai10/copy v1.6.0
 	github.com/pborman/uuid v1.2.1 // indirect
-	github.com/pelletier/go-toml v1.8.1 // indirect
 	github.com/prometheus/client_golang v1.11.0
 	github.com/radovskyb/watcher v1.0.7
 	github.com/spf13/afero v1.6.0
-	github.com/spf13/cast v1.3.1 // indirect
-	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5
-	github.com/spf13/viper v1.7.1
+	github.com/spf13/viper v1.8.1
 	github.com/stretchr/objx v0.3.0 // indirect
 	github.com/stretchr/testify v1.7.0
 	github.com/twmb/murmur3 v1.1.5 // indirect
@@ -49,7 +45,6 @@ require (
 	goa.design/plugins/v3 v3.4.3
 	gocloud.dev v0.23.0
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	gopkg.in/ini.v1 v1.61.0 // indirect
 	gotest.tools/v3 v3.0.3
 	honnef.co/go/tools v0.0.1-2020.1.5 // indirect
 )
