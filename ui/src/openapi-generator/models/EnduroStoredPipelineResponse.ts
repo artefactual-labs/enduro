@@ -20,6 +20,18 @@ import { exists, mapValues } from '../runtime';
  */
 export interface EnduroStoredPipelineResponse {
     /**
+     * Maximum concurrent transfers
+     * @type {number}
+     * @memberof EnduroStoredPipelineResponse
+     */
+    capacity?: number;
+    /**
+     * Current transfers
+     * @type {number}
+     * @memberof EnduroStoredPipelineResponse
+     */
+    current?: number;
+    /**
      * Name of the collection
      * @type {string}
      * @memberof EnduroStoredPipelineResponse
@@ -43,6 +55,8 @@ export function EnduroStoredPipelineResponseFromJSONTyped(json: any, ignoreDiscr
     }
     return {
         
+        'capacity': !exists(json, 'capacity') ? undefined : json['capacity'],
+        'current': !exists(json, 'current') ? undefined : json['current'],
         'id': !exists(json, 'id') ? undefined : json['id'],
         'name': json['name'],
     };
@@ -57,6 +71,8 @@ export function EnduroStoredPipelineResponseToJSON(value?: EnduroStoredPipelineR
     }
     return {
         
+        'capacity': value.capacity,
+        'current': value.current,
         'id': value.id,
         'name': value.name,
     };

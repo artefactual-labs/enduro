@@ -20,6 +20,18 @@ import { exists, mapValues } from '../runtime';
  */
 export interface PipelineShowResponseBody {
     /**
+     * Maximum concurrent transfers
+     * @type {number}
+     * @memberof PipelineShowResponseBody
+     */
+    capacity?: number;
+    /**
+     * Current transfers
+     * @type {number}
+     * @memberof PipelineShowResponseBody
+     */
+    current?: number;
+    /**
      * Name of the collection
      * @type {string}
      * @memberof PipelineShowResponseBody
@@ -43,6 +55,8 @@ export function PipelineShowResponseBodyFromJSONTyped(json: any, ignoreDiscrimin
     }
     return {
         
+        'capacity': !exists(json, 'capacity') ? undefined : json['capacity'],
+        'current': !exists(json, 'current') ? undefined : json['current'],
         'id': !exists(json, 'id') ? undefined : json['id'],
         'name': json['name'],
     };
@@ -57,6 +71,8 @@ export function PipelineShowResponseBodyToJSON(value?: PipelineShowResponseBody 
     }
     return {
         
+        'capacity': value.capacity,
+        'current': value.current,
         'id': value.id,
         'name': value.name,
     };

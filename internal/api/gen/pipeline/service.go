@@ -49,6 +49,10 @@ type EnduroStoredPipeline struct {
 	ID *string
 	// Name of the collection
 	Name string
+	// Maximum concurrent transfers
+	Capacity *int64
+	// Current transfers
+	Current *int64
 }
 
 // NotFound is the type returned when attempting to operate with a collection
@@ -88,7 +92,9 @@ func NewViewedEnduroStoredPipeline(res *EnduroStoredPipeline, view string) *pipe
 // service type EnduroStoredPipeline.
 func newEnduroStoredPipeline(vres *pipelineviews.EnduroStoredPipelineView) *EnduroStoredPipeline {
 	res := &EnduroStoredPipeline{
-		ID: vres.ID,
+		ID:       vres.ID,
+		Capacity: vres.Capacity,
+		Current:  vres.Current,
 	}
 	if vres.Name != nil {
 		res.Name = *vres.Name
@@ -100,8 +106,10 @@ func newEnduroStoredPipeline(vres *pipelineviews.EnduroStoredPipelineView) *Endu
 // projected type EnduroStoredPipelineView using the "default" view.
 func newEnduroStoredPipelineView(res *EnduroStoredPipeline) *pipelineviews.EnduroStoredPipelineView {
 	vres := &pipelineviews.EnduroStoredPipelineView{
-		ID:   res.ID,
-		Name: &res.Name,
+		ID:       res.ID,
+		Name:     &res.Name,
+		Capacity: res.Capacity,
+		Current:  res.Current,
 	}
 	return vres
 }

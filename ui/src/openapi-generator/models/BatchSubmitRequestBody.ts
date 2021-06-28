@@ -30,7 +30,7 @@ export interface BatchSubmitRequestBody {
      * @type {string}
      * @memberof BatchSubmitRequestBody
      */
-    pipeline?: string;
+    pipeline: string;
 }
 
 export function BatchSubmitRequestBodyFromJSON(json: any): BatchSubmitRequestBody {
@@ -44,7 +44,7 @@ export function BatchSubmitRequestBodyFromJSONTyped(json: any, ignoreDiscriminat
     return {
         
         'path': json['path'],
-        'pipeline': !exists(json, 'pipeline') ? undefined : json['pipeline'],
+        'pipeline': json['pipeline'],
     };
 }
 

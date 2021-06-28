@@ -188,8 +188,10 @@ func DecodeShowResponse(decoder func(*http.Response) goahttp.Decoder, restoreBod
 // *EnduroStoredPipelineResponse.
 func unmarshalEnduroStoredPipelineResponseToPipelineEnduroStoredPipeline(v *EnduroStoredPipelineResponse) *pipeline.EnduroStoredPipeline {
 	res := &pipeline.EnduroStoredPipeline{
-		ID:   v.ID,
-		Name: *v.Name,
+		ID:       v.ID,
+		Name:     *v.Name,
+		Capacity: v.Capacity,
+		Current:  v.Current,
 	}
 
 	return res

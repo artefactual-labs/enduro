@@ -28,7 +28,7 @@ func NewWeighted(n int64) *Weighted {
 type Weighted struct {
 	size    int64
 	cur     int64
-	mu      sync.Mutex
+	mu      sync.RWMutex
 	waiters list.List
 }
 
@@ -133,4 +133,11 @@ func (s *Weighted) notifyWaiters() {
 		s.waiters.Remove(next)
 		close(w.ready)
 	}
+}
+
+func (s *Weighted) Capacity() (size, cur int64) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	return s.size, s.cur
 }

@@ -27,6 +27,10 @@ type EnduroStoredPipelineView struct {
 	ID *string
 	// Name of the collection
 	Name *string
+	// Maximum concurrent transfers
+	Capacity *int64
+	// Current transfers
+	Current *int64
 }
 
 var (
@@ -36,6 +40,8 @@ var (
 		"default": []string{
 			"id",
 			"name",
+			"capacity",
+			"current",
 		},
 	}
 )
