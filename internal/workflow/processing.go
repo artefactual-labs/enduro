@@ -390,7 +390,7 @@ func (w *ProcessingWorkflow) SessionHandler(sessCtx workflow.Context, attempt in
 		if tinfo.TransferID == "" {
 			transferResponse := activities.TransferActivityResponse{}
 
-			activityOpts := withActivityOptsForRequest(sessCtx)
+			activityOpts := withActivityOptsForHeartbeatedRequest(sessCtx, time.Minute)
 			err := workflow.ExecuteActivity(activityOpts, activities.TransferActivityName, &activities.TransferActivityParams{
 				PipelineName:       tinfo.PipelineName,
 				TransferLocationID: tinfo.PipelineConfig.TransferLocationID,

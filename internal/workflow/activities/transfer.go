@@ -4,10 +4,14 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/artefactual-labs/enduro/internal/amclient"
 	wferrors "github.com/artefactual-labs/enduro/internal/workflow/errors"
 	"github.com/artefactual-labs/enduro/internal/workflow/manager"
+
+	"github.com/cenkalti/backoff/v3"
+	"go.uber.org/cadence/activity"
 )
 
 // TransferActivity submits the transfer to Archivematica and returns its ID.
@@ -50,21 +54,37 @@ func (a *TransferActivity) Execute(ctx context.Context, params *TransferActivity
 		path = fmt.Sprintf("%s:%s", params.TransferLocationID, path)
 	}
 
-	resp, httpResp, err := amc.Package.Create(ctx, &amclient.PackageCreateRequest{
-		Name:             params.Name,
-		Path:             path,
-		ProcessingConfig: params.ProcessingConfig,
-		AutoApprove:      &params.AutoApprove,
-	})
-	if err != nil {
-		if httpResp != nil {
-			switch {
-			case httpResp.StatusCode == http.StatusForbidden:
-				return nil, wferrors.NonRetryableError(fmt.Errorf("authentication error: %v", err))
+	var resp *amclient.PackageCreateResponse
+	var httpResp *amclient.Response
+	var backoffStrategy = backoff.WithContext(backoff.NewConstantBackOff(25*time.Second), ctx)
+
+	err = backoff.RetryNotify(
+		func() (err error) {
+			ctx, cancel := context.WithTimeout(ctx, time.Second*10)
+			defer cancel()
+
+			resp, httpResp, err = amc.Package.Create(ctx, &amclient.PackageCreateRequest{
+				Name:             params.Name,
+				Path:             path,
+				ProcessingConfig: params.ProcessingConfig,
+				AutoApprove:      &params.AutoApprove,
+			})
+			if err != nil {
+				if httpResp != nil {
+					switch {
+					case httpResp.StatusCode == http.StatusForbidden:
+						return backoff.Permanent(wferrors.NonRetryableError(fmt.Errorf("authentication error: %v", err)))
+					}
+				}
 			}
-		}
-		return nil, err
-	}
+
+			return err
+		},
+		backoffStrategy,
+		func(err error, duration time.Duration) {
+			activity.RecordHeartbeat(ctx, err.Error())
+		},
+	)
 
 	return &TransferActivityResponse{
 		TransferID:      resp.ID,
