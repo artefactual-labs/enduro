@@ -5,7 +5,7 @@ go 1.16
 require (
 	github.com/alicebob/miniredis/v2 v2.15.0
 	github.com/anmitsu/go-shlex v0.0.0-20200502080107-070676123096 // indirect
-	github.com/aws/aws-sdk-go v1.38.69
+	github.com/aws/aws-sdk-go v1.40.2
 	github.com/cenkalti/backoff/v4 v4.1.1
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/go-logr/logr v0.4.0
