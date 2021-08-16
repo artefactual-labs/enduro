@@ -1038,8 +1038,8 @@ go.uber.org/thriftrw v1.25.0/go.mod h1:IcIfSeZgc59AlYb0xr0DlDKIdD7SgjnFpG9BXCPyy
 go.uber.org/tools v0.0.0-20190618225709-2cfd321de3ee h1:0mgffUl7nfd+FpvXMVz4IDEaUSmT1ysygQC7qYo7sG4=
 go.uber.org/tools v0.0.0-20190618225709-2cfd321de3ee/go.mod h1:vJERXedbb3MVM5f9Ejo0C68/HhF8uaILCdgjnY+goOA=
 go.uber.org/yarpc v1.29.1/go.mod h1:5wt+WtAfoQh3yGyup7479I35hUobLqCfb0oewxC58jE=
-go.uber.org/yarpc v1.54.2 h1:nM0HmRg1YkE5UYL6VyhJsr0NI4BdwqDsELPJiZPgaMM=
-go.uber.org/yarpc v1.54.2/go.mod h1:MN4UGtPgheIYyT6HAXKMjGI9H736L+7ZuHIyeRpurW8=
+go.uber.org/yarpc v1.56.1 h1:FZ5jcmvaYSDcilH1qHYtk2JUDeYJQEXmgkDDWJJjqpQ=
+go.uber.org/yarpc v1.56.1/go.mod h1:V2JUPDWHYGNpvyuroYjf0KFjwvBCtcFJLuvZqv7TWA0=
 go.uber.org/zap v1.8.0/go.mod h1:vwi/ZaCAaUcBkycHslxD9B2zi4UTXhF60s6SWpuDF0Q=
 go.uber.org/zap v1.9.1/go.mod h1:vwi/ZaCAaUcBkycHslxD9B2zi4UTXhF60s6SWpuDF0Q=
 go.uber.org/zap v1.10.0/go.mod h1:vwi/ZaCAaUcBkycHslxD9B2zi4UTXhF60s6SWpuDF0Q=
