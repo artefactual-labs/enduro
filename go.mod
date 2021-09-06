@@ -36,10 +36,9 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/twmb/murmur3 v1.1.5 // indirect
 	github.com/uber-go/tally v3.4.1+incompatible
-	github.com/uber/tchannel-go v1.20.1 // indirect
 	github.com/ulikunitz/xz v0.5.8 // indirect
 	go.uber.org/cadence v0.17.0
-	go.uber.org/yarpc v1.54.2
+	go.uber.org/yarpc v1.57.1
 	go.uber.org/zap v1.18.1
 	goa.design/goa/v3 v3.4.3
 	goa.design/plugins/v3 v3.4.3
