@@ -33,6 +33,7 @@ type Config struct {
 	StorageServiceURL  string
 	Capacity           uint64
 	RetryDeadline      *time.Duration
+	TransferDeadline   *time.Duration
 }
 
 type Pipeline struct {

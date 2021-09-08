@@ -49,6 +49,7 @@ processingConfig = "automated"
 storageServiceURL = "http://test:test@127.0.0.1:62081"
 capacity = 3
 retryDeadline = "10m"
+transferDeadline = "24h"
 
 [validation]
 checksumsCheckEnabled = false

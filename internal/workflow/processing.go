@@ -8,7 +8,6 @@ package workflow
 import (
 	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/artefactual-labs/enduro/internal/collection"
@@ -19,6 +18,7 @@ import (
 	"github.com/artefactual-labs/enduro/internal/workflow/activities"
 	"github.com/artefactual-labs/enduro/internal/workflow/manager"
 
+	"go.uber.org/cadence"
 	"go.uber.org/cadence/workflow"
 	"go.uber.org/zap"
 )
@@ -242,16 +242,26 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 				return fmt.Errorf("error creating session: %v", err)
 			}
 
-			sessErr = w.SessionHandler(sessCtx, attempt, tinfo, nameInfo, req.ValidationConfig)
+			// We use this timer to identify transfers that exceeded a deadline.
+			// We can't rely on workflow.ErrCanceled because the same context
+			// error is seen when the session worker dies.
+			timer := NewTimer()
+
+			sessErr = w.SessionHandler(sessCtx, attempt, tinfo, nameInfo, req.ValidationConfig, timer)
 
 			// We want to retry the session if it has been canceled as a result
 			// of losing the worker but not otherwise. This scenario seems to be
 			// identifiable when we have an error but the root context has not
 			// been canceled.
-			if sessErr != nil && (errors.Is(sessErr, workflow.ErrSessionFailed) || errors.Is(sessErr, workflow.ErrCanceled) || strings.Contains(sessErr.Error(), "CanceledError")) {
+			if sessErr != nil && (errors.Is(sessErr, workflow.ErrSessionFailed) || cadence.IsCanceledError(sessErr)) {
 				// Root context canceled, hence workflow canceled.
 				if ctx.Err() == workflow.ErrCanceled {
 					return nil
+				}
+
+				// We're done if the transfer deadline was exceeded.
+				if cadence.IsCanceledError(sessErr) && timer.Exceeded() {
+					return fmt.Errorf("transfer deadline (%s) exceeded", tinfo.PipelineConfig.TransferDeadline)
 				}
 
 				logger.Error("Session failed, will retry shortly (10s)...",
@@ -319,7 +329,7 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 }
 
 // SessionHandler runs activities that belong to the same session.
-func (w *ProcessingWorkflow) SessionHandler(sessCtx workflow.Context, attempt int, tinfo *TransferInfo, nameInfo nha.NameInfo, validationConfig validation.Config) error {
+func (w *ProcessingWorkflow) SessionHandler(sessCtx workflow.Context, attempt int, tinfo *TransferInfo, nameInfo nha.NameInfo, validationConfig validation.Config, timer *Timer) error {
 	defer workflow.CompleteSession(sessCtx)
 
 	// Block until pipeline semaphore is acquired. The collection status is set
@@ -385,6 +395,50 @@ func (w *ProcessingWorkflow) SessionHandler(sessCtx workflow.Context, attempt in
 		}
 	}
 
+	{
+		// Use our timed context if this transfer has a deadline set.
+		duration := tinfo.PipelineConfig.TransferDeadline
+		if duration != nil {
+			var cancel workflow.CancelFunc
+			sessCtx, cancel = timer.WithTimeout(sessCtx, *duration)
+			defer cancel()
+		}
+
+		err := w.transfer(sessCtx, tinfo)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Deliver receipts.
+	{
+		err := w.sendReceipts(sessCtx, &sendReceiptsParams{
+			SIPID:        tinfo.SIPID,
+			StoredAt:     tinfo.StoredAt,
+			FullPath:     tinfo.Bundle.FullPath,
+			PipelineName: tinfo.PipelineName,
+			NameInfo:     nameInfo,
+			CollectionID: tinfo.CollectionID,
+		})
+		if err != nil {
+			return fmt.Errorf("error delivering receipt(s): %w", err)
+		}
+	}
+
+	// Delete local temporary files.
+	{
+		if tinfo.Bundle.FullPathBeforeStrip != "" {
+			activityOpts := withActivityOptsForRequest(sessCtx)
+			_ = workflow.ExecuteActivity(activityOpts, activities.CleanUpActivityName, &activities.CleanUpActivityParams{
+				FullPath: tinfo.Bundle.FullPathBeforeStrip,
+			}).Get(activityOpts, nil)
+		}
+	}
+
+	return nil
+}
+
+func (w *ProcessingWorkflow) transfer(sessCtx workflow.Context, tinfo *TransferInfo) error {
 	// Transfer.
 	{
 		if tinfo.TransferID == "" {
@@ -458,31 +512,6 @@ func (w *ProcessingWorkflow) SessionHandler(sessCtx workflow.Context, attempt in
 			if err != nil {
 				return err
 			}
-		}
-	}
-
-	// Deliver receipts.
-	{
-		err := w.sendReceipts(sessCtx, &sendReceiptsParams{
-			SIPID:        tinfo.SIPID,
-			StoredAt:     tinfo.StoredAt,
-			FullPath:     tinfo.Bundle.FullPath,
-			PipelineName: tinfo.PipelineName,
-			NameInfo:     nameInfo,
-			CollectionID: tinfo.CollectionID,
-		})
-		if err != nil {
-			return fmt.Errorf("error delivering receipt(s): %w", err)
-		}
-	}
-
-	// Delete local temporary files.
-	{
-		if tinfo.Bundle.FullPathBeforeStrip != "" {
-			activityOpts := withActivityOptsForRequest(sessCtx)
-			_ = workflow.ExecuteActivity(activityOpts, activities.CleanUpActivityName, &activities.CleanUpActivityParams{
-				FullPath: tinfo.Bundle.FullPathBeforeStrip,
-			}).Get(activityOpts, nil)
 		}
 	}
 

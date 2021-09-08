@@ -142,18 +142,9 @@ http://127.0.0.1:9001/metrics.
 
 ## Enduro
 
-Enduro binaries can be found at the [release page][enduro-release-page].
-
-The only configuration input accepted at the moment is the TOML configuration
-file. Use `enduro --config=config.toml` or rely one one of the default
-configuration locations: `/etc/enduro.toml` or `$HOME/.config/enduro.toml`, as
-well as in the current directory.
-
-The [development environment configuration][enduro-config] can be used as a
-reference. The sections and attributes are not entirely self-explanatory. We're
-hoping to add individual descriptions at some point. It is very likely that the
-configuration structure changes over time as we are still figuring things out in
-the proof of concept.
+Enduro binaries can be found at the [release page][enduro-release-page]. Learn
+more about the configuration details [here]({{< relref
+"/docs/user-manual/configuration" >}}).
 
 ### Domain creation
 
@@ -212,5 +203,4 @@ the API via cURL is `curl -Ls 127.0.0.1:9000/collection | jq`:
 [minio-redis-access]: https://docs.min.io/docs/minio-bucket-notification-guide.html#Redis
 [docker-restart-policy]: https://docs.docker.com/config/containers/start-containers-automatically/#use-a-restart-policy
 [enduro-release-page]: https://github.com/artefactual-labs/enduro/releases
-[enduro-config]: https://github.com/artefactual-labs/enduro/blob/main/enduro.toml
 [enduro-devenv]: {{< ref "/docs/development/environment" >}}
