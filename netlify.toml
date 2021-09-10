@@ -8,14 +8,14 @@ ignore = "cd ..; git diff --quiet HEAD^ HEAD ./website ./internal/api/gen/http/o
 command = "git submodule update --init --recursive && hugo --gc --minify --enableGitInfo"
 
 [context.split1.environment]
-HUGO_VERSION = "0.84.2"
+HUGO_VERSION = "0.88.1"
 HUGO_ENV = "production"
 
 [context.deploy-preview]
 command = "git submodule update --init --recursive && hugo --gc --minify --buildFuture -b $DEPLOY_PRIME_URL"
 
 [context.deploy-preview.environment]
-HUGO_VERSION = "0.84.2"
+HUGO_VERSION = "0.88.1"
 
 [context.branch-deploy]
 command = "git submodule update --init --recursive && hugo --gc --minify -b $DEPLOY_PRIME_URL"
