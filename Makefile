@@ -44,8 +44,27 @@ release-test-config:
 release-test:
 	$(GORELEASER) --skip-publish
 
-website:
-	$(HUGO) serve --source=website/
+PROJECT := enduro
+UNAME_OS := $(shell uname -s)
+UNAME_ARCH := $(shell uname -m)
+CACHE_BASE := $(HOME)/.cache/$(PROJECT)
+CACHE := $(CACHE_BASE)/$(UNAME_OS)/$(UNAME_ARCH)
+CACHE_BIN := $(CACHE)/bin
+export PATH := $(abspath $(CACHE_BIN)):$(PATH)
+CACHE_VERSIONS := $(CACHE)/versions
+HUGO_VERSION := 0.88.1
+HUGO := $(CACHE_VERSIONS)/hugo/$(HUGO_VERSION)
+$(HUGO):
+	@rm -f $(CACHE_BIN)/hugo
+	@mkdir -p $(CACHE_BIN)
+	curl -sSL "https://github.com/gohugoio/hugo/releases/download/v$(HUGO_VERSION)/hugo_extended_$(HUGO_VERSION)_Linux-64bit.tar.gz" | tar xz -C "$(CACHE_BIN)"
+	chmod +x "$(CACHE_BIN)/hugo"
+	@rm -rf $(dir $(HUGO))
+	@mkdir -p $(dir $(HUGO))
+	@touch $(HUGO)
+
+website: $(HUGO)
+	hugo serve --source=website/
 
 ui:
 	yarn --cwd ui install
