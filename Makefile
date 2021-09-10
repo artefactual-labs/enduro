@@ -75,13 +75,13 @@ cadence-flush:
 	docker-compose exec mysql mysql -hlocalhost -uroot -proot123 -e "CREATE DATABASE IF NOT EXISTS cadence_visibility;"
 	docker-compose run --rm cadence /seed.sh
 	docker-compose restart cadence
-	docker run -it --network=host --rm ubercadence/cli:master --address=127.0.0.1:7400 --domain=enduro domain register --active_cluster=active
+	$(MAKE) cadence-domain
 
 cadence-seed:
 	docker-compose run --rm cadence /seed.sh
 
 cadence-domain:
-	docker run -it --network=host --rm ubercadence/cli:master --address=127.0.0.1:7400 --domain=enduro domain register --active_cluster=active
+	docker run -it --network=host --rm ubercadence/cli:master --address=127.0.0.1:7400 --domain=enduro domain register --global_domain=false --active_cluster=active
 
 db:
 	docker-compose exec --user=root mysql mysql -hlocalhost -uroot -proot123
