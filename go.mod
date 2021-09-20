@@ -40,7 +40,7 @@ require (
 	go.uber.org/cadence v0.18.2
 	go.uber.org/yarpc v1.57.1
 	go.uber.org/zap v1.19.1
-	goa.design/goa/v3 v3.5.1
+	goa.design/goa/v3 v3.5.2
 	goa.design/plugins/v3 v3.5.1
 	gocloud.dev v0.24.0
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
