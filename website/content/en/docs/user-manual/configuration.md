@@ -81,6 +81,10 @@ E.g.: `3`.
 
 #### `retryDeadline` (String)
 
+If present, it sets the amount of time that Enduro waits before abandoning a
+transfer when the Archivematica API is returning potentially transient errors
+repeatedly, e.g., HTTP 5xx server errors or network connectivity errors.
+
 E.g.: `"10m"`.
 
 #### `transferDeadline` (String)
