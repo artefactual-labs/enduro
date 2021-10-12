@@ -19,6 +19,33 @@ file using the optional argument `--config=example.toml`.
 
 ## Sections
 
+### `[watcher]`
+
+Used to define filesystem watchers. For example:
+
+```toml
+[[watcher.minio]]
+name = "dev-minio"
+redisAddress = "redis://127.0.0.1:7470"
+redisList = "minio-events"
+endpoint = "http://127.0.0.1:7460"
+pathStyle = true
+key = "minio"
+secret = "minio123"
+region = "us-west-1"
+bucket = "sips"
+pipeline = "am"
+retentionPeriod = "10s"
+stripTopLevelDir = true
+```
+
+#### `retentionPeriod` (String)
+
+If present, it schedules the deletion of the original from the watched data
+source.
+
+E.g.: `"10s"`
+
 ### `[pipeline]`
 
 Used to define Archivematica pipelines. For example:
