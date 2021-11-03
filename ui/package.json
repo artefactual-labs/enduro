@@ -16,7 +16,7 @@
     "bootstrap-vue": "^2.4.1",
     "core-js": "^3.3.2",
     "humanize-duration": "^3.21.0",
-    "validator": "^13.0.0",
+    "validator": "^13.7.0",
     "vue": "^2.6.10",
     "vue-class-component": "^7.0.2",
     "vue-moment": "^4.0.0",
