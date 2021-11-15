@@ -37,7 +37,7 @@ require (
 	github.com/uber-go/tally v3.4.2+incompatible
 	github.com/uber/tchannel-go v1.22.0 // indirect
 	github.com/ulikunitz/xz v0.5.8 // indirect
-	go.uber.org/cadence v0.18.2
+	go.uber.org/cadence v0.18.5
 	go.uber.org/yarpc v1.57.1
 	go.uber.org/zap v1.19.1
 	goa.design/goa/v3 v3.5.1
