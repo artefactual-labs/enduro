@@ -14,20 +14,6 @@ debug = false
 [database]
 dsn = "enduro:enduro123@tcp(127.0.0.1:7450)/enduro"
 
-[[watcher.minio]]
-name = "dev-minio"
-redisAddress = "redis://127.0.0.1:7470"
-redisList = "minio-events"
-endpoint = "http://127.0.0.1:7460"
-pathStyle = true
-key = "minio"
-secret = "minio123"
-region = "us-west-1"
-bucket = "sips"
-pipeline = "am"
-retentionPeriod = "10s"
-stripTopLevelDir = true
-
 [[watcher.filesystem]]
 name = "dev-fs"
 path = "./hack/watched-dir"
