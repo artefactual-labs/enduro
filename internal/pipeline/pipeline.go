@@ -71,7 +71,7 @@ func NewPipeline(logger logr.Logger, config Config) (*Pipeline, error) {
 	// init() enriches our record by retrieving the UUID but we still return
 	// the the object in case of errors.
 	if err := p.init(); err != nil {
-		return p, err
+		p.logger.Info("Pipeline unreachable")
 	}
 
 	return p, nil

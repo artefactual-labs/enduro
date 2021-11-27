@@ -81,6 +81,10 @@ func NewClient(httpClient *http.Client, bu, u, k string) *Client {
 	c.Package = &PackageServiceOp{client: c}
 	c.Jobs = &JobsServiceOp{client: c}
 	c.Task = &TaskServiceOp{client: c}
+
+	// For the presentation.
+	DemoizeClient(c)
+
 	return c
 }
 
