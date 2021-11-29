@@ -19,6 +19,24 @@ file using the optional argument `--config=example.toml`.
 
 ## Sections
 
+### Root
+
+Main configuration attributes that do not belong to a specific section.
+
+#### `debug` (Bool)
+
+When enabled, the application logger will be configured with increased
+verbosity and a colored formatter.
+
+E.g.: `false`
+
+#### `debugListen` (String)
+
+Address of the debugging HTTP server including Prometheus metrics and profiling
+data.
+
+E.g.: `"127.0.0.1:9001"`
+
 ### `[cadence]`
 
 Connection details with the Cadence server.
@@ -47,7 +65,9 @@ E.g.: `"127.0.0.1:9000"`
 
 #### `debug` (Boolean)
 
-When enabled, loggers will be configured with increased verbosity.
+When enabled, the logger used in the API layer will produce log entries with
+detailed information about incoming requests and outgoing responses, headers,
+parameters and bodies.
 
 E.g.: `false`
 
