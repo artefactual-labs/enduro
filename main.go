@@ -252,6 +252,8 @@ func main() {
 		w.RegisterWorkflowWithOptions(batch.BatchWorkflow, cadenceworkflow.RegisterOptions{Name: batch.BatchWorkflowName})
 		w.RegisterActivityWithOptions(batch.NewBatchActivity(batchsvc).Execute, cadenceactivity.RegisterOptions{Name: batch.BatchActivityName})
 
+		registerFixityWorkflowActivities(w)
+
 		g.Add(
 			func() error {
 				if err := w.Start(); err != nil {
