@@ -52,12 +52,12 @@ CACHE := $(CACHE_BASE)/$(UNAME_OS)/$(UNAME_ARCH)
 CACHE_BIN := $(CACHE)/bin
 export PATH := $(abspath $(CACHE_BIN)):$(PATH)
 CACHE_VERSIONS := $(CACHE)/versions
-HUGO_VERSION := 0.88.1
+HUGO_VERSION := 0.90.0
 HUGO := $(CACHE_VERSIONS)/hugo/$(HUGO_VERSION)
 $(HUGO):
 	@rm -f $(CACHE_BIN)/hugo
 	@mkdir -p $(CACHE_BIN)
-	curl -sSL "https://github.com/gohugoio/hugo/releases/download/v$(HUGO_VERSION)/hugo_extended_$(HUGO_VERSION)_Linux-64bit.tar.gz" | tar xz -C "$(CACHE_BIN)"
+	curl -sSL "https://github.com/gohugoio/hugo/releases/download/v$(HUGO_VERSION)/hugo_extended_$(HUGO_VERSION)_Linux-64bit.tar.gz" | tar xzf - -C "$(CACHE_BIN)"
 	chmod +x "$(CACHE_BIN)/hugo"
 	@rm -rf $(dir $(HUGO))
 	@mkdir -p $(dir $(HUGO))
