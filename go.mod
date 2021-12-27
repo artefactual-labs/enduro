@@ -5,7 +5,7 @@ go 1.17
 require (
 	github.com/alicebob/miniredis/v2 v2.15.1
 	github.com/anmitsu/go-shlex v0.0.0-20200502080107-070676123096 // indirect
-	github.com/aws/aws-sdk-go v1.40.40
+	github.com/aws/aws-sdk-go v1.42.25
 	github.com/cenkalti/backoff/v4 v4.1.1
 	github.com/fsnotify/fsnotify v1.5.1
 	github.com/go-logr/logr v1.1.0
@@ -112,7 +112,7 @@ require (
 	go.uber.org/thriftrw v1.29.1 // indirect
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
 	golang.org/x/mod v0.5.0 // indirect
-	golang.org/x/net v0.0.0-20210825183410-e898025ed96a // indirect
+	golang.org/x/net v0.0.0-20211209124913-491a49abca63 // indirect
 	golang.org/x/sys v0.0.0-20210831042530-f4d43177bf5e // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac // indirect
