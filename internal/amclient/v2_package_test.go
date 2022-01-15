@@ -36,7 +36,6 @@ func TestPackage_Create(t *testing.T) {
 		fmt.Fprint(w, `{"id": "096a284d-5067-4de0-a0a4-a684018cd6df"}`)
 	})
 
-	autoApprove := true
 	req := &PackageCreateRequest{
 		Name:             "Foobar",
 		Type:             "standard",
@@ -44,7 +43,7 @@ func TestPackage_Create(t *testing.T) {
 		Accession:        "12345",
 		AccessSystemID:   "fig-123",
 		ProcessingConfig: "automated",
-		AutoApprove:      &autoApprove,
+		AutoApprove:      true,
 	}
 	payload, _, _ := client.Package.Create(ctx, req)
 

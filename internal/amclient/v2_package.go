@@ -26,7 +26,7 @@ type PackageCreateRequest struct {
 	AccessSystemID   string `json:"access_system_id,omitempty"`
 	MetadataSetID    string `json:"metadata_set_id,omitempty"`
 	ProcessingConfig string `json:"processing_config,omitempty"`
-	AutoApprove      *bool  `json:"auto_approve,omitempty"`
+	AutoApprove      bool   `json:"auto_approve,omitempty"`
 }
 
 type PackageCreateResponse struct {
@@ -40,10 +40,6 @@ func (s *PackageServiceOp) Create(ctx context.Context, r *PackageCreateRequest) 
 
 	if r.Type == "" {
 		r.Type = standardTransferType
-	}
-	if r.AutoApprove == nil {
-		approve := true
-		r.AutoApprove = &approve
 	}
 	r.Path = base64.StdEncoding.EncodeToString([]byte(r.Path))
 
