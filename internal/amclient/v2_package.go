@@ -19,13 +19,14 @@ type PackageServiceOp struct {
 var _ PackageService = &PackageServiceOp{}
 
 type PackageCreateRequest struct {
-	Name              string `json:"name"`
-	Type              string `json:"type"`
-	Path              string `json:"path"`
-	AccessionSystemID string `json:"access_system_id,omitempty"`
-	MetadataSetID     string `json:"metadata_set_id,omitempty"`
-	ProcessingConfig  string `json:"processing_config,omitempty"`
-	AutoApprove       *bool  `json:"auto_approve,omitempty"`
+	Name             string `json:"name"`
+	Type             string `json:"type"`
+	Path             string `json:"path"`
+	Accession        string `json:"accession,omitempty"`
+	AccessSystemID   string `json:"access_system_id,omitempty"`
+	MetadataSetID    string `json:"metadata_set_id,omitempty"`
+	ProcessingConfig string `json:"processing_config,omitempty"`
+	AutoApprove      *bool  `json:"auto_approve,omitempty"`
 }
 
 type PackageCreateResponse struct {
