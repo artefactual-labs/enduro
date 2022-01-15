@@ -31,15 +31,20 @@ func TestPackage_Create(t *testing.T) {
 
 		assert.Equal(t,
 			string(bytes.TrimSpace(blob)),
-			fmt.Sprintf(`{"name":"Foobar","type":"standard","path":"%s","auto_approve":true}`, pathb64))
+			fmt.Sprintf(`{"name":"Foobar","type":"standard","path":"%s","accession":"12345","access_system_id":"fig-123","processing_config":"automated","auto_approve":true}`, pathb64))
 
 		fmt.Fprint(w, `{"id": "096a284d-5067-4de0-a0a4-a684018cd6df"}`)
 	})
 
+	autoApprove := true
 	req := &PackageCreateRequest{
-		Name: "Foobar",
-		Type: "standard",
-		Path: path,
+		Name:             "Foobar",
+		Type:             "standard",
+		Path:             path,
+		Accession:        "12345",
+		AccessSystemID:   "fig-123",
+		ProcessingConfig: "automated",
+		AutoApprove:      &autoApprove,
 	}
 	payload, _, _ := client.Package.Create(ctx, req)
 
