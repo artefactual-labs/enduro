@@ -215,8 +215,8 @@ func (w *goaWrapper) Retry(ctx context.Context, payload *goacollection.RetryPayl
 
 	req.WorkflowID = *goacol.WorkflowID
 	req.CollectionID = goacol.ID
-	if err := TriggerProcessingWorkflow(ctx, w.cc, req); err != nil {
-		return fmt.Errorf("error triggering the new workflow instance: %w", err)
+	if err := InitProcessingWorkflow(ctx, w.cc, req); err != nil {
+		return fmt.Errorf("error starting the new workflow instance: %w", err)
 	}
 
 	return nil
