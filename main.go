@@ -201,7 +201,15 @@ func main() {
 							}
 							logger.V(1).Info("Starting new workflow", "watcher", event.WatcherName, "bucket", event.Bucket, "key", event.Key)
 							go func() {
-								if err := collection.InitProcessingWorkflow(ctx, workflowClient, event.WatcherName, event.PipelineName, event.RetentionPeriod, event.StripTopLevelDir, event.Key, "", config.Validation); err != nil {
+								req := collection.ProcessingWorkflowRequest{
+									WatcherName:      event.WatcherName,
+									PipelineName:     event.PipelineName,
+									RetentionPeriod:  event.RetentionPeriod,
+									StripTopLevelDir: event.StripTopLevelDir,
+									Key:              event.Key,
+									ValidationConfig: config.Validation,
+								}
+								if err := collection.InitProcessingWorkflow(ctx, workflowClient, &req); err != nil {
 									logger.Error(err, "Error initializing processing workflow.")
 								}
 							}()
