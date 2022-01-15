@@ -28,7 +28,6 @@ type TransferActivityParams struct {
 	RelPath            string
 	Name               string
 	ProcessingConfig   string
-	AutoApprove        bool
 }
 
 type TransferActivityResponse struct {
@@ -45,7 +44,7 @@ func (a *TransferActivity) Execute(ctx context.Context, params *TransferActivity
 	amc := p.Client()
 
 	// Transfer path should include the location UUID if defined.
-	var path = params.RelPath
+	path := params.RelPath
 	if params.TransferLocationID != "" {
 		path = fmt.Sprintf("%s:%s", params.TransferLocationID, path)
 	}
@@ -54,7 +53,7 @@ func (a *TransferActivity) Execute(ctx context.Context, params *TransferActivity
 		Name:             params.Name,
 		Path:             path,
 		ProcessingConfig: params.ProcessingConfig,
-		AutoApprove:      &params.AutoApprove,
+		AutoApprove:      true,
 	})
 	if err != nil {
 		if httpResp != nil {

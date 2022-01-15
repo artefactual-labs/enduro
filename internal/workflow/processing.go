@@ -451,7 +451,6 @@ func (w *ProcessingWorkflow) transfer(sessCtx workflow.Context, tinfo *TransferI
 				RelPath:            tinfo.Bundle.RelPath,
 				Name:               tinfo.Key,
 				ProcessingConfig:   tinfo.PipelineConfig.ProcessingConfig,
-				AutoApprove:        true,
 			}).Get(activityOpts, &transferResponse)
 			if err != nil {
 				return err
