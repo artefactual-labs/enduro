@@ -113,13 +113,25 @@ func (w *filesystemWatcher) Watch(ctx context.Context) (*BlobEvent, error) {
 	if !ok {
 		return nil, ErrWatchTimeout
 	}
+	info, err := os.Stat(fsevent.Name)
+	if err != nil {
+		return nil, fmt.Errorf("error in file stat check: %s", err)
+	}
 	rel, err := filepath.Rel(w.path, fsevent.Name)
 	if err != nil {
 		return nil, fmt.Errorf("error generating relative path of fsvent.Name %s - %w", fsevent.Name, err)
 	}
-	return NewBlobEvent(w, rel), nil
+	return NewBlobEvent(w, rel, info.IsDir()), nil
+}
+
+func (w *filesystemWatcher) Path() string {
+	return w.path
 }
 
 func (w *filesystemWatcher) OpenBucket(context.Context) (*blob.Bucket, error) {
 	return fileblob.OpenBucket(w.path, nil)
+}
+
+func (w *filesystemWatcher) RemoveAll(key string) error {
+	return os.RemoveAll(filepath.Join(w.path, key))
 }

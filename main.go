@@ -199,7 +199,7 @@ func main() {
 								}
 								continue
 							}
-							logger.V(1).Info("Starting new workflow", "watcher", event.WatcherName, "bucket", event.Bucket, "key", event.Key)
+							logger.V(1).Info("Starting new workflow", "watcher", event.WatcherName, "bucket", event.Bucket, "key", event.Key, "dir", event.IsDir)
 							go func() {
 								req := collection.ProcessingWorkflowRequest{
 									WatcherName:      event.WatcherName,
@@ -207,6 +207,7 @@ func main() {
 									RetentionPeriod:  event.RetentionPeriod,
 									StripTopLevelDir: event.StripTopLevelDir,
 									Key:              event.Key,
+									IsDir:            event.IsDir,
 									ValidationConfig: config.Validation,
 								}
 								if err := collection.InitProcessingWorkflow(ctx, workflowClient, &req); err != nil {
@@ -241,7 +242,7 @@ func main() {
 		w.RegisterWorkflowWithOptions(workflow.NewProcessingWorkflow(m).Execute, cadenceworkflow.RegisterOptions{Name: collection.ProcessingWorkflowName})
 		w.RegisterActivityWithOptions(activities.NewAcquirePipelineActivity(m).Execute, cadenceactivity.RegisterOptions{Name: activities.AcquirePipelineActivityName})
 		w.RegisterActivityWithOptions(activities.NewDownloadActivity(m).Execute, cadenceactivity.RegisterOptions{Name: activities.DownloadActivityName})
-		w.RegisterActivityWithOptions(activities.NewBundleActivity().Execute, cadenceactivity.RegisterOptions{Name: activities.BundleActivityName})
+		w.RegisterActivityWithOptions(activities.NewBundleActivity(m).Execute, cadenceactivity.RegisterOptions{Name: activities.BundleActivityName})
 		w.RegisterActivityWithOptions(activities.NewValidateTransferActivity().Execute, cadenceactivity.RegisterOptions{Name: activities.ValidateTransferActivityName})
 		w.RegisterActivityWithOptions(activities.NewTransferActivity(m).Execute, cadenceactivity.RegisterOptions{Name: activities.TransferActivityName})
 		w.RegisterActivityWithOptions(activities.NewPollTransferActivity(m).Execute, cadenceactivity.RegisterOptions{Name: activities.PollTransferActivityName})

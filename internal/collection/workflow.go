@@ -45,6 +45,11 @@ type ProcessingWorkflowRequest struct {
 	// Key of the blob.
 	Key string
 
+	// Whether the blob is a directory (fs watcher)
+	//
+	// It is populated via the workflow request.
+	IsDir bool
+
 	// Batch directory that contains the blob.
 	BatchDir string
 

@@ -88,6 +88,10 @@ func (w *minioWatcher) Watch(ctx context.Context) (*BlobEvent, error) {
 	return event, nil
 }
 
+func (w *minioWatcher) Path() string {
+	return ""
+}
+
 func (w *minioWatcher) blpop(ctx context.Context) (*BlobEvent, error) {
 	val, err := w.client.BLPop(ctx, redisPopTimeout, w.listName).Result()
 	if err != nil {
