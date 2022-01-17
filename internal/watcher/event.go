@@ -28,22 +28,26 @@ type BlobEvent struct {
 	// Key of the blob.
 	Key string
 
+	// Whether the blob is a directory (fs watcher)
+	IsDir bool
+
 	// Bucket where the blob lives.
 	Bucket string `json:"Bucket,omitempty"`
 }
 
-func NewBlobEvent(w Watcher, key string) *BlobEvent {
+func NewBlobEvent(w Watcher, key string, isDir bool) *BlobEvent {
 	return &BlobEvent{
 		WatcherName:      w.String(),
 		PipelineName:     w.Pipeline(),
 		RetentionPeriod:  w.RetentionPeriod(),
 		StripTopLevelDir: w.StripTopLevelDir(),
 		Key:              key,
+		IsDir:            isDir,
 	}
 }
 
 func NewBlobEventWithBucket(w Watcher, bucket, key string) *BlobEvent {
-	e := NewBlobEvent(w, key)
+	e := NewBlobEvent(w, key, false)
 	e.Bucket = bucket
 	return e
 }

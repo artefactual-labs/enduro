@@ -60,7 +60,8 @@ type TransferInfo struct {
 
 	// Name of the watcher that received this blob.
 	//
-	// It is populated via the workflow request.
+	// It is populated via the workflow request. Expect an empty string when
+	// the workflow was started by a batch.
 	WatcherName string
 
 	// Pipeline name.
@@ -84,6 +85,11 @@ type TransferInfo struct {
 	//
 	// It is populated via the workflow request.
 	Key string
+
+	// Whether the blob is a directory (fs watcher)
+	//
+	// It is populated via the workflow request.
+	IsDir bool
 
 	// Batch directory that contains the blob.
 	//
@@ -137,6 +143,7 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 			RetentionPeriod:  req.RetentionPeriod,
 			StripTopLevelDir: req.StripTopLevelDir,
 			Key:              req.Key,
+			IsDir:            req.IsDir,
 			BatchDir:         req.BatchDir,
 		}
 
@@ -348,15 +355,17 @@ func (w *ProcessingWorkflow) SessionHandler(sessCtx workflow.Context, attempt in
 
 	// Download.
 	{
-		// TODO: even if TempFile is defined, we should confirm that the file is
-		// locally available in disk, just in case we're in the context of a
-		// session retry where a different working is doing the work. In that
-		// case, the activity whould be executed again.
-		if tinfo.WatcherName != "" && tinfo.TempFile == "" {
-			activityOpts := withActivityOptsForLongLivedRequest(sessCtx)
-			err := workflow.ExecuteActivity(activityOpts, activities.DownloadActivityName, tinfo.PipelineName, tinfo.WatcherName, tinfo.Key).Get(activityOpts, &tinfo.TempFile)
-			if err != nil {
-				return err
+		if tinfo.WatcherName != "" && !tinfo.IsDir {
+			// TODO: even if TempFile is defined, we should confirm that the file is
+			// locally available in disk, just in case we're in the context of a
+			// session retry where a different working is doing the work. In that
+			// case, the activity whould be executed again.
+			if tinfo.TempFile == "" {
+				activityOpts := withActivityOptsForLongLivedRequest(sessCtx)
+				err := workflow.ExecuteActivity(activityOpts, activities.DownloadActivityName, tinfo.PipelineName, tinfo.WatcherName, tinfo.Key).Get(activityOpts, &tinfo.TempFile)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -366,8 +375,10 @@ func (w *ProcessingWorkflow) SessionHandler(sessCtx workflow.Context, attempt in
 		if tinfo.Bundle == (activities.BundleActivityResult{}) {
 			activityOpts := withActivityOptsForLongLivedRequest(sessCtx)
 			err := workflow.ExecuteActivity(activityOpts, activities.BundleActivityName, &activities.BundleActivityParams{
+				WatcherName:      tinfo.WatcherName,
 				TransferDir:      tinfo.PipelineConfig.TransferDir,
 				Key:              tinfo.Key,
+				IsDir:            tinfo.IsDir,
 				TempFile:         tinfo.TempFile,
 				StripTopLevelDir: tinfo.StripTopLevelDir,
 				BatchDir:         tinfo.BatchDir,

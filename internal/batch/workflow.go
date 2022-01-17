@@ -50,7 +50,7 @@ func (a *BatchActivity) Execute(ctx context.Context, params BatchWorkflowInput) 
 		return wferrors.NonRetryableError(err)
 	}
 	for _, file := range files {
-		_ = a.batchsvc.InitProcessingWorkflow(ctx, params.Path, file.Name(), params.PipelineName)
+		_ = a.batchsvc.InitProcessingWorkflow(ctx, params.Path, file.Name(), file.IsDir(), params.PipelineName)
 	}
 	return nil
 }

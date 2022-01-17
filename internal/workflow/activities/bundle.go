@@ -9,23 +9,29 @@ import (
 	"strings"
 
 	"github.com/artefactual-labs/enduro/internal/amclient/bundler"
+	"github.com/artefactual-labs/enduro/internal/watcher"
 	wferrors "github.com/artefactual-labs/enduro/internal/workflow/errors"
+	"github.com/artefactual-labs/enduro/internal/workflow/manager"
 
 	"github.com/mholt/archiver/v3"
 	"github.com/otiai10/copy"
 )
 
-type BundleActivity struct{}
+type BundleActivity struct {
+	manager *manager.Manager
+}
 
-func NewBundleActivity() *BundleActivity {
-	return &BundleActivity{}
+func NewBundleActivity(m *manager.Manager) *BundleActivity {
+	return &BundleActivity{manager: m}
 }
 
 type BundleActivityParams struct {
+	WatcherName      string
 	TransferDir      string
 	Key              string
 	TempFile         string
 	StripTopLevelDir bool
+	IsDir            bool
 	BatchDir         string
 }
 
@@ -33,18 +39,6 @@ type BundleActivityResult struct {
 	RelPath             string // Path of the transfer relative to the transfer directory.
 	FullPath            string // Full path to the transfer in the worker running the session.
 	FullPathBeforeStrip string // Same as FullPath but includes the top-level dir even when stripped.
-}
-
-func isSubPath(path, subPath string) (bool, error) {
-	up := ".." + string(os.PathSeparator)
-	rel, err := filepath.Rel(path, subPath)
-	if err != nil {
-		return false, err
-	}
-	if !strings.HasPrefix(rel, up) && rel != ".." {
-		return true, nil
-	}
-	return false, nil
 }
 
 func (a *BundleActivity) Execute(ctx context.Context, params *BundleActivityParams) (*BundleActivityResult, error) {
@@ -70,7 +64,17 @@ func (a *BundleActivity) Execute(ctx context.Context, params *BundleActivityPara
 			// This makes the workflow not to delete the original content in the transfer directory
 			res.FullPathBeforeStrip = ""
 		} else {
-			res.FullPath, res.FullPathBeforeStrip, err = a.Copy(ctx, params.TransferDir, params.BatchDir, params.Key, params.StripTopLevelDir)
+			src := filepath.Join(params.BatchDir, params.Key)
+			dst := params.TransferDir
+			res.FullPath, res.FullPathBeforeStrip, err = a.Copy(ctx, src, dst, params.StripTopLevelDir)
+		}
+	} else if params.IsDir {
+		var w watcher.Watcher
+		w, err = a.manager.Watcher.ByName(params.WatcherName)
+		if err == nil {
+			src := filepath.Join(w.Path(), params.Key)
+			dst := params.TransferDir
+			res.FullPath, res.FullPathBeforeStrip, err = a.Copy(ctx, src, dst, false)
 		}
 	} else {
 		unar := a.Unarchiver(params.Key, params.TempFile)
@@ -158,22 +162,10 @@ func (a *BundleActivity) Bundle(ctx context.Context, unar archiver.Unarchiver, t
 
 	tempDirBeforeStrip := tempDir
 	if stripTopLevelDir {
-		const errPrefix = "error stripping top-level dir"
-		ff, err := os.Open(tempDir)
+		tempDir, err = stripDirContainer(tempDir)
 		if err != nil {
-			return "", "", fmt.Errorf("%s: error opening dir: %v", errPrefix, err)
+			return "", "", err
 		}
-		fis, err := ff.Readdir(2)
-		if err != nil {
-			return "", "", fmt.Errorf("%s: error reading dir: %v", errPrefix, err)
-		}
-		if len(fis) != 1 {
-			return "", "", fmt.Errorf("%s: unexpected number of items were found in the archive", errPrefix)
-		}
-		if !fis[0].IsDir() {
-			return "", "", fmt.Errorf("%s: top-level item is not a directory", errPrefix)
-		}
-		tempDir = filepath.Join(tempDir, fis[0].Name())
 	}
 
 	// Delete the archive. We still have a copy in the watched source.
@@ -182,37 +174,58 @@ func (a *BundleActivity) Bundle(ctx context.Context, unar archiver.Unarchiver, t
 	return tempDir, tempDirBeforeStrip, nil
 }
 
-func (a *BundleActivity) Copy(ctx context.Context, transferDir, batchDir, key string, stripTopLevelDir bool) (string, string, error) {
+// Copy a transfer in the given destination using an intermediate temp. directory.
+func (a *BundleActivity) Copy(ctx context.Context, src, dst string, stripTopLevelDir bool) (string, string, error) {
 	const prefix = "enduro"
-	tempDir, err := ioutil.TempDir(transferDir, prefix)
+	tempDir, err := ioutil.TempDir(dst, prefix)
 	if err != nil {
 		return "", "", fmt.Errorf("error creating temporary directory: %s", err)
 	}
 	_ = os.Chmod(tempDir, os.FileMode(0o755))
 
-	if err := copy.Copy(filepath.Join(batchDir, key), tempDir); err != nil {
+	if err := copy.Copy(src, tempDir); err != nil {
 		return "", "", fmt.Errorf("error copying transfer: %v", err)
 	}
 
 	tempDirBeforeStrip := tempDir
 	if stripTopLevelDir {
-		const errPrefix = "error stripping top-level dir"
-		ff, err := os.Open(tempDir)
+		tempDir, err = stripDirContainer(tempDir)
 		if err != nil {
-			return "", "", fmt.Errorf("%s: error opening dir: %v", errPrefix, err)
+			return "", "", err
 		}
-		fis, err := ff.Readdir(2)
-		if err != nil {
-			return "", "", fmt.Errorf("%s: error reading dir: %v", errPrefix, err)
-		}
-		if len(fis) != 1 {
-			return "", "", fmt.Errorf("%s: unexpected number of items were found in the archive", errPrefix)
-		}
-		if !fis[0].IsDir() {
-			return "", "", fmt.Errorf("%s: top-level item is not a directory", errPrefix)
-		}
-		tempDir = filepath.Join(tempDir, fis[0].Name())
 	}
 
 	return tempDir, tempDirBeforeStrip, nil
+}
+
+func isSubPath(path, subPath string) (bool, error) {
+	up := ".." + string(os.PathSeparator)
+	rel, err := filepath.Rel(path, subPath)
+	if err != nil {
+		return false, err
+	}
+	if !strings.HasPrefix(rel, up) && rel != ".." {
+		return true, nil
+	}
+	return false, nil
+}
+
+// stripDirContainer strips the top-level directory of a transfer.
+func stripDirContainer(path string) (string, error) {
+	const errPrefix = "error stripping top-level dir"
+	ff, err := os.Open(path)
+	if err != nil {
+		return "", fmt.Errorf("%s: cannot open path: %v", errPrefix, err)
+	}
+	fis, err := ff.Readdir(2)
+	if err != nil {
+		return "", fmt.Errorf("%s: error reading dir: %v", errPrefix, err)
+	}
+	if len(fis) != 1 {
+		return "", fmt.Errorf("%s: directory has more than one child", errPrefix)
+	}
+	if !fis[0].IsDir() {
+		return "", fmt.Errorf("%s: top-level item is not a directory", errPrefix)
+	}
+	return filepath.Join(path, fis[0].Name()), nil
 }

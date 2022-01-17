@@ -36,6 +36,21 @@ func (m *MockService) EXPECT() *MockServiceMockRecorder {
 	return m.recorder
 }
 
+// ByName mocks base method.
+func (m *MockService) ByName(arg0 string) (watcher.Watcher, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ByName", arg0)
+	ret0, _ := ret[0].(watcher.Watcher)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ByName indicates an expected call of ByName.
+func (mr *MockServiceMockRecorder) ByName(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ByName", reflect.TypeOf((*MockService)(nil).ByName), arg0)
+}
+
 // Delete mocks base method.
 func (m *MockService) Delete(arg0 context.Context, arg1, arg2 string) error {
 	m.ctrl.T.Helper()

@@ -21,7 +21,7 @@ var ErrBatchStatusUnavailable = errors.New("batch status unavailable")
 type Service interface {
 	Submit(context.Context, *goabatch.SubmitPayload) (res *goabatch.BatchResult, err error)
 	Status(context.Context) (res *goabatch.BatchStatusResult, err error)
-	InitProcessingWorkflow(ctx context.Context, batchDir, key, pipelineName string) error
+	InitProcessingWorkflow(ctx context.Context, batchDir, key string, isDir bool, pipelineName string) error
 }
 
 type batchImpl struct {
@@ -106,12 +106,13 @@ func (s *batchImpl) Status(ctx context.Context) (*goabatch.BatchStatusResult, er
 	return result, nil
 }
 
-func (s *batchImpl) InitProcessingWorkflow(ctx context.Context, batchDir, key, pipelineName string) error {
+func (s *batchImpl) InitProcessingWorkflow(ctx context.Context, batchDir, key string, isDir bool, pipelineName string) error {
 	req := collection.ProcessingWorkflowRequest{
 		PipelineName:     pipelineName,
 		RetentionPeriod:  nil,
 		StripTopLevelDir: false,
 		Key:              key,
+		IsDir:            isDir,
 		BatchDir:         batchDir,
 		ValidationConfig: validation.Config{},
 	}
