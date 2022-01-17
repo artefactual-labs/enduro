@@ -34,7 +34,7 @@ func TestHARIActivity(t *testing.T) {
 	hariClient.Timeout = time.Second * 1
 
 	// When slimDown is used.
-	var emptyavlxml = []byte(`<?xml version="1.0" encoding="UTF-8"?>
+	emptyavlxml := []byte(`<?xml version="1.0" encoding="UTF-8"?>
 <avlxml xmlns:xsi="" xsi:schemaLocation=""><avlxmlversjon></avlxmlversjon><avleveringsidentifikator></avleveringsidentifikator><avleveringsbeskrivelse></avleveringsbeskrivelse><arkivskaper></arkivskaper><avtale></avtale></avlxml>`)
 
 	tests := map[string]struct {

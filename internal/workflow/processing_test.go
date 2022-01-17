@@ -135,6 +135,7 @@ func buildManager(t *testing.T, ctrl *gomock.Controller) *manager.Manager {
 		},
 	)
 }
+
 func assertNilWorkflowError(t *testing.T, err error) {
 	t.Helper()
 
@@ -149,5 +150,4 @@ func assertNilWorkflowError(t *testing.T, err error) {
 	} else {
 		t.Fatal(err.Error())
 	}
-
 }

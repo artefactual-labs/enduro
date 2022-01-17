@@ -49,7 +49,7 @@ func NewBlobEventWithBucket(w Watcher, bucket, key string) *BlobEvent {
 }
 
 func (e BlobEvent) String() string {
-	var key = e.Key
+	key := e.Key
 
 	if e.Bucket != "" {
 		key = fmt.Sprintf("%s:%s", e.Bucket, key)

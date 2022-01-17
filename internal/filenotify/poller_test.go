@@ -37,7 +37,7 @@ func TestPollerEvent(t *testing.T) {
 	}
 
 	path := filepath.Join(tmpdir, "hello.txt")
-	if err := ioutil.WriteFile(path, []byte("hello"), 0600); err != nil {
+	if err := ioutil.WriteFile(path, []byte("hello"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	if err := assertEvent(w, fsnotify.Create); err != nil {

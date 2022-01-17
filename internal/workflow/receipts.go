@@ -33,7 +33,6 @@ func (w *ProcessingWorkflow) sendReceipts(ctx workflow.Context, params *sendRece
 			PipelineName: params.PipelineName,
 			NameInfo:     params.NameInfo,
 		}).Get(ctx, nil)
-
 		if err != nil {
 			return fmt.Errorf("error sending hari receipt: %w", err)
 		}
@@ -50,7 +49,6 @@ func (w *ProcessingWorkflow) sendReceipts(ctx workflow.Context, params *sendRece
 			NameInfo:     params.NameInfo,
 			FullPath:     params.FullPath,
 		}).Get(ctx, nil)
-
 		if err != nil {
 			return fmt.Errorf("error sending prod receipt: %w", err)
 		}

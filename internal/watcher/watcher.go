@@ -11,8 +11,10 @@ import (
 	"gocloud.dev/blob"
 )
 
-var ErrWatchTimeout = errors.New("watcher timed out")
-var ErrBucketMismatch = errors.New("bucket mismatch")
+var (
+	ErrWatchTimeout   = errors.New("watcher timed out")
+	ErrBucketMismatch = errors.New("bucket mismatch")
+)
 
 type Watcher interface {
 	// Watch waits until a blob is dispatched.
@@ -73,7 +75,7 @@ type serviceImpl struct {
 var _ Service = (*serviceImpl)(nil)
 
 func New(ctx context.Context, c *Config) (*serviceImpl, error) {
-	var watchers = map[string]Watcher{}
+	watchers := map[string]Watcher{}
 
 	for _, item := range c.Minio {
 		item := item
@@ -106,7 +108,7 @@ func (svc *serviceImpl) Watchers() []Watcher {
 	svc.mu.RLock()
 	defer svc.mu.RUnlock()
 
-	var ww = []Watcher{}
+	ww := []Watcher{}
 	for _, item := range svc.watchers {
 		item := item
 		ww = append(ww, item)

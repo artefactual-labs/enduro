@@ -45,7 +45,7 @@ func HookAttr(hooks map[string]map[string]interface{}, hook string, attr string)
 }
 
 func HookAttrString(hooks map[string]map[string]interface{}, hook string, attr string) (string, error) {
-	var accessor = fmt.Sprintf("%s:%s", hook, attr)
+	accessor := fmt.Sprintf("%s:%s", hook, attr)
 
 	value, err := HookAttr(hooks, hook, attr)
 	if err != nil {
@@ -61,7 +61,7 @@ func HookAttrString(hooks map[string]map[string]interface{}, hook string, attr s
 }
 
 func HookAttrBool(hooks map[string]map[string]interface{}, hook string, attr string) (bool, error) {
-	var accessor = fmt.Sprintf("%s:%s", hook, attr)
+	accessor := fmt.Sprintf("%s:%s", hook, attr)
 
 	value, err := HookAttr(hooks, hook, attr)
 	if err != nil {

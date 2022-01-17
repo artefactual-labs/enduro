@@ -28,7 +28,7 @@ func (a *AcquirePipelineActivity) Execute(ctx context.Context, pipelineName stri
 		return wferrors.NonRetryableError(err)
 	}
 
-	var errAcquirePipeline = fmt.Errorf("error acquring semaphore: busy")
+	errAcquirePipeline := fmt.Errorf("error acquring semaphore: busy")
 
 	err = backoff.RetryNotify(
 		func() (err error) {

@@ -36,8 +36,8 @@ func executeActivityWithAsyncErrorHandling(ctx workflow.Context, colsvc collecti
 	future, settable := workflow.NewFuture(ctx)
 
 	workflow.Go(ctx, func(ctx workflow.Context) {
-		var retryWithPolicy = true
-		var retryPolicy = opts.RetryPolicy
+		retryWithPolicy := true
+		retryPolicy := opts.RetryPolicy
 		var attempts uint
 
 		for {
@@ -110,7 +110,7 @@ func NewAsyncCompletionActivity(m *manager.Manager) *AsyncCompletionActivity {
 }
 
 func (a *AsyncCompletionActivity) Execute(ctx context.Context, colID uint) (string, error) {
-	var info = activity.GetInfo(ctx)
+	info := activity.GetInfo(ctx)
 
 	if err := a.manager.Collection.SetStatusPending(ctx, colID, info.TaskToken); err != nil {
 		return "", fmt.Errorf("error saving task token: %v", err)

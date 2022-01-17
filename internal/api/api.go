@@ -38,25 +38,25 @@ func HTTPServer(
 	batchsvc intbatch.Service,
 	colsvc intcol.Service,
 ) *http.Server {
-	var dec = goahttp.RequestDecoder
-	var enc = goahttp.ResponseEncoder
+	dec := goahttp.RequestDecoder
+	enc := goahttp.ResponseEncoder
 	var mux goahttp.Muxer = goahttp.NewMuxer()
 
 	// Pipeline service.
 	var pipelineEndpoints *pipeline.Endpoints = pipeline.NewEndpoints(pipesvc)
-	var pipelineErrorHandler = errorHandler(logger, "Pipeline error.")
+	pipelineErrorHandler := errorHandler(logger, "Pipeline error.")
 	var pipelineServer *pipelinesvr.Server = pipelinesvr.New(pipelineEndpoints, mux, dec, enc, pipelineErrorHandler, nil)
 	pipelinesvr.Mount(mux, pipelineServer)
 
 	// Batch service.
 	var batchEndpoints *batch.Endpoints = batch.NewEndpoints(batchsvc)
-	var batchErrorHandler = errorHandler(logger, "Batch error.")
+	batchErrorHandler := errorHandler(logger, "Batch error.")
 	var batchServer *batchsvr.Server = batchsvr.New(batchEndpoints, mux, dec, enc, batchErrorHandler, nil)
 	batchsvr.Mount(mux, batchServer)
 
 	// Collection service.
 	var collectionEndpoints *collection.Endpoints = collection.NewEndpoints(colsvc.Goa())
-	var collectionErrorHandler = errorHandler(logger, "Collection error.")
+	collectionErrorHandler := errorHandler(logger, "Collection error.")
 	var collectionServer *collectionsvr.Server = collectionsvr.New(collectionEndpoints, mux, dec, enc, collectionErrorHandler, nil)
 	// Intercept request in Download endpoint so we can serve the file directly.
 	collectionServer.Download = colsvc.HTTPDownload(mux, dec)

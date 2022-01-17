@@ -42,7 +42,7 @@ func (ae ActivityError) Assert(t *testing.T, err error) {
 }
 
 func (ae ActivityError) message() string {
-	var message = ae.Message
+	message := ae.Message
 
 	if runtime.GOOS == "windows" && ae.MessageWindows != "" {
 		message = ae.MessageWindows

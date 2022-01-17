@@ -54,9 +54,9 @@ func NewBundler(fs afero.Fs) (*Bundler, error) {
 // NewBundlerWithTempDir returns a bundler based on a temporary directory
 // created under the path given.
 func NewBundlerWithTempDir(path string) (*Bundler, error) {
-	var mode = os.FileMode(0o755)
-	var osFs = afero.NewOsFs()
-	var baseFs = afero.NewBasePathFs(osFs, path)
+	mode := os.FileMode(0o755)
+	osFs := afero.NewOsFs()
+	baseFs := afero.NewBasePathFs(osFs, path)
 
 	const containerDir = "c"
 	ok, err := afero.DirExists(baseFs, containerDir)

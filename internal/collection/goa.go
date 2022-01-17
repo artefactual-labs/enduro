@@ -36,14 +36,14 @@ var patternMatchingCharReplacer = strings.NewReplacer(
 
 // List all stored collections. It implements goacollection.Service.
 func (w *goaWrapper) List(ctx context.Context, payload *goacollection.ListPayload) (*goacollection.ListResult, error) {
-	var query = "SELECT id, name, workflow_id, run_id, transfer_id, aip_id, original_id, pipeline_id, status, CONVERT_TZ(created_at, @@session.time_zone, '+00:00') AS created_at, CONVERT_TZ(started_at, @@session.time_zone, '+00:00') AS started_at, CONVERT_TZ(completed_at, @@session.time_zone, '+00:00') AS completed_at FROM collection"
-	var args = []interface{}{}
+	query := "SELECT id, name, workflow_id, run_id, transfer_id, aip_id, original_id, pipeline_id, status, CONVERT_TZ(created_at, @@session.time_zone, '+00:00') AS created_at, CONVERT_TZ(started_at, @@session.time_zone, '+00:00') AS started_at, CONVERT_TZ(completed_at, @@session.time_zone, '+00:00') AS completed_at FROM collection"
+	args := []interface{}{}
 
 	// We extract one extra item so we can tell the next cursor.
 	const limit = 20
 	const limitSQL = "21"
 
-	var conds = [][2]string{}
+	conds := [][2]string{}
 
 	if payload.Name != nil {
 		name := patternMatchingCharReplacer.Replace(*payload.Name) + "%"
@@ -102,20 +102,20 @@ func (w *goaWrapper) List(ctx context.Context, payload *goacollection.ListPayloa
 	}
 	defer rows.Close()
 
-	var cols = []*goacollection.EnduroStoredCollection{}
+	cols := []*goacollection.EnduroStoredCollection{}
 	for rows.Next() {
-		var c = Collection{}
+		c := Collection{}
 		if err := rows.StructScan(&c); err != nil {
 			return nil, fmt.Errorf("error scanning database result: %w", err)
 		}
 		cols = append(cols, c.Goa())
 	}
 
-	var res = &goacollection.ListResult{
+	res := &goacollection.ListResult{
 		Items: cols,
 	}
 
-	var length = len(cols)
+	length := len(cols)
 	if length > limit {
 		last := cols[length-1]               // Capture last item.
 		lastID := strconv.Itoa(int(last.ID)) // We also need its ID (cursor).
@@ -142,7 +142,7 @@ func (w *goaWrapper) Show(ctx context.Context, payload *goacollection.ShowPayloa
 //
 // TODO: return error if it's still running?
 func (w *goaWrapper) Delete(ctx context.Context, payload *goacollection.DeletePayload) error {
-	var query = "DELETE FROM collection WHERE id = (?)"
+	query := "DELETE FROM collection WHERE id = (?)"
 
 	query = w.db.Rebind(query)
 	res, err := w.db.ExecContext(ctx, query, payload.ID)
@@ -205,9 +205,9 @@ func (w *goaWrapper) Retry(ctx context.Context, payload *goacollection.RetryPayl
 		return fmt.Errorf("error loading history of the previous workflow run: initiator state not found")
 	}
 
-	var input = historyEvent.WorkflowExecutionStartedEventAttributes.Input
-	var attrs = bytes.Split(input, []byte("\n"))
-	var req = &ProcessingWorkflowRequest{}
+	input := historyEvent.WorkflowExecutionStartedEventAttributes.Input
+	attrs := bytes.Split(input, []byte("\n"))
+	req := &ProcessingWorkflowRequest{}
 
 	if err := json.Unmarshal(attrs[0], req); err != nil {
 		return fmt.Errorf("error loading state of the previous workflow run: %w", err)
@@ -228,7 +228,7 @@ func (w *goaWrapper) Workflow(ctx context.Context, payload *goacollection.Workfl
 		return nil, err
 	}
 
-	var resp = &goacollection.EnduroCollectionWorkflowStatus{
+	resp := &goacollection.EnduroCollectionWorkflowStatus{
 		History: []*goacollection.EnduroCollectionWorkflowHistory{},
 	}
 
@@ -242,7 +242,7 @@ func (w *goaWrapper) Workflow(ctx context.Context, payload *goacollection.Workfl
 		}
 	}
 
-	var status = "ACTIVE"
+	status := "ACTIVE"
 	if we.WorkflowExecutionInfo.CloseStatus != nil {
 		status = we.WorkflowExecutionInfo.CloseStatus.String()
 	}
@@ -255,8 +255,8 @@ func (w *goaWrapper) Workflow(ctx context.Context, payload *goacollection.Workfl
 			return nil, fmt.Errorf("error looking up history events: %v", err)
 		}
 
-		var eventID = uint(*event.EventId)
-		var eventType = event.EventType.String()
+		eventID := uint(*event.EventId)
+		eventType := event.EventType.String()
 		resp.History = append(resp.History, &goacollection.EnduroCollectionWorkflowHistory{
 			ID:      &eventID,
 			Type:    &eventType,
@@ -360,18 +360,18 @@ func (w *goaWrapper) BulkStatus(ctx context.Context) (*goacollection.BulkStatusR
 	result.RunID = resp.WorkflowExecutionInfo.Execution.RunId
 
 	if resp.WorkflowExecutionInfo.StartTime != nil {
-		var t = time.Unix(0, *resp.WorkflowExecutionInfo.StartTime).Format(time.RFC3339)
+		t := time.Unix(0, *resp.WorkflowExecutionInfo.StartTime).Format(time.RFC3339)
 		result.StartedAt = &t
 	}
 
 	if resp.WorkflowExecutionInfo.CloseTime != nil {
-		var t = time.Unix(0, *resp.WorkflowExecutionInfo.CloseTime).Format(time.RFC3339)
+		t := time.Unix(0, *resp.WorkflowExecutionInfo.CloseTime).Format(time.RFC3339)
 		result.ClosedAt = &t
 	}
 
 	// Workflow is not running!
 	if resp.WorkflowExecutionInfo.CloseStatus != nil {
-		var st = strings.ToLower(resp.WorkflowExecutionInfo.CloseStatus.String())
+		st := strings.ToLower(resp.WorkflowExecutionInfo.CloseStatus.String())
 		result.Status = &st
 
 		return result, nil
@@ -380,7 +380,7 @@ func (w *goaWrapper) BulkStatus(ctx context.Context) (*goacollection.BulkStatusR
 	result.Running = true
 
 	// We can use the status property to communicate progress from heartbeats.
-	var length = len(resp.PendingActivities)
+	length := len(resp.PendingActivities)
 	if length > 0 {
 		latest := resp.PendingActivities[length-1]
 		progress := &BulkProgress{}
