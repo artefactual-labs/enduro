@@ -237,7 +237,6 @@ func TestWatcherReturnsOnValidMessage(t *testing.T) {
 
 	check := func(t poll.LogT) poll.Result {
 		event, err := w.Watch(context.Background())
-
 		if err != nil {
 			return poll.Error(fmt.Errorf("watcher return an error unexpectedly: %w", err))
 		}
@@ -276,7 +275,6 @@ func TestWatcherReturnsDecodedObjectKey(t *testing.T) {
 
 	check := func(t poll.LogT) poll.Result {
 		event, err := w.Watch(context.Background())
-
 		if err != nil {
 			return poll.Error(fmt.Errorf("watcher return an error unexpectedly: %w", err))
 		}

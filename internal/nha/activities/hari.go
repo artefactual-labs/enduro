@@ -67,7 +67,7 @@ func (a UpdateHARIActivity) Execute(ctx context.Context, params *UpdateHARIActiv
 		apiURL = ts.URL
 	}
 
-	var path = a.avlxml(params.FullPath, params.NameInfo.Type)
+	path := a.avlxml(params.FullPath, params.NameInfo.Type)
 	if path == "" {
 		return wferrors.NonRetryableError(fmt.Errorf("error reading AVLXML file: not found"))
 	}
@@ -272,7 +272,7 @@ type avlRequestTime struct {
 
 func (t avlRequestTime) MarshalJSON() ([]byte, error) {
 	const format = "2006-01-02T15:04:05-07:00"
-	var s = fmt.Sprintf("\"%s\"", t.Time.Format(format))
+	s := fmt.Sprintf("\"%s\"", t.Time.Format(format))
 	return []byte(s), nil
 }
 

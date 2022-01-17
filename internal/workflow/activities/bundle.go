@@ -126,7 +126,7 @@ func (a *BundleActivity) SingleFile(ctx context.Context, transferDir, key, tempF
 	}
 	defer dest.Close()
 
-	var path = filepath.Join(transferDir, dest.Name())
+	path := filepath.Join(transferDir, dest.Name())
 	if err := os.Rename(tempFile, path); err != nil {
 		return "", fmt.Errorf("error moving file (from %s to %s): %v", tempFile, path, err)
 	}
@@ -156,7 +156,7 @@ func (a *BundleActivity) Bundle(ctx context.Context, unar archiver.Unarchiver, t
 		return "", "", fmt.Errorf("error unarchiving file: %v", err)
 	}
 
-	var tempDirBeforeStrip = tempDir
+	tempDirBeforeStrip := tempDir
 	if stripTopLevelDir {
 		const errPrefix = "error stripping top-level dir"
 		ff, err := os.Open(tempDir)
@@ -194,7 +194,7 @@ func (a *BundleActivity) Copy(ctx context.Context, transferDir, batchDir, key st
 		return "", "", fmt.Errorf("error copying transfer: %v", err)
 	}
 
-	var tempDirBeforeStrip = tempDir
+	tempDirBeforeStrip := tempDir
 	if stripTopLevelDir {
 		const errPrefix = "error stripping top-level dir"
 		ff, err := os.Open(tempDir)

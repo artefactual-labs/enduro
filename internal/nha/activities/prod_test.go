@@ -151,7 +151,7 @@ func TestProdActivity(t *testing.T) {
 				return
 			}
 
-			var base = fmt.Sprintf("Receipt_%s_%s", tc.params.NameInfo.Identifier, tc.params.StoredAt.Format(rfc3339forFilename))
+			base := fmt.Sprintf("Receipt_%s_%s", tc.params.NameInfo.Identifier, tc.params.StoredAt.Format(rfc3339forFilename))
 			assert.Assert(t, fs.Equal(
 				tmpdir.Path(),
 				fs.Expected(t,

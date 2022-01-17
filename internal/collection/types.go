@@ -62,7 +62,7 @@ func formatOptionalString(s string) *string {
 func formatOptionalTime(nt sql.NullTime) *string {
 	var res *string
 	if nt.Valid {
-		var f = formatTime(nt.Time)
+		f := formatTime(nt.Time)
 		res = &f
 	}
 	return res

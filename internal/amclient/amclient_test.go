@@ -82,7 +82,6 @@ func TestDo_httpError(t *testing.T) {
 
 func TestCustomUserAgent(t *testing.T) {
 	c, err := New(nil, "http://127.0.0.1", "", "", SetUserAgent("testing"))
-
 	if err != nil {
 		t.Fatalf("New() unexpected error: %v", err)
 	}

@@ -46,9 +46,9 @@ func (a *UpdateProductionSystemActivity) Execute(ctx context.Context, params *Up
 		return wferrors.NonRetryableError(fmt.Errorf("error looking up receiptPath configuration attribute: %v", err))
 	}
 
-	var basename = filepath.Join(receiptPath, fmt.Sprintf("Receipt_%s_%s", params.NameInfo.Identifier, params.StoredAt.Format(rfc3339forFilename)))
-	var jsonPath = basename + ".json"
-	var mftPath = basename + ".mft"
+	basename := filepath.Join(receiptPath, fmt.Sprintf("Receipt_%s_%s", params.NameInfo.Identifier, params.StoredAt.Format(rfc3339forFilename)))
+	jsonPath := basename + ".json"
+	mftPath := basename + ".mft"
 
 	// Create and open receipt file.
 	file, err := os.OpenFile(jsonPath, os.O_RDWR|os.O_CREATE, os.FileMode(0o644))

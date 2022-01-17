@@ -77,7 +77,7 @@ func (a *BulkActivity) Execute(ctx context.Context, params BulkWorkflowInput) er
 
 	// One actor does the work while updating progress.
 	// The other one sends the heartbeats.
-	var progress = &BulkProgress{}
+	progress := &BulkProgress{}
 	var mu sync.RWMutex
 
 	{
@@ -85,7 +85,7 @@ func (a *BulkActivity) Execute(ctx context.Context, params BulkWorkflowInput) er
 
 		group.Add(
 			func() error {
-				var ticker = time.NewTicker(time.Second * 1)
+				ticker := time.NewTicker(time.Second * 1)
 				defer ticker.Stop()
 				for {
 					select {
@@ -114,7 +114,7 @@ func (a *BulkActivity) Execute(ctx context.Context, params BulkWorkflowInput) er
 		group.Add(
 			func() error {
 				var nextCursor *string
-				var status = params.Status.String()
+				status := params.Status.String()
 				var count uint
 				for {
 					select {
