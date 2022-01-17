@@ -1,7 +1,9 @@
 package activities
 
 import (
+	"bufio"
 	"context"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -85,6 +87,11 @@ func (a *BundleActivity) Execute(ctx context.Context, params *BundleActivityPara
 			res.FullPath, res.FullPathBeforeStrip, err = a.Bundle(ctx, unar, params.TransferDir, params.Key, params.TempFile, params.StripTopLevelDir)
 		}
 	}
+	if err != nil {
+		return nil, wferrors.NonRetryableError(err)
+	}
+
+	err = unbag(res.FullPath)
 	if err != nil {
 		return nil, wferrors.NonRetryableError(err)
 	}
@@ -228,4 +235,116 @@ func stripDirContainer(path string) (string, error) {
 		return "", fmt.Errorf("%s: top-level item is not a directory", errPrefix)
 	}
 	return filepath.Join(path, fis[0].Name()), nil
+}
+
+// unbag converts a bagged transfer into a standard Archivematica transfer.
+func unbag(path string) error {
+	fi, err := os.Stat(path)
+	if err != nil {
+		return err
+	}
+	if !fi.IsDir() {
+		return errors.New("not a directory")
+	}
+
+	// Only continue if we have a bag.
+	_, err = os.Stat(filepath.Join(path, "bag-info.txt"))
+	if errors.Is(err, os.ErrNotExist) {
+		return nil
+	}
+
+	// Move files in data up one level if 'objects' folder already exists.
+	// Otherwise, rename data to objects.
+	dataPath := filepath.Join(path, "data")
+	if fi, err := os.Stat(dataPath); !os.IsNotExist(err) && fi.IsDir() {
+		items, err := os.ReadDir(dataPath)
+		if err != nil {
+			return err
+		}
+		for _, item := range items {
+			src := filepath.Join(dataPath, item.Name())
+			dst := filepath.Join(path, filepath.Base(src))
+			if err := os.Rename(src, dst); err != nil {
+				return err
+			}
+		}
+		if err := os.RemoveAll(dataPath); err != nil {
+			return err
+		}
+	} else {
+		dst := filepath.Join(path, "objects")
+		if err := os.Rename(dataPath, dst); err != nil {
+			return err
+		}
+	}
+
+	// Create metadata and submissionDocumentation directories.
+	metadataPath := filepath.Join(path, "metadata")
+	documentationPath := filepath.Join(metadataPath, "submissionDocumentation")
+	if err := os.MkdirAll(metadataPath, 0o775); err != nil {
+		return err
+	}
+	if err := os.MkdirAll(documentationPath, 0o775); err != nil {
+		return err
+	}
+
+	// Write manifest checksums to checksum file.
+	for _, item := range [][2]string{
+		{"manifest-sha512.txt", "checksum.sha512"},
+		{"manifest-sha256.txt", "checksum.sha256"},
+		{"manifest-sha1.txt", "checksum.sha1"},
+		{"manifest-md5.txt", "checksum.md5"},
+	} {
+		file, err := os.Open(filepath.Join(path, item[0]))
+		if err != nil {
+			if errors.Is(err, os.ErrNotExist) {
+				continue
+			}
+			return err
+		}
+		defer file.Close()
+
+		newFile, err := os.Create(filepath.Join(metadataPath, item[1]))
+		if err != nil {
+			if errors.Is(err, os.ErrNotExist) {
+				continue
+			}
+			return err
+		}
+		defer newFile.Close()
+
+		scanner := bufio.NewScanner(file)
+		for scanner.Scan() {
+			line := scanner.Text()
+			newLine := ""
+			if strings.Contains(line, "data/objects/") {
+				newLine = strings.Replace(line, "data/objects/", "../objects/", 1)
+			} else {
+				newLine = strings.Replace(line, "data/", "../objects/", 1)
+			}
+			fmt.Fprintln(newFile, newLine)
+		}
+
+		break // One file is enough.
+	}
+
+	// Move bag files to submissionDocumentation.
+	for _, item := range []string{
+		"bag-info.txt",
+		"bagit.txt",
+		"manifest-md5.txt",
+		"tagmanifest-md5.txt",
+		"manifest-sha1.txt",
+		"tagmanifest-sha1.txt",
+		"manifest-sha256.txt",
+		"tagmanifest-sha256.txt",
+		"manifest-sha512.txt",
+		"tagmanifest-sha512.txt",
+	} {
+		src := filepath.Join(path, item)
+		dst := filepath.Join(documentationPath, item)
+		_ = os.Rename(src, dst)
+	}
+
+	return nil
 }
