@@ -76,6 +76,12 @@ type TransferInfo struct {
 	// It is populated via the workflow request.
 	RetentionPeriod *time.Duration
 
+	// Directory where the transfer is moved to once processing has completed
+	// successfully.
+	//
+	// It is populated via the workflow request.
+	CompletedDir string
+
 	// Whether the top-level directory is meant to be stripped.
 	//
 	// It is populated via the workflow request.
@@ -141,6 +147,7 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 			WatcherName:      req.WatcherName,
 			PipelineName:     req.PipelineName,
 			RetentionPeriod:  req.RetentionPeriod,
+			CompletedDir:     req.CompletedDir,
 			StripTopLevelDir: req.StripTopLevelDir,
 			Key:              req.Key,
 			IsDir:            req.IsDir,
@@ -320,6 +327,25 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 				_ = workflow.ExecuteActivity(activityOpts, activities.DeleteOriginalActivityName, tinfo.WatcherName, tinfo.Key).Get(activityOpts, nil)
 			}
 		}
+
+		if status == collection.StatusDone && tinfo.WatcherName != "" {
+			if tinfo.RetentionPeriod != nil {
+				err := workflow.NewTimer(ctx, *tinfo.RetentionPeriod).Get(ctx, nil)
+				if err != nil {
+					logger.Warn("Retention policy timer failed", zap.Error(err))
+				} else {
+					activityOpts := withActivityOptsForRequest(ctx)
+					_ = workflow.ExecuteActivity(activityOpts, activities.DeleteOriginalActivityName, tinfo.WatcherName, tinfo.Key).Get(activityOpts, nil)
+				}
+			} else if tinfo.CompletedDir != "" {
+				activityOpts := withActivityOptsForLocalAction(ctx)
+				err := workflow.ExecuteActivity(activityOpts, activities.DisposeOriginalActivityName, tinfo.WatcherName, tinfo.Key).Get(activityOpts, nil)
+				if err != nil {
+					return err
+				}
+			}
+		}
+
 	}
 
 	logger.Info(

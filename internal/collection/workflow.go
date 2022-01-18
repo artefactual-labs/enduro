@@ -39,6 +39,10 @@ type ProcessingWorkflowRequest struct {
 	// watched data source. nil means no deletion.
 	RetentionPeriod *time.Duration
 
+	// Directory where the transfer is moved to once processing has completed
+	// successfully.
+	CompletedDir string
+
 	// Whether the top-level directory is meant to be stripped.
 	StripTopLevelDir bool
 

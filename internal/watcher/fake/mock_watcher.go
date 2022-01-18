@@ -65,6 +65,20 @@ func (mr *MockServiceMockRecorder) Delete(arg0, arg1, arg2 interface{}) *gomock.
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockService)(nil).Delete), arg0, arg1, arg2)
 }
 
+// Dispose mocks base method.
+func (m *MockService) Dispose(arg0 context.Context, arg1, arg2 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Dispose", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Dispose indicates an expected call of Dispose.
+func (mr *MockServiceMockRecorder) Dispose(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Dispose", reflect.TypeOf((*MockService)(nil).Dispose), arg0, arg1, arg2)
+}
+
 // Download mocks base method.
 func (m *MockService) Download(arg0 context.Context, arg1 io.Writer, arg2, arg3 string) error {
 	m.ctrl.T.Helper()

@@ -29,6 +29,8 @@ type Watcher interface {
 
 	RetentionPeriod() *time.Duration
 
+	CompletedDir() string
+
 	StripTopLevelDir() bool
 
 	// Full path of the watched bucket when available, empty string otherwise.
@@ -41,6 +43,7 @@ type commonWatcherImpl struct {
 	name             string
 	pipeline         string
 	retentionPeriod  *time.Duration
+	completedDir     string
 	stripTopLevelDir bool
 }
 
@@ -54,6 +57,10 @@ func (w *commonWatcherImpl) Pipeline() string {
 
 func (w *commonWatcherImpl) RetentionPeriod() *time.Duration {
 	return w.retentionPeriod
+}
+
+func (w *commonWatcherImpl) CompletedDir() string {
+	return w.completedDir
 }
 
 func (w *commonWatcherImpl) StripTopLevelDir() bool {
@@ -72,6 +79,9 @@ type Service interface {
 
 	// Delete blob given an event.
 	Delete(ctx context.Context, watcherName, key string) error
+
+	// Dipose blob into the completedDir directory.
+	Dispose(ctx context.Context, watcherName, key string) error
 }
 
 type serviceImpl struct {
@@ -189,4 +199,18 @@ func (svc *serviceImpl) Delete(ctx context.Context, watcherName, key string) err
 	}
 
 	return bucket.Delete(ctx, key)
+}
+
+func (svc *serviceImpl) Dispose(ctx context.Context, watcherName, key string) error {
+	w, err := svc.watcher(watcherName)
+	if err != nil {
+		return err
+	}
+
+	fw, ok := w.(*filesystemWatcher)
+	if !ok {
+		return fmt.Errorf("not available in this type of watcher: %s", err)
+	}
+
+	return fw.Dispose(key)
 }

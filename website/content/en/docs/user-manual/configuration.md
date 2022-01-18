@@ -120,6 +120,25 @@ defined elsewhere in the configuration document. The workflow will wait for
 eleven seconds before the original object is removed from the filesystem. After
 extraction, the top-level directory will be omitted.
 
+#### `retentionPeriod` (String)
+
+The duration of time for which the transfer should be retained before being
+removed. It is mutually exclusive with `completedDir`.
+
+The string should be constructed as a sequence of decimal numbers, each with
+optional fraction and a unit suffix, such as "30m", "24h" or "2h30m".
+Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
+
+E.g.: `"10m"`
+
+#### `completedDir` (String)
+
+The path where transfers are moved into when processing has completed
+successfully. Not available in other type of watchers. It is mutually exclusive
+with `retentionPeriod`.
+
+E.g.: `"/mnt/landfill"`
+
 #### `[[watcher.minio]]`
 
 The following monitor watches a MinIO bucket:
@@ -159,6 +178,17 @@ MinIO server, using path-style URLs and region `us-west-1`, bucket `sips`.
 Attributes `key` and `secret` are for authentication. After extraction of the
 object, the top-level directory will be omitted. All objects will be processed
 using the `am` pipeline.
+
+#### `retentionPeriod` (String)
+
+The duration of time for which the transfer should be retained before being
+removed.
+
+The string should be constructed as a sequence of decimal numbers, each with
+optional fraction and a unit suffix, such as "30m", "24h" or "2h30m".
+Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
+
+E.g.: `"10m"`
 
 ### `[pipeline]`
 

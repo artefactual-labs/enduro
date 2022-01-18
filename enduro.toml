@@ -33,7 +33,7 @@ name = "dev-fs"
 path = "./hack/watched-dir"
 inotify = false
 pipeline = "am"
-retentionPeriod = "11s"
+completedDir = "./hack/landfill"
 ignore = '(^\.)|(^\.gitkeep)|(^*\.mft)$'
 stripTopLevelDir = true
 

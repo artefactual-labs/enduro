@@ -73,6 +73,16 @@ func withActivityOptsForRequest(ctx workflow.Context) workflow.Context {
 	})
 }
 
+// withActivityOptsForLocalAction returns a workflow context with activity
+// options suited for local activities like disk operations that should not
+// require a retry policy attached.
+func withActivityOptsForLocalAction(ctx workflow.Context) workflow.Context {
+	return workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
+		ScheduleToStartTimeout: forever,
+		StartToCloseTimeout:    time.Hour,
+	})
+}
+
 // withActivityOptionsForNoOp returns a workflow context with activity options
 // suited for no-op activities.
 //nolint:deadcode,unused
