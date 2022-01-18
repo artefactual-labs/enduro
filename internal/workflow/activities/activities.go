@@ -11,5 +11,6 @@ const (
 	CleanUpActivityName          = "clean-up-activity"
 	HidePackageActivityName      = "hide-package-activity"
 	DeleteOriginalActivityName   = "delete-original-activity"
+	DisposeOriginalActivityName  = "dispose-original-activity"
 	ValidateTransferActivityName = "validate-transfer-activity"
 )

@@ -22,6 +22,10 @@ type BlobEvent struct {
 	// Retention period for this blob.
 	RetentionPeriod *time.Duration
 
+	// Directory where the transfer is moved to once processing has completed
+	// successfully.
+	CompletedDir string
+
 	// Whether the top-level directory is meant to be stripped.
 	StripTopLevelDir bool
 
@@ -40,6 +44,7 @@ func NewBlobEvent(w Watcher, key string, isDir bool) *BlobEvent {
 		WatcherName:      w.String(),
 		PipelineName:     w.Pipeline(),
 		RetentionPeriod:  w.RetentionPeriod(),
+		CompletedDir:     w.CompletedDir(),
 		StripTopLevelDir: w.StripTopLevelDir(),
 		Key:              key,
 		IsDir:            isDir,

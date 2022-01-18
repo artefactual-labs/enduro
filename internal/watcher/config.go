@@ -16,6 +16,7 @@ type FilesystemConfig struct {
 
 	Pipeline         string
 	RetentionPeriod  *time.Duration
+	CompletedDir     string
 	StripTopLevelDir bool
 }
 

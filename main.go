@@ -205,6 +205,7 @@ func main() {
 									WatcherName:      event.WatcherName,
 									PipelineName:     event.PipelineName,
 									RetentionPeriod:  event.RetentionPeriod,
+									CompletedDir:     event.CompletedDir,
 									StripTopLevelDir: event.StripTopLevelDir,
 									Key:              event.Key,
 									IsDir:            event.IsDir,
@@ -250,6 +251,7 @@ func main() {
 		w.RegisterActivityWithOptions(activities.NewCleanUpActivity(m).Execute, cadenceactivity.RegisterOptions{Name: activities.CleanUpActivityName})
 		w.RegisterActivityWithOptions(activities.NewHidePackageActivity(m).Execute, cadenceactivity.RegisterOptions{Name: activities.HidePackageActivityName})
 		w.RegisterActivityWithOptions(activities.NewDeleteOriginalActivity(m).Execute, cadenceactivity.RegisterOptions{Name: activities.DeleteOriginalActivityName})
+		w.RegisterActivityWithOptions(activities.NewDisposeOriginalActivity(m).Execute, cadenceactivity.RegisterOptions{Name: activities.DisposeOriginalActivityName})
 
 		w.RegisterActivityWithOptions(workflow.NewAsyncCompletionActivity(m).Execute, cadenceactivity.RegisterOptions{Name: workflow.AsyncCompletionActivityName})
 		w.RegisterActivityWithOptions(nha_activities.NewUpdateHARIActivity(m).Execute, cadenceactivity.RegisterOptions{Name: nha_activities.UpdateHARIActivityName})

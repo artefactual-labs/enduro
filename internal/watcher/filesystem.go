@@ -10,6 +10,7 @@ import (
 	"runtime"
 
 	"github.com/artefactual-labs/enduro/internal/filenotify"
+	"github.com/otiai10/copy"
 
 	"github.com/fsnotify/fsnotify"
 	"gocloud.dev/blob"
@@ -48,6 +49,10 @@ func NewFilesystemWatcher(ctx context.Context, config *FilesystemConfig) (*files
 		}
 	}
 
+	if config.CompletedDir != "" && config.RetentionPeriod != nil {
+		return nil, errors.New("cannot use completedDir and retentionPeriod simultaneously")
+	}
+
 	// The inotify API isn't always available, fall back to polling.
 	var fsw filenotify.FileWatcher
 	if config.Inotify && runtime.GOOS != "windows" {
@@ -69,6 +74,7 @@ func NewFilesystemWatcher(ctx context.Context, config *FilesystemConfig) (*files
 			name:             config.Name,
 			pipeline:         config.Pipeline,
 			retentionPeriod:  config.RetentionPeriod,
+			completedDir:     config.CompletedDir,
 			stripTopLevelDir: config.StripTopLevelDir,
 		},
 	}
@@ -134,4 +140,40 @@ func (w *filesystemWatcher) OpenBucket(context.Context) (*blob.Bucket, error) {
 
 func (w *filesystemWatcher) RemoveAll(key string) error {
 	return os.RemoveAll(filepath.Join(w.path, key))
+}
+
+func (w *filesystemWatcher) Dispose(key string) error {
+	if w.completedDir == "" {
+		return nil
+	}
+
+	src := filepath.Join(w.path, key)
+	dst := filepath.Join(w.completedDir, key)
+
+	if _, err := os.Stat(dst); err == nil {
+		return errors.New("destination already exists")
+	}
+
+	// Move when possible.
+	err := os.Rename(src, dst)
+	if err == nil {
+		return nil
+	}
+
+	// Copy and delete otherwise.
+	lerr, _ := err.(*os.LinkError)
+	if lerr.Err.Error() == "invalid cross-device link" {
+		err := copy.Copy(src, dst, copy.Options{
+			Sync: true,
+			OnDirExists: func(src, dst string) copy.DirExistsAction {
+				return copy.Untouchable
+			},
+		})
+		if err != nil {
+			return err
+		}
+		return os.RemoveAll(src)
+	} else {
+		return err
+	}
 }
