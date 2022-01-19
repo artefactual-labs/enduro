@@ -3,9 +3,9 @@ module github.com/artefactual-labs/enduro
 go 1.17
 
 require (
-	github.com/alicebob/miniredis/v2 v2.17.0
+	github.com/alicebob/miniredis/v2 v2.18.0
 	github.com/anmitsu/go-shlex v0.0.0-20200514113438-38f4b401e2be // indirect
-	github.com/aws/aws-sdk-go v1.42.35
+	github.com/aws/aws-sdk-go v1.42.36
 	github.com/cenkalti/backoff/v4 v4.1.2
 	github.com/fsnotify/fsnotify v1.5.1
 	github.com/go-logr/logr v1.2.2
@@ -25,7 +25,7 @@ require (
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	github.com/otiai10/copy v1.7.0
 	github.com/pborman/uuid v1.2.1 // indirect
-	github.com/prometheus/client_golang v1.11.0
+	github.com/prometheus/client_golang v1.12.0
 	github.com/radovskyb/watcher v1.0.7
 	github.com/spf13/afero v1.8.0
 	github.com/spf13/pflag v1.0.5
@@ -43,7 +43,7 @@ require (
 	goa.design/plugins/v3 v3.5.4
 	gocloud.dev v0.24.0
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	gotest.tools/v3 v3.0.3
+	gotest.tools/v3 v3.1.0
 	honnef.co/go/tools v0.2.2 // indirect
 )
 
