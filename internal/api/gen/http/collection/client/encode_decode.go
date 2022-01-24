@@ -20,6 +20,70 @@ import (
 	goahttp "goa.design/goa/v3/http"
 )
 
+// BuildMonitorRequest instantiates a HTTP request object with method and path
+// set to call the "collection" service "monitor" endpoint
+func (c *Client) BuildMonitorRequest(ctx context.Context, v interface{}) (*http.Request, error) {
+	scheme := c.scheme
+	switch c.scheme {
+	case "http":
+		scheme = "ws"
+	case "https":
+		scheme = "wss"
+	}
+	u := &url.URL{Scheme: scheme, Host: c.host, Path: MonitorCollectionPath()}
+	req, err := http.NewRequest("GET", u.String(), nil)
+	if err != nil {
+		return nil, goahttp.ErrInvalidURL("collection", "monitor", u.String(), err)
+	}
+	if ctx != nil {
+		req = req.WithContext(ctx)
+	}
+
+	return req, nil
+}
+
+// DecodeMonitorResponse returns a decoder for responses returned by the
+// collection monitor endpoint. restoreBody controls whether the response body
+// should be restored after having been read.
+func DecodeMonitorResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (interface{}, error) {
+	return func(resp *http.Response) (interface{}, error) {
+		if restoreBody {
+			b, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			resp.Body = ioutil.NopCloser(bytes.NewBuffer(b))
+			defer func() {
+				resp.Body = ioutil.NopCloser(bytes.NewBuffer(b))
+			}()
+		} else {
+			defer resp.Body.Close()
+		}
+		switch resp.StatusCode {
+		case http.StatusOK:
+			var (
+				body MonitorResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("collection", "monitor", err)
+			}
+			p := NewMonitorEnduroMonitorUpdateOK(&body)
+			view := "default"
+			vres := &collectionviews.EnduroMonitorUpdate{Projected: p, View: view}
+			if err = collectionviews.ValidateEnduroMonitorUpdate(vres); err != nil {
+				return nil, goahttp.ErrValidationError("collection", "monitor", err)
+			}
+			res := collection.NewEnduroMonitorUpdate(vres)
+			return res, nil
+		default:
+			body, _ := ioutil.ReadAll(resp.Body)
+			return nil, goahttp.ErrInvalidResponse("collection", "monitor", resp.StatusCode, string(body))
+		}
+	}
+}
+
 // BuildListRequest instantiates a HTTP request object with method and path set
 // to call the "collection" service "list" endpoint
 func (c *Client) BuildListRequest(ctx context.Context, v interface{}) (*http.Request, error) {
@@ -854,6 +918,31 @@ func DecodeBulkStatusResponse(decoder func(*http.Response) goahttp.Decoder, rest
 			return nil, goahttp.ErrInvalidResponse("collection", "bulk_status", resp.StatusCode, string(body))
 		}
 	}
+}
+
+// unmarshalEnduroStoredCollectionResponseBodyToCollectionviewsEnduroStoredCollectionView
+// builds a value of type *collectionviews.EnduroStoredCollectionView from a
+// value of type *EnduroStoredCollectionResponseBody.
+func unmarshalEnduroStoredCollectionResponseBodyToCollectionviewsEnduroStoredCollectionView(v *EnduroStoredCollectionResponseBody) *collectionviews.EnduroStoredCollectionView {
+	if v == nil {
+		return nil
+	}
+	res := &collectionviews.EnduroStoredCollectionView{
+		ID:          v.ID,
+		Name:        v.Name,
+		Status:      v.Status,
+		WorkflowID:  v.WorkflowID,
+		RunID:       v.RunID,
+		TransferID:  v.TransferID,
+		AipID:       v.AipID,
+		OriginalID:  v.OriginalID,
+		PipelineID:  v.PipelineID,
+		CreatedAt:   v.CreatedAt,
+		StartedAt:   v.StartedAt,
+		CompletedAt: v.CompletedAt,
+	}
+
+	return res
 }
 
 // unmarshalEnduroStoredCollectionResponseBodyToCollectionEnduroStoredCollection

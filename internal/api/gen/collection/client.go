@@ -16,6 +16,7 @@ import (
 
 // Client is the "collection" service client.
 type Client struct {
+	MonitorEndpoint    goa.Endpoint
 	ListEndpoint       goa.Endpoint
 	ShowEndpoint       goa.Endpoint
 	DeleteEndpoint     goa.Endpoint
@@ -29,8 +30,9 @@ type Client struct {
 }
 
 // NewClient initializes a "collection" service client given the endpoints.
-func NewClient(list, show, delete_, cancel, retry, workflow, download, decide, bulk, bulkStatus goa.Endpoint) *Client {
+func NewClient(monitor, list, show, delete_, cancel, retry, workflow, download, decide, bulk, bulkStatus goa.Endpoint) *Client {
 	return &Client{
+		MonitorEndpoint:    monitor,
 		ListEndpoint:       list,
 		ShowEndpoint:       show,
 		DeleteEndpoint:     delete_,
@@ -42,6 +44,16 @@ func NewClient(list, show, delete_, cancel, retry, workflow, download, decide, b
 		BulkEndpoint:       bulk,
 		BulkStatusEndpoint: bulkStatus,
 	}
+}
+
+// Monitor calls the "monitor" endpoint of the "collection" service.
+func (c *Client) Monitor(ctx context.Context) (res MonitorClientStream, err error) {
+	var ires interface{}
+	ires, err = c.MonitorEndpoint(ctx, nil)
+	if err != nil {
+		return
+	}
+	return ires.(MonitorClientStream), nil
 }
 
 // List calls the "list" endpoint of the "collection" service.

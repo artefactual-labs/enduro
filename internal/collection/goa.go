@@ -34,6 +34,50 @@ var patternMatchingCharReplacer = strings.NewReplacer(
 	"_", "\\_",
 )
 
+// Monitor collection activity. It implements goacollection.Service.
+func (w *goaWrapper) Monitor(ctx context.Context, stream collection.MonitorServerStream) error {
+	defer stream.Close()
+
+	// Subscribe to the event service.
+	sub, err := w.events.Subscribe(ctx)
+	if err != nil {
+		return err
+	}
+	defer sub.Close()
+
+	// Say hello to be nice.
+	if err := stream.Send(&goacollection.EnduroMonitorUpdate{Type: "hello"}); err != nil {
+		return err
+	}
+
+	// We'll use this ticker to ping the client once in a while to detect stale
+	// connections. I'm not entirely sure this is needed, it may depend on the
+	// client or the various middlewares.
+	ticker := time.NewTicker(time.Second * 10)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+
+		case <-ticker.C:
+			if err := stream.Send(&goacollection.EnduroMonitorUpdate{Type: "ping"}); err != nil {
+				return nil
+			}
+
+		case event, ok := <-sub.C():
+			if !ok {
+				return nil
+			}
+
+			if err := stream.Send(event); err != nil {
+				return err
+			}
+		}
+	}
+}
+
 // List all stored collections. It implements goacollection.Service.
 func (w *goaWrapper) List(ctx context.Context, payload *goacollection.ListPayload) (*goacollection.ListResult, error) {
 	query := "SELECT id, name, workflow_id, run_id, transfer_id, aip_id, original_id, pipeline_id, status, CONVERT_TZ(created_at, @@session.time_zone, '+00:00') AS created_at, CONVERT_TZ(started_at, @@session.time_zone, '+00:00') AS started_at, CONVERT_TZ(completed_at, @@session.time_zone, '+00:00') AS completed_at FROM collection"
@@ -157,6 +201,8 @@ func (w *goaWrapper) Delete(ctx context.Context, payload *goacollection.DeletePa
 		return &goacollection.CollectionNotfound{ID: payload.ID, Message: "not_found"}
 	}
 
+	publishEvent(ctx, w.events, EventTypeCollectionDeleted, payload.ID)
+
 	return nil
 }
 
@@ -178,6 +224,9 @@ func (w *goaWrapper) Cancel(ctx context.Context, payload *goacollection.CancelPa
 		}
 		return err
 	}
+
+	publishEvent(ctx, w.events, EventTypeCollectionUpdated, payload.ID)
+
 	return nil
 }
 
@@ -218,6 +267,8 @@ func (w *goaWrapper) Retry(ctx context.Context, payload *goacollection.RetryPayl
 	if err := InitProcessingWorkflow(ctx, w.cc, req); err != nil {
 		return fmt.Errorf("error starting the new workflow instance: %w", err)
 	}
+
+	publishEvent(ctx, w.events, EventTypeCollectionUpdated, payload.ID)
 
 	return nil
 }
@@ -296,6 +347,8 @@ func (w *goaWrapper) Decide(ctx context.Context, payload *goacollection.DecidePa
 	if err := w.cc.CompleteActivity(ctx, []byte(c.DecisionToken), payload.Option, nil); err != nil {
 		return err
 	}
+
+	publishEvent(ctx, w.events, EventTypeCollectionUpdated, payload.ID)
 
 	return nil
 }

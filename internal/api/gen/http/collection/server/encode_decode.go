@@ -709,6 +709,31 @@ func EncodeBulkStatusResponse(encoder func(context.Context, http.ResponseWriter)
 	}
 }
 
+// marshalCollectionviewsEnduroStoredCollectionViewToEnduroStoredCollectionResponseBody
+// builds a value of type *EnduroStoredCollectionResponseBody from a value of
+// type *collectionviews.EnduroStoredCollectionView.
+func marshalCollectionviewsEnduroStoredCollectionViewToEnduroStoredCollectionResponseBody(v *collectionviews.EnduroStoredCollectionView) *EnduroStoredCollectionResponseBody {
+	if v == nil {
+		return nil
+	}
+	res := &EnduroStoredCollectionResponseBody{
+		ID:          *v.ID,
+		Name:        v.Name,
+		Status:      *v.Status,
+		WorkflowID:  v.WorkflowID,
+		RunID:       v.RunID,
+		TransferID:  v.TransferID,
+		AipID:       v.AipID,
+		OriginalID:  v.OriginalID,
+		PipelineID:  v.PipelineID,
+		CreatedAt:   *v.CreatedAt,
+		StartedAt:   v.StartedAt,
+		CompletedAt: v.CompletedAt,
+	}
+
+	return res
+}
+
 // marshalCollectionEnduroStoredCollectionToEnduroStoredCollectionResponseBody
 // builds a value of type *EnduroStoredCollectionResponseBody from a value of
 // type *collection.EnduroStoredCollection.

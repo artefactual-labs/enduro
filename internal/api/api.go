@@ -10,9 +10,12 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
+	"net/url"
 	"os"
 	"time"
+	"unicode/utf8"
 
 	"github.com/artefactual-labs/enduro/internal/api/gen/batch"
 	"github.com/artefactual-labs/enduro/internal/api/gen/collection"
@@ -25,6 +28,7 @@ import (
 	intcol "github.com/artefactual-labs/enduro/internal/collection"
 	intpipe "github.com/artefactual-labs/enduro/internal/pipeline"
 	"github.com/artefactual-labs/enduro/ui"
+	"github.com/gorilla/websocket"
 
 	"github.com/go-logr/logr"
 	goahttp "goa.design/goa/v3/http"
@@ -42,6 +46,11 @@ func HTTPServer(
 	enc := goahttp.ResponseEncoder
 	var mux goahttp.Muxer = goahttp.NewMuxer()
 
+	websocketUpgrader := &websocket.Upgrader{
+		HandshakeTimeout: time.Second,
+		CheckOrigin:      sameOriginChecker(logger),
+	}
+
 	// Pipeline service.
 	var pipelineEndpoints *pipeline.Endpoints = pipeline.NewEndpoints(pipesvc)
 	pipelineErrorHandler := errorHandler(logger, "Pipeline error.")
@@ -57,7 +66,7 @@ func HTTPServer(
 	// Collection service.
 	var collectionEndpoints *collection.Endpoints = collection.NewEndpoints(colsvc.Goa())
 	collectionErrorHandler := errorHandler(logger, "Collection error.")
-	var collectionServer *collectionsvr.Server = collectionsvr.New(collectionEndpoints, mux, dec, enc, collectionErrorHandler, nil)
+	var collectionServer *collectionsvr.Server = collectionsvr.New(collectionEndpoints, mux, dec, enc, collectionErrorHandler, nil, websocketUpgrader, nil)
 	// Intercept request in Download endpoint so we can serve the file directly.
 	collectionServer.Download = colsvc.HTTPDownload(mux, dec)
 	collectionsvr.Mount(mux, collectionServer)
@@ -91,14 +100,22 @@ func HTTPServer(
 	}
 }
 
+type errorMessage struct {
+	RequestID string
+	Error     error
+}
+
 // errorHandler returns a function that writes and logs the given error.
 // The function also writes and logs the error unique ID so that it's possible
 // to correlate.
 func errorHandler(logger logr.Logger, msg string) func(context.Context, http.ResponseWriter, error) {
 	return func(ctx context.Context, w http.ResponseWriter, err error) {
-		id := ctx.Value(middleware.RequestIDKey).(string)
-		_, _ = w.Write([]byte("[" + id + "] encoding: " + err.Error()))
-		logger.Error(err, "Package service error.")
+		reqID, ok := ctx.Value(middleware.RequestIDKey).(string)
+		if !ok {
+			reqID = "unknown"
+		}
+		_ = json.NewEncoder(w).Encode(&errorMessage{RequestID: reqID})
+		logger.Error(err, "Package service error.", "reqID", reqID)
 	}
 }
 
@@ -109,4 +126,47 @@ func versionHeaderMiddleware(version string) func(http.Handler) http.Handler {
 			h.ServeHTTP(w, r)
 		})
 	}
+}
+
+func sameOriginChecker(logger logr.Logger) func(r *http.Request) bool {
+	return func(r *http.Request) bool {
+		origin := r.Header["Origin"]
+		if len(origin) == 0 {
+			return true
+		}
+		u, err := url.Parse(origin[0])
+		if err != nil {
+			logger.V(1).Info("WebSocket client rejected (origin parse error)", "err", err)
+			return false
+		}
+		eq := equalASCIIFold(u.Host, r.Host)
+		if !eq {
+			logger.V(1).Info("WebSocket client rejected (origin and host not equal)", "origin-host", u.Host, "request-host", r.Host)
+		}
+		return eq
+	}
+}
+
+// equalASCIIFold returns true if s is equal to t with ASCII case folding as
+// defined in RFC 4790.
+func equalASCIIFold(s, t string) bool {
+	for s != "" && t != "" {
+		sr, size := utf8.DecodeRuneInString(s)
+		s = s[size:]
+		tr, size := utf8.DecodeRuneInString(t)
+		t = t[size:]
+		if sr == tr {
+			continue
+		}
+		if 'A' <= sr && sr <= 'Z' {
+			sr = sr + 'a' - 'A'
+		}
+		if 'A' <= tr && tr <= 'Z' {
+			tr = tr + 'a' - 'A'
+		}
+		if sr != tr {
+			return false
+		}
+	}
+	return s == t
 }

@@ -12,6 +12,15 @@ import (
 	goa "goa.design/goa/v3/pkg"
 )
 
+// EnduroMonitorUpdate is the viewed result type that is projected based on a
+// view.
+type EnduroMonitorUpdate struct {
+	// Type to project
+	Projected *EnduroMonitorUpdateView
+	// View to render
+	View string
+}
+
 // EnduroStoredCollection is the viewed result type that is projected based on
 // a view.
 type EnduroStoredCollection struct {
@@ -28,6 +37,16 @@ type EnduroCollectionWorkflowStatus struct {
 	Projected *EnduroCollectionWorkflowStatusView
 	// View to render
 	View string
+}
+
+// EnduroMonitorUpdateView is a type that runs validations on a projected type.
+type EnduroMonitorUpdateView struct {
+	// Identifier of collection
+	ID *uint
+	// Type of the event
+	Type *string
+	// Collection
+	Item *EnduroStoredCollectionView
 }
 
 // EnduroStoredCollectionView is a type that runs validations on a projected
@@ -82,6 +101,15 @@ type EnduroCollectionWorkflowHistoryView struct {
 }
 
 var (
+	// EnduroMonitorUpdateMap is a map indexing the attribute names of
+	// EnduroMonitorUpdate by view name.
+	EnduroMonitorUpdateMap = map[string][]string{
+		"default": {
+			"id",
+			"type",
+			"item",
+		},
+	}
 	// EnduroStoredCollectionMap is a map indexing the attribute names of
 	// EnduroStoredCollection by view name.
 	EnduroStoredCollectionMap = map[string][]string{
@@ -128,6 +156,18 @@ var (
 	}
 )
 
+// ValidateEnduroMonitorUpdate runs the validations defined on the viewed
+// result type EnduroMonitorUpdate.
+func ValidateEnduroMonitorUpdate(result *EnduroMonitorUpdate) (err error) {
+	switch result.View {
+	case "default", "":
+		err = ValidateEnduroMonitorUpdateView(result.Projected)
+	default:
+		err = goa.InvalidEnumValueError("view", result.View, []interface{}{"default"})
+	}
+	return
+}
+
 // ValidateEnduroStoredCollection runs the validations defined on the viewed
 // result type EnduroStoredCollection.
 func ValidateEnduroStoredCollection(result *EnduroStoredCollection) (err error) {
@@ -148,6 +188,23 @@ func ValidateEnduroCollectionWorkflowStatus(result *EnduroCollectionWorkflowStat
 		err = ValidateEnduroCollectionWorkflowStatusView(result.Projected)
 	default:
 		err = goa.InvalidEnumValueError("view", result.View, []interface{}{"default"})
+	}
+	return
+}
+
+// ValidateEnduroMonitorUpdateView runs the validations defined on
+// EnduroMonitorUpdateView using the "default" view.
+func ValidateEnduroMonitorUpdateView(result *EnduroMonitorUpdateView) (err error) {
+	if result.ID == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("id", "result"))
+	}
+	if result.Type == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("type", "result"))
+	}
+	if result.Item != nil {
+		if err2 := ValidateEnduroStoredCollectionView(result.Item); err2 != nil {
+			err = goa.MergeErrors(err, err2)
+		}
 	}
 	return
 }

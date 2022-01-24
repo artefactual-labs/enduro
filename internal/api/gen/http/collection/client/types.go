@@ -22,6 +22,17 @@ type BulkRequestBody struct {
 	Size      uint   `form:"size" json:"size" xml:"size"`
 }
 
+// MonitorResponseBody is the type of the "collection" service "monitor"
+// endpoint HTTP response body.
+type MonitorResponseBody struct {
+	// Identifier of collection
+	ID *uint `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
+	// Type of the event
+	Type *string `form:"type,omitempty" json:"type,omitempty" xml:"type,omitempty"`
+	// Collection
+	Item *EnduroStoredCollectionResponseBody `form:"item,omitempty" json:"item,omitempty" xml:"item,omitempty"`
+}
+
 // ListResponseBody is the type of the "collection" service "list" endpoint
 // HTTP response body.
 type ListResponseBody struct {
@@ -236,10 +247,6 @@ type BulkNotValidResponseBody struct {
 	Fault *bool `form:"fault,omitempty" json:"fault,omitempty" xml:"fault,omitempty"`
 }
 
-// EnduroStoredCollectionCollectionResponseBody is used to define fields on
-// response body types.
-type EnduroStoredCollectionCollectionResponseBody []*EnduroStoredCollectionResponseBody
-
 // EnduroStoredCollectionResponseBody is used to define fields on response body
 // types.
 type EnduroStoredCollectionResponseBody struct {
@@ -268,6 +275,10 @@ type EnduroStoredCollectionResponseBody struct {
 	// Completion datetime
 	CompletedAt *string `form:"completed_at,omitempty" json:"completed_at,omitempty" xml:"completed_at,omitempty"`
 }
+
+// EnduroStoredCollectionCollectionResponseBody is used to define fields on
+// response body types.
+type EnduroStoredCollectionCollectionResponseBody []*EnduroStoredCollectionResponseBody
 
 // EnduroCollectionWorkflowHistoryCollectionResponseBody is used to define
 // fields on response body types.
@@ -299,6 +310,20 @@ func NewBulkRequestBody(p *collection.BulkPayload) *BulkRequestBody {
 		}
 	}
 	return body
+}
+
+// NewMonitorEnduroMonitorUpdateOK builds a "collection" service "monitor"
+// endpoint result from a HTTP "OK" response.
+func NewMonitorEnduroMonitorUpdateOK(body *MonitorResponseBody) *collectionviews.EnduroMonitorUpdateView {
+	v := &collectionviews.EnduroMonitorUpdateView{
+		ID:   body.ID,
+		Type: body.Type,
+	}
+	if body.Item != nil {
+		v.Item = unmarshalEnduroStoredCollectionResponseBodyToCollectionviewsEnduroStoredCollectionView(body.Item)
+	}
+
+	return v
 }
 
 // NewListResultOK builds a "collection" service "list" endpoint result from a
@@ -768,19 +793,6 @@ func ValidateBulkNotValidResponseBody(body *BulkNotValidResponseBody) (err error
 	return
 }
 
-// ValidateEnduroStoredCollectionCollectionResponseBody runs the validations
-// defined on EnduroStored-CollectionCollectionResponseBody
-func ValidateEnduroStoredCollectionCollectionResponseBody(body EnduroStoredCollectionCollectionResponseBody) (err error) {
-	for _, e := range body {
-		if e != nil {
-			if err2 := ValidateEnduroStoredCollectionResponseBody(e); err2 != nil {
-				err = goa.MergeErrors(err, err2)
-			}
-		}
-	}
-	return
-}
-
 // ValidateEnduroStoredCollectionResponseBody runs the validations defined on
 // EnduroStored-CollectionResponseBody
 func ValidateEnduroStoredCollectionResponseBody(body *EnduroStoredCollectionResponseBody) (err error) {
@@ -821,6 +833,19 @@ func ValidateEnduroStoredCollectionResponseBody(body *EnduroStoredCollectionResp
 	}
 	if body.CompletedAt != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("body.completed_at", *body.CompletedAt, goa.FormatDateTime))
+	}
+	return
+}
+
+// ValidateEnduroStoredCollectionCollectionResponseBody runs the validations
+// defined on EnduroStored-CollectionCollectionResponseBody
+func ValidateEnduroStoredCollectionCollectionResponseBody(body EnduroStoredCollectionCollectionResponseBody) (err error) {
+	for _, e := range body {
+		if e != nil {
+			if err2 := ValidateEnduroStoredCollectionResponseBody(e); err2 != nil {
+				err = goa.MergeErrors(err, err2)
+			}
+		}
 	}
 	return
 }

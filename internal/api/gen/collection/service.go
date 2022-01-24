@@ -17,6 +17,8 @@ import (
 
 // The collection service manages packages being transferred to Archivematica.
 type Service interface {
+	// Monitor implements monitor.
+	Monitor(context.Context, MonitorServerStream) (err error)
 	// List all stored collections
 	List(context.Context, *ListPayload) (res *ListResult, err error)
 	// Show collection by ID
@@ -47,7 +49,34 @@ const ServiceName = "collection"
 // MethodNames lists the service method names as defined in the design. These
 // are the same values that are set in the endpoint request contexts under the
 // MethodKey key.
-var MethodNames = [10]string{"list", "show", "delete", "cancel", "retry", "workflow", "download", "decide", "bulk", "bulk_status"}
+var MethodNames = [11]string{"monitor", "list", "show", "delete", "cancel", "retry", "workflow", "download", "decide", "bulk", "bulk_status"}
+
+// MonitorServerStream is the interface a "monitor" endpoint server stream must
+// satisfy.
+type MonitorServerStream interface {
+	// Send streams instances of "EnduroMonitorUpdate".
+	Send(*EnduroMonitorUpdate) error
+	// Close closes the stream.
+	Close() error
+}
+
+// MonitorClientStream is the interface a "monitor" endpoint client stream must
+// satisfy.
+type MonitorClientStream interface {
+	// Recv reads instances of "EnduroMonitorUpdate" from the stream.
+	Recv() (*EnduroMonitorUpdate, error)
+}
+
+// EnduroMonitorUpdate is the result type of the collection service monitor
+// method.
+type EnduroMonitorUpdate struct {
+	// Identifier of collection
+	ID uint
+	// Type of the event
+	Type string
+	// Collection
+	Item *EnduroStoredCollection
+}
 
 // ListPayload is the payload type of the collection service list method.
 type ListPayload struct {
@@ -234,6 +263,20 @@ func MakeNotAvailable(err error) *goa.ServiceError {
 	}
 }
 
+// NewEnduroMonitorUpdate initializes result type EnduroMonitorUpdate from
+// viewed result type EnduroMonitorUpdate.
+func NewEnduroMonitorUpdate(vres *collectionviews.EnduroMonitorUpdate) *EnduroMonitorUpdate {
+	return newEnduroMonitorUpdate(vres.Projected)
+}
+
+// NewViewedEnduroMonitorUpdate initializes viewed result type
+// EnduroMonitorUpdate from result type EnduroMonitorUpdate using the given
+// view.
+func NewViewedEnduroMonitorUpdate(res *EnduroMonitorUpdate, view string) *collectionviews.EnduroMonitorUpdate {
+	p := newEnduroMonitorUpdateView(res)
+	return &collectionviews.EnduroMonitorUpdate{Projected: p, View: "default"}
+}
+
 // NewEnduroStoredCollection initializes result type EnduroStoredCollection
 // from viewed result type EnduroStoredCollection.
 func NewEnduroStoredCollection(vres *collectionviews.EnduroStoredCollection) *EnduroStoredCollection {
@@ -261,6 +304,35 @@ func NewEnduroCollectionWorkflowStatus(vres *collectionviews.EnduroCollectionWor
 func NewViewedEnduroCollectionWorkflowStatus(res *EnduroCollectionWorkflowStatus, view string) *collectionviews.EnduroCollectionWorkflowStatus {
 	p := newEnduroCollectionWorkflowStatusView(res)
 	return &collectionviews.EnduroCollectionWorkflowStatus{Projected: p, View: "default"}
+}
+
+// newEnduroMonitorUpdate converts projected type EnduroMonitorUpdate to
+// service type EnduroMonitorUpdate.
+func newEnduroMonitorUpdate(vres *collectionviews.EnduroMonitorUpdateView) *EnduroMonitorUpdate {
+	res := &EnduroMonitorUpdate{}
+	if vres.ID != nil {
+		res.ID = *vres.ID
+	}
+	if vres.Type != nil {
+		res.Type = *vres.Type
+	}
+	if vres.Item != nil {
+		res.Item = newEnduroStoredCollection(vres.Item)
+	}
+	return res
+}
+
+// newEnduroMonitorUpdateView projects result type EnduroMonitorUpdate to
+// projected type EnduroMonitorUpdateView using the "default" view.
+func newEnduroMonitorUpdateView(res *EnduroMonitorUpdate) *collectionviews.EnduroMonitorUpdateView {
+	vres := &collectionviews.EnduroMonitorUpdateView{
+		ID:   &res.ID,
+		Type: &res.Type,
+	}
+	if res.Item != nil {
+		vres.Item = newEnduroStoredCollectionView(res.Item)
+	}
+	return vres
 }
 
 // newEnduroStoredCollection converts projected type EnduroStoredCollection to
