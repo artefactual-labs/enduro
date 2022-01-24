@@ -31,6 +31,12 @@ export interface BatchSubmitRequestBody {
      * @memberof BatchSubmitRequestBody
      */
     pipeline: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof BatchSubmitRequestBody
+     */
+    processingConfig?: string;
 }
 
 export function BatchSubmitRequestBodyFromJSON(json: any): BatchSubmitRequestBody {
@@ -45,6 +51,7 @@ export function BatchSubmitRequestBodyFromJSONTyped(json: any, ignoreDiscriminat
         
         'path': json['path'],
         'pipeline': json['pipeline'],
+        'processingConfig': !exists(json, 'processing_config') ? undefined : json['processing_config'],
     };
 }
 
@@ -59,6 +66,7 @@ export function BatchSubmitRequestBodyToJSON(value?: BatchSubmitRequestBody | nu
         
         'path': value.path,
         'pipeline': value.pipeline,
+        'processing_config': value.processingConfig,
     };
 }
 

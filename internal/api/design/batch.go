@@ -14,6 +14,7 @@ var _ = Service("batch", func() {
 		Payload(func() {
 			Attribute("path", String)
 			Attribute("pipeline", String)
+			Attribute("processing_config", String)
 			Required("path", "pipeline")
 		})
 		Result(BatchResult)

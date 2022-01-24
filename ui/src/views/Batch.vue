@@ -31,6 +31,10 @@
               <b-form-input id="input-pipeline" v-model="form.pipeline" type="text" required></b-form-input>
             </b-form-group>
 
+            <b-form-group label="Processing configuration" label-for="input-processing-conf" description="Type the name of one of the processing configurations available in the pipeline, e.g.: &quot;automated&quot;.">
+              <b-form-input id="input-processing-config" v-model="form.processingConfig" type="text"></b-form-input>
+            </b-form-group>
+
             <b-button type="submit" variant="primary">Submit</b-button>
 
           </b-form>
@@ -54,6 +58,7 @@ export default class Batch extends Vue {
   private form: any = {
     path: null,
     pipeline: null,
+    processingConfig: null,
   };
 
   private status: api.BatchStatusResponseBody = {
@@ -98,6 +103,7 @@ export default class Batch extends Vue {
       submitRequestBody: {
         path: this.form.path,
         pipeline: this.form.pipeline,
+        processingConfig: this.form.processingConfig,
       },
     };
     return EnduroBatchClient.batchSubmit(request).then((response: api.BatchSubmitResponseBody) => {

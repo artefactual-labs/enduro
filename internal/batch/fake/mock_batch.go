@@ -36,17 +36,17 @@ func (m *MockService) EXPECT() *MockServiceMockRecorder {
 }
 
 // InitProcessingWorkflow mocks base method.
-func (m *MockService) InitProcessingWorkflow(arg0 context.Context, arg1, arg2 string, arg3 bool, arg4 string) error {
+func (m *MockService) InitProcessingWorkflow(arg0 context.Context, arg1, arg2 string, arg3 bool, arg4, arg5 string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "InitProcessingWorkflow", arg0, arg1, arg2, arg3, arg4)
+	ret := m.ctrl.Call(m, "InitProcessingWorkflow", arg0, arg1, arg2, arg3, arg4, arg5)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // InitProcessingWorkflow indicates an expected call of InitProcessingWorkflow.
-func (mr *MockServiceMockRecorder) InitProcessingWorkflow(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
+func (mr *MockServiceMockRecorder) InitProcessingWorkflow(arg0, arg1, arg2, arg3, arg4, arg5 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InitProcessingWorkflow", reflect.TypeOf((*MockService)(nil).InitProcessingWorkflow), arg0, arg1, arg2, arg3, arg4)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InitProcessingWorkflow", reflect.TypeOf((*MockService)(nil).InitProcessingWorkflow), arg0, arg1, arg2, arg3, arg4, arg5)
 }
 
 // Status mocks base method.

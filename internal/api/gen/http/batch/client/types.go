@@ -16,8 +16,9 @@ import (
 // SubmitRequestBody is the type of the "batch" service "submit" endpoint HTTP
 // request body.
 type SubmitRequestBody struct {
-	Path     string `form:"path" json:"path" xml:"path"`
-	Pipeline string `form:"pipeline" json:"pipeline" xml:"pipeline"`
+	Path             string  `form:"path" json:"path" xml:"path"`
+	Pipeline         string  `form:"pipeline" json:"pipeline" xml:"pipeline"`
+	ProcessingConfig *string `form:"processing_config,omitempty" json:"processing_config,omitempty" xml:"processing_config,omitempty"`
 }
 
 // SubmitResponseBody is the type of the "batch" service "submit" endpoint HTTP
@@ -76,8 +77,9 @@ type SubmitNotValidResponseBody struct {
 // "submit" endpoint of the "batch" service.
 func NewSubmitRequestBody(p *batch.SubmitPayload) *SubmitRequestBody {
 	body := &SubmitRequestBody{
-		Path:     p.Path,
-		Pipeline: p.Pipeline,
+		Path:             p.Path,
+		Pipeline:         p.Pipeline,
+		ProcessingConfig: p.ProcessingConfig,
 	}
 	return body
 }
