@@ -3,6 +3,7 @@ import { RootState } from '@/store';
 
 import validator from 'validator';
 import moment from 'moment';
+import { debounce } from 'lodash';
 
 import { EnduroCollectionClient, api } from '@/client';
 
@@ -33,10 +34,12 @@ export const SET_WORKFLOW_DECISION_ERROR = 'SET_WORKFLOW_DECISION_ERROR';
 export const SEARCH_COLLECTION = 'SEARCH_COLLECTION';
 export const SEARCH_COLLECTION_RESET = 'SEARCH_COLLECTION_RESET';
 export const SEARCH_COLLECTIONS = 'SEARCH_COLLECTIONS';
+export const SEARCH_COLLECTIONS_DEBOUNCED = 'SEARCH_COLLECTIONS_DEBOUNCED';
 export const SEARCH_COLLECTIONS_HOME_PAGE = 'SEARCH_COLLECTIONS_HOME_PAGE';
 export const SEARCH_COLLECTIONS_PREV_PAGE = 'SEARCH_COLLECTIONS_PREV_PAGE';
 export const SEARCH_COLLECTIONS_NEXT_PAGE = 'SEARCH_COLLECTIONS_NEXT_PAGE';
 export const MAKE_WORKFLOW_DECISION = 'MAKE_WORKFLOW_DECISION';
+export const ON_SOCKET_MESSAGE = 'ON_SOCKET_MESSAGE';
 
 const namespaced: boolean = true;
 
@@ -93,13 +96,18 @@ const getters: GetterTree<State, RootState> = {
 
 };
 
+const debouncedSearch = debounce((dispatch) => {
+  dispatch(SEARCH_COLLECTIONS);
+}, 1000);
+
 const actions: ActionTree<State, RootState> = {
 
-  [SEARCH_COLLECTION]({ commit }, id): any {
+  [SEARCH_COLLECTION]({ commit, dispatch }, id): any {
     const request: api.CollectionShowRequest = { id: +id };
     return EnduroCollectionClient.collectionShow(request).then((response: api.CollectionShowResponseBody) => {
       commit(SET_SEARCH_RESULT, response);
       commit(SET_SEARCH_ERROR, false);
+      dispatch('pipeline/SEARCH_PIPELINE', response.pipelineId, { root: true });
     }).catch(() => {
       commit(SET_SEARCH_ERROR, true);
     });
@@ -193,6 +201,10 @@ const actions: ActionTree<State, RootState> = {
     });
   },
 
+  [SEARCH_COLLECTIONS_DEBOUNCED]({ dispatch }): any {
+    debouncedSearch(dispatch);
+  },
+
   [SEARCH_COLLECTIONS_HOME_PAGE]({ commit, dispatch }): any {
     commit(SET_SEARCH_HOME_PAGE);
     dispatch(SEARCH_COLLECTIONS);
@@ -221,6 +233,25 @@ const actions: ActionTree<State, RootState> = {
       commit(SET_WORKFLOW_DECISION_ERROR, true);
     });
   },
+
+  [ON_SOCKET_MESSAGE]({ state, dispatch }, payload): void {
+    const event = JSON.parse(payload.event.data);
+
+    // Update global collection search. We use the debounced action to limit
+    // the number of API requests we send to the server.
+    if (['collection:created', 'collection:updated'].includes(event.type)) {
+      dispatch(SEARCH_COLLECTIONS_DEBOUNCED);
+    }
+
+    // Update current collection if necessary.
+    if (event.type === 'collection:updated') {
+      const current = state.result;
+      if (Object.keys(current).length > 0 && current.id === event.id) {
+        dispatch(SEARCH_COLLECTION, event.id);
+      }
+    }
+  },
+
 };
 
 const mutations: MutationTree<State> = {

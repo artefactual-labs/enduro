@@ -35,13 +35,13 @@ const getters: GetterTree<State, RootState> = {
 
 const actions: ActionTree<State, RootState> = {
 
-  [SEARCH_PIPELINE]({ commit }, id): any {
+  [SEARCH_PIPELINE]({ commit }, id): Promise<any> {
     const request: api.PipelineShowRequest = { id };
     return EnduroPipelineClient.pipelineShow(request).then((response: api.PipelineShowResponseBody) => {
-    commit(SET_PIPELINE_RESULT, response);
-    commit(SET_PIPELINE_ERROR, false);
+      commit(SET_PIPELINE_RESULT, response);
+      commit(SET_PIPELINE_ERROR, false);
     }).catch(() => {
-    commit(SET_PIPELINE_ERROR, true);
+      commit(SET_PIPELINE_ERROR, true);
     });
   },
 

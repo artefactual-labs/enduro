@@ -15,6 +15,7 @@ export * from './CollectionDecideNotValidResponseBody';
 export * from './CollectionDeleteNotFoundResponseBody';
 export * from './CollectionDownloadNotFoundResponseBody';
 export * from './CollectionListResponseBody';
+export * from './CollectionMonitorResponseBody';
 export * from './CollectionRetryNotFoundResponseBody';
 export * from './CollectionRetryNotRunningResponseBody';
 export * from './CollectionShowNotFoundResponseBody';

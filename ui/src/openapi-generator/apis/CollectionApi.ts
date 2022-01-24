@@ -51,6 +51,9 @@ import {
     CollectionListResponseBody,
     CollectionListResponseBodyFromJSON,
     CollectionListResponseBodyToJSON,
+    CollectionMonitorResponseBody,
+    CollectionMonitorResponseBodyFromJSON,
+    CollectionMonitorResponseBodyToJSON,
     CollectionRetryNotFoundResponseBody,
     CollectionRetryNotFoundResponseBodyFromJSON,
     CollectionRetryNotFoundResponseBodyToJSON,
@@ -381,6 +384,31 @@ export class CollectionApi extends runtime.BaseAPI {
     async collectionList(requestParameters: CollectionListRequest): Promise<CollectionListResponseBody> {
         const response = await this.collectionListRaw(requestParameters);
         return await response.value();
+    }
+
+    /**
+     * monitor collection
+     */
+    async collectionMonitorRaw(): Promise<runtime.ApiResponse<void>> {
+        const queryParameters: runtime.HTTPQuery = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/collection/monitor`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        });
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * monitor collection
+     */
+    async collectionMonitor(): Promise<void> {
+        await this.collectionMonitorRaw();
     }
 
     /**
