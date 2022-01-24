@@ -80,7 +80,7 @@
 </template>
 
 <script lang="ts">
-import { Component, Prop, Provide, Vue } from 'vue-property-decorator';
+import { Component, Watch, Vue } from 'vue-property-decorator';
 import { namespace } from 'vuex-class';
 import * as CollectionStore from '../store/collection';
 import CollectionStatusBadge from '@/components/CollectionStatusBadge.vue';
@@ -115,7 +115,13 @@ export default class CollectionShowWorkflow extends Vue {
     this.loadHistory();
   }
 
-  private loadHistory() {
+  @Watch('collection')
+  private onCollectionChanged(val: object, oldVal: object) {
+    // Reload the workflow history when the collection changes.
+    this.loadHistory();
+  }
+
+  private async loadHistory() {
     return EnduroCollectionClient.collectionWorkflow({id: +this.$route.params.id}).then((response: api.CollectionWorkflowResponseBody) => {
       this.history = response;
       this.processHistory();

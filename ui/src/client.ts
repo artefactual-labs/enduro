@@ -23,7 +23,7 @@ let EnduroCollectionClient: api.CollectionApi;
 let EnduroPipelineClient: api.PipelineApi;
 let EnduroBatchClient: api.BatchApi;
 
-function setUpEnduroClient() {
+function getPath(): string {
   let path = apiPath();
 
   // path seems to be wrong when Enduro is deployed behind FortiNet SSLVPN.
@@ -33,13 +33,46 @@ function setUpEnduroClient() {
     path = window.fgt_sslvpn.url_rewrite(path);
   }
 
+  return path;
+}
+
+function getWebSocketURL(): string {
+  let url = getPath();
+
+  if (url.startsWith('https')) {
+    url = 'wss' + url.slice('https'.length);
+  } else if (url.startsWith('http')) {
+    url = 'ws' + url.slice('http'.length);
+  }
+
+  return url;
+}
+
+function setUpEnduroClient(): void {
+  const path = getPath();
   const config: api.Configuration = new api.Configuration({basePath: path});
+
   EnduroCollectionClient = new api.CollectionApi(config);
   EnduroPipelineClient = new api.PipelineApi(config);
   EnduroBatchClient = new api.BatchApi(config);
 
   // tslint:disable-next-line:no-console
   console.log('Enduro client created', path);
+}
+
+function setUpEnduroMonitor(store: any) {
+  const url = getWebSocketURL() + '/collection/monitor';
+  const socket = new WebSocket(url);
+  socket.onmessage = (event) => {
+    store.dispatch('collection/ON_SOCKET_MESSAGE', {event});
+  };
+  socket.onclose = (event) => {
+    // tslint:disable-next-line:no-console
+    console.log('Enduro WebSocket client closed', event.code);
+  };
+
+  // tslint:disable-next-line:no-console
+  console.log('Enduro WebSocket client created', url);
 }
 
 window.enduro = {
@@ -54,5 +87,6 @@ export {
   EnduroPipelineClient,
   EnduroBatchClient,
   setUpEnduroClient,
+  setUpEnduroMonitor,
   api,
 };
