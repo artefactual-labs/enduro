@@ -151,3 +151,64 @@ func assertNilWorkflowError(t *testing.T, err error) {
 		t.Fatal(err.Error())
 	}
 }
+
+func TestTransferInfoProcessingConfiguration(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		tinfo            TransferInfo
+		processingConfig string
+	}{
+		{
+			tinfo: TransferInfo{
+				ProcessingConfig: "automated",
+				PipelineConfig: &pipeline.Config{
+					ProcessingConfig: "default",
+				},
+			},
+			processingConfig: "automated",
+		},
+		{
+			tinfo: TransferInfo{
+				ProcessingConfig: "automated",
+				PipelineConfig:   nil,
+			},
+			processingConfig: "automated",
+		},
+		{
+			tinfo: TransferInfo{
+				ProcessingConfig: "",
+				PipelineConfig:   nil,
+			},
+			processingConfig: "",
+		},
+		{
+			tinfo: TransferInfo{
+				ProcessingConfig: "",
+				PipelineConfig: &pipeline.Config{
+					ProcessingConfig: "default",
+				},
+			},
+			processingConfig: "default",
+		},
+		{
+			tinfo: TransferInfo{
+				ProcessingConfig: "",
+				PipelineConfig: &pipeline.Config{
+					ProcessingConfig: "",
+				},
+			},
+			processingConfig: "",
+		},
+	}
+	for _, tc := range testCases {
+		t.Run("", func(t *testing.T) {
+			t.Parallel()
+			tc := tc
+			result := tc.tinfo.ProcessingConfiguration()
+			if have, want := result, tc.processingConfig; have != want {
+				t.Errorf("tinfo.ProcessingConfiguration() returned %s; expected %s", have, want)
+			}
+		})
+	}
+}

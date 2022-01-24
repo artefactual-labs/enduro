@@ -21,7 +21,7 @@ var ErrBatchStatusUnavailable = errors.New("batch status unavailable")
 type Service interface {
 	Submit(context.Context, *goabatch.SubmitPayload) (res *goabatch.BatchResult, err error)
 	Status(context.Context) (res *goabatch.BatchStatusResult, err error)
-	InitProcessingWorkflow(ctx context.Context, batchDir, key string, isDir bool, pipelineName string) error
+	InitProcessingWorkflow(ctx context.Context, batchDir, key string, isDir bool, pipelineName, processingConfig string) error
 }
 
 type batchImpl struct {
@@ -52,6 +52,9 @@ func (s *batchImpl) Submit(ctx context.Context, payload *goabatch.SubmitPayload)
 	input := BatchWorkflowInput{
 		Path:         payload.Path,
 		PipelineName: payload.Pipeline,
+	}
+	if payload.ProcessingConfig != nil {
+		input.ProcessingConfig = *payload.ProcessingConfig
 	}
 	opts := cadenceclient.StartWorkflowOptions{
 		ID:                              BatchWorkflowID,
@@ -106,7 +109,7 @@ func (s *batchImpl) Status(ctx context.Context) (*goabatch.BatchStatusResult, er
 	return result, nil
 }
 
-func (s *batchImpl) InitProcessingWorkflow(ctx context.Context, batchDir, key string, isDir bool, pipelineName string) error {
+func (s *batchImpl) InitProcessingWorkflow(ctx context.Context, batchDir, key string, isDir bool, pipelineName, processingConfig string) error {
 	req := collection.ProcessingWorkflowRequest{
 		PipelineName:     pipelineName,
 		RetentionPeriod:  nil,
@@ -115,6 +118,7 @@ func (s *batchImpl) InitProcessingWorkflow(ctx context.Context, batchDir, key st
 		IsDir:            isDir,
 		BatchDir:         batchDir,
 		ValidationConfig: validation.Config{},
+		ProcessingConfig: processingConfig,
 	}
 	err := collection.InitProcessingWorkflow(ctx, s.cc, &req)
 	if err != nil {

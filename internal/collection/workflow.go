@@ -50,8 +50,6 @@ type ProcessingWorkflowRequest struct {
 	Key string
 
 	// Whether the blob is a directory (fs watcher)
-	//
-	// It is populated via the workflow request.
 	IsDir bool
 
 	// Batch directory that contains the blob.
@@ -59,6 +57,9 @@ type ProcessingWorkflowRequest struct {
 
 	// Configuration for the validating the transfer.
 	ValidationConfig validation.Config
+
+	// Processing configuration name.
+	ProcessingConfig string
 }
 
 func InitProcessingWorkflow(ctx context.Context, c client.Client, req *ProcessingWorkflowRequest) error {

@@ -31,13 +31,14 @@ func TestBatchActivityStartsProcessingWorkflows(t *testing.T) {
 	a := NewBatchActivity(serviceMock)
 
 	// Expectations: the activity starts a processing workflow for each subdirectory.
-	serviceMock.EXPECT().InitProcessingWorkflow(ctx, batchPath, "transfer1", true, "am")
-	serviceMock.EXPECT().InitProcessingWorkflow(ctx, batchPath, "transfer2", true, "am")
+	serviceMock.EXPECT().InitProcessingWorkflow(ctx, batchPath, "transfer1", true, "am", "automated")
+	serviceMock.EXPECT().InitProcessingWorkflow(ctx, batchPath, "transfer2", true, "am", "automated")
 
 	// Execute the activity.
 	err := a.Execute(ctx, BatchWorkflowInput{
-		Path:         batchPath,
-		PipelineName: "am",
+		Path:             batchPath,
+		PipelineName:     "am",
+		ProcessingConfig: "automated",
 	})
 	assert.NilError(t, err)
 }

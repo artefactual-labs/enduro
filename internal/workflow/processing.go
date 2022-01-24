@@ -113,6 +113,11 @@ type TransferInfo struct {
 	// It is populated by loadConfigLocalActivity.
 	PipelineConfig *pipeline.Config
 
+	// Processing configuration name.
+	//
+	// It is populated via the workflow request.
+	ProcessingConfig string
+
 	// PipelineID is the UUID of the Archivematica pipeline. Extracted from
 	// the API response header when the transfer is submitted.
 	//
@@ -129,6 +134,16 @@ type TransferInfo struct {
 	//
 	// It is populated by BundleActivity.
 	Bundle activities.BundleActivityResult
+}
+
+func (tinfo TransferInfo) ProcessingConfiguration() string {
+	if tinfo.ProcessingConfig != "" {
+		return tinfo.ProcessingConfig
+	}
+	if tinfo.PipelineConfig == nil {
+		return ""
+	}
+	return tinfo.PipelineConfig.ProcessingConfig
 }
 
 // ProcessingWorkflow orchestrates all the activities related to the processing
@@ -152,6 +167,7 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 			Key:              req.Key,
 			IsDir:            req.IsDir,
 			BatchDir:         req.BatchDir,
+			ProcessingConfig: req.ProcessingConfig,
 		}
 
 		// Attributes inferred from the name of the transfer. Populated by parseNameLocalActivity.
@@ -487,7 +503,7 @@ func (w *ProcessingWorkflow) transfer(sessCtx workflow.Context, tinfo *TransferI
 				TransferLocationID: tinfo.PipelineConfig.TransferLocationID,
 				RelPath:            tinfo.Bundle.RelPath,
 				Name:               tinfo.Key,
-				ProcessingConfig:   tinfo.PipelineConfig.ProcessingConfig,
+				ProcessingConfig:   tinfo.ProcessingConfiguration(),
 			}).Get(activityOpts, &transferResponse)
 			if err != nil {
 				return err

@@ -21,8 +21,9 @@ type BatchProgress struct {
 }
 
 type BatchWorkflowInput struct {
-	Path         string
-	PipelineName string
+	Path             string
+	PipelineName     string
+	ProcessingConfig string
 }
 
 func BatchWorkflow(ctx workflow.Context, params BatchWorkflowInput) error {
@@ -50,7 +51,7 @@ func (a *BatchActivity) Execute(ctx context.Context, params BatchWorkflowInput) 
 		return wferrors.NonRetryableError(err)
 	}
 	for _, file := range files {
-		_ = a.batchsvc.InitProcessingWorkflow(ctx, params.Path, file.Name(), file.IsDir(), params.PipelineName)
+		_ = a.batchsvc.InitProcessingWorkflow(ctx, params.Path, file.Name(), file.IsDir(), params.PipelineName, params.ProcessingConfig)
 	}
 	return nil
 }
