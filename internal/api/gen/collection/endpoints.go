@@ -16,6 +16,7 @@ import (
 
 // Endpoints wraps the "collection" service endpoints.
 type Endpoints struct {
+	Monitor    goa.Endpoint
 	List       goa.Endpoint
 	Show       goa.Endpoint
 	Delete     goa.Endpoint
@@ -28,9 +29,17 @@ type Endpoints struct {
 	BulkStatus goa.Endpoint
 }
 
+// MonitorEndpointInput holds both the payload and the server stream of the
+// "monitor" method.
+type MonitorEndpointInput struct {
+	// Stream is the server stream used by the "monitor" method to send data.
+	Stream MonitorServerStream
+}
+
 // NewEndpoints wraps the methods of the "collection" service with endpoints.
 func NewEndpoints(s Service) *Endpoints {
 	return &Endpoints{
+		Monitor:    NewMonitorEndpoint(s),
 		List:       NewListEndpoint(s),
 		Show:       NewShowEndpoint(s),
 		Delete:     NewDeleteEndpoint(s),
@@ -46,6 +55,7 @@ func NewEndpoints(s Service) *Endpoints {
 
 // Use applies the given middleware to all the "collection" service endpoints.
 func (e *Endpoints) Use(m func(goa.Endpoint) goa.Endpoint) {
+	e.Monitor = m(e.Monitor)
 	e.List = m(e.List)
 	e.Show = m(e.Show)
 	e.Delete = m(e.Delete)
@@ -56,6 +66,15 @@ func (e *Endpoints) Use(m func(goa.Endpoint) goa.Endpoint) {
 	e.Decide = m(e.Decide)
 	e.Bulk = m(e.Bulk)
 	e.BulkStatus = m(e.BulkStatus)
+}
+
+// NewMonitorEndpoint returns an endpoint function that calls the method
+// "monitor" of service "collection".
+func NewMonitorEndpoint(s Service) goa.Endpoint {
+	return func(ctx context.Context, req interface{}) (interface{}, error) {
+		ep := req.(*MonitorEndpointInput)
+		return nil, s.Monitor(ctx, ep.Stream)
+	}
 }
 
 // NewListEndpoint returns an endpoint function that calls the method "list" of

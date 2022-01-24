@@ -13,6 +13,7 @@ import (
 	"net/http"
 
 	collection "github.com/artefactual-labs/enduro/internal/api/gen/collection"
+	"github.com/gorilla/websocket"
 	goahttp "goa.design/goa/v3/http"
 	goa "goa.design/goa/v3/pkg"
 	"goa.design/plugins/v3/cors"
@@ -21,6 +22,7 @@ import (
 // Server lists the collection service endpoint HTTP handlers.
 type Server struct {
 	Mounts     []*MountPoint
+	Monitor    http.Handler
 	List       http.Handler
 	Show       http.Handler
 	Delete     http.Handler
@@ -64,9 +66,15 @@ func New(
 	encoder func(context.Context, http.ResponseWriter) goahttp.Encoder,
 	errhandler func(context.Context, http.ResponseWriter, error),
 	formatter func(err error) goahttp.Statuser,
+	upgrader goahttp.Upgrader,
+	configurer *ConnConfigurer,
 ) *Server {
+	if configurer == nil {
+		configurer = &ConnConfigurer{}
+	}
 	return &Server{
 		Mounts: []*MountPoint{
+			{"Monitor", "GET", "/collection/monitor"},
 			{"List", "GET", "/collection"},
 			{"Show", "GET", "/collection/{id}"},
 			{"Delete", "DELETE", "/collection/{id}"},
@@ -77,6 +85,7 @@ func New(
 			{"Decide", "POST", "/collection/{id}/decision"},
 			{"Bulk", "POST", "/collection/bulk"},
 			{"BulkStatus", "GET", "/collection/bulk"},
+			{"CORS", "OPTIONS", "/collection/monitor"},
 			{"CORS", "OPTIONS", "/collection"},
 			{"CORS", "OPTIONS", "/collection/{id}"},
 			{"CORS", "OPTIONS", "/collection/{id}/cancel"},
@@ -86,6 +95,7 @@ func New(
 			{"CORS", "OPTIONS", "/collection/{id}/decision"},
 			{"CORS", "OPTIONS", "/collection/bulk"},
 		},
+		Monitor:    NewMonitorHandler(e.Monitor, mux, decoder, encoder, errhandler, formatter, upgrader, configurer.MonitorFn),
 		List:       NewListHandler(e.List, mux, decoder, encoder, errhandler, formatter),
 		Show:       NewShowHandler(e.Show, mux, decoder, encoder, errhandler, formatter),
 		Delete:     NewDeleteHandler(e.Delete, mux, decoder, encoder, errhandler, formatter),
@@ -105,6 +115,7 @@ func (s *Server) Service() string { return "collection" }
 
 // Use wraps the server handlers with the given middleware.
 func (s *Server) Use(m func(http.Handler) http.Handler) {
+	s.Monitor = m(s.Monitor)
 	s.List = m(s.List)
 	s.Show = m(s.Show)
 	s.Delete = m(s.Delete)
@@ -120,6 +131,7 @@ func (s *Server) Use(m func(http.Handler) http.Handler) {
 
 // Mount configures the mux to serve the collection endpoints.
 func Mount(mux goahttp.Muxer, h *Server) {
+	MountMonitorHandler(mux, h.Monitor)
 	MountListHandler(mux, h.List)
 	MountShowHandler(mux, h.Show)
 	MountDeleteHandler(mux, h.Delete)
@@ -136,6 +148,62 @@ func Mount(mux goahttp.Muxer, h *Server) {
 // Mount configures the mux to serve the collection endpoints.
 func (s *Server) Mount(mux goahttp.Muxer) {
 	Mount(mux, s)
+}
+
+// MountMonitorHandler configures the mux to serve the "collection" service
+// "monitor" endpoint.
+func MountMonitorHandler(mux goahttp.Muxer, h http.Handler) {
+	f, ok := HandleCollectionOrigin(h).(http.HandlerFunc)
+	if !ok {
+		f = func(w http.ResponseWriter, r *http.Request) {
+			h.ServeHTTP(w, r)
+		}
+	}
+	mux.Handle("GET", "/collection/monitor", f)
+}
+
+// NewMonitorHandler creates a HTTP handler which loads the HTTP request and
+// calls the "collection" service "monitor" endpoint.
+func NewMonitorHandler(
+	endpoint goa.Endpoint,
+	mux goahttp.Muxer,
+	decoder func(*http.Request) goahttp.Decoder,
+	encoder func(context.Context, http.ResponseWriter) goahttp.Encoder,
+	errhandler func(context.Context, http.ResponseWriter, error),
+	formatter func(err error) goahttp.Statuser,
+	upgrader goahttp.Upgrader,
+	configurer goahttp.ConnConfigureFunc,
+) http.Handler {
+	var (
+		encodeError = goahttp.ErrorEncoder(encoder, formatter)
+	)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
+		ctx = context.WithValue(ctx, goa.MethodKey, "monitor")
+		ctx = context.WithValue(ctx, goa.ServiceKey, "collection")
+		var err error
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithCancel(ctx)
+		v := &collection.MonitorEndpointInput{
+			Stream: &MonitorServerStream{
+				upgrader:   upgrader,
+				configurer: configurer,
+				cancel:     cancel,
+				w:          w,
+				r:          r,
+			},
+		}
+		_, err = endpoint(ctx, v)
+		if err != nil {
+			if _, ok := err.(websocket.HandshakeError); ok {
+				return
+			}
+			if err := encodeError(ctx, w, err); err != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+	})
 }
 
 // MountListHandler configures the mux to serve the "collection" service "list"
@@ -645,6 +713,7 @@ func NewBulkStatusHandler(
 // service collection.
 func MountCORSHandler(mux goahttp.Muxer, h http.Handler) {
 	h = HandleCollectionOrigin(h)
+	mux.Handle("OPTIONS", "/collection/monitor", h.ServeHTTP)
 	mux.Handle("OPTIONS", "/collection", h.ServeHTTP)
 	mux.Handle("OPTIONS", "/collection/{id}", h.ServeHTTP)
 	mux.Handle("OPTIONS", "/collection/{id}/cancel", h.ServeHTTP)

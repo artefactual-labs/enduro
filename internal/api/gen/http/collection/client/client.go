@@ -11,13 +11,19 @@ package client
 import (
 	"context"
 	"net/http"
+	"time"
 
+	"github.com/gorilla/websocket"
 	goahttp "goa.design/goa/v3/http"
 	goa "goa.design/goa/v3/pkg"
 )
 
 // Client lists the collection service endpoint HTTP clients.
 type Client struct {
+	// Monitor Doer is the HTTP client used to make requests to the monitor
+	// endpoint.
+	MonitorDoer goahttp.Doer
+
 	// List Doer is the HTTP client used to make requests to the list endpoint.
 	ListDoer goahttp.Doer
 
@@ -58,10 +64,12 @@ type Client struct {
 	// decoding so they can be read again.
 	RestoreResponseBody bool
 
-	scheme  string
-	host    string
-	encoder func(*http.Request) goahttp.Encoder
-	decoder func(*http.Response) goahttp.Decoder
+	scheme     string
+	host       string
+	encoder    func(*http.Request) goahttp.Encoder
+	decoder    func(*http.Response) goahttp.Decoder
+	dialer     goahttp.Dialer
+	configurer *ConnConfigurer
 }
 
 // NewClient instantiates HTTP clients for all the collection service servers.
@@ -72,8 +80,14 @@ func NewClient(
 	enc func(*http.Request) goahttp.Encoder,
 	dec func(*http.Response) goahttp.Decoder,
 	restoreBody bool,
+	dialer goahttp.Dialer,
+	cfn *ConnConfigurer,
 ) *Client {
+	if cfn == nil {
+		cfn = &ConnConfigurer{}
+	}
 	return &Client{
+		MonitorDoer:         doer,
 		ListDoer:            doer,
 		ShowDoer:            doer,
 		DeleteDoer:          doer,
@@ -90,6 +104,45 @@ func NewClient(
 		host:                host,
 		decoder:             dec,
 		encoder:             enc,
+		dialer:              dialer,
+		configurer:          cfn,
+	}
+}
+
+// Monitor returns an endpoint that makes HTTP requests to the collection
+// service monitor server.
+func (c *Client) Monitor() goa.Endpoint {
+	var (
+		decodeResponse = DecodeMonitorResponse(c.decoder, c.RestoreResponseBody)
+	)
+	return func(ctx context.Context, v interface{}) (interface{}, error) {
+		req, err := c.BuildMonitorRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithCancel(ctx)
+		conn, resp, err := c.dialer.DialContext(ctx, req.URL.String(), req.Header)
+		if err != nil {
+			if resp != nil {
+				return decodeResponse(resp)
+			}
+			return nil, goahttp.ErrRequestError("collection", "monitor", err)
+		}
+		if c.configurer.MonitorFn != nil {
+			conn = c.configurer.MonitorFn(conn, cancel)
+		}
+		go func() {
+			<-ctx.Done()
+			conn.WriteControl(
+				websocket.CloseMessage,
+				websocket.FormatCloseMessage(websocket.CloseNormalClosure, "client closing connection"),
+				time.Now().Add(time.Second),
+			)
+			conn.Close()
+		}()
+		stream := &MonitorClientStream{conn: conn}
+		return stream, nil
 	}
 }
 

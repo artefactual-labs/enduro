@@ -9,6 +9,13 @@ var _ = Service("collection", func() {
 	HTTP(func() {
 		Path("/collection")
 	})
+	Method("monitor", func() {
+		StreamingResult(MonitorUpdate)
+		HTTP(func() {
+			GET("/monitor")
+			Response(StatusOK)
+		})
+	})
 	Method("list", func() {
 		Description("List all stored collections")
 		Payload(func() {
@@ -260,6 +267,13 @@ var StoredCollection = ResultType("application/vnd.enduro.stored-collection", fu
 		Attribute("completed_at")
 	})
 	Required("id", "status", "created_at")
+})
+
+var MonitorUpdate = ResultType("application/vnd.enduro.monitor-update", func() {
+	Attribute("id", UInt, "Identifier of collection")
+	Attribute("type", String, "Type of the event")
+	Attribute("item", StoredCollection, "Collection")
+	Required("id", "type")
 })
 
 var WorkflowStatus = ResultType("application/vnd.enduro.collection-workflow-status", func() {

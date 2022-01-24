@@ -12,6 +12,11 @@ import (
 	"fmt"
 )
 
+// MonitorCollectionPath returns the URL path to the collection service monitor HTTP endpoint.
+func MonitorCollectionPath() string {
+	return "/collection/monitor"
+}
+
 // ListCollectionPath returns the URL path to the collection service list HTTP endpoint.
 func ListCollectionPath() string {
 	return "/collection"

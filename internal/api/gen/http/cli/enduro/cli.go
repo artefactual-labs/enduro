@@ -28,19 +28,19 @@ import (
 func UsageCommands() string {
 	return `pipeline (list|show|processing)
 batch (submit|status)
-collection (list|show|delete|cancel|retry|workflow|download|decide|bulk|bulk-status)
+collection (monitor|list|show|delete|cancel|retry|workflow|download|decide|bulk|bulk-status)
 `
 }
 
 // UsageExamples produces an example of a valid invocation of the CLI tool.
 func UsageExamples() string {
-	return os.Args[0] + ` pipeline list --name "Officia quibusdam dolore in aliquid aut optio."` + "\n" +
+	return os.Args[0] + ` pipeline list --name "Mollitia adipisci sed aperiam sed consequatur."` + "\n" +
 		os.Args[0] + ` batch submit --body '{
       "path": "Hic deleniti quidem.",
       "pipeline": "Esse quisquam blanditiis ut aut.",
       "processing_config": "Facilis quo vero architecto ab doloribus."
    }'` + "\n" +
-		os.Args[0] + ` collection list --name "Est ut eum quis nihil soluta ut." --original-id "Et voluptas sit." --transfer-id "4CCDE767-7648-444F-D09F-4B4FFE4EB36B" --aip-id "0C589E55-99C1-3ED8-809A-1463C91242B6" --pipeline-id "AB12B85B-1864-53B4-4A92-3519B45D0D5E" --earliest-created-time "1983-03-24T18:13:30Z" --latest-created-time "1989-05-24T14:37:08Z" --status "abandoned" --cursor "Asperiores cum aliquid aut impedit tenetur iure."` + "\n" +
+		os.Args[0] + ` collection monitor` + "\n" +
 		""
 }
 
@@ -52,6 +52,8 @@ func ParseEndpoint(
 	enc func(*http.Request) goahttp.Encoder,
 	dec func(*http.Response) goahttp.Decoder,
 	restore bool,
+	dialer goahttp.Dialer,
+	collectionConfigurer *collectionc.ConnConfigurer,
 ) (goa.Endpoint, interface{}, error) {
 	var (
 		pipelineFlags = flag.NewFlagSet("pipeline", flag.ContinueOnError)
@@ -73,6 +75,8 @@ func ParseEndpoint(
 		batchStatusFlags = flag.NewFlagSet("status", flag.ExitOnError)
 
 		collectionFlags = flag.NewFlagSet("collection", flag.ContinueOnError)
+
+		collectionMonitorFlags = flag.NewFlagSet("monitor", flag.ExitOnError)
 
 		collectionListFlags                   = flag.NewFlagSet("list", flag.ExitOnError)
 		collectionListNameFlag                = collectionListFlags.String("name", "", "")
@@ -122,6 +126,7 @@ func ParseEndpoint(
 	batchStatusFlags.Usage = batchStatusUsage
 
 	collectionFlags.Usage = collectionUsage
+	collectionMonitorFlags.Usage = collectionMonitorUsage
 	collectionListFlags.Usage = collectionListUsage
 	collectionShowFlags.Usage = collectionShowUsage
 	collectionDeleteFlags.Usage = collectionDeleteUsage
@@ -194,6 +199,9 @@ func ParseEndpoint(
 
 		case "collection":
 			switch epn {
+			case "monitor":
+				epf = collectionMonitorFlags
+
 			case "list":
 				epf = collectionListFlags
 
@@ -270,8 +278,11 @@ func ParseEndpoint(
 				data = nil
 			}
 		case "collection":
-			c := collectionc.NewClient(scheme, host, doer, enc, dec, restore)
+			c := collectionc.NewClient(scheme, host, doer, enc, dec, restore, dialer, collectionConfigurer)
 			switch epn {
+			case "monitor":
+				endpoint = c.Monitor()
+				data = nil
 			case "list":
 				endpoint = c.List()
 				data, err = collectionc.BuildListPayload(*collectionListNameFlag, *collectionListOriginalIDFlag, *collectionListTransferIDFlag, *collectionListAipIDFlag, *collectionListPipelineIDFlag, *collectionListEarliestCreatedTimeFlag, *collectionListLatestCreatedTimeFlag, *collectionListStatusFlag, *collectionListCursorFlag)
@@ -334,7 +345,7 @@ List all known pipelines
     -name STRING: 
 
 Example:
-    %[1]s pipeline list --name "Officia quibusdam dolore in aliquid aut optio."
+    %[1]s pipeline list --name "Mollitia adipisci sed aperiam sed consequatur."
 `, os.Args[0])
 }
 
@@ -407,6 +418,7 @@ Usage:
     %[1]s [globalflags] collection COMMAND [flags]
 
 COMMAND:
+    monitor: Monitor implements monitor.
     list: List all stored collections
     show: Show collection by ID
     delete: Delete collection by ID
@@ -422,6 +434,16 @@ Additional help:
     %[1]s collection COMMAND --help
 `, os.Args[0])
 }
+func collectionMonitorUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] collection monitor
+
+Monitor implements monitor.
+
+Example:
+    %[1]s collection monitor
+`, os.Args[0])
+}
+
 func collectionListUsage() {
 	fmt.Fprintf(os.Stderr, `%[1]s [flags] collection list -name STRING -original-id STRING -transfer-id STRING -aip-id STRING -pipeline-id STRING -earliest-created-time STRING -latest-created-time STRING -status STRING -cursor STRING
 
@@ -437,7 +459,7 @@ List all stored collections
     -cursor STRING: 
 
 Example:
-    %[1]s collection list --name "Est ut eum quis nihil soluta ut." --original-id "Et voluptas sit." --transfer-id "4CCDE767-7648-444F-D09F-4B4FFE4EB36B" --aip-id "0C589E55-99C1-3ED8-809A-1463C91242B6" --pipeline-id "AB12B85B-1864-53B4-4A92-3519B45D0D5E" --earliest-created-time "1983-03-24T18:13:30Z" --latest-created-time "1989-05-24T14:37:08Z" --status "abandoned" --cursor "Asperiores cum aliquid aut impedit tenetur iure."
+    %[1]s collection list --name "Labore sit occaecati quia aliquid labore quibusdam." --original-id "Illum eum officiis." --transfer-id "1576BB1F-D21C-05AD-6677-73725A387FA6" --aip-id "7F641448-35F7-7B05-AFB4-8DFCC48CED66" --pipeline-id "D358BA94-28F1-C0F1-EA4E-E3BFBD8A6AE2" --earliest-created-time "1998-01-09T17:56:03Z" --latest-created-time "1981-08-11T07:01:54Z" --status "new" --cursor "Natus perferendis ullam at perferendis est rem."
 `, os.Args[0])
 }
 
@@ -448,7 +470,7 @@ Show collection by ID
     -id UINT: Identifier of collection to show
 
 Example:
-    %[1]s collection show --id 16226413424839125038
+    %[1]s collection show --id 11974437713996064126
 `, os.Args[0])
 }
 
@@ -459,7 +481,7 @@ Delete collection by ID
     -id UINT: Identifier of collection to delete
 
 Example:
-    %[1]s collection delete --id 13127725253964961724
+    %[1]s collection delete --id 7268397533347124061
 `, os.Args[0])
 }
 
@@ -470,7 +492,7 @@ Cancel collection processing by ID
     -id UINT: Identifier of collection to remove
 
 Example:
-    %[1]s collection cancel --id 7982077703646575391
+    %[1]s collection cancel --id 16074802722416268152
 `, os.Args[0])
 }
 
@@ -481,7 +503,7 @@ Retry collection processing by ID
     -id UINT: Identifier of collection to retry
 
 Example:
-    %[1]s collection retry --id 2846484845428550035
+    %[1]s collection retry --id 3767799258405947447
 `, os.Args[0])
 }
 
@@ -492,7 +514,7 @@ Retrieve workflow status by ID
     -id UINT: Identifier of collection to look up
 
 Example:
-    %[1]s collection workflow --id 14489675283330150547
+    %[1]s collection workflow --id 12807129903681834262
 `, os.Args[0])
 }
 
@@ -503,7 +525,7 @@ Download collection by ID
     -id UINT: Identifier of collection to look up
 
 Example:
-    %[1]s collection download --id 2413256010816516905
+    %[1]s collection download --id 2144585671607276988
 `, os.Args[0])
 }
 
@@ -516,8 +538,8 @@ Make decision for a pending collection by ID
 
 Example:
     %[1]s collection decide --body '{
-      "option": "Aut voluptatem labore expedita odio praesentium et."
-   }' --id 14857201764762641199
+      "option": "Et voluptatem aut dolorem."
+   }' --id 3621067762755523940
 `, os.Args[0])
 }
 
@@ -529,8 +551,8 @@ Bulk operations (retry, cancel...).
 
 Example:
     %[1]s collection bulk --body '{
-      "operation": "cancel",
-      "size": 9856036078581782826,
+      "operation": "retry",
+      "size": 16883413515208329515,
       "status": "abandoned"
    }'
 `, os.Args[0])

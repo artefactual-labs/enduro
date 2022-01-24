@@ -22,6 +22,17 @@ type BulkRequestBody struct {
 	Size      *uint   `form:"size,omitempty" json:"size,omitempty" xml:"size,omitempty"`
 }
 
+// MonitorResponseBody is the type of the "collection" service "monitor"
+// endpoint HTTP response body.
+type MonitorResponseBody struct {
+	// Identifier of collection
+	ID uint `form:"id" json:"id" xml:"id"`
+	// Type of the event
+	Type string `form:"type" json:"type" xml:"type"`
+	// Collection
+	Item *EnduroStoredCollectionResponseBody `form:"item,omitempty" json:"item,omitempty" xml:"item,omitempty"`
+}
+
 // ListResponseBody is the type of the "collection" service "list" endpoint
 // HTTP response body.
 type ListResponseBody struct {
@@ -236,10 +247,6 @@ type BulkNotValidResponseBody struct {
 	Fault bool `form:"fault" json:"fault" xml:"fault"`
 }
 
-// EnduroStoredCollectionCollectionResponseBody is used to define fields on
-// response body types.
-type EnduroStoredCollectionCollectionResponseBody []*EnduroStoredCollectionResponseBody
-
 // EnduroStoredCollectionResponseBody is used to define fields on response body
 // types.
 type EnduroStoredCollectionResponseBody struct {
@@ -269,6 +276,10 @@ type EnduroStoredCollectionResponseBody struct {
 	CompletedAt *string `form:"completed_at,omitempty" json:"completed_at,omitempty" xml:"completed_at,omitempty"`
 }
 
+// EnduroStoredCollectionCollectionResponseBody is used to define fields on
+// response body types.
+type EnduroStoredCollectionCollectionResponseBody []*EnduroStoredCollectionResponseBody
+
 // EnduroCollectionWorkflowHistoryResponseBodyCollection is used to define
 // fields on response body types.
 type EnduroCollectionWorkflowHistoryResponseBodyCollection []*EnduroCollectionWorkflowHistoryResponseBody
@@ -282,6 +293,19 @@ type EnduroCollectionWorkflowHistoryResponseBody struct {
 	Type *string `form:"type,omitempty" json:"type,omitempty" xml:"type,omitempty"`
 	// Contents of the event
 	Details interface{} `form:"details,omitempty" json:"details,omitempty" xml:"details,omitempty"`
+}
+
+// NewMonitorResponseBody builds the HTTP response body from the result of the
+// "monitor" endpoint of the "collection" service.
+func NewMonitorResponseBody(res *collectionviews.EnduroMonitorUpdateView) *MonitorResponseBody {
+	body := &MonitorResponseBody{
+		ID:   *res.ID,
+		Type: *res.Type,
+	}
+	if res.Item != nil {
+		body.Item = marshalCollectionviewsEnduroStoredCollectionViewToEnduroStoredCollectionResponseBody(res.Item)
+	}
+	return body
 }
 
 // NewListResponseBody builds the HTTP response body from the result of the

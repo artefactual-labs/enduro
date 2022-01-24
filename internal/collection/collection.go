@@ -45,6 +45,9 @@ type collectionImpl struct {
 
 	// downloadProxy generates a reverse proxy on each download.
 	downloadProxy *downloadReverseProxy
+
+	// Destination for events to be published.
+	events EventService
 }
 
 var _ Service = (*collectionImpl)(nil)
@@ -56,6 +59,7 @@ func NewService(logger logr.Logger, db *sql.DB, cc cadenceclient.Client, registr
 		cc:            cc,
 		registry:      registry,
 		downloadProxy: newDownloadReverseProxy(logger),
+		events:        NewEventService(),
 	}
 }
 
@@ -92,7 +96,20 @@ func (svc *collectionImpl) Create(ctx context.Context, col *Collection) error {
 
 	col.ID = uint(id)
 
-	return err
+	publishEvent(ctx, svc.events, EventTypeCollectionCreated, col.ID)
+
+	return nil
+}
+
+func publishEvent(ctx context.Context, events EventService, eventType string, id uint) {
+	// TODO: publish updated collection?
+	var item *goacollection.EnduroStoredCollection
+
+	events.PublishEvent(&goacollection.EnduroMonitorUpdate{
+		ID:   id,
+		Type: eventType,
+		Item: item,
+	})
 }
 
 func (svc *collectionImpl) UpdateWorkflowStatus(ctx context.Context, ID uint, name string, workflowID, runID, transferID, aipID, pipelineID string, status Status, storedAt time.Time) error {
@@ -118,9 +135,13 @@ func (svc *collectionImpl) UpdateWorkflowStatus(ctx context.Context, ID uint, na
 		ID,
 	}
 
-	_, err := svc.updateRow(ctx, query, args)
+	if _, err := svc.updateRow(ctx, query, args); err != nil {
+		return err
+	}
 
-	return err
+	publishEvent(ctx, svc.events, EventTypeCollectionUpdated, ID)
+
+	return nil
 }
 
 func (svc *collectionImpl) SetStatus(ctx context.Context, ID uint, status Status) error {
@@ -130,9 +151,13 @@ func (svc *collectionImpl) SetStatus(ctx context.Context, ID uint, status Status
 		ID,
 	}
 
-	_, err := svc.updateRow(ctx, query, args)
+	if _, err := svc.updateRow(ctx, query, args); err != nil {
+		return err
+	}
 
-	return err
+	publishEvent(ctx, svc.events, EventTypeCollectionUpdated, ID)
+
+	return nil
 }
 
 func (svc *collectionImpl) SetStatusInProgress(ctx context.Context, ID uint, startedAt time.Time) error {
@@ -147,9 +172,13 @@ func (svc *collectionImpl) SetStatusInProgress(ctx context.Context, ID uint, sta
 		args = append(args, ID)
 	}
 
-	_, err := svc.updateRow(ctx, query, args)
+	if _, err := svc.updateRow(ctx, query, args); err != nil {
+		return err
+	}
 
-	return err
+	publishEvent(ctx, svc.events, EventTypeCollectionUpdated, ID)
+
+	return nil
 }
 
 func (svc *collectionImpl) SetStatusPending(ctx context.Context, ID uint, taskToken []byte) error {
@@ -160,9 +189,13 @@ func (svc *collectionImpl) SetStatusPending(ctx context.Context, ID uint, taskTo
 		ID,
 	}
 
-	_, err := svc.updateRow(ctx, query, args)
+	if _, err := svc.updateRow(ctx, query, args); err != nil {
+		return err
+	}
 
-	return err
+	publishEvent(ctx, svc.events, EventTypeCollectionUpdated, ID)
+
+	return nil
 }
 
 func (svc *collectionImpl) SetOriginalID(ctx context.Context, ID uint, originalID string) error {
@@ -172,9 +205,13 @@ func (svc *collectionImpl) SetOriginalID(ctx context.Context, ID uint, originalI
 		ID,
 	}
 
-	_, err := svc.updateRow(ctx, query, args)
+	if _, err := svc.updateRow(ctx, query, args); err != nil {
+		return err
+	}
 
-	return err
+	publishEvent(ctx, svc.events, EventTypeCollectionUpdated, ID)
+
+	return nil
 }
 
 func (svc *collectionImpl) updateRow(ctx context.Context, query string, args []interface{}) (int64, error) {
