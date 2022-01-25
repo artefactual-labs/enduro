@@ -12,6 +12,7 @@ const processingConfigBasePath = "api/processing-configuration"
 // configuration endpoints of the Dashboard API.
 type ProcessingConfigService interface {
 	Get(context.Context, string) (*ProcessingConfig, *Response, error)
+	List(context.Context) ([]string, *Response, error)
 }
 
 // ProcessingConfigOp handles communication with the Tranfer related methods of
@@ -41,4 +42,21 @@ func (s *ProcessingConfigOp) Get(ctx context.Context, name string) (*ProcessingC
 	resp, err := s.client.Do(ctx, req, payload)
 
 	return payload, resp, err
+}
+
+func (s *ProcessingConfigOp) List(ctx context.Context) ([]string, *Response, error) {
+	path := fmt.Sprintf("%s/", processingConfigBasePath)
+
+	req, err := s.client.NewRequest(ctx, "GET", path, nil)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	payload := struct {
+		ProcessingConfigurations []string `json:"processing_configurations"`
+	}{}
+
+	resp, err := s.client.Do(ctx, req, &payload)
+
+	return payload.ProcessingConfigurations, resp, err
 }
