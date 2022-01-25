@@ -26,7 +26,7 @@ import (
 //    command (subcommand1|subcommand2|...)
 //
 func UsageCommands() string {
-	return `pipeline (list|show)
+	return `pipeline (list|show|processing)
 batch (submit|status)
 collection (list|show|delete|cancel|retry|workflow|download|decide|bulk|bulk-status)
 `
@@ -34,13 +34,13 @@ collection (list|show|delete|cancel|retry|workflow|download|decide|bulk|bulk-sta
 
 // UsageExamples produces an example of a valid invocation of the CLI tool.
 func UsageExamples() string {
-	return os.Args[0] + ` pipeline list --name "Corrupti reiciendis laudantium."` + "\n" +
+	return os.Args[0] + ` pipeline list --name "Officia quibusdam dolore in aliquid aut optio."` + "\n" +
 		os.Args[0] + ` batch submit --body '{
-      "path": "Eos quia voluptas aspernatur quas minima.",
-      "pipeline": "Quod odio nulla.",
-      "processing_config": "Rerum voluptatem voluptatem labore."
+      "path": "Hic deleniti quidem.",
+      "pipeline": "Esse quisquam blanditiis ut aut.",
+      "processing_config": "Facilis quo vero architecto ab doloribus."
    }'` + "\n" +
-		os.Args[0] + ` collection list --name "Molestias et qui corporis." --original-id "Hic deleniti quidem." --transfer-id "A129B534-C1FC-F09D-BF29-3DA5781E0ECB" --aip-id "4CCDE767-7648-444F-D09F-4B4FFE4EB36B" --pipeline-id "0C589E55-99C1-3ED8-809A-1463C91242B6" --earliest-created-time "1973-08-21T00:35:08Z" --latest-created-time "1986-02-14T21:37:44Z" --status "pending" --cursor "Vel odit vitae ut alias voluptas molestias."` + "\n" +
+		os.Args[0] + ` collection list --name "Est ut eum quis nihil soluta ut." --original-id "Et voluptas sit." --transfer-id "4CCDE767-7648-444F-D09F-4B4FFE4EB36B" --aip-id "0C589E55-99C1-3ED8-809A-1463C91242B6" --pipeline-id "AB12B85B-1864-53B4-4A92-3519B45D0D5E" --earliest-created-time "1983-03-24T18:13:30Z" --latest-created-time "1989-05-24T14:37:08Z" --status "abandoned" --cursor "Asperiores cum aliquid aut impedit tenetur iure."` + "\n" +
 		""
 }
 
@@ -61,6 +61,9 @@ func ParseEndpoint(
 
 		pipelineShowFlags  = flag.NewFlagSet("show", flag.ExitOnError)
 		pipelineShowIDFlag = pipelineShowFlags.String("id", "REQUIRED", "Identifier of pipeline to show")
+
+		pipelineProcessingFlags  = flag.NewFlagSet("processing", flag.ExitOnError)
+		pipelineProcessingIDFlag = pipelineProcessingFlags.String("id", "REQUIRED", "Identifier of pipeline")
 
 		batchFlags = flag.NewFlagSet("batch", flag.ContinueOnError)
 
@@ -112,6 +115,7 @@ func ParseEndpoint(
 	pipelineFlags.Usage = pipelineUsage
 	pipelineListFlags.Usage = pipelineListUsage
 	pipelineShowFlags.Usage = pipelineShowUsage
+	pipelineProcessingFlags.Usage = pipelineProcessingUsage
 
 	batchFlags.Usage = batchUsage
 	batchSubmitFlags.Usage = batchSubmitUsage
@@ -172,6 +176,9 @@ func ParseEndpoint(
 
 			case "show":
 				epf = pipelineShowFlags
+
+			case "processing":
+				epf = pipelineProcessingFlags
 
 			}
 
@@ -248,6 +255,9 @@ func ParseEndpoint(
 			case "show":
 				endpoint = c.Show()
 				data, err = pipelinec.BuildShowPayload(*pipelineShowIDFlag)
+			case "processing":
+				endpoint = c.Processing()
+				data, err = pipelinec.BuildProcessingPayload(*pipelineProcessingIDFlag)
 			}
 		case "batch":
 			c := batchc.NewClient(scheme, host, doer, enc, dec, restore)
@@ -311,6 +321,7 @@ Usage:
 COMMAND:
     list: List all known pipelines
     show: Show pipeline by ID
+    processing: List all processing configurations of a pipeline given its ID
 
 Additional help:
     %[1]s pipeline COMMAND --help
@@ -323,7 +334,7 @@ List all known pipelines
     -name STRING: 
 
 Example:
-    %[1]s pipeline list --name "Corrupti reiciendis laudantium."
+    %[1]s pipeline list --name "Officia quibusdam dolore in aliquid aut optio."
 `, os.Args[0])
 }
 
@@ -334,7 +345,18 @@ Show pipeline by ID
     -id STRING: Identifier of pipeline to show
 
 Example:
-    %[1]s pipeline show --id "5D93A99A-535C-03BB-87BD-865144549E25"
+    %[1]s pipeline show --id "6BD40BD6-7AF6-FB4E-C1C1-23700A0E68DE"
+`, os.Args[0])
+}
+
+func pipelineProcessingUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] pipeline processing -id STRING
+
+List all processing configurations of a pipeline given its ID
+    -id STRING: Identifier of pipeline
+
+Example:
+    %[1]s pipeline processing --id "799C598D-49D1-F53A-0ED6-818482028C45"
 `, os.Args[0])
 }
 
@@ -360,9 +382,9 @@ Submit a new batch
 
 Example:
     %[1]s batch submit --body '{
-      "path": "Eos quia voluptas aspernatur quas minima.",
-      "pipeline": "Quod odio nulla.",
-      "processing_config": "Rerum voluptatem voluptatem labore."
+      "path": "Hic deleniti quidem.",
+      "pipeline": "Esse quisquam blanditiis ut aut.",
+      "processing_config": "Facilis quo vero architecto ab doloribus."
    }'
 `, os.Args[0])
 }
@@ -415,7 +437,7 @@ List all stored collections
     -cursor STRING: 
 
 Example:
-    %[1]s collection list --name "Molestias et qui corporis." --original-id "Hic deleniti quidem." --transfer-id "A129B534-C1FC-F09D-BF29-3DA5781E0ECB" --aip-id "4CCDE767-7648-444F-D09F-4B4FFE4EB36B" --pipeline-id "0C589E55-99C1-3ED8-809A-1463C91242B6" --earliest-created-time "1973-08-21T00:35:08Z" --latest-created-time "1986-02-14T21:37:44Z" --status "pending" --cursor "Vel odit vitae ut alias voluptas molestias."
+    %[1]s collection list --name "Est ut eum quis nihil soluta ut." --original-id "Et voluptas sit." --transfer-id "4CCDE767-7648-444F-D09F-4B4FFE4EB36B" --aip-id "0C589E55-99C1-3ED8-809A-1463C91242B6" --pipeline-id "AB12B85B-1864-53B4-4A92-3519B45D0D5E" --earliest-created-time "1983-03-24T18:13:30Z" --latest-created-time "1989-05-24T14:37:08Z" --status "abandoned" --cursor "Asperiores cum aliquid aut impedit tenetur iure."
 `, os.Args[0])
 }
 
@@ -426,7 +448,7 @@ Show collection by ID
     -id UINT: Identifier of collection to show
 
 Example:
-    %[1]s collection show --id 9188529240547168068
+    %[1]s collection show --id 16226413424839125038
 `, os.Args[0])
 }
 
@@ -437,7 +459,7 @@ Delete collection by ID
     -id UINT: Identifier of collection to delete
 
 Example:
-    %[1]s collection delete --id 10916720185593198763
+    %[1]s collection delete --id 13127725253964961724
 `, os.Args[0])
 }
 
@@ -448,7 +470,7 @@ Cancel collection processing by ID
     -id UINT: Identifier of collection to remove
 
 Example:
-    %[1]s collection cancel --id 646974705416522731
+    %[1]s collection cancel --id 7982077703646575391
 `, os.Args[0])
 }
 
@@ -459,7 +481,7 @@ Retry collection processing by ID
     -id UINT: Identifier of collection to retry
 
 Example:
-    %[1]s collection retry --id 2018151398983385474
+    %[1]s collection retry --id 2846484845428550035
 `, os.Args[0])
 }
 
@@ -470,7 +492,7 @@ Retrieve workflow status by ID
     -id UINT: Identifier of collection to look up
 
 Example:
-    %[1]s collection workflow --id 15656824071418464692
+    %[1]s collection workflow --id 14489675283330150547
 `, os.Args[0])
 }
 
@@ -481,7 +503,7 @@ Download collection by ID
     -id UINT: Identifier of collection to look up
 
 Example:
-    %[1]s collection download --id 9146733231910218533
+    %[1]s collection download --id 2413256010816516905
 `, os.Args[0])
 }
 
@@ -494,8 +516,8 @@ Make decision for a pending collection by ID
 
 Example:
     %[1]s collection decide --body '{
-      "option": "Occaecati aut."
-   }' --id 16364633503575410051
+      "option": "Aut voluptatem labore expedita odio praesentium et."
+   }' --id 14857201764762641199
 `, os.Args[0])
 }
 
@@ -508,8 +530,8 @@ Bulk operations (retry, cancel...).
 Example:
     %[1]s collection bulk --body '{
       "operation": "cancel",
-      "size": 8676398643222733978,
-      "status": "in progress"
+      "size": 9856036078581782826,
+      "status": "abandoned"
    }'
 `, os.Args[0])
 }

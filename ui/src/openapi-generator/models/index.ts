@@ -27,5 +27,6 @@ export * from './EnduroStoredCollectionResponseBody';
 export * from './EnduroStoredCollectionResponseBodyCollection';
 export * from './EnduroStoredPipelineResponse';
 export * from './InlineObject';
+export * from './PipelineProcessingNotFoundResponseBody';
 export * from './PipelineShowNotFoundResponseBody';
 export * from './PipelineShowResponseBody';

@@ -21,9 +21,9 @@ type ListResponseBody []*EnduroStoredPipelineResponse
 // ShowResponseBody is the type of the "pipeline" service "show" endpoint HTTP
 // response body.
 type ShowResponseBody struct {
-	// Name of the collection
+	// Identifier of the pipeline
 	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
-	// Name of the collection
+	// Name of the pipeline
 	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
 	// Maximum concurrent transfers
 	Capacity *int64 `form:"capacity,omitempty" json:"capacity,omitempty" xml:"capacity,omitempty"`
@@ -36,15 +36,24 @@ type ShowResponseBody struct {
 type ShowNotFoundResponseBody struct {
 	// Message of error
 	Message *string `form:"message,omitempty" json:"message,omitempty" xml:"message,omitempty"`
-	// Identifier of missing collection
-	ID *uint `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
+	// Identifier of missing pipeline
+	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
+}
+
+// ProcessingNotFoundResponseBody is the type of the "pipeline" service
+// "processing" endpoint HTTP response body for the "not_found" error.
+type ProcessingNotFoundResponseBody struct {
+	// Message of error
+	Message *string `form:"message,omitempty" json:"message,omitempty" xml:"message,omitempty"`
+	// Identifier of missing pipeline
+	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
 }
 
 // EnduroStoredPipelineResponse is used to define fields on response body types.
 type EnduroStoredPipelineResponse struct {
-	// Name of the collection
+	// Identifier of the pipeline
 	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
-	// Name of the collection
+	// Name of the pipeline
 	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
 	// Maximum concurrent transfers
 	Capacity *int64 `form:"capacity,omitempty" json:"capacity,omitempty" xml:"capacity,omitempty"`
@@ -77,8 +86,19 @@ func NewShowEnduroStoredPipelineOK(body *ShowResponseBody) *pipelineviews.Enduro
 }
 
 // NewShowNotFound builds a pipeline service show endpoint not_found error.
-func NewShowNotFound(body *ShowNotFoundResponseBody) *pipeline.NotFound {
-	v := &pipeline.NotFound{
+func NewShowNotFound(body *ShowNotFoundResponseBody) *pipeline.PipelineNotFound {
+	v := &pipeline.PipelineNotFound{
+		Message: *body.Message,
+		ID:      *body.ID,
+	}
+
+	return v
+}
+
+// NewProcessingNotFound builds a pipeline service processing endpoint
+// not_found error.
+func NewProcessingNotFound(body *ProcessingNotFoundResponseBody) *pipeline.PipelineNotFound {
+	v := &pipeline.PipelineNotFound{
 		Message: *body.Message,
 		ID:      *body.ID,
 	}
@@ -89,6 +109,18 @@ func NewShowNotFound(body *ShowNotFoundResponseBody) *pipeline.NotFound {
 // ValidateShowNotFoundResponseBody runs the validations defined on
 // show_not_found_response_body
 func ValidateShowNotFoundResponseBody(body *ShowNotFoundResponseBody) (err error) {
+	if body.Message == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("message", "body"))
+	}
+	if body.ID == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("id", "body"))
+	}
+	return
+}
+
+// ValidateProcessingNotFoundResponseBody runs the validations defined on
+// processing_not_found_response_body
+func ValidateProcessingNotFoundResponseBody(body *ProcessingNotFoundResponseBody) (err error) {
 	if body.Message == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("message", "body"))
 	}

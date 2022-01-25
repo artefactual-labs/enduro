@@ -8,8 +8,9 @@ import (
 )
 
 type Service interface {
-	List(context.Context, *goapipeline.ListPayload) (res []*goapipeline.EnduroStoredPipeline, err error)
-	Show(context.Context, *goapipeline.ShowPayload) (res *goapipeline.EnduroStoredPipeline, err error)
+	List(context.Context, *goapipeline.ListPayload) ([]*goapipeline.EnduroStoredPipeline, error)
+	Show(context.Context, *goapipeline.ShowPayload) (*goapipeline.EnduroStoredPipeline, error)
+	Processing(context.Context, *goapipeline.ProcessingPayload) ([]string, error)
 }
 
 type pipelineImpl struct {
@@ -62,4 +63,18 @@ func (w *pipelineImpl) Show(ctx context.Context, payload *goapipeline.ShowPayloa
 		Capacity: &size,
 		Current:  &cur,
 	}, nil
+}
+
+func (w *pipelineImpl) Processing(ctx context.Context, payload *goapipeline.ProcessingPayload) ([]string, error) {
+	pipeline, err := w.registry.ByID(payload.ID)
+	if err != nil {
+		return nil, &goapipeline.PipelineNotFound{Message: "not_found", ID: payload.ID}
+	}
+
+	amc := pipeline.Client()
+
+	var ret []string
+	ret, _, err = amc.ProcessingConfig.List(ctx)
+
+	return ret, err
 }

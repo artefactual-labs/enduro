@@ -20,10 +20,11 @@ import (
 
 // Server lists the pipeline service endpoint HTTP handlers.
 type Server struct {
-	Mounts []*MountPoint
-	List   http.Handler
-	Show   http.Handler
-	CORS   http.Handler
+	Mounts     []*MountPoint
+	List       http.Handler
+	Show       http.Handler
+	Processing http.Handler
+	CORS       http.Handler
 }
 
 // ErrorNamer is an interface implemented by generated error structs that
@@ -61,12 +62,15 @@ func New(
 		Mounts: []*MountPoint{
 			{"List", "GET", "/pipeline"},
 			{"Show", "GET", "/pipeline/{id}"},
+			{"Processing", "GET", "/pipeline/{id}/processing"},
 			{"CORS", "OPTIONS", "/pipeline"},
 			{"CORS", "OPTIONS", "/pipeline/{id}"},
+			{"CORS", "OPTIONS", "/pipeline/{id}/processing"},
 		},
-		List: NewListHandler(e.List, mux, decoder, encoder, errhandler, formatter),
-		Show: NewShowHandler(e.Show, mux, decoder, encoder, errhandler, formatter),
-		CORS: NewCORSHandler(),
+		List:       NewListHandler(e.List, mux, decoder, encoder, errhandler, formatter),
+		Show:       NewShowHandler(e.Show, mux, decoder, encoder, errhandler, formatter),
+		Processing: NewProcessingHandler(e.Processing, mux, decoder, encoder, errhandler, formatter),
+		CORS:       NewCORSHandler(),
 	}
 }
 
@@ -77,6 +81,7 @@ func (s *Server) Service() string { return "pipeline" }
 func (s *Server) Use(m func(http.Handler) http.Handler) {
 	s.List = m(s.List)
 	s.Show = m(s.Show)
+	s.Processing = m(s.Processing)
 	s.CORS = m(s.CORS)
 }
 
@@ -84,6 +89,7 @@ func (s *Server) Use(m func(http.Handler) http.Handler) {
 func Mount(mux goahttp.Muxer, h *Server) {
 	MountListHandler(mux, h.List)
 	MountShowHandler(mux, h.Show)
+	MountProcessingHandler(mux, h.Processing)
 	MountCORSHandler(mux, h.CORS)
 }
 
@@ -194,12 +200,64 @@ func NewShowHandler(
 	})
 }
 
+// MountProcessingHandler configures the mux to serve the "pipeline" service
+// "processing" endpoint.
+func MountProcessingHandler(mux goahttp.Muxer, h http.Handler) {
+	f, ok := HandlePipelineOrigin(h).(http.HandlerFunc)
+	if !ok {
+		f = func(w http.ResponseWriter, r *http.Request) {
+			h.ServeHTTP(w, r)
+		}
+	}
+	mux.Handle("GET", "/pipeline/{id}/processing", f)
+}
+
+// NewProcessingHandler creates a HTTP handler which loads the HTTP request and
+// calls the "pipeline" service "processing" endpoint.
+func NewProcessingHandler(
+	endpoint goa.Endpoint,
+	mux goahttp.Muxer,
+	decoder func(*http.Request) goahttp.Decoder,
+	encoder func(context.Context, http.ResponseWriter) goahttp.Encoder,
+	errhandler func(context.Context, http.ResponseWriter, error),
+	formatter func(err error) goahttp.Statuser,
+) http.Handler {
+	var (
+		decodeRequest  = DecodeProcessingRequest(mux, decoder)
+		encodeResponse = EncodeProcessingResponse(encoder)
+		encodeError    = EncodeProcessingError(encoder, formatter)
+	)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
+		ctx = context.WithValue(ctx, goa.MethodKey, "processing")
+		ctx = context.WithValue(ctx, goa.ServiceKey, "pipeline")
+		payload, err := decodeRequest(r)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		res, err := endpoint(ctx, payload)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		if err := encodeResponse(ctx, w, res); err != nil {
+			errhandler(ctx, w, err)
+		}
+	})
+}
+
 // MountCORSHandler configures the mux to serve the CORS endpoints for the
 // service pipeline.
 func MountCORSHandler(mux goahttp.Muxer, h http.Handler) {
 	h = HandlePipelineOrigin(h)
 	mux.Handle("OPTIONS", "/pipeline", h.ServeHTTP)
 	mux.Handle("OPTIONS", "/pipeline/{id}", h.ServeHTTP)
+	mux.Handle("OPTIONS", "/pipeline/{id}/processing", h.ServeHTTP)
 }
 
 // NewCORSHandler creates a HTTP handler which returns a simple 200 response.

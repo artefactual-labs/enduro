@@ -130,7 +130,7 @@ func (w *goaWrapper) List(ctx context.Context, payload *goacollection.ListPayloa
 func (w *goaWrapper) Show(ctx context.Context, payload *goacollection.ShowPayload) (*goacollection.EnduroStoredCollection, error) {
 	c, err := w.read(ctx, payload.ID)
 	if err == sql.ErrNoRows {
-		return nil, &goacollection.NotFound{ID: payload.ID, Message: "not_found"}
+		return nil, &goacollection.CollectionNotfound{ID: payload.ID, Message: "not_found"}
 	} else if err != nil {
 		return nil, err
 	}
@@ -154,7 +154,7 @@ func (w *goaWrapper) Delete(ctx context.Context, payload *goacollection.DeletePa
 		return err
 	}
 	if n != 1 {
-		return &goacollection.NotFound{ID: payload.ID, Message: "not_found"}
+		return &goacollection.CollectionNotfound{ID: payload.ID, Message: "not_found"}
 	}
 
 	return nil
@@ -236,7 +236,7 @@ func (w *goaWrapper) Workflow(ctx context.Context, payload *goacollection.Workfl
 	if err != nil {
 		switch err.(type) {
 		case *shared.EntityNotExistsError:
-			return nil, &goacollection.NotFound{Message: "not_found"}
+			return nil, &goacollection.CollectionNotfound{Message: "not_found"}
 		default:
 			return nil, fmt.Errorf("error looking up history: %v", err)
 		}
@@ -280,7 +280,7 @@ func (w *goaWrapper) Decide(ctx context.Context, payload *goacollection.DecidePa
 	c, err := w.read(ctx, payload.ID)
 
 	if err == sql.ErrNoRows {
-		return &goacollection.NotFound{ID: payload.ID, Message: "not_found"}
+		return &goacollection.CollectionNotfound{ID: payload.ID, Message: "not_found"}
 	} else if err != nil {
 		return err
 	}

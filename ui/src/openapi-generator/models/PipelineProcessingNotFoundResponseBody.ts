@@ -16,28 +16,28 @@ import { exists, mapValues } from '../runtime';
 /**
  * Pipeline not found
  * @export
- * @interface PipelineShowNotFoundResponseBody
+ * @interface PipelineProcessingNotFoundResponseBody
  */
-export interface PipelineShowNotFoundResponseBody {
+export interface PipelineProcessingNotFoundResponseBody {
     /**
      * Identifier of missing pipeline
      * @type {string}
-     * @memberof PipelineShowNotFoundResponseBody
+     * @memberof PipelineProcessingNotFoundResponseBody
      */
     id: string;
     /**
      * Message of error
      * @type {string}
-     * @memberof PipelineShowNotFoundResponseBody
+     * @memberof PipelineProcessingNotFoundResponseBody
      */
     message: string;
 }
 
-export function PipelineShowNotFoundResponseBodyFromJSON(json: any): PipelineShowNotFoundResponseBody {
-    return PipelineShowNotFoundResponseBodyFromJSONTyped(json, false);
+export function PipelineProcessingNotFoundResponseBodyFromJSON(json: any): PipelineProcessingNotFoundResponseBody {
+    return PipelineProcessingNotFoundResponseBodyFromJSONTyped(json, false);
 }
 
-export function PipelineShowNotFoundResponseBodyFromJSONTyped(json: any, ignoreDiscriminator: boolean): PipelineShowNotFoundResponseBody {
+export function PipelineProcessingNotFoundResponseBodyFromJSONTyped(json: any, ignoreDiscriminator: boolean): PipelineProcessingNotFoundResponseBody {
     if ((json === undefined) || (json === null)) {
         return json;
     }
@@ -48,7 +48,7 @@ export function PipelineShowNotFoundResponseBodyFromJSONTyped(json: any, ignoreD
     };
 }
 
-export function PipelineShowNotFoundResponseBodyToJSON(value?: PipelineShowNotFoundResponseBody | null): any {
+export function PipelineProcessingNotFoundResponseBodyToJSON(value?: PipelineProcessingNotFoundResponseBody | null): any {
     if (value === undefined) {
         return undefined;
     }

@@ -58,7 +58,7 @@ var _ = Service("collection", func() {
 			Required("id")
 		})
 		Result(StoredCollection)
-		Error("not_found", NotFound, "Collection not found")
+		Error("not_found", CollectionNotFound, "Collection not found")
 		HTTP(func() {
 			GET("/{id}")
 			Response(StatusOK)
@@ -71,7 +71,7 @@ var _ = Service("collection", func() {
 			Attribute("id", UInt, "Identifier of collection to delete")
 			Required("id")
 		})
-		Error("not_found", NotFound, "Collection not found")
+		Error("not_found", CollectionNotFound, "Collection not found")
 		HTTP(func() {
 			DELETE("/{id}")
 			Response(StatusNoContent)
@@ -84,7 +84,7 @@ var _ = Service("collection", func() {
 			Attribute("id", UInt, "Identifier of collection to remove")
 			Required("id")
 		})
-		Error("not_found", NotFound, "Collection not found")
+		Error("not_found", CollectionNotFound, "Collection not found")
 		Error("not_running")
 		HTTP(func() {
 			POST("/{id}/cancel")
@@ -99,7 +99,7 @@ var _ = Service("collection", func() {
 			Attribute("id", UInt, "Identifier of collection to retry")
 			Required("id")
 		})
-		Error("not_found", NotFound, "Collection not found")
+		Error("not_found", CollectionNotFound, "Collection not found")
 		Error("not_running")
 		HTTP(func() {
 			POST("/{id}/retry")
@@ -115,7 +115,7 @@ var _ = Service("collection", func() {
 			Required("id")
 		})
 		Result(WorkflowStatus)
-		Error("not_found", NotFound, "Collection not found")
+		Error("not_found", CollectionNotFound, "Collection not found")
 		HTTP(func() {
 			GET("/{id}/workflow")
 			Response(StatusOK)
@@ -129,7 +129,7 @@ var _ = Service("collection", func() {
 			Required("id")
 		})
 		Result(Bytes)
-		Error("not_found", NotFound, "Collection not found")
+		Error("not_found", CollectionNotFound, "Collection not found")
 		HTTP(func() {
 			GET("/{id}/download")
 			Response(StatusOK)
@@ -143,7 +143,7 @@ var _ = Service("collection", func() {
 			Attribute("option", String, "Decision option to proceed with")
 			Required("id", "option")
 		})
-		Error("not_found", NotFound, "Collection not found")
+		Error("not_found", CollectionNotFound, "Collection not found")
 		Error("not_valid")
 		HTTP(func() {
 			POST("/{id}/decision")
@@ -277,8 +277,8 @@ var WorkflowHistoryEvent = ResultType("application/vnd.enduro.collection-workflo
 	})
 })
 
-var NotFound = Type("NotFound", func() {
-	Description("NotFound is the type returned when attempting to operate with a collection that does not exist.")
+var CollectionNotFound = Type("CollectionNotfound", func() {
+	Description("Collection not found.")
 	Attribute("message", String, "Message of error", func() {
 		Meta("struct:error:name")
 	})

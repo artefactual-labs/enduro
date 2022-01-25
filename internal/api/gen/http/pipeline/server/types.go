@@ -20,9 +20,9 @@ type ListResponseBody []*EnduroStoredPipelineResponse
 // ShowResponseBody is the type of the "pipeline" service "show" endpoint HTTP
 // response body.
 type ShowResponseBody struct {
-	// Name of the collection
+	// Identifier of the pipeline
 	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
-	// Name of the collection
+	// Name of the pipeline
 	Name string `form:"name" json:"name" xml:"name"`
 	// Maximum concurrent transfers
 	Capacity *int64 `form:"capacity,omitempty" json:"capacity,omitempty" xml:"capacity,omitempty"`
@@ -35,15 +35,24 @@ type ShowResponseBody struct {
 type ShowNotFoundResponseBody struct {
 	// Message of error
 	Message string `form:"message" json:"message" xml:"message"`
-	// Identifier of missing collection
-	ID uint `form:"id" json:"id" xml:"id"`
+	// Identifier of missing pipeline
+	ID string `form:"id" json:"id" xml:"id"`
+}
+
+// ProcessingNotFoundResponseBody is the type of the "pipeline" service
+// "processing" endpoint HTTP response body for the "not_found" error.
+type ProcessingNotFoundResponseBody struct {
+	// Message of error
+	Message string `form:"message" json:"message" xml:"message"`
+	// Identifier of missing pipeline
+	ID string `form:"id" json:"id" xml:"id"`
 }
 
 // EnduroStoredPipelineResponse is used to define fields on response body types.
 type EnduroStoredPipelineResponse struct {
-	// Name of the collection
+	// Identifier of the pipeline
 	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
-	// Name of the collection
+	// Name of the pipeline
 	Name string `form:"name" json:"name" xml:"name"`
 	// Maximum concurrent transfers
 	Capacity *int64 `form:"capacity,omitempty" json:"capacity,omitempty" xml:"capacity,omitempty"`
@@ -75,8 +84,18 @@ func NewShowResponseBody(res *pipelineviews.EnduroStoredPipelineView) *ShowRespo
 
 // NewShowNotFoundResponseBody builds the HTTP response body from the result of
 // the "show" endpoint of the "pipeline" service.
-func NewShowNotFoundResponseBody(res *pipeline.NotFound) *ShowNotFoundResponseBody {
+func NewShowNotFoundResponseBody(res *pipeline.PipelineNotFound) *ShowNotFoundResponseBody {
 	body := &ShowNotFoundResponseBody{
+		Message: res.Message,
+		ID:      res.ID,
+	}
+	return body
+}
+
+// NewProcessingNotFoundResponseBody builds the HTTP response body from the
+// result of the "processing" endpoint of the "pipeline" service.
+func NewProcessingNotFoundResponseBody(res *pipeline.PipelineNotFound) *ProcessingNotFoundResponseBody {
+	body := &ProcessingNotFoundResponseBody{
 		Message: res.Message,
 		ID:      res.ID,
 	}
@@ -94,6 +113,14 @@ func NewListPayload(name *string) *pipeline.ListPayload {
 // NewShowPayload builds a pipeline service show endpoint payload.
 func NewShowPayload(id string) *pipeline.ShowPayload {
 	v := &pipeline.ShowPayload{}
+	v.ID = id
+
+	return v
+}
+
+// NewProcessingPayload builds a pipeline service processing endpoint payload.
+func NewProcessingPayload(id string) *pipeline.ProcessingPayload {
+	v := &pipeline.ProcessingPayload{}
 	v.ID = id
 
 	return v
