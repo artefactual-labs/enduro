@@ -27,15 +27,13 @@
               <b-form-input id="input-path" v-model="form.path" type="text" required></b-form-input>
             </b-form-group>
 
-            <b-form-group label="Pipeline" label-for="input-pipeline" description="Pipeline.">
-              <b-form-input id="input-pipeline" v-model="form.pipeline" type="text" required></b-form-input>
-            </b-form-group>
+            <pipeline-dropdown v-on:pipeline-selected="onPipelineSelected($event)"/>
 
-            <b-form-group label="Processing configuration" label-for="input-processing-conf" description="Type the name of one of the processing configurations available in the pipeline, e.g.: &quot;automated&quot;.">
-              <b-form-input id="input-processing-config" v-model="form.processingConfig" type="text"></b-form-input>
-            </b-form-group>
+            <pipeline-processing-configuration-dropdown :pipeline-id="pipelineId" v-on:pipeline-processing-configuration-selected="form.processingConfig = $event"/>
 
-            <b-button type="submit" variant="primary">Submit</b-button>
+            <div class="actions">
+              <b-button type="submit" variant="primary">Submit</b-button>
+            </div>
 
           </b-form>
 
@@ -51,8 +49,15 @@
 
 import { Component, Vue } from 'vue-property-decorator';
 import { api, EnduroBatchClient } from '../client';
+import PipelineDropdown from '@/components/PipelineDropdown.vue';
+import PipelineProcessingConfigurationDropdown from '@/components/PipelineProcessingConfigurationDropdown.vue';
 
-@Component({})
+@Component({
+  components: {
+    PipelineDropdown,
+    PipelineProcessingConfigurationDropdown,
+  },
+})
 export default class Batch extends Vue {
 
   private form: any = {
@@ -61,9 +66,16 @@ export default class Batch extends Vue {
     processingConfig: null,
   };
 
+  private pipelineId: string = '';
+
   private status: api.BatchStatusResponseBody = {
     running: false,
   };
+
+  private onPipelineSelected($event: any): void {
+    this.pipelineId = $event ? $event.value : null;
+    this.form.pipeline = $event ? $event.text : null;
+  }
 
   private get alertVariant() {
     return this.status.status === 'completed' ? 'success' : 'warning';
