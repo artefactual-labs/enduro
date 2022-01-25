@@ -23,9 +23,9 @@ type EnduroStoredPipeline struct {
 
 // EnduroStoredPipelineView is a type that runs validations on a projected type.
 type EnduroStoredPipelineView struct {
-	// Name of the collection
+	// Identifier of the pipeline
 	ID *string
-	// Name of the collection
+	// Name of the pipeline
 	Name *string
 	// Maximum concurrent transfers
 	Capacity *int64

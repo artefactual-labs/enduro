@@ -337,8 +337,8 @@ func NewShowEnduroStoredCollectionOK(body *ShowResponseBody) *collectionviews.En
 }
 
 // NewShowNotFound builds a collection service show endpoint not_found error.
-func NewShowNotFound(body *ShowNotFoundResponseBody) *collection.NotFound {
-	v := &collection.NotFound{
+func NewShowNotFound(body *ShowNotFoundResponseBody) *collection.CollectionNotfound {
+	v := &collection.CollectionNotfound{
 		Message: *body.Message,
 		ID:      *body.ID,
 	}
@@ -348,8 +348,8 @@ func NewShowNotFound(body *ShowNotFoundResponseBody) *collection.NotFound {
 
 // NewDeleteNotFound builds a collection service delete endpoint not_found
 // error.
-func NewDeleteNotFound(body *DeleteNotFoundResponseBody) *collection.NotFound {
-	v := &collection.NotFound{
+func NewDeleteNotFound(body *DeleteNotFoundResponseBody) *collection.CollectionNotfound {
+	v := &collection.CollectionNotfound{
 		Message: *body.Message,
 		ID:      *body.ID,
 	}
@@ -359,8 +359,8 @@ func NewDeleteNotFound(body *DeleteNotFoundResponseBody) *collection.NotFound {
 
 // NewCancelNotFound builds a collection service cancel endpoint not_found
 // error.
-func NewCancelNotFound(body *CancelNotFoundResponseBody) *collection.NotFound {
-	v := &collection.NotFound{
+func NewCancelNotFound(body *CancelNotFoundResponseBody) *collection.CollectionNotfound {
+	v := &collection.CollectionNotfound{
 		Message: *body.Message,
 		ID:      *body.ID,
 	}
@@ -384,8 +384,8 @@ func NewCancelNotRunning(body *CancelNotRunningResponseBody) *goa.ServiceError {
 }
 
 // NewRetryNotFound builds a collection service retry endpoint not_found error.
-func NewRetryNotFound(body *RetryNotFoundResponseBody) *collection.NotFound {
-	v := &collection.NotFound{
+func NewRetryNotFound(body *RetryNotFoundResponseBody) *collection.CollectionNotfound {
+	v := &collection.CollectionNotfound{
 		Message: *body.Message,
 		ID:      *body.ID,
 	}
@@ -426,8 +426,8 @@ func NewWorkflowEnduroCollectionWorkflowStatusOK(body *WorkflowResponseBody) *co
 
 // NewWorkflowNotFound builds a collection service workflow endpoint not_found
 // error.
-func NewWorkflowNotFound(body *WorkflowNotFoundResponseBody) *collection.NotFound {
-	v := &collection.NotFound{
+func NewWorkflowNotFound(body *WorkflowNotFoundResponseBody) *collection.CollectionNotfound {
+	v := &collection.CollectionNotfound{
 		Message: *body.Message,
 		ID:      *body.ID,
 	}
@@ -437,8 +437,8 @@ func NewWorkflowNotFound(body *WorkflowNotFoundResponseBody) *collection.NotFoun
 
 // NewDownloadNotFound builds a collection service download endpoint not_found
 // error.
-func NewDownloadNotFound(body *DownloadNotFoundResponseBody) *collection.NotFound {
-	v := &collection.NotFound{
+func NewDownloadNotFound(body *DownloadNotFoundResponseBody) *collection.CollectionNotfound {
+	v := &collection.CollectionNotfound{
 		Message: *body.Message,
 		ID:      *body.ID,
 	}
@@ -448,8 +448,8 @@ func NewDownloadNotFound(body *DownloadNotFoundResponseBody) *collection.NotFoun
 
 // NewDecideNotFound builds a collection service decide endpoint not_found
 // error.
-func NewDecideNotFound(body *DecideNotFoundResponseBody) *collection.NotFound {
-	v := &collection.NotFound{
+func NewDecideNotFound(body *DecideNotFoundResponseBody) *collection.CollectionNotfound {
+	v := &collection.CollectionNotfound{
 		Message: *body.Message,
 		ID:      *body.ID,
 	}

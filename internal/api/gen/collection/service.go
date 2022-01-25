@@ -189,9 +189,8 @@ type EnduroCollectionWorkflowHistory struct {
 	Details interface{}
 }
 
-// NotFound is the type returned when attempting to operate with a collection
-// that does not exist.
-type NotFound struct {
+// Collection not found.
+type CollectionNotfound struct {
 	// Message of error
 	Message string
 	// Identifier of missing collection
@@ -199,12 +198,12 @@ type NotFound struct {
 }
 
 // Error returns an error description.
-func (e *NotFound) Error() string {
-	return "NotFound is the type returned when attempting to operate with a collection that does not exist."
+func (e *CollectionNotfound) Error() string {
+	return "Collection not found."
 }
 
-// ErrorName returns "NotFound".
-func (e *NotFound) ErrorName() string {
+// ErrorName returns "CollectionNotfound".
+func (e *CollectionNotfound) ErrorName() string {
 	return e.Message
 }
 

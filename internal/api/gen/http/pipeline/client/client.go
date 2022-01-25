@@ -24,6 +24,10 @@ type Client struct {
 	// Show Doer is the HTTP client used to make requests to the show endpoint.
 	ShowDoer goahttp.Doer
 
+	// Processing Doer is the HTTP client used to make requests to the processing
+	// endpoint.
+	ProcessingDoer goahttp.Doer
+
 	// CORS Doer is the HTTP client used to make requests to the  endpoint.
 	CORSDoer goahttp.Doer
 
@@ -49,6 +53,7 @@ func NewClient(
 	return &Client{
 		ListDoer:            doer,
 		ShowDoer:            doer,
+		ProcessingDoer:      doer,
 		CORSDoer:            doer,
 		RestoreResponseBody: restoreBody,
 		scheme:              scheme,
@@ -96,6 +101,25 @@ func (c *Client) Show() goa.Endpoint {
 		resp, err := c.ShowDoer.Do(req)
 		if err != nil {
 			return nil, goahttp.ErrRequestError("pipeline", "show", err)
+		}
+		return decodeResponse(resp)
+	}
+}
+
+// Processing returns an endpoint that makes HTTP requests to the pipeline
+// service processing server.
+func (c *Client) Processing() goa.Endpoint {
+	var (
+		decodeResponse = DecodeProcessingResponse(c.decoder, c.RestoreResponseBody)
+	)
+	return func(ctx context.Context, v interface{}) (interface{}, error) {
+		req, err := c.BuildProcessingRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.ProcessingDoer.Do(req)
+		if err != nil {
+			return nil, goahttp.ErrRequestError("pipeline", "processing", err)
 		}
 		return decodeResponse(resp)
 	}

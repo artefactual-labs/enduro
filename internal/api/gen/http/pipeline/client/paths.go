@@ -21,3 +21,8 @@ func ListPipelinePath() string {
 func ShowPipelinePath(id string) string {
 	return fmt.Sprintf("/pipeline/%v", id)
 }
+
+// ProcessingPipelinePath returns the URL path to the pipeline service processing HTTP endpoint.
+func ProcessingPipelinePath(id string) string {
+	return fmt.Sprintf("/pipeline/%v/processing", id)
+}

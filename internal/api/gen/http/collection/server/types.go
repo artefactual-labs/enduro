@@ -360,7 +360,7 @@ func NewBulkStatusResponseBody(res *collection.BulkStatusResult) *BulkStatusResp
 
 // NewShowNotFoundResponseBody builds the HTTP response body from the result of
 // the "show" endpoint of the "collection" service.
-func NewShowNotFoundResponseBody(res *collection.NotFound) *ShowNotFoundResponseBody {
+func NewShowNotFoundResponseBody(res *collection.CollectionNotfound) *ShowNotFoundResponseBody {
 	body := &ShowNotFoundResponseBody{
 		Message: res.Message,
 		ID:      res.ID,
@@ -370,7 +370,7 @@ func NewShowNotFoundResponseBody(res *collection.NotFound) *ShowNotFoundResponse
 
 // NewDeleteNotFoundResponseBody builds the HTTP response body from the result
 // of the "delete" endpoint of the "collection" service.
-func NewDeleteNotFoundResponseBody(res *collection.NotFound) *DeleteNotFoundResponseBody {
+func NewDeleteNotFoundResponseBody(res *collection.CollectionNotfound) *DeleteNotFoundResponseBody {
 	body := &DeleteNotFoundResponseBody{
 		Message: res.Message,
 		ID:      res.ID,
@@ -380,7 +380,7 @@ func NewDeleteNotFoundResponseBody(res *collection.NotFound) *DeleteNotFoundResp
 
 // NewCancelNotFoundResponseBody builds the HTTP response body from the result
 // of the "cancel" endpoint of the "collection" service.
-func NewCancelNotFoundResponseBody(res *collection.NotFound) *CancelNotFoundResponseBody {
+func NewCancelNotFoundResponseBody(res *collection.CollectionNotfound) *CancelNotFoundResponseBody {
 	body := &CancelNotFoundResponseBody{
 		Message: res.Message,
 		ID:      res.ID,
@@ -404,7 +404,7 @@ func NewCancelNotRunningResponseBody(res *goa.ServiceError) *CancelNotRunningRes
 
 // NewRetryNotFoundResponseBody builds the HTTP response body from the result
 // of the "retry" endpoint of the "collection" service.
-func NewRetryNotFoundResponseBody(res *collection.NotFound) *RetryNotFoundResponseBody {
+func NewRetryNotFoundResponseBody(res *collection.CollectionNotfound) *RetryNotFoundResponseBody {
 	body := &RetryNotFoundResponseBody{
 		Message: res.Message,
 		ID:      res.ID,
@@ -428,7 +428,7 @@ func NewRetryNotRunningResponseBody(res *goa.ServiceError) *RetryNotRunningRespo
 
 // NewWorkflowNotFoundResponseBody builds the HTTP response body from the
 // result of the "workflow" endpoint of the "collection" service.
-func NewWorkflowNotFoundResponseBody(res *collection.NotFound) *WorkflowNotFoundResponseBody {
+func NewWorkflowNotFoundResponseBody(res *collection.CollectionNotfound) *WorkflowNotFoundResponseBody {
 	body := &WorkflowNotFoundResponseBody{
 		Message: res.Message,
 		ID:      res.ID,
@@ -438,7 +438,7 @@ func NewWorkflowNotFoundResponseBody(res *collection.NotFound) *WorkflowNotFound
 
 // NewDownloadNotFoundResponseBody builds the HTTP response body from the
 // result of the "download" endpoint of the "collection" service.
-func NewDownloadNotFoundResponseBody(res *collection.NotFound) *DownloadNotFoundResponseBody {
+func NewDownloadNotFoundResponseBody(res *collection.CollectionNotfound) *DownloadNotFoundResponseBody {
 	body := &DownloadNotFoundResponseBody{
 		Message: res.Message,
 		ID:      res.ID,
@@ -448,7 +448,7 @@ func NewDownloadNotFoundResponseBody(res *collection.NotFound) *DownloadNotFound
 
 // NewDecideNotFoundResponseBody builds the HTTP response body from the result
 // of the "decide" endpoint of the "collection" service.
-func NewDecideNotFoundResponseBody(res *collection.NotFound) *DecideNotFoundResponseBody {
+func NewDecideNotFoundResponseBody(res *collection.CollectionNotfound) *DecideNotFoundResponseBody {
 	body := &DecideNotFoundResponseBody{
 		Message: res.Message,
 		ID:      res.ID,

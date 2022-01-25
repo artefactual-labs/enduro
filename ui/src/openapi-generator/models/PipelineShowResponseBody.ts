@@ -32,13 +32,13 @@ export interface PipelineShowResponseBody {
      */
     current?: number;
     /**
-     * Name of the collection
+     * Identifier of the pipeline
      * @type {string}
      * @memberof PipelineShowResponseBody
      */
     id?: string;
     /**
-     * Name of the collection
+     * Name of the pipeline
      * @type {string}
      * @memberof PipelineShowResponseBody
      */

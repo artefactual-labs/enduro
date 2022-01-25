@@ -163,7 +163,7 @@ func EncodeShowError(encoder func(context.Context, http.ResponseWriter) goahttp.
 		}
 		switch en.ErrorName() {
 		case "not_found":
-			res := v.(*collection.NotFound)
+			res := v.(*collection.CollectionNotfound)
 			enc := encoder(ctx, w)
 			var body interface{}
 			if formatter != nil {
@@ -227,7 +227,7 @@ func EncodeDeleteError(encoder func(context.Context, http.ResponseWriter) goahtt
 		}
 		switch en.ErrorName() {
 		case "not_found":
-			res := v.(*collection.NotFound)
+			res := v.(*collection.CollectionNotfound)
 			enc := encoder(ctx, w)
 			var body interface{}
 			if formatter != nil {
@@ -291,7 +291,7 @@ func EncodeCancelError(encoder func(context.Context, http.ResponseWriter) goahtt
 		}
 		switch en.ErrorName() {
 		case "not_found":
-			res := v.(*collection.NotFound)
+			res := v.(*collection.CollectionNotfound)
 			enc := encoder(ctx, w)
 			var body interface{}
 			if formatter != nil {
@@ -367,7 +367,7 @@ func EncodeRetryError(encoder func(context.Context, http.ResponseWriter) goahttp
 		}
 		switch en.ErrorName() {
 		case "not_found":
-			res := v.(*collection.NotFound)
+			res := v.(*collection.CollectionNotfound)
 			enc := encoder(ctx, w)
 			var body interface{}
 			if formatter != nil {
@@ -446,7 +446,7 @@ func EncodeWorkflowError(encoder func(context.Context, http.ResponseWriter) goah
 		}
 		switch en.ErrorName() {
 		case "not_found":
-			res := v.(*collection.NotFound)
+			res := v.(*collection.CollectionNotfound)
 			enc := encoder(ctx, w)
 			var body interface{}
 			if formatter != nil {
@@ -513,7 +513,7 @@ func EncodeDownloadError(encoder func(context.Context, http.ResponseWriter) goah
 		}
 		switch en.ErrorName() {
 		case "not_found":
-			res := v.(*collection.NotFound)
+			res := v.(*collection.CollectionNotfound)
 			enc := encoder(ctx, w)
 			var body interface{}
 			if formatter != nil {
@@ -591,7 +591,7 @@ func EncodeDecideError(encoder func(context.Context, http.ResponseWriter) goahtt
 		}
 		switch en.ErrorName() {
 		case "not_found":
-			res := v.(*collection.NotFound)
+			res := v.(*collection.CollectionNotfound)
 			enc := encoder(ctx, w)
 			var body interface{}
 			if formatter != nil {

@@ -16,15 +16,17 @@ import (
 
 // Endpoints wraps the "pipeline" service endpoints.
 type Endpoints struct {
-	List goa.Endpoint
-	Show goa.Endpoint
+	List       goa.Endpoint
+	Show       goa.Endpoint
+	Processing goa.Endpoint
 }
 
 // NewEndpoints wraps the methods of the "pipeline" service with endpoints.
 func NewEndpoints(s Service) *Endpoints {
 	return &Endpoints{
-		List: NewListEndpoint(s),
-		Show: NewShowEndpoint(s),
+		List:       NewListEndpoint(s),
+		Show:       NewShowEndpoint(s),
+		Processing: NewProcessingEndpoint(s),
 	}
 }
 
@@ -32,6 +34,7 @@ func NewEndpoints(s Service) *Endpoints {
 func (e *Endpoints) Use(m func(goa.Endpoint) goa.Endpoint) {
 	e.List = m(e.List)
 	e.Show = m(e.Show)
+	e.Processing = m(e.Processing)
 }
 
 // NewListEndpoint returns an endpoint function that calls the method "list" of
@@ -54,5 +57,14 @@ func NewShowEndpoint(s Service) goa.Endpoint {
 		}
 		vres := NewViewedEnduroStoredPipeline(res, "default")
 		return vres, nil
+	}
+}
+
+// NewProcessingEndpoint returns an endpoint function that calls the method
+// "processing" of service "pipeline".
+func NewProcessingEndpoint(s Service) goa.Endpoint {
+	return func(ctx context.Context, req interface{}) (interface{}, error) {
+		p := req.(*ProcessingPayload)
+		return s.Processing(ctx, p)
 	}
 }

@@ -30,9 +30,23 @@ var _ = Service("pipeline", func() {
 			Required("id")
 		})
 		Result(StoredPipeline)
-		Error("not_found", NotFound, "Collection not found")
+		Error("not_found", PipelineNotFound, "Pipeline not found")
 		HTTP(func() {
 			GET("/{id}")
+			Response(StatusOK)
+			Response("not_found", StatusNotFound)
+		})
+	})
+	Method("processing", func() {
+		Description("List all processing configurations of a pipeline given its ID")
+		Payload(func() {
+			Attribute("id", String, "Identifier of pipeline", func() { Format(FormatUUID) })
+			Required("id")
+		})
+		Result(ArrayOf(String))
+		Error("not_found", PipelineNotFound, "Pipeline not found")
+		HTTP(func() {
+			GET("/{id}/processing")
 			Response(StatusOK)
 			Response("not_found", StatusNotFound)
 		})
@@ -41,8 +55,8 @@ var _ = Service("pipeline", func() {
 
 var Pipeline = Type("Pipeline", func() {
 	Description("Pipeline describes an Archivematica pipeline.")
-	Attribute("id", String, "Name of the collection", func() { Format(FormatUUID) })
-	Attribute("name", String, "Name of the collection")
+	Attribute("id", String, "Identifier of the pipeline", func() { Format(FormatUUID) })
+	Attribute("name", String, "Name of the pipeline")
 	Attribute("capacity", Int64, "Maximum concurrent transfers")
 	Attribute("current", Int64, "Current transfers")
 	Required("name")
@@ -64,4 +78,13 @@ var StoredPipeline = ResultType("application/vnd.enduro.stored-pipeline", func()
 		Attribute("current")
 	})
 	Required("name")
+})
+
+var PipelineNotFound = Type("PipelineNotFound", func() {
+	Description("Pipeline not found.")
+	Attribute("message", String, "Message of error", func() {
+		Meta("struct:error:name")
+	})
+	Attribute("id", String, "Identifier of missing pipeline")
+	Required("message", "id")
 })

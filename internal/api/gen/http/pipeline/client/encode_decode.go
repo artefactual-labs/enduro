@@ -128,7 +128,7 @@ func (c *Client) BuildShowRequest(ctx context.Context, v interface{}) (*http.Req
 // show endpoint. restoreBody controls whether the response body should be
 // restored after having been read.
 // DecodeShowResponse may return the following errors:
-//	- "not_found" (type *pipeline.NotFound): http.StatusNotFound
+//	- "not_found" (type *pipeline.PipelineNotFound): http.StatusNotFound
 //	- error: internal error
 func DecodeShowResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (interface{}, error) {
 	return func(resp *http.Response) (interface{}, error) {
@@ -179,6 +179,83 @@ func DecodeShowResponse(decoder func(*http.Response) goahttp.Decoder, restoreBod
 		default:
 			body, _ := ioutil.ReadAll(resp.Body)
 			return nil, goahttp.ErrInvalidResponse("pipeline", "show", resp.StatusCode, string(body))
+		}
+	}
+}
+
+// BuildProcessingRequest instantiates a HTTP request object with method and
+// path set to call the "pipeline" service "processing" endpoint
+func (c *Client) BuildProcessingRequest(ctx context.Context, v interface{}) (*http.Request, error) {
+	var (
+		id string
+	)
+	{
+		p, ok := v.(*pipeline.ProcessingPayload)
+		if !ok {
+			return nil, goahttp.ErrInvalidType("pipeline", "processing", "*pipeline.ProcessingPayload", v)
+		}
+		id = p.ID
+	}
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: ProcessingPipelinePath(id)}
+	req, err := http.NewRequest("GET", u.String(), nil)
+	if err != nil {
+		return nil, goahttp.ErrInvalidURL("pipeline", "processing", u.String(), err)
+	}
+	if ctx != nil {
+		req = req.WithContext(ctx)
+	}
+
+	return req, nil
+}
+
+// DecodeProcessingResponse returns a decoder for responses returned by the
+// pipeline processing endpoint. restoreBody controls whether the response body
+// should be restored after having been read.
+// DecodeProcessingResponse may return the following errors:
+//	- "not_found" (type *pipeline.PipelineNotFound): http.StatusNotFound
+//	- error: internal error
+func DecodeProcessingResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (interface{}, error) {
+	return func(resp *http.Response) (interface{}, error) {
+		if restoreBody {
+			b, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			resp.Body = ioutil.NopCloser(bytes.NewBuffer(b))
+			defer func() {
+				resp.Body = ioutil.NopCloser(bytes.NewBuffer(b))
+			}()
+		} else {
+			defer resp.Body.Close()
+		}
+		switch resp.StatusCode {
+		case http.StatusOK:
+			var (
+				body []string
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("pipeline", "processing", err)
+			}
+			return body, nil
+		case http.StatusNotFound:
+			var (
+				body ProcessingNotFoundResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("pipeline", "processing", err)
+			}
+			err = ValidateProcessingNotFoundResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("pipeline", "processing", err)
+			}
+			return nil, NewProcessingNotFound(&body)
+		default:
+			body, _ := ioutil.ReadAll(resp.Body)
+			return nil, goahttp.ErrInvalidResponse("pipeline", "processing", resp.StatusCode, string(body))
 		}
 	}
 }

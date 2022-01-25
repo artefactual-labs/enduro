@@ -20,6 +20,8 @@ type Service interface {
 	List(context.Context, *ListPayload) (res []*EnduroStoredPipeline, err error)
 	// Show pipeline by ID
 	Show(context.Context, *ShowPayload) (res *EnduroStoredPipeline, err error)
+	// List all processing configurations of a pipeline given its ID
+	Processing(context.Context, *ProcessingPayload) (res []string, err error)
 }
 
 // ServiceName is the name of the service as defined in the design. This is the
@@ -30,7 +32,7 @@ const ServiceName = "pipeline"
 // MethodNames lists the service method names as defined in the design. These
 // are the same values that are set in the endpoint request contexts under the
 // MethodKey key.
-var MethodNames = [2]string{"list", "show"}
+var MethodNames = [3]string{"list", "show", "processing"}
 
 // ListPayload is the payload type of the pipeline service list method.
 type ListPayload struct {
@@ -45,9 +47,9 @@ type ShowPayload struct {
 
 // EnduroStoredPipeline is the result type of the pipeline service show method.
 type EnduroStoredPipeline struct {
-	// Name of the collection
+	// Identifier of the pipeline
 	ID *string
-	// Name of the collection
+	// Name of the pipeline
 	Name string
 	// Maximum concurrent transfers
 	Capacity *int64
@@ -55,22 +57,28 @@ type EnduroStoredPipeline struct {
 	Current *int64
 }
 
-// NotFound is the type returned when attempting to operate with a collection
-// that does not exist.
-type NotFound struct {
+// ProcessingPayload is the payload type of the pipeline service processing
+// method.
+type ProcessingPayload struct {
+	// Identifier of pipeline
+	ID string
+}
+
+// Pipeline not found.
+type PipelineNotFound struct {
 	// Message of error
 	Message string
-	// Identifier of missing collection
-	ID uint
+	// Identifier of missing pipeline
+	ID string
 }
 
 // Error returns an error description.
-func (e *NotFound) Error() string {
-	return "NotFound is the type returned when attempting to operate with a collection that does not exist."
+func (e *PipelineNotFound) Error() string {
+	return "Pipeline not found."
 }
 
-// ErrorName returns "NotFound".
-func (e *NotFound) ErrorName() string {
+// ErrorName returns "PipelineNotFound".
+func (e *PipelineNotFound) ErrorName() string {
 	return e.Message
 }
 

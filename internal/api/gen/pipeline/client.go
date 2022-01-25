@@ -16,15 +16,17 @@ import (
 
 // Client is the "pipeline" service client.
 type Client struct {
-	ListEndpoint goa.Endpoint
-	ShowEndpoint goa.Endpoint
+	ListEndpoint       goa.Endpoint
+	ShowEndpoint       goa.Endpoint
+	ProcessingEndpoint goa.Endpoint
 }
 
 // NewClient initializes a "pipeline" service client given the endpoints.
-func NewClient(list, show goa.Endpoint) *Client {
+func NewClient(list, show, processing goa.Endpoint) *Client {
 	return &Client{
-		ListEndpoint: list,
-		ShowEndpoint: show,
+		ListEndpoint:       list,
+		ShowEndpoint:       show,
+		ProcessingEndpoint: processing,
 	}
 }
 
@@ -40,7 +42,7 @@ func (c *Client) List(ctx context.Context, p *ListPayload) (res []*EnduroStoredP
 
 // Show calls the "show" endpoint of the "pipeline" service.
 // Show may return the following errors:
-//	- "not_found" (type *NotFound): Collection not found
+//	- "not_found" (type *PipelineNotFound): Pipeline not found
 //	- error: internal error
 func (c *Client) Show(ctx context.Context, p *ShowPayload) (res *EnduroStoredPipeline, err error) {
 	var ires interface{}
@@ -49,4 +51,17 @@ func (c *Client) Show(ctx context.Context, p *ShowPayload) (res *EnduroStoredPip
 		return
 	}
 	return ires.(*EnduroStoredPipeline), nil
+}
+
+// Processing calls the "processing" endpoint of the "pipeline" service.
+// Processing may return the following errors:
+//	- "not_found" (type *PipelineNotFound): Pipeline not found
+//	- error: internal error
+func (c *Client) Processing(ctx context.Context, p *ProcessingPayload) (res []string, err error) {
+	var ires interface{}
+	ires, err = c.ProcessingEndpoint(ctx, p)
+	if err != nil {
+		return
+	}
+	return ires.([]string), nil
 }

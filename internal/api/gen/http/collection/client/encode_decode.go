@@ -145,7 +145,7 @@ func (c *Client) BuildShowRequest(ctx context.Context, v interface{}) (*http.Req
 // collection show endpoint. restoreBody controls whether the response body
 // should be restored after having been read.
 // DecodeShowResponse may return the following errors:
-//	- "not_found" (type *collection.NotFound): http.StatusNotFound
+//	- "not_found" (type *collection.CollectionNotfound): http.StatusNotFound
 //	- error: internal error
 func DecodeShowResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (interface{}, error) {
 	return func(resp *http.Response) (interface{}, error) {
@@ -229,7 +229,7 @@ func (c *Client) BuildDeleteRequest(ctx context.Context, v interface{}) (*http.R
 // collection delete endpoint. restoreBody controls whether the response body
 // should be restored after having been read.
 // DecodeDeleteResponse may return the following errors:
-//	- "not_found" (type *collection.NotFound): http.StatusNotFound
+//	- "not_found" (type *collection.CollectionNotfound): http.StatusNotFound
 //	- error: internal error
 func DecodeDeleteResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (interface{}, error) {
 	return func(resp *http.Response) (interface{}, error) {
@@ -298,7 +298,7 @@ func (c *Client) BuildCancelRequest(ctx context.Context, v interface{}) (*http.R
 // collection cancel endpoint. restoreBody controls whether the response body
 // should be restored after having been read.
 // DecodeCancelResponse may return the following errors:
-//	- "not_found" (type *collection.NotFound): http.StatusNotFound
+//	- "not_found" (type *collection.CollectionNotfound): http.StatusNotFound
 //	- "not_running" (type *goa.ServiceError): http.StatusBadRequest
 //	- error: internal error
 func DecodeCancelResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (interface{}, error) {
@@ -382,7 +382,7 @@ func (c *Client) BuildRetryRequest(ctx context.Context, v interface{}) (*http.Re
 // collection retry endpoint. restoreBody controls whether the response body
 // should be restored after having been read.
 // DecodeRetryResponse may return the following errors:
-//	- "not_found" (type *collection.NotFound): http.StatusNotFound
+//	- "not_found" (type *collection.CollectionNotfound): http.StatusNotFound
 //	- "not_running" (type *goa.ServiceError): http.StatusBadRequest
 //	- error: internal error
 func DecodeRetryResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (interface{}, error) {
@@ -466,7 +466,7 @@ func (c *Client) BuildWorkflowRequest(ctx context.Context, v interface{}) (*http
 // collection workflow endpoint. restoreBody controls whether the response body
 // should be restored after having been read.
 // DecodeWorkflowResponse may return the following errors:
-//	- "not_found" (type *collection.NotFound): http.StatusNotFound
+//	- "not_found" (type *collection.CollectionNotfound): http.StatusNotFound
 //	- error: internal error
 func DecodeWorkflowResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (interface{}, error) {
 	return func(resp *http.Response) (interface{}, error) {
@@ -550,7 +550,7 @@ func (c *Client) BuildDownloadRequest(ctx context.Context, v interface{}) (*http
 // collection download endpoint. restoreBody controls whether the response body
 // should be restored after having been read.
 // DecodeDownloadResponse may return the following errors:
-//	- "not_found" (type *collection.NotFound): http.StatusNotFound
+//	- "not_found" (type *collection.CollectionNotfound): http.StatusNotFound
 //	- error: internal error
 func DecodeDownloadResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (interface{}, error) {
 	return func(resp *http.Response) (interface{}, error) {
@@ -643,7 +643,7 @@ func EncodeDecideRequest(encoder func(*http.Request) goahttp.Encoder) func(*http
 // collection decide endpoint. restoreBody controls whether the response body
 // should be restored after having been read.
 // DecodeDecideResponse may return the following errors:
-//	- "not_found" (type *collection.NotFound): http.StatusNotFound
+//	- "not_found" (type *collection.CollectionNotfound): http.StatusNotFound
 //	- "not_valid" (type *goa.ServiceError): http.StatusBadRequest
 //	- error: internal error
 func DecodeDecideResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (interface{}, error) {

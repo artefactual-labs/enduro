@@ -46,3 +46,22 @@ func BuildShowPayload(pipelineShowID string) (*pipeline.ShowPayload, error) {
 
 	return v, nil
 }
+
+// BuildProcessingPayload builds the payload for the pipeline processing
+// endpoint from CLI flags.
+func BuildProcessingPayload(pipelineProcessingID string) (*pipeline.ProcessingPayload, error) {
+	var err error
+	var id string
+	{
+		id = pipelineProcessingID
+		err = goa.MergeErrors(err, goa.ValidateFormat("id", id, goa.FormatUUID))
+
+		if err != nil {
+			return nil, err
+		}
+	}
+	v := &pipeline.ProcessingPayload{}
+	v.ID = id
+
+	return v, nil
+}

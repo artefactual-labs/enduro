@@ -56,7 +56,7 @@ func (c *Client) List(ctx context.Context, p *ListPayload) (res *ListResult, err
 
 // Show calls the "show" endpoint of the "collection" service.
 // Show may return the following errors:
-//	- "not_found" (type *NotFound): Collection not found
+//	- "not_found" (type *CollectionNotfound): Collection not found
 //	- error: internal error
 func (c *Client) Show(ctx context.Context, p *ShowPayload) (res *EnduroStoredCollection, err error) {
 	var ires interface{}
@@ -69,7 +69,7 @@ func (c *Client) Show(ctx context.Context, p *ShowPayload) (res *EnduroStoredCol
 
 // Delete calls the "delete" endpoint of the "collection" service.
 // Delete may return the following errors:
-//	- "not_found" (type *NotFound): Collection not found
+//	- "not_found" (type *CollectionNotfound): Collection not found
 //	- error: internal error
 func (c *Client) Delete(ctx context.Context, p *DeletePayload) (err error) {
 	_, err = c.DeleteEndpoint(ctx, p)
@@ -78,7 +78,7 @@ func (c *Client) Delete(ctx context.Context, p *DeletePayload) (err error) {
 
 // Cancel calls the "cancel" endpoint of the "collection" service.
 // Cancel may return the following errors:
-//	- "not_found" (type *NotFound): Collection not found
+//	- "not_found" (type *CollectionNotfound): Collection not found
 //	- "not_running" (type *goa.ServiceError)
 //	- error: internal error
 func (c *Client) Cancel(ctx context.Context, p *CancelPayload) (err error) {
@@ -88,7 +88,7 @@ func (c *Client) Cancel(ctx context.Context, p *CancelPayload) (err error) {
 
 // Retry calls the "retry" endpoint of the "collection" service.
 // Retry may return the following errors:
-//	- "not_found" (type *NotFound): Collection not found
+//	- "not_found" (type *CollectionNotfound): Collection not found
 //	- "not_running" (type *goa.ServiceError)
 //	- error: internal error
 func (c *Client) Retry(ctx context.Context, p *RetryPayload) (err error) {
@@ -98,7 +98,7 @@ func (c *Client) Retry(ctx context.Context, p *RetryPayload) (err error) {
 
 // Workflow calls the "workflow" endpoint of the "collection" service.
 // Workflow may return the following errors:
-//	- "not_found" (type *NotFound): Collection not found
+//	- "not_found" (type *CollectionNotfound): Collection not found
 //	- error: internal error
 func (c *Client) Workflow(ctx context.Context, p *WorkflowPayload) (res *EnduroCollectionWorkflowStatus, err error) {
 	var ires interface{}
@@ -111,7 +111,7 @@ func (c *Client) Workflow(ctx context.Context, p *WorkflowPayload) (res *EnduroC
 
 // Download calls the "download" endpoint of the "collection" service.
 // Download may return the following errors:
-//	- "not_found" (type *NotFound): Collection not found
+//	- "not_found" (type *CollectionNotfound): Collection not found
 //	- error: internal error
 func (c *Client) Download(ctx context.Context, p *DownloadPayload) (res []byte, err error) {
 	var ires interface{}
@@ -124,7 +124,7 @@ func (c *Client) Download(ctx context.Context, p *DownloadPayload) (res []byte, 
 
 // Decide calls the "decide" endpoint of the "collection" service.
 // Decide may return the following errors:
-//	- "not_found" (type *NotFound): Collection not found
+//	- "not_found" (type *CollectionNotfound): Collection not found
 //	- "not_valid" (type *goa.ServiceError)
 //	- error: internal error
 func (c *Client) Decide(ctx context.Context, p *DecidePayload) (err error) {
