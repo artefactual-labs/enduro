@@ -98,6 +98,9 @@ func (w *filesystemWatcher) loop() {
 			if event.Op != fsnotify.Create && event.Op != fsnotify.Rename {
 				continue
 			}
+			if path, err := filepath.Abs(event.Name); err != nil || path == w.path {
+				continue
+			}
 			if w.regex != nil && w.regex.MatchString(filepath.Base(event.Name)) {
 				continue
 			}
