@@ -48,8 +48,8 @@ export default class PipelineProcessingConfigurationDropdown extends Vue {
 
   @Watch('pipelineId')
   private onPipelineChanged(val: string, oldVal: string) {
+    this.options = [];
     if (!val) {
-      this.options = [];
       return;
     }
     EnduroPipelineClient.pipelineProcessing({id: val}).then((response) => {
