@@ -25,7 +25,7 @@ require (
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	github.com/otiai10/copy v1.7.0
 	github.com/pborman/uuid v1.2.1 // indirect
-	github.com/prometheus/client_golang v1.12.0
+	github.com/prometheus/client_golang v1.12.1
 	github.com/radovskyb/watcher v1.0.7
 	github.com/spf13/afero v1.8.0
 	github.com/spf13/pflag v1.0.5
