@@ -37,6 +37,8 @@ type SubmitPayload struct {
 	Path             string
 	Pipeline         string
 	ProcessingConfig *string
+	CompletedDir     *string
+	RetentionPeriod  *string
 }
 
 // BatchResult is the result type of the batch service submit method.

@@ -10,7 +10,7 @@ import (
 	"runtime"
 
 	"github.com/artefactual-labs/enduro/internal/filenotify"
-	"github.com/otiai10/copy"
+	"github.com/artefactual-labs/enduro/internal/fsutil"
 
 	"github.com/fsnotify/fsnotify"
 	"gocloud.dev/blob"
@@ -153,30 +153,5 @@ func (w *filesystemWatcher) Dispose(key string) error {
 	src := filepath.Join(w.path, key)
 	dst := filepath.Join(w.completedDir, key)
 
-	if _, err := os.Stat(dst); err == nil {
-		return errors.New("destination already exists")
-	}
-
-	// Move when possible.
-	err := os.Rename(src, dst)
-	if err == nil {
-		return nil
-	}
-
-	// Copy and delete otherwise.
-	lerr, _ := err.(*os.LinkError)
-	if lerr.Err.Error() == "invalid cross-device link" {
-		err := copy.Copy(src, dst, copy.Options{
-			Sync: true,
-			OnDirExists: func(src, dst string) copy.DirExistsAction {
-				return copy.Untouchable
-			},
-		})
-		if err != nil {
-			return err
-		}
-		return os.RemoveAll(src)
-	} else {
-		return err
-	}
+	return fsutil.Move(src, dst)
 }

@@ -19,6 +19,8 @@ type SubmitRequestBody struct {
 	Path             *string `form:"path,omitempty" json:"path,omitempty" xml:"path,omitempty"`
 	Pipeline         *string `form:"pipeline,omitempty" json:"pipeline,omitempty" xml:"pipeline,omitempty"`
 	ProcessingConfig *string `form:"processing_config,omitempty" json:"processing_config,omitempty" xml:"processing_config,omitempty"`
+	CompletedDir     *string `form:"completed_dir,omitempty" json:"completed_dir,omitempty" xml:"completed_dir,omitempty"`
+	RetentionPeriod  *string `form:"retention_period,omitempty" json:"retention_period,omitempty" xml:"retention_period,omitempty"`
 }
 
 // SubmitResponseBody is the type of the "batch" service "submit" endpoint HTTP
@@ -129,6 +131,8 @@ func NewSubmitPayload(body *SubmitRequestBody) *batch.SubmitPayload {
 		Path:             *body.Path,
 		Pipeline:         *body.Pipeline,
 		ProcessingConfig: body.ProcessingConfig,
+		CompletedDir:     body.CompletedDir,
+		RetentionPeriod:  body.RetentionPeriod,
 	}
 
 	return v
