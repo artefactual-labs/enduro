@@ -15,6 +15,8 @@ var _ = Service("batch", func() {
 			Attribute("path", String)
 			Attribute("pipeline", String)
 			Attribute("processing_config", String)
+			Attribute("completed_dir", String)
+			Attribute("retention_period", String)
 			Required("path", "pipeline")
 		})
 		Result(BatchResult)

@@ -334,34 +334,23 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 
 	// Schedule deletion of the original in the watched data source.
 	{
-		if tinfo.WatcherName != "" && status == collection.StatusDone && tinfo.RetentionPeriod != nil {
-			err := workflow.NewTimer(ctx, *tinfo.RetentionPeriod).Get(ctx, nil)
-			if err != nil {
-				logger.Warn("Retention policy timer failed", zap.Error(err))
-			} else {
-				activityOpts := withActivityOptsForRequest(ctx)
-				_ = workflow.ExecuteActivity(activityOpts, activities.DeleteOriginalActivityName, tinfo.WatcherName, tinfo.Key).Get(activityOpts, nil)
-			}
-		}
-
-		if status == collection.StatusDone && tinfo.WatcherName != "" {
+		if status == collection.StatusDone {
 			if tinfo.RetentionPeriod != nil {
 				err := workflow.NewTimer(ctx, *tinfo.RetentionPeriod).Get(ctx, nil)
 				if err != nil {
 					logger.Warn("Retention policy timer failed", zap.Error(err))
 				} else {
 					activityOpts := withActivityOptsForRequest(ctx)
-					_ = workflow.ExecuteActivity(activityOpts, activities.DeleteOriginalActivityName, tinfo.WatcherName, tinfo.Key).Get(activityOpts, nil)
+					_ = workflow.ExecuteActivity(activityOpts, activities.DeleteOriginalActivityName, tinfo.WatcherName, tinfo.BatchDir, tinfo.Key).Get(activityOpts, nil)
 				}
 			} else if tinfo.CompletedDir != "" {
 				activityOpts := withActivityOptsForLocalAction(ctx)
-				err := workflow.ExecuteActivity(activityOpts, activities.DisposeOriginalActivityName, tinfo.WatcherName, tinfo.Key).Get(activityOpts, nil)
+				err := workflow.ExecuteActivity(activityOpts, activities.DisposeOriginalActivityName, tinfo.WatcherName, tinfo.CompletedDir, tinfo.BatchDir, tinfo.Key).Get(activityOpts, nil)
 				if err != nil {
 					return err
 				}
 			}
 		}
-
 	}
 
 	logger.Info(

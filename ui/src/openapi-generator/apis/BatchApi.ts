@@ -15,6 +15,12 @@
 
 import * as runtime from '../runtime';
 import {
+    BatchConfigNotFoundResponseBody,
+    BatchConfigNotFoundResponseBodyFromJSON,
+    BatchConfigNotFoundResponseBodyToJSON,
+    BatchConfigResponseBody,
+    BatchConfigResponseBodyFromJSON,
+    BatchConfigResponseBodyToJSON,
     BatchStatusResponseBody,
     BatchStatusResponseBodyFromJSON,
     BatchStatusResponseBodyToJSON,
@@ -40,6 +46,34 @@ export interface BatchSubmitRequest {
  * no description
  */
 export class BatchApi extends runtime.BaseAPI {
+
+    /**
+     * Retrieve the default configuration attributes for all batch operations.
+     * config batch
+     */
+    async batchConfigRaw(): Promise<runtime.ApiResponse<BatchConfigResponseBody>> {
+        const queryParameters: runtime.HTTPQuery = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/batch/config`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        });
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => BatchConfigResponseBodyFromJSON(jsonValue));
+    }
+
+    /**
+     * Retrieve the default configuration attributes for all batch operations.
+     * config batch
+     */
+    async batchConfig(): Promise<BatchConfigResponseBody> {
+        const response = await this.batchConfigRaw();
+        return await response.value();
+    }
 
     /**
      * Retrieve status of current batch operation.

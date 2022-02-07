@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"time"
 
+	"github.com/artefactual-labs/enduro/internal/collection"
 	wferrors "github.com/artefactual-labs/enduro/internal/workflow/errors"
 
 	"go.uber.org/cadence/workflow"
@@ -24,6 +25,8 @@ type BatchWorkflowInput struct {
 	Path             string
 	PipelineName     string
 	ProcessingConfig string
+	CompletedDir     string
+	RetentionPeriod  *time.Duration
 }
 
 func BatchWorkflow(ctx workflow.Context, params BatchWorkflowInput) error {
@@ -51,7 +54,16 @@ func (a *BatchActivity) Execute(ctx context.Context, params BatchWorkflowInput) 
 		return wferrors.NonRetryableError(err)
 	}
 	for _, file := range files {
-		_ = a.batchsvc.InitProcessingWorkflow(ctx, params.Path, file.Name(), file.IsDir(), params.PipelineName, params.ProcessingConfig)
+		req := collection.ProcessingWorkflowRequest{
+			BatchDir:         params.Path,
+			Key:              file.Name(),
+			IsDir:            file.IsDir(),
+			PipelineName:     params.PipelineName,
+			ProcessingConfig: params.ProcessingConfig,
+			CompletedDir:     params.CompletedDir,
+			RetentionPeriod:  params.RetentionPeriod,
+		}
+		_ = a.batchsvc.InitProcessingWorkflow(ctx, &req)
 	}
 	return nil
 }

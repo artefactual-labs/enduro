@@ -21,7 +21,7 @@ var ErrBatchStatusUnavailable = errors.New("batch status unavailable")
 type Service interface {
 	Submit(context.Context, *goabatch.SubmitPayload) (res *goabatch.BatchResult, err error)
 	Status(context.Context) (res *goabatch.BatchStatusResult, err error)
-	InitProcessingWorkflow(ctx context.Context, batchDir, key string, isDir bool, pipelineName, processingConfig string) error
+	InitProcessingWorkflow(ctx context.Context, req *collection.ProcessingWorkflowRequest) error
 }
 
 type batchImpl struct {
@@ -40,14 +40,10 @@ func NewService(logger logr.Logger, cc cadenceclient.Client) *batchImpl {
 
 func (s *batchImpl) Submit(ctx context.Context, payload *goabatch.SubmitPayload) (*goabatch.BatchResult, error) {
 	if payload.Path == "" {
-		return nil, goabatch.MakeNotAvailable(
-			fmt.Errorf("error starting batch - path is empty"),
-		)
+		return nil, goabatch.MakeNotValid(errors.New("error starting batch - path is empty"))
 	}
 	if payload.Pipeline == "" {
-		return nil, goabatch.MakeNotAvailable(
-			fmt.Errorf("error starting batch - pipeline is empty"),
-		)
+		return nil, goabatch.MakeNotValid(errors.New("error starting batch - pipeline is empty"))
 	}
 	input := BatchWorkflowInput{
 		Path:         payload.Path,
@@ -55,6 +51,16 @@ func (s *batchImpl) Submit(ctx context.Context, payload *goabatch.SubmitPayload)
 	}
 	if payload.ProcessingConfig != nil {
 		input.ProcessingConfig = *payload.ProcessingConfig
+	}
+	if payload.CompletedDir != nil {
+		input.CompletedDir = *payload.CompletedDir
+	}
+	if payload.RetentionPeriod != nil {
+		dur, err := time.ParseDuration(*payload.RetentionPeriod)
+		if err != nil {
+			return nil, goabatch.MakeNotValid(errors.New("error starting batch - retention period format is invalid"))
+		}
+		input.RetentionPeriod = &dur
 	}
 	opts := cadenceclient.StartWorkflowOptions{
 		ID:                              BatchWorkflowID,
@@ -109,18 +115,9 @@ func (s *batchImpl) Status(ctx context.Context) (*goabatch.BatchStatusResult, er
 	return result, nil
 }
 
-func (s *batchImpl) InitProcessingWorkflow(ctx context.Context, batchDir, key string, isDir bool, pipelineName, processingConfig string) error {
-	req := collection.ProcessingWorkflowRequest{
-		PipelineName:     pipelineName,
-		RetentionPeriod:  nil,
-		StripTopLevelDir: false,
-		Key:              key,
-		IsDir:            isDir,
-		BatchDir:         batchDir,
-		ValidationConfig: validation.Config{},
-		ProcessingConfig: processingConfig,
-	}
-	err := collection.InitProcessingWorkflow(ctx, s.cc, &req)
+func (s *batchImpl) InitProcessingWorkflow(ctx context.Context, req *collection.ProcessingWorkflowRequest) error {
+	req.ValidationConfig = validation.Config{}
+	err := collection.InitProcessingWorkflow(ctx, s.cc, req)
 	if err != nil {
 		s.logger.Error(err, "Error initializing processing workflow.")
 	}

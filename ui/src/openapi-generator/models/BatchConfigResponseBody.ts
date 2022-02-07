@@ -16,60 +16,39 @@ import { exists, mapValues } from '../runtime';
 /**
  * 
  * @export
- * @interface BatchSubmitRequestBody
+ * @interface BatchConfigResponseBody
  */
-export interface BatchSubmitRequestBody {
+export interface BatchConfigResponseBody {
     /**
      * 
      * @type {string}
-     * @memberof BatchSubmitRequestBody
+     * @memberof BatchConfigResponseBody
      */
     completedDir?: string;
     /**
      * 
      * @type {string}
-     * @memberof BatchSubmitRequestBody
-     */
-    path: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof BatchSubmitRequestBody
-     */
-    pipeline: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof BatchSubmitRequestBody
-     */
-    processingConfig?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof BatchSubmitRequestBody
+     * @memberof BatchConfigResponseBody
      */
     retentionPeriod?: string;
 }
 
-export function BatchSubmitRequestBodyFromJSON(json: any): BatchSubmitRequestBody {
-    return BatchSubmitRequestBodyFromJSONTyped(json, false);
+export function BatchConfigResponseBodyFromJSON(json: any): BatchConfigResponseBody {
+    return BatchConfigResponseBodyFromJSONTyped(json, false);
 }
 
-export function BatchSubmitRequestBodyFromJSONTyped(json: any, ignoreDiscriminator: boolean): BatchSubmitRequestBody {
+export function BatchConfigResponseBodyFromJSONTyped(json: any, ignoreDiscriminator: boolean): BatchConfigResponseBody {
     if ((json === undefined) || (json === null)) {
         return json;
     }
     return {
         
         'completedDir': !exists(json, 'completed_dir') ? undefined : json['completed_dir'],
-        'path': json['path'],
-        'pipeline': json['pipeline'],
-        'processingConfig': !exists(json, 'processing_config') ? undefined : json['processing_config'],
         'retentionPeriod': !exists(json, 'retention_period') ? undefined : json['retention_period'],
     };
 }
 
-export function BatchSubmitRequestBodyToJSON(value?: BatchSubmitRequestBody | null): any {
+export function BatchConfigResponseBodyToJSON(value?: BatchConfigResponseBody | null): any {
     if (value === undefined) {
         return undefined;
     }
@@ -79,9 +58,6 @@ export function BatchSubmitRequestBodyToJSON(value?: BatchSubmitRequestBody | nu
     return {
         
         'completed_dir': value.completedDir,
-        'path': value.path,
-        'pipeline': value.pipeline,
-        'processing_config': value.processingConfig,
         'retention_period': value.retentionPeriod,
     };
 }

@@ -50,6 +50,21 @@ func (mr *MockServiceMockRecorder) List(arg0, arg1 interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockService)(nil).List), arg0, arg1)
 }
 
+// Processing mocks base method.
+func (m *MockService) Processing(arg0 context.Context, arg1 *pipeline.ProcessingPayload) ([]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Processing", arg0, arg1)
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Processing indicates an expected call of Processing.
+func (mr *MockServiceMockRecorder) Processing(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Processing", reflect.TypeOf((*MockService)(nil).Processing), arg0, arg1)
+}
+
 // Show mocks base method.
 func (m *MockService) Show(arg0 context.Context, arg1 *pipeline.ShowPayload) (*pipeline.EnduroStoredPipeline, error) {
 	m.ctrl.T.Helper()

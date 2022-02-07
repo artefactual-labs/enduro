@@ -50,3 +50,19 @@ func (mr *MockProcessingConfigServiceMockRecorder) Get(arg0, arg1 interface{}) *
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockProcessingConfigService)(nil).Get), arg0, arg1)
 }
+
+// List mocks base method.
+func (m *MockProcessingConfigService) List(arg0 context.Context) ([]string, *amclient.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "List", arg0)
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(*amclient.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// List indicates an expected call of List.
+func (mr *MockProcessingConfigServiceMockRecorder) List(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockProcessingConfigService)(nil).List), arg0)
+}

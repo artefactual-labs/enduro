@@ -1,3 +1,5 @@
+export * from './BatchConfigNotFoundResponseBody';
+export * from './BatchConfigResponseBody';
 export * from './BatchStatusResponseBody';
 export * from './BatchSubmitNotAvailableResponseBody';
 export * from './BatchSubmitNotValidResponseBody';

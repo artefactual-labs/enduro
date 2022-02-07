@@ -31,6 +31,25 @@
 
             <pipeline-processing-configuration-dropdown :pipeline-id="pipelineId" v-on:pipeline-processing-configuration-selected="form.processingConfig = $event"/>
 
+            <b-tabs content-class="mt-3" tite-item-class="mt-3" v-model="tabIndex">
+              <b-tab title="Completed directory" active>
+                <div class="form-group">
+                  <input v-model="form.completedDir" type="text" class="form-control" id="completed-directory-input" aria-describedby="completed-directory-help">
+                  <small id="completed-directory-help" class="form-text text-muted">
+                    Optional. The path where transfers are moved into when processing has completed successfully.
+                  </small>
+                </div>
+              </b-tab>
+              <b-tab title="Retention period">
+                <div class="form-group">
+                  <input v-model="form.retentionPeriod" type="text" class="form-control" id="retention-period-input" aria-describedby="retention-period-help">
+                  <small id="retention-period-help" class="form-text text-muted">
+                    Optional. The duration of time for which the transfer should be retained before being removed. The string should be constructed as a sequence of decimal numbers, each with optional fraction and a unit suffix, such as "30m", "24h" or "2h30m". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
+                  </small>
+                </div>
+              </b-tab>
+            </b-tabs>
+
             <div class="actions">
               <b-button type="submit" variant="primary">Submit</b-button>
             </div>
@@ -64,7 +83,11 @@ export default class Batch extends Vue {
     path: null,
     pipeline: null,
     processingConfig: null,
+    completedDir: null,
+    retentionPeriod: null,
   };
+
+  private tabIndex: number = 0;
 
   private pipelineId: string = '';
 
@@ -75,14 +98,6 @@ export default class Batch extends Vue {
   private onPipelineSelected($event: any): void {
     this.pipelineId = $event ? $event.value : null;
     this.form.pipeline = $event ? $event.text : null;
-  }
-
-  private get alertVariant() {
-    return this.status.status === 'completed' ? 'success' : 'warning';
-  }
-
-  private get lastFailed() {
-    return this.status.status !== 'completed';
   }
 
   private get isRunning() {
@@ -118,6 +133,12 @@ export default class Batch extends Vue {
         processingConfig: this.form.processingConfig,
       },
     };
+    if (this.form.completedDir && this.tabIndex === 0) {
+      request.submitRequestBody.completedDir = this.form.completedDir;
+    }
+    if (this.form.retentionPeriod && this.tabIndex === 1) {
+      request.submitRequestBody.retentionPeriod = this.form.retentionPeriod;
+    }
     return EnduroBatchClient.batchSubmit(request).then((response: api.BatchSubmitResponseBody) => {
       this.loadStatus();
     }).catch((response: Response) => {
