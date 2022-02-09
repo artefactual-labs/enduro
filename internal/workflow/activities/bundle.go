@@ -248,7 +248,7 @@ func unbag(path string) error {
 	}
 
 	// Only continue if we have a bag.
-	_, err = os.Stat(filepath.Join(path, "bag-info.txt"))
+	_, err = os.Stat(filepath.Join(path, "bagit.txt"))
 	if errors.Is(err, os.ErrNotExist) {
 		return nil
 	}
