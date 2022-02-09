@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/artefactual-labs/enduro/internal/amclient/bundler"
+	"github.com/artefactual-labs/enduro/internal/bagit"
 	"github.com/artefactual-labs/enduro/internal/watcher"
 	wferrors "github.com/artefactual-labs/enduro/internal/workflow/errors"
 	"github.com/artefactual-labs/enduro/internal/workflow/manager"
@@ -238,6 +239,8 @@ func stripDirContainer(path string) (string, error) {
 }
 
 // unbag converts a bagged transfer into a standard Archivematica transfer.
+// It returns a nil error if a bag is not identified, and non-nil errors when
+// the bag seems invalid, without verifying the actual file contents.
 func unbag(path string) error {
 	fi, err := os.Stat(path)
 	if err != nil {
@@ -251,6 +254,11 @@ func unbag(path string) error {
 	_, err = os.Stat(filepath.Join(path, "bagit.txt"))
 	if errors.Is(err, os.ErrNotExist) {
 		return nil
+	}
+
+	// Confirm completeness of the bag.
+	if err := bagit.Complete(path); err != nil {
+		return err
 	}
 
 	// Move files in data up one level if 'objects' folder already exists.
