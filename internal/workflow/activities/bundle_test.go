@@ -1,6 +1,7 @@
 package activities
 
 import (
+	"context"
 	"runtime"
 	"syscall"
 	"testing"
@@ -90,7 +91,7 @@ e91f941be5973ff71f1dccbdd1a32d598881893a7f21be516aca743da38b1689 bagit.txt
 	)
 
 	path := tempdir.Path()
-	err := unbag(path)
+	err := unbag(context.Background(), path)
 
 	assert.NilError(t, err)
 	assert.Assert(t, fs.Equal(path, expected))

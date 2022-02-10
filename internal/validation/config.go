@@ -1,9 +1,6 @@
 package validation
 
 type Config struct {
+	BagitCheckEnabled     bool
 	ChecksumsCheckEnabled bool
-}
-
-func (c Config) IsEnabled() bool {
-	return c.ChecksumsCheckEnabled
 }

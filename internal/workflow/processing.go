@@ -433,7 +433,7 @@ func (w *ProcessingWorkflow) SessionHandler(sessCtx workflow.Context, attempt in
 
 	// Validate transfer.
 	{
-		if validationConfig.IsEnabled() && tinfo.Bundle != (activities.BundleActivityResult{}) {
+		if validationConfig.BagitCheckEnabled && tinfo.Bundle != (activities.BundleActivityResult{}) {
 			activityOpts := workflow.WithActivityOptions(sessCtx, workflow.ActivityOptions{
 				ScheduleToStartTimeout: forever,
 				StartToCloseTimeout:    time.Minute * 5,

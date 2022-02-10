@@ -92,7 +92,7 @@ func (a *BundleActivity) Execute(ctx context.Context, params *BundleActivityPara
 		return nil, wferrors.NonRetryableError(err)
 	}
 
-	err = unbag(res.FullPath)
+	err = unbag(ctx, res.FullPath)
 	if err != nil {
 		return nil, wferrors.NonRetryableError(err)
 	}
@@ -241,7 +241,7 @@ func stripDirContainer(path string) (string, error) {
 // unbag converts a bagged transfer into a standard Archivematica transfer.
 // It returns a nil error if a bag is not identified, and non-nil errors when
 // the bag seems invalid, without verifying the actual file contents.
-func unbag(path string) error {
+func unbag(ctx context.Context, path string) error {
 	fi, err := os.Stat(path)
 	if err != nil {
 		return err
@@ -257,7 +257,7 @@ func unbag(path string) error {
 	}
 
 	// Confirm completeness of the bag.
-	if err := bagit.Complete(path); err != nil {
+	if err := bagit.Complete(ctx, path); err != nil {
 		return err
 	}
 
