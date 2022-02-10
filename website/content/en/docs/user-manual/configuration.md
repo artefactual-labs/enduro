@@ -108,7 +108,7 @@ pipeline = "am"
 retentionPeriod = "11s"
 
 # Ignore new filesystem entries matching the following pattern.
-ignore = '(^\.)|(^\.gitkeep)|(^*\.mft)$'
+ignore = '(^\.gitkeep)|(^*\.mft)$'
 
 # Omit the top-level directory of the transfer after extraction.
 stripTopLevelDir = true
@@ -138,6 +138,23 @@ successfully. Not available in other type of watchers. It is mutually exclusive
 with `retentionPeriod`.
 
 E.g.: `"/mnt/landfill"`
+
+#### `ignore` (String)
+
+A regular expression or search pattern that can be used to ignore new files or
+directories identified by the filesystem watcher. Its main purpose is to
+provide a mechanism to avoid launching the processing workflow for new entries
+that may not be fully transferred by the time that they're identified.
+
+For example, when transferring a directory, the watcher will likely start the
+processing workflow before all the contents are fully transferred. Using a
+pattern like `'^*\.ignored$'` allows for transferring a directory (e.g.
+`sample-transfer.ignored`) that will not be processed by the system until the
+user renames it to have the `.ignored` suffix removed.
+
+The expressions must use the [RE2 syntax].
+
+E.g.: `'^*\.ignored$'`
 
 #### `[[watcher.minio]]`
 
@@ -310,3 +327,6 @@ Source: https://github.com/artefactual-labs/enduro/blob/main/enduro.toml.
 {{< config >}}
 
 [Data Source Name format]: https://github.com/go-sql-driver/mysql#dsn-data-source-name
+
+
+[RE2 syntax]: https://github.com/google/re2/wiki/Syntax

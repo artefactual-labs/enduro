@@ -23,6 +23,13 @@ ingests and shows their processing status.
 
 {{< figure src="/dashboard.png" title="Enduro dashboard" >}}
 
+## Watching filesystem and object stores
+
+It is possible to configure watchers that monitor filesystems or object stores
+in order to start the processing of transfers automatically. See the [watcher
+configuration section]({{< ref"/docs/user-manual/configuration#watcher" >}}) for
+more details.
+
 ## Preparing transfers for batch import
 
 * Enduro is designed to import and queue up multiple transfers for ingest into
