@@ -24,6 +24,9 @@ type Client struct {
 	// Status Doer is the HTTP client used to make requests to the status endpoint.
 	StatusDoer goahttp.Doer
 
+	// Hints Doer is the HTTP client used to make requests to the hints endpoint.
+	HintsDoer goahttp.Doer
+
 	// CORS Doer is the HTTP client used to make requests to the  endpoint.
 	CORSDoer goahttp.Doer
 
@@ -49,6 +52,7 @@ func NewClient(
 	return &Client{
 		SubmitDoer:          doer,
 		StatusDoer:          doer,
+		HintsDoer:           doer,
 		CORSDoer:            doer,
 		RestoreResponseBody: restoreBody,
 		scheme:              scheme,
@@ -96,6 +100,25 @@ func (c *Client) Status() goa.Endpoint {
 		resp, err := c.StatusDoer.Do(req)
 		if err != nil {
 			return nil, goahttp.ErrRequestError("batch", "status", err)
+		}
+		return decodeResponse(resp)
+	}
+}
+
+// Hints returns an endpoint that makes HTTP requests to the batch service
+// hints server.
+func (c *Client) Hints() goa.Endpoint {
+	var (
+		decodeResponse = DecodeHintsResponse(c.decoder, c.RestoreResponseBody)
+	)
+	return func(ctx context.Context, v interface{}) (interface{}, error) {
+		req, err := c.BuildHintsRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.HintsDoer.Do(req)
+		if err != nil {
+			return nil, goahttp.ErrRequestError("batch", "hints", err)
 		}
 		return decodeResponse(resp)
 	}

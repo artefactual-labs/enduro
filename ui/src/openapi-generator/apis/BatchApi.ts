@@ -15,12 +15,9 @@
 
 import * as runtime from '../runtime';
 import {
-    BatchConfigNotFoundResponseBody,
-    BatchConfigNotFoundResponseBodyFromJSON,
-    BatchConfigNotFoundResponseBodyToJSON,
-    BatchConfigResponseBody,
-    BatchConfigResponseBodyFromJSON,
-    BatchConfigResponseBodyToJSON,
+    BatchHintsResponseBody,
+    BatchHintsResponseBodyFromJSON,
+    BatchHintsResponseBodyToJSON,
     BatchStatusResponseBody,
     BatchStatusResponseBodyFromJSON,
     BatchStatusResponseBodyToJSON,
@@ -48,30 +45,30 @@ export interface BatchSubmitRequest {
 export class BatchApi extends runtime.BaseAPI {
 
     /**
-     * Retrieve the default configuration attributes for all batch operations.
-     * config batch
+     * Retrieve form hints
+     * hints batch
      */
-    async batchConfigRaw(): Promise<runtime.ApiResponse<BatchConfigResponseBody>> {
+    async batchHintsRaw(): Promise<runtime.ApiResponse<BatchHintsResponseBody>> {
         const queryParameters: runtime.HTTPQuery = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
 
         const response = await this.request({
-            path: `/batch/config`,
+            path: `/batch/hints`,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
         });
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => BatchConfigResponseBodyFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => BatchHintsResponseBodyFromJSON(jsonValue));
     }
 
     /**
-     * Retrieve the default configuration attributes for all batch operations.
-     * config batch
+     * Retrieve form hints
+     * hints batch
      */
-    async batchConfig(): Promise<BatchConfigResponseBody> {
-        const response = await this.batchConfigRaw();
+    async batchHints(): Promise<BatchHintsResponseBody> {
+        const response = await this.batchHintsRaw();
         return await response.value();
     }
 

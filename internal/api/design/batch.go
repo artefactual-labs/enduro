@@ -37,6 +37,14 @@ var _ = Service("batch", func() {
 			Response(StatusOK)
 		})
 	})
+	Method("hints", func() {
+		Description("Retrieve form hints")
+		Result(BatchHintsResult)
+		HTTP(func() {
+			GET("/hints")
+			Response(StatusOK)
+		})
+	})
 })
 
 var BatchResult = Type("BatchResult", func() {
@@ -51,4 +59,8 @@ var BatchStatusResult = Type("BatchStatusResult", func() {
 	Attribute("workflow_id", String)
 	Attribute("run_id", String)
 	Required("running")
+})
+
+var BatchHintsResult = Type("BatchHintsResult", func() {
+	Attribute("completed_dirs", ArrayOf(String), "A list of known values of completedDir used by existing watchers.")
 })

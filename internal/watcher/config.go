@@ -1,10 +1,29 @@
 package watcher
 
-import "time"
+import (
+	"path/filepath"
+	"time"
+)
 
 type Config struct {
 	Filesystem []*FilesystemConfig
 	Minio      []*MinioConfig
+}
+
+func (c Config) CompletedDirs() []string {
+	dirs := []string{}
+	for _, item := range c.Filesystem {
+		if item == nil {
+			continue
+		}
+		if item.CompletedDir == "" {
+			continue
+		}
+		if abs, err := filepath.Abs(item.CompletedDir); err == nil {
+			dirs = append(dirs, abs)
+		}
+	}
+	return dirs
 }
 
 // See filesystem.go for more.

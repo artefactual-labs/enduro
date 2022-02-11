@@ -36,6 +36,21 @@ func (m *MockService) EXPECT() *MockServiceMockRecorder {
 	return m.recorder
 }
 
+// Hints mocks base method.
+func (m *MockService) Hints(arg0 context.Context) (*batch.BatchHintsResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Hints", arg0)
+	ret0, _ := ret[0].(*batch.BatchHintsResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Hints indicates an expected call of Hints.
+func (mr *MockServiceMockRecorder) Hints(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Hints", reflect.TypeOf((*MockService)(nil).Hints), arg0)
+}
+
 // InitProcessingWorkflow mocks base method.
 func (m *MockService) InitProcessingWorkflow(arg0 context.Context, arg1 *collection.ProcessingWorkflowRequest) error {
 	m.ctrl.T.Helper()

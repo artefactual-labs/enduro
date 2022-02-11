@@ -21,20 +21,26 @@ var ErrBatchStatusUnavailable = errors.New("batch status unavailable")
 type Service interface {
 	Submit(context.Context, *goabatch.SubmitPayload) (res *goabatch.BatchResult, err error)
 	Status(context.Context) (res *goabatch.BatchStatusResult, err error)
+	Hints(context.Context) (res *goabatch.BatchHintsResult, err error)
 	InitProcessingWorkflow(ctx context.Context, req *collection.ProcessingWorkflowRequest) error
 }
 
 type batchImpl struct {
 	logger logr.Logger
 	cc     cadenceclient.Client
+
+	// A list of completedDirs reported by the watcher configuration. This is
+	// used to provide the user with possible known values.
+	completedDirs []string
 }
 
 var _ Service = (*batchImpl)(nil)
 
-func NewService(logger logr.Logger, cc cadenceclient.Client) *batchImpl {
+func NewService(logger logr.Logger, cc cadenceclient.Client, completedDirs []string) *batchImpl {
 	return &batchImpl{
-		logger: logger,
-		cc:     cc,
+		logger:        logger,
+		cc:            cc,
+		completedDirs: completedDirs,
 	}
 }
 
@@ -112,6 +118,13 @@ func (s *batchImpl) Status(ctx context.Context) (*goabatch.BatchStatusResult, er
 		return result, nil
 	}
 	result.Running = true
+	return result, nil
+}
+
+func (s *batchImpl) Hints(ctx context.Context) (*goabatch.BatchHintsResult, error) {
+	result := &goabatch.BatchHintsResult{
+		CompletedDirs: s.completedDirs,
+	}
 	return result, nil
 }
 

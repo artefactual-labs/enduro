@@ -21,7 +21,7 @@
 
           <p>Start a new batch.</p>
 
-          <b-form @submit="onSubmit">
+          <b-form @submit.prevent="onSubmit">
 
             <b-form-group label="Path" label-for="input-path" description="Select the path for the batch.">
               <b-form-input id="input-path" v-model="form.path" type="text" required></b-form-input>
@@ -37,6 +37,14 @@
                   <input v-model="form.completedDir" type="text" class="form-control" id="completed-directory-input" aria-describedby="completed-directory-help">
                   <small id="completed-directory-help" class="form-text text-muted">
                     Optional. The path where transfers are moved into when processing has completed successfully.
+                    <p v-if="hints.completedDirs">
+                      Known directories:
+                      <ul>
+                        <li v-for="item in hints.completedDirs">
+                          <a href="#" @click.prevent="form.completedDir = item">{{ item }}</a>
+                        </li>
+                      </ul>
+                    </p>
                   </small>
                 </div>
               </b-tab>
@@ -95,6 +103,10 @@ export default class Batch extends Vue {
     running: false,
   };
 
+  private hints: api.BatchHintsResponseBody = {
+    completedDirs: [],
+  };
+
   private onPipelineSelected($event: any): void {
     this.pipelineId = $event ? $event.value : null;
     this.form.pipeline = $event ? $event.text : null;
@@ -106,6 +118,7 @@ export default class Batch extends Vue {
 
   private created() {
     this.loadStatus();
+    this.loadHints();
   }
 
   private loadStatus() {
@@ -124,8 +137,13 @@ export default class Batch extends Vue {
     });
   }
 
+  private loadHints() {
+    return EnduroBatchClient.batchHints().then((response: api.BatchHintsResponseBody) => {
+      this.hints = response;
+    });
+  }
+
   private onSubmit(evt: Event) {
-    evt.preventDefault();
     const request: api.BatchSubmitRequest = {
       submitRequestBody: {
         path: this.form.path,
