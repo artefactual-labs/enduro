@@ -17,3 +17,8 @@ func SubmitBatchPath() string {
 func StatusBatchPath() string {
 	return "/batch"
 }
+
+// HintsBatchPath returns the URL path to the batch service hints HTTP endpoint.
+func HintsBatchPath() string {
+	return "/batch/hints"
+}

@@ -142,7 +142,7 @@ func main() {
 	// Set up the batch service.
 	var batchsvc batch.Service
 	{
-		batchsvc = batch.NewService(logger.WithName("batch"), workflowClient)
+		batchsvc = batch.NewService(logger.WithName("batch"), workflowClient, config.Watcher.CompletedDirs())
 	}
 
 	// Set up the collection service.

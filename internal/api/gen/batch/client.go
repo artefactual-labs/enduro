@@ -18,13 +18,15 @@ import (
 type Client struct {
 	SubmitEndpoint goa.Endpoint
 	StatusEndpoint goa.Endpoint
+	HintsEndpoint  goa.Endpoint
 }
 
 // NewClient initializes a "batch" service client given the endpoints.
-func NewClient(submit, status goa.Endpoint) *Client {
+func NewClient(submit, status, hints goa.Endpoint) *Client {
 	return &Client{
 		SubmitEndpoint: submit,
 		StatusEndpoint: status,
+		HintsEndpoint:  hints,
 	}
 }
 
@@ -50,4 +52,14 @@ func (c *Client) Status(ctx context.Context) (res *BatchStatusResult, err error)
 		return
 	}
 	return ires.(*BatchStatusResult), nil
+}
+
+// Hints calls the "hints" endpoint of the "batch" service.
+func (c *Client) Hints(ctx context.Context) (res *BatchHintsResult, err error) {
+	var ires interface{}
+	ires, err = c.HintsEndpoint(ctx, nil)
+	if err != nil {
+		return
+	}
+	return ires.(*BatchHintsResult), nil
 }

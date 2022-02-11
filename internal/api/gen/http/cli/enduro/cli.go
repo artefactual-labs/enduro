@@ -27,7 +27,7 @@ import (
 //
 func UsageCommands() string {
 	return `pipeline (list|show|processing)
-batch (submit|status)
+batch (submit|status|hints)
 collection (monitor|list|show|delete|cancel|retry|workflow|download|decide|bulk|bulk-status)
 `
 }
@@ -36,11 +36,11 @@ collection (monitor|list|show|delete|cancel|retry|workflow|download|decide|bulk|
 func UsageExamples() string {
 	return os.Args[0] + ` pipeline list --name "Porro numquam dolores doloribus."` + "\n" +
 		os.Args[0] + ` batch submit --body '{
-      "completed_dir": "Eum quis nihil soluta ut molestiae et.",
-      "path": "Labore impedit rerum laborum.",
-      "pipeline": "Provident voluptates iure et.",
-      "processing_config": "Ut dolor est.",
-      "retention_period": "Sit sed laboriosam."
+      "completed_dir": "Sit sed laboriosam.",
+      "path": "Provident voluptates iure et.",
+      "pipeline": "Ut dolor est.",
+      "processing_config": "Eum quis nihil soluta ut molestiae et.",
+      "retention_period": "Sit nihil."
    }'` + "\n" +
 		os.Args[0] + ` collection monitor` + "\n" +
 		""
@@ -75,6 +75,8 @@ func ParseEndpoint(
 		batchSubmitBodyFlag = batchSubmitFlags.String("body", "REQUIRED", "")
 
 		batchStatusFlags = flag.NewFlagSet("status", flag.ExitOnError)
+
+		batchHintsFlags = flag.NewFlagSet("hints", flag.ExitOnError)
 
 		collectionFlags = flag.NewFlagSet("collection", flag.ContinueOnError)
 
@@ -126,6 +128,7 @@ func ParseEndpoint(
 	batchFlags.Usage = batchUsage
 	batchSubmitFlags.Usage = batchSubmitUsage
 	batchStatusFlags.Usage = batchStatusUsage
+	batchHintsFlags.Usage = batchHintsUsage
 
 	collectionFlags.Usage = collectionUsage
 	collectionMonitorFlags.Usage = collectionMonitorUsage
@@ -196,6 +199,9 @@ func ParseEndpoint(
 
 			case "status":
 				epf = batchStatusFlags
+
+			case "hints":
+				epf = batchHintsFlags
 
 			}
 
@@ -277,6 +283,9 @@ func ParseEndpoint(
 				data, err = batchc.BuildSubmitPayload(*batchSubmitBodyFlag)
 			case "status":
 				endpoint = c.Status()
+				data = nil
+			case "hints":
+				endpoint = c.Hints()
 				data = nil
 			}
 		case "collection":
@@ -382,6 +391,7 @@ Usage:
 COMMAND:
     submit: Submit a new batch
     status: Retrieve status of current batch operation.
+    hints: Retrieve form hints
 
 Additional help:
     %[1]s batch COMMAND --help
@@ -395,11 +405,11 @@ Submit a new batch
 
 Example:
     %[1]s batch submit --body '{
-      "completed_dir": "Eum quis nihil soluta ut molestiae et.",
-      "path": "Labore impedit rerum laborum.",
-      "pipeline": "Provident voluptates iure et.",
-      "processing_config": "Ut dolor est.",
-      "retention_period": "Sit sed laboriosam."
+      "completed_dir": "Sit sed laboriosam.",
+      "path": "Provident voluptates iure et.",
+      "pipeline": "Ut dolor est.",
+      "processing_config": "Eum quis nihil soluta ut molestiae et.",
+      "retention_period": "Sit nihil."
    }'
 `, os.Args[0])
 }
@@ -411,6 +421,16 @@ Retrieve status of current batch operation.
 
 Example:
     %[1]s batch status
+`, os.Args[0])
+}
+
+func batchHintsUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] batch hints
+
+Retrieve form hints
+
+Example:
+    %[1]s batch hints
 `, os.Args[0])
 }
 
@@ -463,7 +483,7 @@ List all stored collections
     -cursor STRING: 
 
 Example:
-    %[1]s collection list --name "Fuga sequi magnam." --original-id "Et quam ut veniam." --transfer-id "1576BB1F-D21C-05AD-6677-73725A387FA6" --aip-id "7F641448-35F7-7B05-AFB4-8DFCC48CED66" --pipeline-id "D358BA94-28F1-C0F1-EA4E-E3BFBD8A6AE2" --earliest-created-time "1981-08-11T07:01:54Z" --latest-created-time "2012-03-11T09:25:13Z" --status "new" --cursor "Reprehenderit perferendis sed assumenda sit."
+    %[1]s collection list --name "Ut veniam molestiae amet." --original-id "Quod quibusdam ea fugit odio quia autem." --transfer-id "1576BB1F-D21C-05AD-6677-73725A387FA6" --aip-id "7F641448-35F7-7B05-AFB4-8DFCC48CED66" --pipeline-id "D358BA94-28F1-C0F1-EA4E-E3BFBD8A6AE2" --earliest-created-time "1990-10-06T02:21:42Z" --latest-created-time "2015-02-25T11:02:44Z" --status "done" --cursor "Debitis eveniet atque ipsum esse."
 `, os.Args[0])
 }
 
@@ -474,7 +494,7 @@ Show collection by ID
     -id UINT: Identifier of collection to show
 
 Example:
-    %[1]s collection show --id 3558183262425239957
+    %[1]s collection show --id 9792579105820977192
 `, os.Args[0])
 }
 
@@ -485,7 +505,7 @@ Delete collection by ID
     -id UINT: Identifier of collection to delete
 
 Example:
-    %[1]s collection delete --id 7798335794928801069
+    %[1]s collection delete --id 11400018648607317492
 `, os.Args[0])
 }
 
@@ -496,7 +516,7 @@ Cancel collection processing by ID
     -id UINT: Identifier of collection to remove
 
 Example:
-    %[1]s collection cancel --id 9551223557370062845
+    %[1]s collection cancel --id 14499263187360059104
 `, os.Args[0])
 }
 
@@ -507,7 +527,7 @@ Retry collection processing by ID
     -id UINT: Identifier of collection to retry
 
 Example:
-    %[1]s collection retry --id 2144585671607276988
+    %[1]s collection retry --id 14607175962139653509
 `, os.Args[0])
 }
 
@@ -518,7 +538,7 @@ Retrieve workflow status by ID
     -id UINT: Identifier of collection to look up
 
 Example:
-    %[1]s collection workflow --id 31156698221410907
+    %[1]s collection workflow --id 11925746244690710531
 `, os.Args[0])
 }
 
@@ -529,7 +549,7 @@ Download collection by ID
     -id UINT: Identifier of collection to look up
 
 Example:
-    %[1]s collection download --id 8390237418842601989
+    %[1]s collection download --id 1369363346339569407
 `, os.Args[0])
 }
 
@@ -542,8 +562,8 @@ Make decision for a pending collection by ID
 
 Example:
     %[1]s collection decide --body '{
-      "option": "Fugiat officia repellat."
-   }' --id 1568520991719710225
+      "option": "Optio non a officia sint."
+   }' --id 4433925421161774604
 `, os.Args[0])
 }
 
@@ -555,9 +575,9 @@ Bulk operations (retry, cancel...).
 
 Example:
     %[1]s collection bulk --body '{
-      "operation": "abandon",
-      "size": 3038399096498753622,
-      "status": "queued"
+      "operation": "cancel",
+      "size": 11998998615337084245,
+      "status": "done"
    }'
 `, os.Args[0])
 }
