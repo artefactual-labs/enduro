@@ -1,2 +1,5 @@
-internal/api/gen/* linguist-generated=true
-ui/src/openapi-generator/* linguist-generated=true
+.bingo/** linguist-generated
+.bingo/variables.env -linguist-generated
+internal/api/gen/** linguist-generated
+ui/src/openapi-generator/** linguist-generated
+website/** linguist-documentation
