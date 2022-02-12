@@ -6,6 +6,39 @@ GIT_COMMIT=$(shell git rev-parse --short HEAD)
 LD_FLAGS= '-X "main.buildTime=$(BUILD_TIME)" -X main.gitCommit=$(GIT_COMMIT)'
 GO_FLAGS= -ldflags=$(LD_FLAGS)
 
+define NEWLINE
+
+
+endef
+
+IGNORED_PACKAGES := \
+	github.com/artefactual-labs/enduro/hack/gencols \
+	github.com/artefactual-labs/enduro/hack/landfill/gencols \
+	github.com/artefactual-labs/enduro/internal/amclient/fake \
+	github.com/artefactual-labs/enduro/internal/api/design \
+	github.com/artefactual-labs/enduro/internal/api/gen/batch \
+	github.com/artefactual-labs/enduro/internal/api/gen/collection \
+	github.com/artefactual-labs/enduro/internal/api/gen/collection/views \
+	github.com/artefactual-labs/enduro/internal/api/gen/http/batch/client \
+	github.com/artefactual-labs/enduro/internal/api/gen/http/batch/server \
+	github.com/artefactual-labs/enduro/internal/api/gen/http/cli/enduro \
+	github.com/artefactual-labs/enduro/internal/api/gen/http/collection/client \
+	github.com/artefactual-labs/enduro/internal/api/gen/http/collection/server \
+	github.com/artefactual-labs/enduro/internal/api/gen/http/pipeline/client \
+	github.com/artefactual-labs/enduro/internal/api/gen/http/pipeline/server \
+	github.com/artefactual-labs/enduro/internal/api/gen/http/swagger/client \
+	github.com/artefactual-labs/enduro/internal/api/gen/http/swagger/server \
+	github.com/artefactual-labs/enduro/internal/api/gen/pipeline \
+	github.com/artefactual-labs/enduro/internal/api/gen/pipeline/views \
+	github.com/artefactual-labs/enduro/internal/api/gen/swagger \
+	github.com/artefactual-labs/enduro/internal/batch/fake \
+	github.com/artefactual-labs/enduro/internal/collection/fake \
+	github.com/artefactual-labs/enduro/internal/pipeline/fake \
+	github.com/artefactual-labs/enduro/internal/testutil \
+	github.com/artefactual-labs/enduro/internal/watcher/fake
+PACKAGES		:= $(shell go list ./...)
+TEST_PACKAGES	:= $(filter-out $(IGNORED_PACKAGES),$(PACKAGES))
+
 export PATH:=$(GOBIN):$(PATH)
 
 .DEFAULT_GOAL := run
@@ -27,7 +60,13 @@ enduro-dev:
 	$(GO) build -trimpath -o build/enduro $(GO_FLAGS) -v
 
 test:
-	$(GO) test -race -v ./...
+	@$(GOTESTSUM) $(TEST_PACKAGES)
+
+test-race:
+	@$(GOTESTSUM) $(TEST_PACKAGES) -- -race
+
+ignored:
+	$(foreach PACKAGE,$(IGNORED_PACKAGES),@echo $(PACKAGE)$(NEWLINE))
 
 lint:
 	$(GOLANGCI_LINT) run -v --timeout=5m
