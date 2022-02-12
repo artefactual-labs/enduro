@@ -41,6 +41,12 @@ $(GORELEASER): $(BINGO_DIR)/goreleaser.mod
 	@echo "(re)installing $(GOBIN)/goreleaser-v0.169.0"
 	@cd $(BINGO_DIR) && $(GO) build -mod=mod -modfile=goreleaser.mod -o=$(GOBIN)/goreleaser-v0.169.0 "github.com/goreleaser/goreleaser"
 
+GOTESTSUM := $(GOBIN)/gotestsum-v1.7.0
+$(GOTESTSUM): $(BINGO_DIR)/gotestsum.mod
+	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
+	@echo "(re)installing $(GOBIN)/gotestsum-v1.7.0"
+	@cd $(BINGO_DIR) && $(GO) build -mod=mod -modfile=gotestsum.mod -o=$(GOBIN)/gotestsum-v1.7.0 "gotest.tools/gotestsum"
+
 MOCKGEN := $(GOBIN)/mockgen-v1.6.0
 $(MOCKGEN): $(BINGO_DIR)/mockgen.mod
 	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
