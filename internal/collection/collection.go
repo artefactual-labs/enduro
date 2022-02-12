@@ -19,7 +19,6 @@ import (
 type Service interface {
 	// Goa returns an implementation of the goacollection Service.
 	Goa() goacollection.Service
-
 	Create(context.Context, *Collection) error
 	UpdateWorkflowStatus(ctx context.Context, ID uint, name string, workflowID, runID, transferID, aipID, pipelineID string, status Status, storedAt time.Time) error
 	SetStatus(ctx context.Context, ID uint, status Status) error
