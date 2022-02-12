@@ -26,11 +26,8 @@ type Watcher interface {
 
 	// Every watcher targets a pipeline.
 	Pipeline() string
-
 	RetentionPeriod() *time.Duration
-
 	CompletedDir() string
-
 	StripTopLevelDir() bool
 
 	// Full path of the watched bucket when available, empty string otherwise.
