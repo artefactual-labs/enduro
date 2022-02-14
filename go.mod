@@ -22,7 +22,7 @@ require (
 	github.com/jmoiron/sqlx v1.3.4
 	github.com/jonboulle/clockwork v0.2.2
 	github.com/mholt/archiver/v3 v3.5.1
-	github.com/nyudlts/go-bagit v0.1.1-alpha.0.20220209192346-2c25d62f6231
+	github.com/nyudlts/go-bagit v0.1.1-alpha.0.20220214141947-20f7d3004abe
 	github.com/oklog/run v1.1.0
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	github.com/otiai10/copy v1.7.0
