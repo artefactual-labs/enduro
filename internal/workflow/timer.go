@@ -4,6 +4,7 @@ import (
 	"sync"
 	"time"
 
+	"go.uber.org/cadence"
 	"go.uber.org/cadence/workflow"
 	"go.uber.org/zap"
 )
@@ -23,7 +24,9 @@ func (t *Timer) WithTimeout(ctx workflow.Context, d time.Duration) (workflow.Con
 	timedCtx, cancelHandler := workflow.WithCancel(ctx)
 	workflow.Go(ctx, func(ctx workflow.Context) {
 		if err := workflow.NewTimer(ctx, d).Get(ctx, nil); err != nil {
-			logger.Warn("Timer failed", zap.Error(err))
+			if !cadence.IsCanceledError(err) {
+				logger.Warn("Timer failed", zap.Error(err))
+			}
 		}
 
 		cancelHandler()
