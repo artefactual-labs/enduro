@@ -21,19 +21,17 @@ var completedDirs = []string{"/tmp/xyz"}
 func TestBatchServiceSubmit(t *testing.T) {
 	ctx := context.Background()
 	logger := logr.Discard()
+	pipeline := "am"
 
 	t.Run("Fails with empty or invalid parameters parameters", func(t *testing.T) {
 		client := &cadencemocks.Client{}
 		batchsvc := NewService(logger, client, completedDirs)
 
-		_, err := batchsvc.Submit(ctx, &goabatch.SubmitPayload{Pipeline: "am"})
+		_, err := batchsvc.Submit(ctx, &goabatch.SubmitPayload{Pipeline: &pipeline})
 		assert.Error(t, err, "error starting batch - path is empty")
 
-		_, err = batchsvc.Submit(ctx, &goabatch.SubmitPayload{Path: "/some/path"})
-		assert.Error(t, err, "error starting batch - pipeline is empty")
-
 		rp := "invalid-duration-format"
-		_, err = batchsvc.Submit(ctx, &goabatch.SubmitPayload{Pipeline: "am", Path: "/some/path", RetentionPeriod: &rp})
+		_, err = batchsvc.Submit(ctx, &goabatch.SubmitPayload{Pipeline: &pipeline, Path: "/some/path", RetentionPeriod: &rp})
 		assert.Error(t, err, "error starting batch - retention period format is invalid")
 	})
 
@@ -61,7 +59,7 @@ func TestBatchServiceSubmit(t *testing.T) {
 		batchsvc := NewService(logger, client, completedDirs)
 		result, err := batchsvc.Submit(ctx, &goabatch.SubmitPayload{
 			Path:             "/some/path",
-			Pipeline:         "am",
+			Pipeline:         &pipeline,
 			ProcessingConfig: &processingConfig,
 			CompletedDir:     &completedDir,
 			RetentionPeriod:  &retentionPeriod,

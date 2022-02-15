@@ -42,7 +42,6 @@ paths:
           $ref: '#/definitions/BatchSubmitRequestBody'
           required:
           - path
-          - pipeline
       responses:
         "202":
           description: Accepted response.
@@ -661,7 +660,6 @@ definitions:
       retention_period: Aut aliquid enim ex sint laboriosam.
     required:
     - path
-    - pipeline
   BatchSubmitResponseBody:
     title: BatchSubmitResponseBody
     type: object

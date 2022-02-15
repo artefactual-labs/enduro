@@ -53,12 +53,16 @@ func (a *BatchActivity) Execute(ctx context.Context, params BatchWorkflowInput) 
 	if err != nil {
 		return wferrors.NonRetryableError(err)
 	}
+	pipelines := []string{}
+	if params.PipelineName != "" {
+		pipelines = append(pipelines, params.PipelineName)
+	}
 	for _, file := range files {
 		req := collection.ProcessingWorkflowRequest{
 			BatchDir:         params.Path,
 			Key:              file.Name(),
 			IsDir:            file.IsDir(),
-			PipelineName:     params.PipelineName,
+			PipelineNames:    pipelines,
 			ProcessingConfig: params.ProcessingConfig,
 			CompletedDir:     params.CompletedDir,
 			RetentionPeriod:  params.RetentionPeriod,

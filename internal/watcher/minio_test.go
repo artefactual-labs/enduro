@@ -35,7 +35,7 @@ func newWatcher(t *testing.T) (*miniredis.Miniredis, watcher.Watcher) {
 		Secret:           "secret",
 		Token:            "token",
 		Bucket:           "bucket",
-		Pipeline:         "am1",
+		Pipeline:         []string{"am1"},
 		RetentionPeriod:  &dur,
 		StripTopLevelDir: true,
 	}

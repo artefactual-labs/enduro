@@ -36,7 +36,7 @@ export interface BatchSubmitRequestBody {
      * @type {string}
      * @memberof BatchSubmitRequestBody
      */
-    pipeline: string;
+    pipeline?: string;
     /**
      * 
      * @type {string}
@@ -63,7 +63,7 @@ export function BatchSubmitRequestBodyFromJSONTyped(json: any, ignoreDiscriminat
         
         'completedDir': !exists(json, 'completed_dir') ? undefined : json['completed_dir'],
         'path': json['path'],
-        'pipeline': json['pipeline'],
+        'pipeline': !exists(json, 'pipeline') ? undefined : json['pipeline'],
         'processingConfig': !exists(json, 'processing_config') ? undefined : json['processing_config'],
         'retentionPeriod': !exists(json, 'retention_period') ? undefined : json['retention_period'],
     };

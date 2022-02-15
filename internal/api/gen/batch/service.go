@@ -37,7 +37,7 @@ var MethodNames = [3]string{"submit", "status", "hints"}
 // SubmitPayload is the payload type of the batch service submit method.
 type SubmitPayload struct {
 	Path             string
-	Pipeline         string
+	Pipeline         *string
 	ProcessingConfig *string
 	CompletedDir     *string
 	RetentionPeriod  *string

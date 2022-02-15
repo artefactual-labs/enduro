@@ -29,7 +29,7 @@
 
             <pipeline-dropdown v-on:pipeline-selected="onPipelineSelected($event)"/>
 
-            <pipeline-processing-configuration-dropdown :pipeline-id="pipelineId" v-on:pipeline-processing-configuration-selected="form.processingConfig = $event"/>
+            <pipeline-processing-configuration-dropdown v-show="pipelineId" :pipeline-id="pipelineId" v-on:pipeline-processing-configuration-selected="form.processingConfig = $event"/>
 
             <b-tabs content-class="mt-3" tite-item-class="mt-3" v-model="tabIndex">
               <b-tab title="Completed directory" active>
@@ -147,10 +147,14 @@ export default class Batch extends Vue {
     const request: api.BatchSubmitRequest = {
       submitRequestBody: {
         path: this.form.path,
-        pipeline: this.form.pipeline,
-        processingConfig: this.form.processingConfig,
       },
     };
+    if (this.form.pipeline) {
+      request.submitRequestBody.pipeline = this.form.pipeline;
+    }
+    if (this.form.processingConfig) {
+      request.submitRequestBody.processingConfig = this.form.processingConfig;
+    }
     if (this.form.completedDir && this.tabIndex === 0) {
       request.submitRequestBody.completedDir = this.form.completedDir;
     }

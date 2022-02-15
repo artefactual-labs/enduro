@@ -17,7 +17,7 @@ var _ = Service("batch", func() {
 			Attribute("processing_config", String)
 			Attribute("completed_dir", String)
 			Attribute("retention_period", String)
-			Required("path", "pipeline")
+			Required("path")
 		})
 		Result(BatchResult)
 		Error("not_available")
