@@ -36,14 +36,14 @@ func TestBatchActivityStartsProcessingWorkflows(t *testing.T) {
 		BatchDir:         batchPath,
 		Key:              "transfer1",
 		IsDir:            true,
-		PipelineName:     "am",
+		PipelineNames:    []string{"am"},
 		ProcessingConfig: "automated",
 	})
 	serviceMock.EXPECT().InitProcessingWorkflow(ctx, &collection.ProcessingWorkflowRequest{
 		BatchDir:         batchPath,
 		Key:              "transfer2",
 		IsDir:            true,
-		PipelineName:     "am",
+		PipelineNames:    []string{"am"},
 		ProcessingConfig: "automated",
 	})
 

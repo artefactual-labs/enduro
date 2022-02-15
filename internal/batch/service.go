@@ -48,12 +48,11 @@ func (s *batchImpl) Submit(ctx context.Context, payload *goabatch.SubmitPayload)
 	if payload.Path == "" {
 		return nil, goabatch.MakeNotValid(errors.New("error starting batch - path is empty"))
 	}
-	if payload.Pipeline == "" {
-		return nil, goabatch.MakeNotValid(errors.New("error starting batch - pipeline is empty"))
-	}
 	input := BatchWorkflowInput{
-		Path:         payload.Path,
-		PipelineName: payload.Pipeline,
+		Path: payload.Path,
+	}
+	if payload.Pipeline != nil {
+		input.PipelineName = *payload.Pipeline
 	}
 	if payload.ProcessingConfig != nil {
 		input.ProcessingConfig = *payload.ProcessingConfig

@@ -203,7 +203,7 @@ func main() {
 							go func() {
 								req := collection.ProcessingWorkflowRequest{
 									WatcherName:      event.WatcherName,
-									PipelineName:     event.PipelineName,
+									PipelineNames:    event.PipelineName,
 									RetentionPeriod:  event.RetentionPeriod,
 									CompletedDir:     event.CompletedDir,
 									StripTopLevelDir: event.StripTopLevelDir,

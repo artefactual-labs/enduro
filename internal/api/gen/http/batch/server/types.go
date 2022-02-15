@@ -149,7 +149,7 @@ func NewSubmitNotValidResponseBody(res *goa.ServiceError) *SubmitNotValidRespons
 func NewSubmitPayload(body *SubmitRequestBody) *batch.SubmitPayload {
 	v := &batch.SubmitPayload{
 		Path:             *body.Path,
-		Pipeline:         *body.Pipeline,
+		Pipeline:         body.Pipeline,
 		ProcessingConfig: body.ProcessingConfig,
 		CompletedDir:     body.CompletedDir,
 		RetentionPeriod:  body.RetentionPeriod,
@@ -162,9 +162,6 @@ func NewSubmitPayload(body *SubmitRequestBody) *batch.SubmitPayload {
 func ValidateSubmitRequestBody(body *SubmitRequestBody) (err error) {
 	if body.Path == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("path", "body"))
-	}
-	if body.Pipeline == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("pipeline", "body"))
 	}
 	return
 }

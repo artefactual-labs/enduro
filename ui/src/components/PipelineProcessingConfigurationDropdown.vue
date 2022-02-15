@@ -8,7 +8,7 @@
       id="pipeline-processing-configuration-dropdown"
       described-by="pipeline-processing-configuration-dropdown-help"
       v-on:change="$emit('pipeline-processing-configuration-selected', $event.target.value)"
-      required>
+    >
 
       <option selected value>Select a processing configuration</option>
 
@@ -23,7 +23,7 @@
     <small
       id="pipeline-processing-configuration-dropdown-help"
       class="form-text text-muted">
-        Choose one of the processing configurations available.
+        Optional. Choose one of the processing configurations available.
     </small>
 
   </div>

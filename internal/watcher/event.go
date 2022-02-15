@@ -17,7 +17,7 @@ type BlobEvent struct {
 	WatcherName string
 
 	// Name of the pipeline that the watcher targets.
-	PipelineName string
+	PipelineName []string
 
 	// Retention period for this blob.
 	RetentionPeriod *time.Duration
@@ -42,7 +42,7 @@ type BlobEvent struct {
 func NewBlobEvent(w Watcher, key string, isDir bool) *BlobEvent {
 	return &BlobEvent{
 		WatcherName:      w.String(),
-		PipelineName:     w.Pipeline(),
+		PipelineName:     w.Pipelines(),
 		RetentionPeriod:  w.RetentionPeriod(),
 		CompletedDir:     w.CompletedDir(),
 		StripTopLevelDir: w.StripTopLevelDir(),

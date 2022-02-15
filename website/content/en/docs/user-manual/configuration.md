@@ -156,6 +156,14 @@ The expressions must use the [RE2 syntax].
 
 E.g.: `'^*\.ignored$'`
 
+#### `pipeline` (String | Array(String))
+
+The name of the pipeline to be used during processing. If undefined, one will
+be chosen randomly from the list of existing pipelines configured. If an Array
+is provided, the name will be chosen randomly from its values.
+
+E.g.: `"am"`, `["am1", "am2"]`
+
 #### `[[watcher.minio]]`
 
 The following monitor watches a MinIO bucket:
@@ -206,6 +214,14 @@ optional fraction and a unit suffix, such as "30m", "24h" or "2h30m".
 Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
 
 E.g.: `"10m"`
+
+#### `pipeline` (String | Array(String))
+
+The name of the pipeline to be used during processing. If undefined, one will
+be chosen randomly from the list of existing pipelines configured. If an Array
+is provided, the name will be chosen randomly from its values.
+
+E.g.: `"am"`, `["am1", "am2"]`
 
 ### `[pipeline]`
 

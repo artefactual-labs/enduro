@@ -67,3 +67,15 @@ func (r *Registry) ByID(id string) (*Pipeline, error) {
 
 	return nil, ErrUnknownPipeline
 }
+
+func (r *Registry) Names() []string {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	names := make([]string, len(r.pipelines))
+	for name := range r.pipelines {
+		names = append(names, name)
+	}
+
+	return names
+}

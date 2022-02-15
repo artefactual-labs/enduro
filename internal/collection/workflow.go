@@ -32,8 +32,10 @@ type ProcessingWorkflowRequest struct {
 	// Name of the watcher that received this blob.
 	WatcherName string
 
-	// Pipeline name.
-	PipelineName string
+	// Pipelines that are available for processing. The workflow will choose one
+	// (randomly picked for now). If the slice is empty, it will be
+	// automatically populated from the list of all configured pipelines.
+	PipelineNames []string
 
 	// Period of time to schedule the deletion of the original blob from the
 	// watched data source. nil means no deletion.

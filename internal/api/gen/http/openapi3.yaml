@@ -1385,7 +1385,6 @@ components:
         retention_period: Dignissimos debitis.
       required:
       - path
-      - pipeline
 tags:
 - name: batch
   description: The batch service manages batches of collections.

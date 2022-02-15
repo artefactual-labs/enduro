@@ -6,8 +6,7 @@
     <select
       class="form-control"
       id="pipeline-dropdown"
-      @change="onChange"
-      required>
+      @change="onChange">
 
       <option selected value>Select a pipeline</option>
 
@@ -22,7 +21,7 @@
     <small
       id="pipeline-dropdown-help"
       class="form-text text-muted">
-        Choose one of the pipelines configured.
+        Optional. Choose one of the pipelines configured.
     </small>
 
   </div>

@@ -8,6 +8,7 @@ package workflow
 import (
 	"errors"
 	"fmt"
+	"math/rand"
 	"time"
 
 	"github.com/artefactual-labs/enduro/internal/collection"
@@ -64,9 +65,10 @@ type TransferInfo struct {
 	// the workflow was started by a batch.
 	WatcherName string
 
-	// Pipeline name.
+	// Name of the pipeline to be used for processing.
 	//
-	// It is populated via the workflow request.
+	// It is populated by this workflow after the list provided by the user or
+	// the list of configured pipelines in the system.
 	PipelineName string
 
 	// Retention period.
@@ -160,7 +162,6 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 		tinfo = &TransferInfo{
 			CollectionID:     req.CollectionID,
 			WatcherName:      req.WatcherName,
-			PipelineName:     req.PipelineName,
 			RetentionPeriod:  req.RetentionPeriod,
 			CompletedDir:     req.CompletedDir,
 			StripTopLevelDir: req.StripTopLevelDir,
@@ -243,6 +244,28 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 			activityOpts = withLocalActivityOpts(ctx)
 			_ = workflow.ExecuteLocalActivity(activityOpts, setOriginalIDLocalActivity, w.manager.Collection, tinfo.CollectionID, nameInfo.Identifier).Get(activityOpts, nil)
 		}
+	}
+
+	// Randomly choose the pipeline from the list of names provided. If the
+	// list is empty then choose one from the list of all configured pipelines.
+	{
+		var pick string
+		if err := workflow.SideEffect(ctx, func(ctx workflow.Context) interface{} {
+			names := req.PipelineNames
+			if len(names) < 1 {
+				names = w.manager.Pipelines.Names()
+				if len(names) < 1 {
+					return ""
+				}
+			}
+			src := rand.NewSource(time.Now().UnixNano())
+			rnd := rand.New(src)
+			return names[rnd.Intn(len(names))]
+		}).Get(&pick); err != nil {
+			return err
+		}
+
+		tinfo.PipelineName = pick
 	}
 
 	// Load pipeline configuration and hooks.
