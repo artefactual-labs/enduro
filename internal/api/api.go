@@ -114,8 +114,15 @@ func errorHandler(logger logr.Logger, msg string) func(context.Context, http.Res
 		if !ok {
 			reqID = "unknown"
 		}
-		_ = json.NewEncoder(w).Encode(&errorMessage{RequestID: reqID})
-		logger.Error(err, "Package service error.", "reqID", reqID)
+
+		var ws bool
+		if _, err := w.Write(nil); err == http.ErrHijacked {
+			ws = true
+		} else {
+			_ = json.NewEncoder(w).Encode(&errorMessage{RequestID: reqID})
+		}
+
+		logger.Error(err, "Service error.", "reqID", reqID, "ws", ws)
 	}
 }
 
