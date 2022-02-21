@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"time"
 
-	"go.uber.org/cadence/activity"
+	"github.com/cenkalti/backoff/v4"
+	cadencesdk_activity "go.uber.org/cadence/activity"
 
 	wferrors "github.com/artefactual-labs/enduro/internal/workflow/errors"
 	"github.com/artefactual-labs/enduro/internal/workflow/manager"
-	"github.com/cenkalti/backoff/v4"
 )
 
 // AcquirePipelineActivity acquires a lock in the weighted semaphore associated
@@ -41,7 +41,7 @@ func (a *AcquirePipelineActivity) Execute(ctx context.Context, pipelineName stri
 		},
 		backoff.WithContext(backoff.NewConstantBackOff(time.Second*5), ctx),
 		func(err error, duration time.Duration) {
-			activity.RecordHeartbeat(ctx)
+			cadencesdk_activity.RecordHeartbeat(ctx)
 		},
 	)
 

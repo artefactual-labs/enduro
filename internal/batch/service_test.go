@@ -5,15 +5,15 @@ import (
 	"testing"
 	"time"
 
-	goabatch "github.com/artefactual-labs/enduro/internal/api/gen/batch"
-	"github.com/artefactual-labs/enduro/internal/collection"
-
 	"github.com/go-logr/logr"
 	"github.com/stretchr/testify/mock"
-	"go.uber.org/cadence/.gen/go/shared"
-	cadencemocks "go.uber.org/cadence/mocks"
-	"go.uber.org/cadence/workflow"
+	cadencesdk_gen_shared "go.uber.org/cadence/.gen/go/shared"
+	cadencesdk_mocks "go.uber.org/cadence/mocks"
+	cadencesdk_workflow "go.uber.org/cadence/workflow"
 	"gotest.tools/v3/assert"
+
+	goabatch "github.com/artefactual-labs/enduro/internal/api/gen/batch"
+	"github.com/artefactual-labs/enduro/internal/collection"
 )
 
 var completedDirs = []string{"/tmp/xyz"}
@@ -24,7 +24,7 @@ func TestBatchServiceSubmit(t *testing.T) {
 	pipeline := "am"
 
 	t.Run("Fails with empty or invalid parameters parameters", func(t *testing.T) {
-		client := &cadencemocks.Client{}
+		client := &cadencesdk_mocks.Client{}
 		batchsvc := NewService(logger, client, completedDirs)
 
 		_, err := batchsvc.Submit(ctx, &goabatch.SubmitPayload{Pipeline: &pipeline})
@@ -36,7 +36,7 @@ func TestBatchServiceSubmit(t *testing.T) {
 	})
 
 	t.Run("Fails with empty parameters", func(t *testing.T) {
-		client := &cadencemocks.Client{}
+		client := &cadencesdk_mocks.Client{}
 		processingConfig, completedDir, retentionPeriod := "default", "/tmp", "2h"
 
 		dur := time.Duration(time.Hour * 2)
@@ -50,7 +50,7 @@ func TestBatchServiceSubmit(t *testing.T) {
 				RetentionPeriod:  &dur,
 			},
 		).Return(
-			&workflow.Execution{
+			&cadencesdk_workflow.Execution{
 				ID:    "batch-workflow",
 				RunID: "some-run-id",
 			}, nil,
@@ -79,8 +79,8 @@ func TestBatchServiceStatus(t *testing.T) {
 	wid, rid := "batch-workflow", "some-run-id"
 
 	t.Run("Fails if the workflow information is unavailable", func(t *testing.T) {
-		client := &cadencemocks.Client{}
-		client.On("DescribeWorkflowExecution", mock.Anything, "batch-workflow", "").Return(nil, &shared.ServiceBusyError{})
+		client := &cadencesdk_mocks.Client{}
+		client.On("DescribeWorkflowExecution", mock.Anything, "batch-workflow", "").Return(nil, &cadencesdk_gen_shared.ServiceBusyError{})
 
 		batchsvc := NewService(logger, client, completedDirs)
 		_, err := batchsvc.Status(ctx)
@@ -89,8 +89,8 @@ func TestBatchServiceStatus(t *testing.T) {
 	})
 
 	t.Run("Fails if the workflow information is incomplete", func(t *testing.T) {
-		client := &cadencemocks.Client{}
-		client.On("DescribeWorkflowExecution", mock.Anything, "batch-workflow", "").Return(&shared.DescribeWorkflowExecutionResponse{}, nil)
+		client := &cadencesdk_mocks.Client{}
+		client.On("DescribeWorkflowExecution", mock.Anything, "batch-workflow", "").Return(&cadencesdk_gen_shared.DescribeWorkflowExecutionResponse{}, nil)
 
 		batchsvc := NewService(logger, client, completedDirs)
 		_, err := batchsvc.Status(ctx)
@@ -99,8 +99,8 @@ func TestBatchServiceStatus(t *testing.T) {
 	})
 
 	t.Run("Identifies a non-running batch", func(t *testing.T) {
-		client := &cadencemocks.Client{}
-		client.On("DescribeWorkflowExecution", mock.Anything, "batch-workflow", "").Return(nil, &shared.EntityNotExistsError{})
+		client := &cadencesdk_mocks.Client{}
+		client.On("DescribeWorkflowExecution", mock.Anything, "batch-workflow", "").Return(nil, &cadencesdk_gen_shared.EntityNotExistsError{})
 
 		batchsvc := NewService(logger, client, completedDirs)
 		result, err := batchsvc.Status(ctx)
@@ -112,10 +112,10 @@ func TestBatchServiceStatus(t *testing.T) {
 	})
 
 	t.Run("Identifies a running batch", func(t *testing.T) {
-		client := &cadencemocks.Client{}
-		client.On("DescribeWorkflowExecution", mock.Anything, "batch-workflow", "").Return(&shared.DescribeWorkflowExecutionResponse{
-			WorkflowExecutionInfo: &shared.WorkflowExecutionInfo{
-				Execution: &shared.WorkflowExecution{
+		client := &cadencesdk_mocks.Client{}
+		client.On("DescribeWorkflowExecution", mock.Anything, "batch-workflow", "").Return(&cadencesdk_gen_shared.DescribeWorkflowExecutionResponse{
+			WorkflowExecutionInfo: &cadencesdk_gen_shared.WorkflowExecutionInfo{
+				Execution: &cadencesdk_gen_shared.WorkflowExecution{
 					WorkflowId: &wid,
 					RunId:      &rid,
 				},
@@ -134,14 +134,14 @@ func TestBatchServiceStatus(t *testing.T) {
 	})
 
 	t.Run("Identifies a closed batch", func(t *testing.T) {
-		client := &cadencemocks.Client{}
-		client.On("DescribeWorkflowExecution", mock.Anything, "batch-workflow", "").Return(&shared.DescribeWorkflowExecutionResponse{
-			WorkflowExecutionInfo: &shared.WorkflowExecutionInfo{
-				Execution: &shared.WorkflowExecution{
+		client := &cadencesdk_mocks.Client{}
+		client.On("DescribeWorkflowExecution", mock.Anything, "batch-workflow", "").Return(&cadencesdk_gen_shared.DescribeWorkflowExecutionResponse{
+			WorkflowExecutionInfo: &cadencesdk_gen_shared.WorkflowExecutionInfo{
+				Execution: &cadencesdk_gen_shared.WorkflowExecution{
 					WorkflowId: &wid,
 					RunId:      &rid,
 				},
-				CloseStatus: shared.WorkflowExecutionCloseStatusCompleted.Ptr(),
+				CloseStatus: cadencesdk_gen_shared.WorkflowExecutionCloseStatusCompleted.Ptr(),
 			},
 		}, nil)
 
@@ -162,7 +162,7 @@ func TestBatchServiceStatus(t *testing.T) {
 func TestBatchServiceHints(t *testing.T) {
 	ctx := context.Background()
 	logger := logr.Discard()
-	client := &cadencemocks.Client{}
+	client := &cadencesdk_mocks.Client{}
 
 	batchsvc := NewService(logger, client, completedDirs)
 	result, err := batchsvc.Hints(ctx)
@@ -176,7 +176,7 @@ func TestBatchServiceHints(t *testing.T) {
 func TestBatchServiceInitProcessingWorkflow(t *testing.T) {
 	ctx := context.Background()
 	logger := logr.Discard()
-	client := &cadencemocks.Client{}
+	client := &cadencesdk_mocks.Client{}
 	client.On(
 		"StartWorkflow",
 		mock.AnythingOfType("*context.timerCtx"),
@@ -185,11 +185,11 @@ func TestBatchServiceInitProcessingWorkflow(t *testing.T) {
 		mock.AnythingOfType("*collection.ProcessingWorkflowRequest"),
 	).Return(
 		nil,
-		&shared.InternalServiceError{},
+		&cadencesdk_gen_shared.InternalServiceError{},
 	)
 
 	batchsvc := NewService(logger, client, completedDirs)
 	err := batchsvc.InitProcessingWorkflow(ctx, &collection.ProcessingWorkflowRequest{})
 
-	assert.ErrorType(t, err, &shared.InternalServiceError{})
+	assert.ErrorType(t, err, &cadencesdk_gen_shared.InternalServiceError{})
 }

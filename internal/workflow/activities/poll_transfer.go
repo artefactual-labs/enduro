@@ -5,12 +5,12 @@ import (
 	"errors"
 	"time"
 
+	"github.com/cenkalti/backoff/v4"
+	cadencesdk_activity "go.uber.org/cadence/activity"
+
 	"github.com/artefactual-labs/enduro/internal/pipeline"
 	wferrors "github.com/artefactual-labs/enduro/internal/workflow/errors"
 	"github.com/artefactual-labs/enduro/internal/workflow/manager"
-
-	"github.com/cenkalti/backoff/v4"
-	"go.uber.org/cadence/activity"
 )
 
 // PollTransferActivity polls the Transfer Status API repeatedly until
@@ -75,7 +75,7 @@ func (a *PollTransferActivity) Execute(ctx context.Context, params *PollTransfer
 		},
 		backoffStrategy,
 		func(err error, duration time.Duration) {
-			activity.RecordHeartbeat(ctx, err.Error())
+			cadencesdk_activity.RecordHeartbeat(ctx, err.Error())
 		},
 	)
 

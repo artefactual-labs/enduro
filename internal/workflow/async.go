@@ -6,12 +6,12 @@ import (
 	"fmt"
 	"time"
 
+	cadencesdk "go.uber.org/cadence"
+	cadencesdk_activity "go.uber.org/cadence/activity"
+	cadencesdk_workflow "go.uber.org/cadence/workflow"
+
 	"github.com/artefactual-labs/enduro/internal/collection"
 	"github.com/artefactual-labs/enduro/internal/workflow/manager"
-
-	"go.uber.org/cadence"
-	"go.uber.org/cadence/activity"
-	"go.uber.org/cadence/workflow"
 )
 
 type asyncDecision string
@@ -32,10 +32,10 @@ var ErrAsyncCompletionAbandoned = errors.New("user abandoned")
 //
 // TODO: state changes in collection could be performed via hook functions,
 // generalize and convert into a struct.
-func executeActivityWithAsyncErrorHandling(ctx workflow.Context, colsvc collection.Service, colID uint, opts workflow.ActivityOptions, act interface{}, args ...interface{}) workflow.Future {
-	future, settable := workflow.NewFuture(ctx)
+func executeActivityWithAsyncErrorHandling(ctx cadencesdk_workflow.Context, colsvc collection.Service, colID uint, opts cadencesdk_workflow.ActivityOptions, act interface{}, args ...interface{}) cadencesdk_workflow.Future {
+	future, settable := cadencesdk_workflow.NewFuture(ctx)
 
-	workflow.Go(ctx, func(ctx workflow.Context) {
+	cadencesdk_workflow.Go(ctx, func(ctx cadencesdk_workflow.Context) {
 		retryWithPolicy := true
 		retryPolicy := opts.RetryPolicy
 		var attempts uint
@@ -51,12 +51,12 @@ func executeActivityWithAsyncErrorHandling(ctx workflow.Context, colsvc collecti
 
 			// Set in-progress status on new attempts - presumably coming from "pending".
 			if attempts > 0 {
-				_ = workflow.ExecuteLocalActivity(ctx, setStatusInProgressLocalActivity, colsvc, colID, time.Time{}).Get(ctx, nil)
+				_ = cadencesdk_workflow.ExecuteLocalActivity(ctx, setStatusInProgressLocalActivity, colsvc, colID, time.Time{}).Get(ctx, nil)
 			}
 
 			// Execute the activity that we're wrapping.
-			activityOpts := workflow.WithActivityOptions(ctx, opts)
-			err := workflow.ExecuteActivity(activityOpts, act, args...).Get(activityOpts, nil)
+			activityOpts := cadencesdk_workflow.WithActivityOptions(ctx, opts)
+			err := cadencesdk_workflow.ExecuteActivity(activityOpts, act, args...).Get(activityOpts, nil)
 
 			// We're done here if the activity did not fail.
 			if err == nil {
@@ -67,11 +67,11 @@ func executeActivityWithAsyncErrorHandling(ctx workflow.Context, colsvc collecti
 			// Execute the activity that performs asynchronous completion.
 			var decision asyncDecision
 			activityOpts = withActivityOptsForAsyncCompletion(ctx)
-			err = workflow.ExecuteActivity(activityOpts, AsyncCompletionActivityName, colID).Get(activityOpts, &decision)
+			err = cadencesdk_workflow.ExecuteActivity(activityOpts, AsyncCompletionActivityName, colID).Get(activityOpts, &decision)
 
 			// Asynchronous completion failed.
 			if err != nil {
-				if cadence.IsTimeoutError(err) {
+				if cadencesdk.IsTimeoutError(err) {
 					decision = abandon
 				} else {
 					settable.Set(nil, err)
@@ -90,7 +90,7 @@ func executeActivityWithAsyncErrorHandling(ctx workflow.Context, colsvc collecti
 				settable.Set(nil, ErrAsyncCompletionAbandoned)
 				return
 			default:
-				settable.Set(nil, cadence.NewCustomError("received decision is unknown"))
+				settable.Set(nil, cadencesdk.NewCustomError("received decision is unknown"))
 				return
 			}
 		}
@@ -110,11 +110,11 @@ func NewAsyncCompletionActivity(m *manager.Manager) *AsyncCompletionActivity {
 }
 
 func (a *AsyncCompletionActivity) Execute(ctx context.Context, colID uint) (string, error) {
-	info := activity.GetInfo(ctx)
+	info := cadencesdk_activity.GetInfo(ctx)
 
 	if err := a.manager.Collection.SetStatusPending(ctx, colID, info.TaskToken); err != nil {
 		return "", fmt.Errorf("error saving task token: %v", err)
 	}
 
-	return "", activity.ErrResultPending
+	return "", cadencesdk_activity.ErrResultPending
 }

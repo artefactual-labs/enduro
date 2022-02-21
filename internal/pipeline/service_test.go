@@ -7,9 +7,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	goapipeline "github.com/artefactual-labs/enduro/internal/api/gen/pipeline"
 	"github.com/go-logr/logr"
 	"gotest.tools/v3/assert"
+
+	goapipeline "github.com/artefactual-labs/enduro/internal/api/gen/pipeline"
 )
 
 func TestService(t *testing.T) {

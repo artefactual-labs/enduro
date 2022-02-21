@@ -9,9 +9,34 @@ linters:
   enable:
   - misspell
   - gofumpt
+  - importas
+  - gci
 
 issues:
   exclude-rules:
   - path: _test\.go
     linters:
     - errcheck
+
+linters-settings:
+  gci:
+    no-inline-comments: true
+    no-prefix-comments: false
+    sections:
+      - standard
+      - default
+      - prefix(github.com/artefactual-labs/enduro)
+    section-separators:
+      - newLine
+  importas:
+    no-unaliased: true
+    no-extra-aliases: false
+    alias:
+      - pkg: go.uber.org/cadence
+        alias: cadencesdk
+      - pkg: go.uber.org/cadence/(\w+)
+        alias: cadencesdk_$1
+      - pkg: go.uber.org/cadence/.gen/go/shared
+        alias: cadencesdk_gen_shared
+      - pkg: go.uber.org/cadence/.gen/go/cadence/workflowserviceclient
+        alias: cadencesdk_gen_workflowserviceclient

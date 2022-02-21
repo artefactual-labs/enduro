@@ -9,12 +9,12 @@ import (
 	"regexp"
 	"runtime"
 
-	"github.com/artefactual-labs/enduro/internal/filenotify"
-	"github.com/artefactual-labs/enduro/internal/fsutil"
-
 	"github.com/fsnotify/fsnotify"
 	"gocloud.dev/blob"
 	"gocloud.dev/blob/fileblob"
+
+	"github.com/artefactual-labs/enduro/internal/filenotify"
+	"github.com/artefactual-labs/enduro/internal/fsutil"
 )
 
 // filesystemWatcher implements a Watcher for watching paths in a local filesystem.

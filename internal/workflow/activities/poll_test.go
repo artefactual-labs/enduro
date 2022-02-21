@@ -7,10 +7,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/artefactual-labs/enduro/internal/pipeline"
-	"github.com/artefactual-labs/enduro/internal/workflow/manager"
 	"github.com/go-logr/logr"
 	"gotest.tools/v3/assert"
+
+	"github.com/artefactual-labs/enduro/internal/pipeline"
+	"github.com/artefactual-labs/enduro/internal/workflow/manager"
 )
 
 type ZeroBackOff struct {

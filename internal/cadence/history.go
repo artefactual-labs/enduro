@@ -5,13 +5,13 @@ import (
 	"errors"
 	"fmt"
 
-	"go.uber.org/cadence/.gen/go/shared"
-	"go.uber.org/cadence/client"
+	cadencesdk_gen_shared "go.uber.org/cadence/.gen/go/shared"
+	cadencesdk_client "go.uber.org/cadence/client"
 )
 
-func HistoryEvents(ctx context.Context, cc client.Client, exec *shared.WorkflowExecution, poll bool) ([]*shared.HistoryEvent, error) {
-	iter := cc.GetWorkflowHistory(ctx, exec.GetWorkflowId(), exec.GetRunId(), poll, shared.HistoryEventFilterTypeAllEvent)
-	var events []*shared.HistoryEvent
+func HistoryEvents(ctx context.Context, cc cadencesdk_client.Client, exec *cadencesdk_gen_shared.WorkflowExecution, poll bool) ([]*cadencesdk_gen_shared.HistoryEvent, error) {
+	iter := cc.GetWorkflowHistory(ctx, exec.GetWorkflowId(), exec.GetRunId(), poll, cadencesdk_gen_shared.HistoryEventFilterTypeAllEvent)
+	var events []*cadencesdk_gen_shared.HistoryEvent
 	for iter.HasNext() {
 		event, err := iter.Next()
 		if err != nil {
@@ -28,9 +28,9 @@ func HistoryEvents(ctx context.Context, cc client.Client, exec *shared.WorkflowE
 	return events, nil
 }
 
-func FirstHistoryEvent(ctx context.Context, cc client.Client, exec *shared.WorkflowExecution) (event *shared.HistoryEvent, err error) {
+func FirstHistoryEvent(ctx context.Context, cc cadencesdk_client.Client, exec *cadencesdk_gen_shared.WorkflowExecution) (event *cadencesdk_gen_shared.HistoryEvent, err error) {
 	const polling = false
-	iter := cc.GetWorkflowHistory(ctx, exec.GetWorkflowId(), exec.GetRunId(), polling, shared.HistoryEventFilterTypeAllEvent)
+	iter := cc.GetWorkflowHistory(ctx, exec.GetWorkflowId(), exec.GetRunId(), polling, cadencesdk_gen_shared.HistoryEventFilterTypeAllEvent)
 
 	for iter.HasNext() {
 		event, err = iter.Next()

@@ -7,12 +7,12 @@ import (
 	"net/http/httputil"
 	"net/url"
 
+	"github.com/go-logr/logr"
+	goahttp "goa.design/goa/v3/http"
+
 	"github.com/artefactual-labs/enduro/internal/api/gen/collection"
 	"github.com/artefactual-labs/enduro/internal/api/gen/http/collection/server"
 	"github.com/artefactual-labs/enduro/internal/pipeline"
-
-	"github.com/go-logr/logr"
-	goahttp "goa.design/goa/v3/http"
 )
 
 const userAgent = "Enduro (ssclient)"

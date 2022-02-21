@@ -5,10 +5,10 @@ import (
 	"io/ioutil"
 	"time"
 
+	cadencesdk_workflow "go.uber.org/cadence/workflow"
+
 	"github.com/artefactual-labs/enduro/internal/collection"
 	wferrors "github.com/artefactual-labs/enduro/internal/workflow/errors"
-
-	"go.uber.org/cadence/workflow"
 )
 
 const (
@@ -29,13 +29,13 @@ type BatchWorkflowInput struct {
 	RetentionPeriod  *time.Duration
 }
 
-func BatchWorkflow(ctx workflow.Context, params BatchWorkflowInput) error {
-	opts := workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
+func BatchWorkflow(ctx cadencesdk_workflow.Context, params BatchWorkflowInput) error {
+	opts := cadencesdk_workflow.WithActivityOptions(ctx, cadencesdk_workflow.ActivityOptions{
 		ScheduleToStartTimeout: time.Hour * 24 * 365,
 		StartToCloseTimeout:    time.Hour * 24 * 365,
 		WaitForCancellation:    true,
 	})
-	return workflow.ExecuteActivity(opts, BatchActivityName, params).Get(opts, nil)
+	return cadencesdk_workflow.ExecuteActivity(opts, BatchActivityName, params).Get(opts, nil)
 }
 
 type BatchActivity struct {

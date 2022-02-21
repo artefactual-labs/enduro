@@ -7,13 +7,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-logr/logr"
+	cadencesdk_gen_shared "go.uber.org/cadence/.gen/go/shared"
+	cadencesdk_client "go.uber.org/cadence/client"
+
 	goabatch "github.com/artefactual-labs/enduro/internal/api/gen/batch"
 	"github.com/artefactual-labs/enduro/internal/cadence"
 	"github.com/artefactual-labs/enduro/internal/collection"
 	"github.com/artefactual-labs/enduro/internal/validation"
-	"github.com/go-logr/logr"
-	"go.uber.org/cadence/.gen/go/shared"
-	cadenceclient "go.uber.org/cadence/client"
 )
 
 var ErrBatchStatusUnavailable = errors.New("batch status unavailable")
@@ -27,7 +28,7 @@ type Service interface {
 
 type batchImpl struct {
 	logger logr.Logger
-	cc     cadenceclient.Client
+	cc     cadencesdk_client.Client
 
 	// A list of completedDirs reported by the watcher configuration. This is
 	// used to provide the user with possible known values.
@@ -36,7 +37,7 @@ type batchImpl struct {
 
 var _ Service = (*batchImpl)(nil)
 
-func NewService(logger logr.Logger, cc cadenceclient.Client, completedDirs []string) *batchImpl {
+func NewService(logger logr.Logger, cc cadencesdk_client.Client, completedDirs []string) *batchImpl {
 	return &batchImpl{
 		logger:        logger,
 		cc:            cc,
@@ -67,9 +68,9 @@ func (s *batchImpl) Submit(ctx context.Context, payload *goabatch.SubmitPayload)
 		}
 		input.RetentionPeriod = &dur
 	}
-	opts := cadenceclient.StartWorkflowOptions{
+	opts := cadencesdk_client.StartWorkflowOptions{
 		ID:                              BatchWorkflowID,
-		WorkflowIDReusePolicy:           cadenceclient.WorkflowIDReusePolicyAllowDuplicate,
+		WorkflowIDReusePolicy:           cadencesdk_client.WorkflowIDReusePolicyAllowDuplicate,
 		TaskList:                        cadence.GlobalTaskListName,
 		DecisionTaskStartToCloseTimeout: time.Second * 10,
 		ExecutionStartToCloseTimeout:    time.Hour,
@@ -77,7 +78,7 @@ func (s *batchImpl) Submit(ctx context.Context, payload *goabatch.SubmitPayload)
 	exec, err := s.cc.StartWorkflow(ctx, opts, BatchWorkflowName, input)
 	if err != nil {
 		switch err := err.(type) {
-		case *shared.WorkflowExecutionAlreadyStartedError:
+		case *cadencesdk_gen_shared.WorkflowExecutionAlreadyStartedError:
 			return nil, goabatch.MakeNotAvailable(
 				fmt.Errorf("error starting batch - operation is already in progress (workflowID=%s runID=%s)",
 					BatchWorkflowID, *err.RunId))
@@ -98,7 +99,7 @@ func (s *batchImpl) Status(ctx context.Context) (*goabatch.BatchStatusResult, er
 	resp, err := s.cc.DescribeWorkflowExecution(ctx, BatchWorkflowID, "")
 	if err != nil {
 		switch err := err.(type) {
-		case *shared.EntityNotExistsError:
+		case *cadencesdk_gen_shared.EntityNotExistsError:
 			return result, nil
 		default:
 			s.logger.Info("error retrieving workflow", "err", err)

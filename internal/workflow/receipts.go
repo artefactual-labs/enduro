@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"time"
 
+	cadencesdk_workflow "go.uber.org/cadence/workflow"
+
 	"github.com/artefactual-labs/enduro/internal/nha"
 	nha_activities "github.com/artefactual-labs/enduro/internal/nha/activities"
 	"github.com/artefactual-labs/enduro/internal/workflow/manager"
-
-	"go.uber.org/cadence/workflow"
 )
 
 type sendReceiptsParams struct {
@@ -20,9 +20,9 @@ type sendReceiptsParams struct {
 	CollectionID uint
 }
 
-func (w *ProcessingWorkflow) sendReceipts(ctx workflow.Context, params *sendReceiptsParams) error {
+func (w *ProcessingWorkflow) sendReceipts(ctx cadencesdk_workflow.Context, params *sendReceiptsParams) error {
 	if disabled, _ := manager.HookAttrBool(w.manager.Hooks, "hari", "disabled"); !disabled {
-		opts := workflow.ActivityOptions{
+		opts := cadencesdk_workflow.ActivityOptions{
 			ScheduleToStartTimeout: forever,
 			StartToCloseTimeout:    time.Minute * 20,
 		}
@@ -39,7 +39,7 @@ func (w *ProcessingWorkflow) sendReceipts(ctx workflow.Context, params *sendRece
 	}
 
 	if disabled, _ := manager.HookAttrBool(w.manager.Hooks, "prod", "disabled"); !disabled {
-		opts := workflow.ActivityOptions{
+		opts := cadencesdk_workflow.ActivityOptions{
 			ScheduleToStartTimeout: forever,
 			StartToCloseTimeout:    time.Second * 10,
 		}

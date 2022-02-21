@@ -8,10 +8,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/artefactual-labs/enduro/internal/watcher"
-
 	"github.com/alicebob/miniredis/v2"
 	"gotest.tools/v3/poll"
+
+	"github.com/artefactual-labs/enduro/internal/watcher"
 )
 
 func newWatcher(t *testing.T) (*miniredis.Miniredis, watcher.Watcher) {
