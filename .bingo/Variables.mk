@@ -29,11 +29,11 @@ $(GOA): $(BINGO_DIR)/goa.mod
 	@echo "(re)installing $(GOBIN)/goa-v3.5.5"
 	@cd $(BINGO_DIR) && $(GO) build -mod=mod -modfile=goa.mod -o=$(GOBIN)/goa-v3.5.5 "goa.design/goa/v3/cmd/goa"
 
-GOLANGCI_LINT := $(GOBIN)/golangci-lint-v1.44.0
+GOLANGCI_LINT := $(GOBIN)/golangci-lint-v1.44.2
 $(GOLANGCI_LINT): $(BINGO_DIR)/golangci-lint.mod
 	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
-	@echo "(re)installing $(GOBIN)/golangci-lint-v1.44.0"
-	@cd $(BINGO_DIR) && $(GO) build -mod=mod -modfile=golangci-lint.mod -o=$(GOBIN)/golangci-lint-v1.44.0 "github.com/golangci/golangci-lint/cmd/golangci-lint"
+	@echo "(re)installing $(GOBIN)/golangci-lint-v1.44.2"
+	@cd $(BINGO_DIR) && $(GO) build -mod=mod -modfile=golangci-lint.mod -o=$(GOBIN)/golangci-lint-v1.44.2 "github.com/golangci/golangci-lint/cmd/golangci-lint"
 
 GORELEASER := $(GOBIN)/goreleaser-v1.4.1
 $(GORELEASER): $(BINGO_DIR)/goreleaser.mod
