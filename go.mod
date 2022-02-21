@@ -9,7 +9,7 @@ require (
 	github.com/cenkalti/backoff/v4 v4.1.2
 	github.com/fsnotify/fsnotify v1.5.1
 	github.com/go-logr/logr v1.2.2
-	github.com/go-logr/zapr v1.2.2
+	github.com/go-logr/zapr v1.2.3
 	github.com/go-redis/redis/v8 v8.11.4
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/golang-migrate/migrate/v4 v4.15.1
