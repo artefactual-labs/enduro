@@ -6,13 +6,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/artefactual-labs/enduro/internal/pipeline"
 	"github.com/go-logr/logr"
 	"github.com/jonboulle/clockwork"
-	"go.uber.org/cadence/testsuite"
-	"go.uber.org/cadence/worker"
+	cadencesdk_testsuite "go.uber.org/cadence/testsuite"
+	cadencesdk_worker "go.uber.org/cadence/worker"
 	"gotest.tools/v3/assert"
 	is "gotest.tools/v3/assert/cmp"
+
+	"github.com/artefactual-labs/enduro/internal/pipeline"
 )
 
 func TestPollTransferActivity(t *testing.T) {
@@ -21,7 +22,7 @@ func TestPollTransferActivity(t *testing.T) {
 		activity := NewPollTransferActivity(manager)
 		manager.Pipelines, _ = pipeline.NewPipelineRegistry(logr.Discard(), []pipeline.Config{})
 
-		s := testsuite.WorkflowTestSuite{}
+		s := cadencesdk_testsuite.WorkflowTestSuite{}
 		env := s.NewTestActivityEnvironment()
 		env.RegisterActivity(activity.Execute)
 
@@ -42,10 +43,10 @@ func TestPollTransferActivity(t *testing.T) {
 		})
 		activity := NewPollTransferActivity(manager)
 
-		s := testsuite.WorkflowTestSuite{}
+		s := cadencesdk_testsuite.WorkflowTestSuite{}
 		env := s.NewTestActivityEnvironment()
 		env.RegisterActivity(activity.Execute)
-		env.SetWorkerOptions(worker.Options{BackgroundActivityContext: ctx})
+		env.SetWorkerOptions(cadencesdk_worker.Options{BackgroundActivityContext: ctx})
 
 		var sipID string
 		future, err := env.ExecuteActivity(activity.Execute, &PollTransferActivityParams{
@@ -65,10 +66,10 @@ func TestPollTransferActivity(t *testing.T) {
 		})
 		activity := NewPollTransferActivity(manager)
 
-		s := testsuite.WorkflowTestSuite{}
+		s := cadencesdk_testsuite.WorkflowTestSuite{}
 		env := s.NewTestActivityEnvironment()
 		env.RegisterActivity(activity.Execute)
-		env.SetWorkerOptions(worker.Options{BackgroundActivityContext: ctx})
+		env.SetWorkerOptions(cadencesdk_worker.Options{BackgroundActivityContext: ctx})
 
 		future, err := env.ExecuteActivity(activity.Execute, &PollTransferActivityParams{
 			PipelineName: "am",
@@ -101,10 +102,10 @@ func TestPollTransferActivity(t *testing.T) {
 		})
 		activity := NewPollTransferActivity(manager)
 
-		s := testsuite.WorkflowTestSuite{}
+		s := cadencesdk_testsuite.WorkflowTestSuite{}
 		env := s.NewTestActivityEnvironment()
 		env.RegisterActivity(activity.Execute)
-		env.SetWorkerOptions(worker.Options{BackgroundActivityContext: ctx})
+		env.SetWorkerOptions(cadencesdk_worker.Options{BackgroundActivityContext: ctx})
 
 		var sipID string
 		future, err := env.ExecuteActivity(activity.Execute, &PollTransferActivityParams{
@@ -130,10 +131,10 @@ func TestPollTransferActivity(t *testing.T) {
 		})
 		activity := NewPollTransferActivity(manager)
 
-		s := testsuite.WorkflowTestSuite{}
+		s := cadencesdk_testsuite.WorkflowTestSuite{}
 		env := s.NewTestActivityEnvironment()
 		env.RegisterActivity(activity.Execute)
-		env.SetWorkerOptions(worker.Options{BackgroundActivityContext: ctx})
+		env.SetWorkerOptions(cadencesdk_worker.Options{BackgroundActivityContext: ctx})
 
 		future, err := env.ExecuteActivity(activity.Execute, &PollTransferActivityParams{
 			PipelineName: "am",

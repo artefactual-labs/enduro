@@ -3,8 +3,8 @@ package workflow
 import (
 	"time"
 
-	"go.uber.org/cadence"
-	"go.uber.org/cadence/workflow"
+	cadencesdk "go.uber.org/cadence"
+	cadencesdk_workflow "go.uber.org/cadence/workflow"
 
 	wferrors "github.com/artefactual-labs/enduro/internal/workflow/errors"
 )
@@ -15,11 +15,11 @@ const forever = time.Hour * 24 * 365 * 10
 
 // withActivityOptsForLongLivedRequest returns a workflow context with activity
 // options suited for long-running activities without heartbeats
-func withActivityOptsForLongLivedRequest(ctx workflow.Context) workflow.Context {
-	return workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
+func withActivityOptsForLongLivedRequest(ctx cadencesdk_workflow.Context) cadencesdk_workflow.Context {
+	return cadencesdk_workflow.WithActivityOptions(ctx, cadencesdk_workflow.ActivityOptions{
 		ScheduleToStartTimeout: forever,
 		StartToCloseTimeout:    time.Hour * 2,
-		RetryPolicy: &cadence.RetryPolicy{
+		RetryPolicy: &cadencesdk.RetryPolicy{
 			InitialInterval:    time.Second,
 			BackoffCoefficient: 2,
 			MaximumInterval:    time.Minute * 10,
@@ -41,12 +41,12 @@ func withActivityOptsForLongLivedRequest(ctx workflow.Context) workflow.Context 
 //
 // The activity is responsible for returning a NRE error. Otherwise it will be
 // retried "forever".
-func withActivityOptsForHeartbeatedRequest(ctx workflow.Context, heartbeatTimeout time.Duration) workflow.Context {
-	return workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
+func withActivityOptsForHeartbeatedRequest(ctx cadencesdk_workflow.Context, heartbeatTimeout time.Duration) cadencesdk_workflow.Context {
+	return cadencesdk_workflow.WithActivityOptions(ctx, cadencesdk_workflow.ActivityOptions{
 		ScheduleToStartTimeout: forever,
 		StartToCloseTimeout:    forever, // Real cap is workflow.ExecutionStartToCloseTimeout.
 		HeartbeatTimeout:       heartbeatTimeout,
-		RetryPolicy: &cadence.RetryPolicy{
+		RetryPolicy: &cadencesdk.RetryPolicy{
 			InitialInterval:          time.Second,
 			BackoffCoefficient:       2,
 			MaximumInterval:          time.Second * 10,
@@ -58,11 +58,11 @@ func withActivityOptsForHeartbeatedRequest(ctx workflow.Context, heartbeatTimeou
 
 // withActivityOptsForRequest returns a workflow context with activity options
 // suited for short-lived requests that may require multiple attempts.
-func withActivityOptsForRequest(ctx workflow.Context) workflow.Context {
-	return workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
+func withActivityOptsForRequest(ctx cadencesdk_workflow.Context) cadencesdk_workflow.Context {
+	return cadencesdk_workflow.WithActivityOptions(ctx, cadencesdk_workflow.ActivityOptions{
 		ScheduleToStartTimeout: forever,
 		StartToCloseTimeout:    time.Second * 10,
-		RetryPolicy: &cadence.RetryPolicy{
+		RetryPolicy: &cadencesdk.RetryPolicy{
 			InitialInterval:          time.Second,
 			BackoffCoefficient:       2,
 			MaximumInterval:          time.Minute * 5,
@@ -76,8 +76,8 @@ func withActivityOptsForRequest(ctx workflow.Context) workflow.Context {
 // withActivityOptsForLocalAction returns a workflow context with activity
 // options suited for local activities like disk operations that should not
 // require a retry policy attached.
-func withActivityOptsForLocalAction(ctx workflow.Context) workflow.Context {
-	return workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
+func withActivityOptsForLocalAction(ctx cadencesdk_workflow.Context) cadencesdk_workflow.Context {
+	return cadencesdk_workflow.WithActivityOptions(ctx, cadencesdk_workflow.ActivityOptions{
 		ScheduleToStartTimeout: forever,
 		StartToCloseTimeout:    time.Hour,
 	})
@@ -86,8 +86,8 @@ func withActivityOptsForLocalAction(ctx workflow.Context) workflow.Context {
 // withActivityOptionsForNoOp returns a workflow context with activity options
 // suited for no-op activities.
 //nolint:deadcode,unused
-func withActivityOptsForNoOp(ctx workflow.Context) workflow.Context {
-	return workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
+func withActivityOptsForNoOp(ctx cadencesdk_workflow.Context) cadencesdk_workflow.Context {
+	return cadencesdk_workflow.WithActivityOptions(ctx, cadencesdk_workflow.ActivityOptions{
 		ScheduleToStartTimeout: forever,
 		StartToCloseTimeout:    time.Second * 10,
 	})
@@ -95,10 +95,10 @@ func withActivityOptsForNoOp(ctx workflow.Context) workflow.Context {
 
 // withLocalActivityOpts returns a workflow context with activity options suited
 // for local and short-lived activities with a few retries.
-func withLocalActivityOpts(ctx workflow.Context) workflow.Context {
-	return workflow.WithLocalActivityOptions(ctx, workflow.LocalActivityOptions{
+func withLocalActivityOpts(ctx cadencesdk_workflow.Context) cadencesdk_workflow.Context {
+	return cadencesdk_workflow.WithLocalActivityOptions(ctx, cadencesdk_workflow.LocalActivityOptions{
 		ScheduleToCloseTimeout: 5 * time.Second,
-		RetryPolicy: &cadence.RetryPolicy{
+		RetryPolicy: &cadencesdk.RetryPolicy{
 			InitialInterval:          time.Second,
 			BackoffCoefficient:       2,
 			MaximumInterval:          time.Minute,
@@ -110,8 +110,8 @@ func withLocalActivityOpts(ctx workflow.Context) workflow.Context {
 
 // withActivityOptsForAsyncCompletion returns a workflow context with activity
 // options for local and short-lived activities that don't deserve retries.
-func withLocalActivityWithoutRetriesOpts(ctx workflow.Context) workflow.Context {
-	return workflow.WithLocalActivityOptions(ctx, workflow.LocalActivityOptions{
+func withLocalActivityWithoutRetriesOpts(ctx cadencesdk_workflow.Context) cadencesdk_workflow.Context {
+	return cadencesdk_workflow.WithLocalActivityOptions(ctx, cadencesdk_workflow.LocalActivityOptions{
 		ScheduleToCloseTimeout: 5 * time.Second,
 	})
 }
@@ -119,8 +119,8 @@ func withLocalActivityWithoutRetriesOpts(ctx workflow.Context) workflow.Context 
 // withActivityOptsForAsyncCompletion returns a workflow context with activity
 // options suited for asynchronous completion, embracing the fact that users
 // can be away from keyboard for long periods (weekends, holidays...).
-func withActivityOptsForAsyncCompletion(ctx workflow.Context) workflow.Context {
-	return workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
+func withActivityOptsForAsyncCompletion(ctx cadencesdk_workflow.Context) cadencesdk_workflow.Context {
+	return cadencesdk_workflow.WithActivityOptions(ctx, cadencesdk_workflow.ActivityOptions{
 		ScheduleToStartTimeout: forever,
 		StartToCloseTimeout:    time.Hour * 24 * 7,
 	})

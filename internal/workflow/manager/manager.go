@@ -3,11 +3,11 @@ package manager
 import (
 	"fmt"
 
+	"github.com/go-logr/logr"
+
 	"github.com/artefactual-labs/enduro/internal/collection"
 	"github.com/artefactual-labs/enduro/internal/pipeline"
 	"github.com/artefactual-labs/enduro/internal/watcher"
-
-	"github.com/go-logr/logr"
 )
 
 // Manager carries workflow and activity dependencies.

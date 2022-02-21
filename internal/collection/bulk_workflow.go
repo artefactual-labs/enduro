@@ -8,13 +8,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/artefactual-labs/enduro/internal/api/gen/collection"
 	"github.com/oklog/run"
-
-	"go.uber.org/cadence/.gen/go/shared"
-	"go.uber.org/cadence/activity"
-	"go.uber.org/cadence/workflow"
+	cadencesdk_gen_shared "go.uber.org/cadence/.gen/go/shared"
+	cadencesdk_activity "go.uber.org/cadence/activity"
+	cadencesdk_workflow "go.uber.org/cadence/workflow"
 	"go.uber.org/yarpc/yarpcerrors"
+
+	"github.com/artefactual-labs/enduro/internal/api/gen/collection"
 )
 
 const (
@@ -51,15 +51,15 @@ type BulkWorkflowInput struct {
 }
 
 // BulkWorkflow is a Cadence workflow that performs bulk operations.
-func BulkWorkflow(ctx workflow.Context, params BulkWorkflowInput) error {
-	opts := workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
+func BulkWorkflow(ctx cadencesdk_workflow.Context, params BulkWorkflowInput) error {
+	opts := cadencesdk_workflow.WithActivityOptions(ctx, cadencesdk_workflow.ActivityOptions{
 		ScheduleToStartTimeout: time.Hour * 24 * 365,
 		StartToCloseTimeout:    time.Hour * 24 * 365,
 		WaitForCancellation:    true,
 		HeartbeatTimeout:       time.Second * 5,
 	})
 
-	return workflow.ExecuteActivity(opts, BulkActivityName, params).Get(opts, nil)
+	return cadencesdk_workflow.ExecuteActivity(opts, BulkActivityName, params).Get(opts, nil)
 }
 
 type BulkActivity struct {
@@ -98,7 +98,7 @@ func (a *BulkActivity) Execute(ctx context.Context, params BulkWorkflowInput) er
 						cp := progress
 						mu.RUnlock()
 
-						activity.RecordHeartbeat(ctx, cp)
+						cadencesdk_activity.RecordHeartbeat(ctx, cp)
 					}
 				}
 			},
@@ -181,7 +181,7 @@ func (a *BulkActivity) Retry(ctx context.Context, ID uint) error {
 	err := a.colsvc.Goa().Retry(ctx, &collection.RetryPayload{ID: ID})
 
 	// User may have already started it manually.
-	var werr *shared.WorkflowExecutionAlreadyStartedError
+	var werr *cadencesdk_gen_shared.WorkflowExecutionAlreadyStartedError
 	if errors.As(err, &werr) {
 		return nil
 	}

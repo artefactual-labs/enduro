@@ -4,11 +4,11 @@ import (
 	"context"
 	"time"
 
+	"github.com/go-logr/logr"
+	cadencesdk_activity "go.uber.org/cadence/activity"
+
 	"github.com/artefactual-labs/enduro/internal/collection"
 	"github.com/artefactual-labs/enduro/internal/workflow/manager"
-
-	"github.com/go-logr/logr"
-	"go.uber.org/cadence/activity"
 )
 
 type createPackageLocalActivityParams struct {
@@ -17,7 +17,7 @@ type createPackageLocalActivityParams struct {
 }
 
 func createPackageLocalActivity(ctx context.Context, logger logr.Logger, colsvc collection.Service, params *createPackageLocalActivityParams) (uint, error) {
-	info := activity.GetInfo(ctx)
+	info := cadencesdk_activity.GetInfo(ctx)
 
 	col := &collection.Collection{
 		Name:       params.Key,
@@ -45,7 +45,7 @@ type updatePackageLocalActivityParams struct {
 }
 
 func updatePackageLocalActivity(ctx context.Context, logger logr.Logger, colsvc collection.Service, params *updatePackageLocalActivityParams) error {
-	info := activity.GetInfo(ctx)
+	info := cadencesdk_activity.GetInfo(ctx)
 
 	err := colsvc.UpdateWorkflowStatus(
 		ctx, params.CollectionID, params.Key, info.WorkflowExecution.ID,

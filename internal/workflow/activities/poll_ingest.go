@@ -5,11 +5,12 @@ import (
 	"errors"
 	"time"
 
+	"github.com/cenkalti/backoff/v4"
+	cadencesdk_activity "go.uber.org/cadence/activity"
+
 	"github.com/artefactual-labs/enduro/internal/pipeline"
 	wferrors "github.com/artefactual-labs/enduro/internal/workflow/errors"
 	"github.com/artefactual-labs/enduro/internal/workflow/manager"
-	"github.com/cenkalti/backoff/v4"
-	"go.uber.org/cadence/activity"
 )
 
 type PollIngestActivity struct {
@@ -69,7 +70,7 @@ func (a *PollIngestActivity) Execute(ctx context.Context, params *PollIngestActi
 		},
 		backoffStrategy,
 		func(err error, duration time.Duration) {
-			activity.RecordHeartbeat(ctx, err.Error())
+			cadencesdk_activity.RecordHeartbeat(ctx, err.Error())
 		},
 	)
 

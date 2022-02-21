@@ -10,14 +10,14 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/mholt/archiver/v3"
+	"github.com/otiai10/copy"
+
 	"github.com/artefactual-labs/enduro/internal/amclient/bundler"
 	"github.com/artefactual-labs/enduro/internal/bagit"
 	"github.com/artefactual-labs/enduro/internal/watcher"
 	wferrors "github.com/artefactual-labs/enduro/internal/workflow/errors"
 	"github.com/artefactual-labs/enduro/internal/workflow/manager"
-
-	"github.com/mholt/archiver/v3"
-	"github.com/otiai10/copy"
 )
 
 type BundleActivity struct {

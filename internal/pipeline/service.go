@@ -3,8 +3,9 @@ package pipeline
 import (
 	"context"
 
-	goapipeline "github.com/artefactual-labs/enduro/internal/api/gen/pipeline"
 	"github.com/go-logr/logr"
+
+	goapipeline "github.com/artefactual-labs/enduro/internal/api/gen/pipeline"
 )
 
 type Service interface {

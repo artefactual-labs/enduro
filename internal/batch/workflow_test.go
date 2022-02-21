@@ -4,11 +4,12 @@ import (
 	"context"
 	"testing"
 
-	batchfake "github.com/artefactual-labs/enduro/internal/batch/fake"
-	"github.com/artefactual-labs/enduro/internal/collection"
 	"github.com/golang/mock/gomock"
 	"gotest.tools/v3/assert"
 	"gotest.tools/v3/fs"
+
+	batchfake "github.com/artefactual-labs/enduro/internal/batch/fake"
+	"github.com/artefactual-labs/enduro/internal/collection"
 )
 
 func TestBatchActivityStartsProcessingWorkflows(t *testing.T) {

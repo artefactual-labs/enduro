@@ -11,6 +11,10 @@ import (
 	"math/rand"
 	"time"
 
+	cadencesdk "go.uber.org/cadence"
+	cadencesdk_workflow "go.uber.org/cadence/workflow"
+	"go.uber.org/zap"
+
 	"github.com/artefactual-labs/enduro/internal/collection"
 	"github.com/artefactual-labs/enduro/internal/nha"
 	nha_activities "github.com/artefactual-labs/enduro/internal/nha/activities"
@@ -18,10 +22,6 @@ import (
 	"github.com/artefactual-labs/enduro/internal/validation"
 	"github.com/artefactual-labs/enduro/internal/workflow/activities"
 	"github.com/artefactual-labs/enduro/internal/workflow/manager"
-
-	"go.uber.org/cadence"
-	"go.uber.org/cadence/workflow"
-	"go.uber.org/zap"
 )
 
 type ProcessingWorkflow struct {
@@ -155,9 +155,9 @@ func (tinfo TransferInfo) ProcessingConfiguration() string {
 // Retrying this workflow would result in a new Archivematica transfer. We  do
 // not have a retry policy in place. The user could trigger a new instance via
 // the API.
-func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.ProcessingWorkflowRequest) error {
+func (w *ProcessingWorkflow) Execute(ctx cadencesdk_workflow.Context, req *collection.ProcessingWorkflowRequest) error {
 	var (
-		logger = workflow.GetLogger(ctx)
+		logger = cadencesdk_workflow.GetLogger(ctx)
 
 		tinfo = &TransferInfo{
 			CollectionID:     req.CollectionID,
@@ -184,13 +184,13 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 		var err error
 
 		if req.CollectionID == 0 {
-			err = workflow.ExecuteLocalActivity(activityOpts, createPackageLocalActivity, w.manager.Logger, w.manager.Collection, &createPackageLocalActivityParams{
+			err = cadencesdk_workflow.ExecuteLocalActivity(activityOpts, createPackageLocalActivity, w.manager.Logger, w.manager.Collection, &createPackageLocalActivityParams{
 				Key:    req.Key,
 				Status: status,
 			}).Get(activityOpts, &tinfo.CollectionID)
 		} else {
 			// TODO: investigate better way to reset the collection.
-			err = workflow.ExecuteLocalActivity(activityOpts, updatePackageLocalActivity, w.manager.Logger, w.manager.Collection, &updatePackageLocalActivityParams{
+			err = cadencesdk_workflow.ExecuteLocalActivity(activityOpts, updatePackageLocalActivity, w.manager.Logger, w.manager.Collection, &updatePackageLocalActivityParams{
 				CollectionID: req.CollectionID,
 				Key:          req.Key,
 				PipelineID:   "",
@@ -215,9 +215,9 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 		}
 
 		// Use disconnected context so it also runs after cancellation.
-		dctx, _ := workflow.NewDisconnectedContext(ctx)
+		dctx, _ := cadencesdk_workflow.NewDisconnectedContext(ctx)
 		activityOpts := withLocalActivityOpts(dctx)
-		_ = workflow.ExecuteLocalActivity(activityOpts, updatePackageLocalActivity, w.manager.Logger, w.manager.Collection, &updatePackageLocalActivityParams{
+		_ = cadencesdk_workflow.ExecuteLocalActivity(activityOpts, updatePackageLocalActivity, w.manager.Logger, w.manager.Collection, &updatePackageLocalActivityParams{
 			CollectionID: tinfo.CollectionID,
 			Key:          tinfo.Key,
 			PipelineID:   tinfo.PipelineID,
@@ -231,7 +231,7 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 	// Extract details from transfer name.
 	{
 		activityOpts := withLocalActivityWithoutRetriesOpts(ctx)
-		err := workflow.ExecuteLocalActivity(activityOpts, nha_activities.ParseNameLocalActivity, tinfo.Key).Get(activityOpts, &nameInfo)
+		err := cadencesdk_workflow.ExecuteLocalActivity(activityOpts, nha_activities.ParseNameLocalActivity, tinfo.Key).Get(activityOpts, &nameInfo)
 
 		// An error should only stop the workflow if hari/prod activities are enabled.
 		hariDisabled, _ := manager.HookAttrBool(w.manager.Hooks, "hari", "disabled")
@@ -242,7 +242,7 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 
 		if nameInfo.Identifier != "" {
 			activityOpts = withLocalActivityOpts(ctx)
-			_ = workflow.ExecuteLocalActivity(activityOpts, setOriginalIDLocalActivity, w.manager.Collection, tinfo.CollectionID, nameInfo.Identifier).Get(activityOpts, nil)
+			_ = cadencesdk_workflow.ExecuteLocalActivity(activityOpts, setOriginalIDLocalActivity, w.manager.Collection, tinfo.CollectionID, nameInfo.Identifier).Get(activityOpts, nil)
 		}
 	}
 
@@ -250,7 +250,7 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 	// list is empty then choose one from the list of all configured pipelines.
 	{
 		var pick string
-		if err := workflow.SideEffect(ctx, func(ctx workflow.Context) interface{} {
+		if err := cadencesdk_workflow.SideEffect(ctx, func(ctx cadencesdk_workflow.Context) interface{} {
 			names := req.PipelineNames
 			if len(names) < 1 {
 				names = w.manager.Pipelines.Names()
@@ -271,7 +271,7 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 	// Load pipeline configuration and hooks.
 	{
 		activityOpts := withLocalActivityWithoutRetriesOpts(ctx)
-		err := workflow.ExecuteLocalActivity(activityOpts, loadConfigLocalActivity, w.manager, tinfo.PipelineName, tinfo).Get(activityOpts, &tinfo)
+		err := cadencesdk_workflow.ExecuteLocalActivity(activityOpts, loadConfigLocalActivity, w.manager, tinfo.PipelineName, tinfo).Get(activityOpts, &tinfo)
 		if err != nil {
 			return fmt.Errorf("error loading configuration: %v", err)
 		}
@@ -283,11 +283,11 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 		maxAttempts := 5
 
 		for attempt := 1; attempt <= maxAttempts; attempt++ {
-			activityOpts := workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
+			activityOpts := cadencesdk_workflow.WithActivityOptions(ctx, cadencesdk_workflow.ActivityOptions{
 				ScheduleToStartTimeout: forever,
 				StartToCloseTimeout:    time.Minute,
 			})
-			sessCtx, err := workflow.CreateSession(activityOpts, &workflow.SessionOptions{
+			sessCtx, err := cadencesdk_workflow.CreateSession(activityOpts, &cadencesdk_workflow.SessionOptions{
 				CreationTimeout:  forever,
 				ExecutionTimeout: forever,
 			})
@@ -306,14 +306,14 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 			// of losing the worker but not otherwise. This scenario seems to be
 			// identifiable when we have an error but the root context has not
 			// been canceled.
-			if sessErr != nil && (errors.Is(sessErr, workflow.ErrSessionFailed) || cadence.IsCanceledError(sessErr)) {
+			if sessErr != nil && (errors.Is(sessErr, cadencesdk_workflow.ErrSessionFailed) || cadencesdk.IsCanceledError(sessErr)) {
 				// Root context canceled, hence workflow canceled.
-				if ctx.Err() == workflow.ErrCanceled {
+				if ctx.Err() == cadencesdk_workflow.ErrCanceled {
 					return nil
 				}
 
 				// We're done if the transfer deadline was exceeded.
-				if cadence.IsCanceledError(sessErr) && timer.Exceeded() {
+				if cadencesdk.IsCanceledError(sessErr) && timer.Exceeded() {
 					return fmt.Errorf("transfer deadline (%s) exceeded", tinfo.PipelineConfig.TransferDeadline)
 				}
 
@@ -322,7 +322,7 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 					zap.Int("attemptFailed", attempt),
 					zap.Int("attemptsLeft", maxAttempts-attempt))
 
-				_ = workflow.Sleep(ctx, time.Second*10)
+				_ = cadencesdk_workflow.Sleep(ctx, time.Second*10)
 
 				continue
 			}
@@ -345,10 +345,10 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 	// Hide packages from Archivematica Dashboard.
 	{
 		if status == collection.StatusDone {
-			futures := []workflow.Future{}
+			futures := []cadencesdk_workflow.Future{}
 			activityOpts := withActivityOptsForRequest(ctx)
-			futures = append(futures, workflow.ExecuteActivity(activityOpts, activities.HidePackageActivityName, tinfo.TransferID, "transfer", tinfo.PipelineName))
-			futures = append(futures, workflow.ExecuteActivity(activityOpts, activities.HidePackageActivityName, tinfo.SIPID, "ingest", tinfo.PipelineName))
+			futures = append(futures, cadencesdk_workflow.ExecuteActivity(activityOpts, activities.HidePackageActivityName, tinfo.TransferID, "transfer", tinfo.PipelineName))
+			futures = append(futures, cadencesdk_workflow.ExecuteActivity(activityOpts, activities.HidePackageActivityName, tinfo.SIPID, "ingest", tinfo.PipelineName))
 			for _, f := range futures {
 				_ = f.Get(activityOpts, nil)
 			}
@@ -359,16 +359,16 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 	{
 		if status == collection.StatusDone {
 			if tinfo.RetentionPeriod != nil {
-				err := workflow.NewTimer(ctx, *tinfo.RetentionPeriod).Get(ctx, nil)
+				err := cadencesdk_workflow.NewTimer(ctx, *tinfo.RetentionPeriod).Get(ctx, nil)
 				if err != nil {
 					logger.Warn("Retention policy timer failed", zap.Error(err))
 				} else {
 					activityOpts := withActivityOptsForRequest(ctx)
-					_ = workflow.ExecuteActivity(activityOpts, activities.DeleteOriginalActivityName, tinfo.WatcherName, tinfo.BatchDir, tinfo.Key).Get(activityOpts, nil)
+					_ = cadencesdk_workflow.ExecuteActivity(activityOpts, activities.DeleteOriginalActivityName, tinfo.WatcherName, tinfo.BatchDir, tinfo.Key).Get(activityOpts, nil)
 				}
 			} else if tinfo.CompletedDir != "" {
 				activityOpts := withActivityOptsForLocalAction(ctx)
-				err := workflow.ExecuteActivity(activityOpts, activities.DisposeOriginalActivityName, tinfo.WatcherName, tinfo.CompletedDir, tinfo.BatchDir, tinfo.Key).Get(activityOpts, nil)
+				err := cadencesdk_workflow.ExecuteActivity(activityOpts, activities.DisposeOriginalActivityName, tinfo.WatcherName, tinfo.CompletedDir, tinfo.BatchDir, tinfo.Key).Get(activityOpts, nil)
 				if err != nil {
 					return err
 				}
@@ -390,8 +390,8 @@ func (w *ProcessingWorkflow) Execute(ctx workflow.Context, req *collection.Proce
 }
 
 // SessionHandler runs activities that belong to the same session.
-func (w *ProcessingWorkflow) SessionHandler(sessCtx workflow.Context, attempt int, tinfo *TransferInfo, nameInfo nha.NameInfo, validationConfig validation.Config, timer *Timer) error {
-	defer workflow.CompleteSession(sessCtx)
+func (w *ProcessingWorkflow) SessionHandler(sessCtx cadencesdk_workflow.Context, attempt int, tinfo *TransferInfo, nameInfo nha.NameInfo, validationConfig validation.Config, timer *Timer) error {
+	defer cadencesdk_workflow.CompleteSession(sessCtx)
 
 	// Block until pipeline semaphore is acquired. The collection status is set
 	// to in-progress as soon as the operation succeeds.
@@ -416,7 +416,7 @@ func (w *ProcessingWorkflow) SessionHandler(sessCtx workflow.Context, attempt in
 			// case, the activity whould be executed again.
 			if tinfo.TempFile == "" {
 				activityOpts := withActivityOptsForLongLivedRequest(sessCtx)
-				err := workflow.ExecuteActivity(activityOpts, activities.DownloadActivityName, tinfo.PipelineName, tinfo.WatcherName, tinfo.Key).Get(activityOpts, &tinfo.TempFile)
+				err := cadencesdk_workflow.ExecuteActivity(activityOpts, activities.DownloadActivityName, tinfo.PipelineName, tinfo.WatcherName, tinfo.Key).Get(activityOpts, &tinfo.TempFile)
 				if err != nil {
 					return err
 				}
@@ -428,7 +428,7 @@ func (w *ProcessingWorkflow) SessionHandler(sessCtx workflow.Context, attempt in
 	{
 		if tinfo.Bundle == (activities.BundleActivityResult{}) {
 			activityOpts := withActivityOptsForLongLivedRequest(sessCtx)
-			err := workflow.ExecuteActivity(activityOpts, activities.BundleActivityName, &activities.BundleActivityParams{
+			err := cadencesdk_workflow.ExecuteActivity(activityOpts, activities.BundleActivityName, &activities.BundleActivityParams{
 				WatcherName:      tinfo.WatcherName,
 				TransferDir:      tinfo.PipelineConfig.TransferDir,
 				Key:              tinfo.Key,
@@ -446,11 +446,11 @@ func (w *ProcessingWorkflow) SessionHandler(sessCtx workflow.Context, attempt in
 	// Validate transfer.
 	{
 		if validationConfig.IsEnabled() && tinfo.Bundle != (activities.BundleActivityResult{}) {
-			activityOpts := workflow.WithActivityOptions(sessCtx, workflow.ActivityOptions{
+			activityOpts := cadencesdk_workflow.WithActivityOptions(sessCtx, cadencesdk_workflow.ActivityOptions{
 				ScheduleToStartTimeout: forever,
 				StartToCloseTimeout:    time.Minute * 5,
 			})
-			err := workflow.ExecuteActivity(activityOpts, activities.ValidateTransferActivityName, &activities.ValidateTransferActivityParams{
+			err := cadencesdk_workflow.ExecuteActivity(activityOpts, activities.ValidateTransferActivityName, &activities.ValidateTransferActivityParams{
 				Config: validationConfig,
 				Path:   tinfo.Bundle.FullPath,
 			}).Get(activityOpts, nil)
@@ -464,7 +464,7 @@ func (w *ProcessingWorkflow) SessionHandler(sessCtx workflow.Context, attempt in
 		// Use our timed context if this transfer has a deadline set.
 		duration := tinfo.PipelineConfig.TransferDeadline
 		if duration != nil {
-			var cancel workflow.CancelFunc
+			var cancel cadencesdk_workflow.CancelFunc
 			sessCtx, cancel = timer.WithTimeout(sessCtx, *duration)
 			defer cancel()
 		}
@@ -494,7 +494,7 @@ func (w *ProcessingWorkflow) SessionHandler(sessCtx workflow.Context, attempt in
 	{
 		if tinfo.Bundle.FullPathBeforeStrip != "" {
 			activityOpts := withActivityOptsForRequest(sessCtx)
-			_ = workflow.ExecuteActivity(activityOpts, activities.CleanUpActivityName, &activities.CleanUpActivityParams{
+			_ = cadencesdk_workflow.ExecuteActivity(activityOpts, activities.CleanUpActivityName, &activities.CleanUpActivityParams{
 				FullPath: tinfo.Bundle.FullPathBeforeStrip,
 			}).Get(activityOpts, nil)
 		}
@@ -503,14 +503,14 @@ func (w *ProcessingWorkflow) SessionHandler(sessCtx workflow.Context, attempt in
 	return nil
 }
 
-func (w *ProcessingWorkflow) transfer(sessCtx workflow.Context, tinfo *TransferInfo) error {
+func (w *ProcessingWorkflow) transfer(sessCtx cadencesdk_workflow.Context, tinfo *TransferInfo) error {
 	// Transfer.
 	{
 		if tinfo.TransferID == "" {
 			transferResponse := activities.TransferActivityResponse{}
 
 			activityOpts := withActivityOptsForRequest(sessCtx)
-			err := workflow.ExecuteActivity(activityOpts, activities.TransferActivityName, &activities.TransferActivityParams{
+			err := cadencesdk_workflow.ExecuteActivity(activityOpts, activities.TransferActivityName, &activities.TransferActivityParams{
 				PipelineName:       tinfo.PipelineName,
 				TransferLocationID: tinfo.PipelineConfig.TransferLocationID,
 				RelPath:            tinfo.Bundle.RelPath,
@@ -529,7 +529,7 @@ func (w *ProcessingWorkflow) transfer(sessCtx workflow.Context, tinfo *TransferI
 	// Persist TransferID + PipelineID.
 	{
 		activityOpts := withLocalActivityOpts(sessCtx)
-		_ = workflow.ExecuteLocalActivity(activityOpts, updatePackageLocalActivity, w.manager.Logger, w.manager.Collection, &updatePackageLocalActivityParams{
+		_ = cadencesdk_workflow.ExecuteLocalActivity(activityOpts, updatePackageLocalActivity, w.manager.Logger, w.manager.Collection, &updatePackageLocalActivityParams{
 			CollectionID: tinfo.CollectionID,
 			Key:          tinfo.Key,
 			Status:       collection.StatusInProgress,
@@ -542,7 +542,7 @@ func (w *ProcessingWorkflow) transfer(sessCtx workflow.Context, tinfo *TransferI
 	{
 		if tinfo.SIPID == "" {
 			activityOpts := withActivityOptsForHeartbeatedRequest(sessCtx, time.Minute)
-			err := workflow.ExecuteActivity(activityOpts, activities.PollTransferActivityName, &activities.PollTransferActivityParams{
+			err := cadencesdk_workflow.ExecuteActivity(activityOpts, activities.PollTransferActivityName, &activities.PollTransferActivityParams{
 				PipelineName: tinfo.PipelineName,
 				TransferID:   tinfo.TransferID,
 			}).Get(activityOpts, &tinfo.SIPID)
@@ -555,7 +555,7 @@ func (w *ProcessingWorkflow) transfer(sessCtx workflow.Context, tinfo *TransferI
 	// Persist SIPID.
 	{
 		activityOpts := withLocalActivityOpts(sessCtx)
-		_ = workflow.ExecuteLocalActivity(activityOpts, updatePackageLocalActivity, w.manager.Logger, w.manager.Collection, &updatePackageLocalActivityParams{
+		_ = cadencesdk_workflow.ExecuteLocalActivity(activityOpts, updatePackageLocalActivity, w.manager.Logger, w.manager.Collection, &updatePackageLocalActivityParams{
 			CollectionID: tinfo.CollectionID,
 			Key:          tinfo.Key,
 			TransferID:   tinfo.TransferID,
@@ -569,7 +569,7 @@ func (w *ProcessingWorkflow) transfer(sessCtx workflow.Context, tinfo *TransferI
 	{
 		if tinfo.StoredAt.IsZero() {
 			activityOpts := withActivityOptsForHeartbeatedRequest(sessCtx, time.Minute)
-			err := workflow.ExecuteActivity(activityOpts, activities.PollIngestActivityName, &activities.PollIngestActivityParams{
+			err := cadencesdk_workflow.ExecuteActivity(activityOpts, activities.PollIngestActivityName, &activities.PollIngestActivityParams{
 				PipelineName: tinfo.PipelineName,
 				SIPID:        tinfo.SIPID,
 			}).Get(activityOpts, &tinfo.StoredAt)

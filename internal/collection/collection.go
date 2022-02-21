@@ -7,13 +7,13 @@ import (
 	"net/http"
 	"time"
 
-	goacollection "github.com/artefactual-labs/enduro/internal/api/gen/collection"
-	"github.com/artefactual-labs/enduro/internal/pipeline"
-
 	"github.com/go-logr/logr"
 	"github.com/jmoiron/sqlx"
-	cadenceclient "go.uber.org/cadence/client"
+	cadencesdk_client "go.uber.org/cadence/client"
 	goahttp "goa.design/goa/v3/http"
+
+	goacollection "github.com/artefactual-labs/enduro/internal/api/gen/collection"
+	"github.com/artefactual-labs/enduro/internal/pipeline"
 )
 
 type Service interface {
@@ -38,7 +38,7 @@ type Service interface {
 type collectionImpl struct {
 	logger logr.Logger
 	db     *sqlx.DB
-	cc     cadenceclient.Client
+	cc     cadencesdk_client.Client
 
 	registry *pipeline.Registry
 
@@ -51,7 +51,7 @@ type collectionImpl struct {
 
 var _ Service = (*collectionImpl)(nil)
 
-func NewService(logger logr.Logger, db *sql.DB, cc cadenceclient.Client, registry *pipeline.Registry) *collectionImpl {
+func NewService(logger logr.Logger, db *sql.DB, cc cadencesdk_client.Client, registry *pipeline.Registry) *collectionImpl {
 	return &collectionImpl{
 		logger:        logger,
 		db:            sqlx.NewDb(db, "mysql"),

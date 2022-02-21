@@ -4,8 +4,8 @@ import (
 	"sync"
 	"time"
 
-	"go.uber.org/cadence"
-	"go.uber.org/cadence/workflow"
+	cadencesdk "go.uber.org/cadence"
+	cadencesdk_workflow "go.uber.org/cadence/workflow"
 	"go.uber.org/zap"
 )
 
@@ -18,13 +18,13 @@ func NewTimer() *Timer {
 	return &Timer{}
 }
 
-func (t *Timer) WithTimeout(ctx workflow.Context, d time.Duration) (workflow.Context, workflow.CancelFunc) {
-	logger := workflow.GetLogger(ctx)
+func (t *Timer) WithTimeout(ctx cadencesdk_workflow.Context, d time.Duration) (cadencesdk_workflow.Context, cadencesdk_workflow.CancelFunc) {
+	logger := cadencesdk_workflow.GetLogger(ctx)
 
-	timedCtx, cancelHandler := workflow.WithCancel(ctx)
-	workflow.Go(ctx, func(ctx workflow.Context) {
-		if err := workflow.NewTimer(ctx, d).Get(ctx, nil); err != nil {
-			if !cadence.IsCanceledError(err) {
+	timedCtx, cancelHandler := cadencesdk_workflow.WithCancel(ctx)
+	cadencesdk_workflow.Go(ctx, func(ctx cadencesdk_workflow.Context) {
+		if err := cadencesdk_workflow.NewTimer(ctx, d).Get(ctx, nil); err != nil {
+			if !cadencesdk.IsCanceledError(err) {
 				logger.Warn("Timer failed", zap.Error(err))
 			}
 		}

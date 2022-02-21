@@ -5,9 +5,10 @@ import (
 	"runtime"
 	"testing"
 
-	wferrors "github.com/artefactual-labs/enduro/internal/workflow/errors"
-	"go.uber.org/cadence"
+	cadencesdk "go.uber.org/cadence"
 	"gotest.tools/v3/assert"
+
+	wferrors "github.com/artefactual-labs/enduro/internal/workflow/errors"
 )
 
 // ActivityError describes an error assertion, where its zero value is a
@@ -59,7 +60,7 @@ func (ae ActivityError) AssertNilError(t *testing.T, err error) {
 			return ""
 		}
 
-		perr, ok := err.(*cadence.CustomError)
+		perr, ok := err.(*cadencesdk.CustomError)
 		if !ok {
 			return err.Error()
 		}
@@ -78,12 +79,12 @@ func (ae ActivityError) AssertNilError(t *testing.T, err error) {
 func (ae ActivityError) assertNonRetryableError(t *testing.T, err error) {
 	t.Helper()
 
-	assert.ErrorType(t, err, &cadence.CustomError{})
+	assert.ErrorType(t, err, &cadencesdk.CustomError{})
 	assert.Error(t, err, wferrors.NRE)
 
 	// cadence.CustomError has a details field where our test message goes.
 	var result string
-	perr := err.(*cadence.CustomError)
+	perr := err.(*cadencesdk.CustomError)
 	assert.NilError(t, perr.Details(&result))
 
 	if ae.message() != "" {

@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"time"
 
-	cce "github.com/artefactual-labs/enduro/internal/cadence"
-	"github.com/artefactual-labs/enduro/internal/validation"
-
 	"github.com/google/uuid"
-	"go.uber.org/cadence/client"
+	cadencesdk_client "go.uber.org/cadence/client"
+
+	"github.com/artefactual-labs/enduro/internal/cadence"
+	"github.com/artefactual-labs/enduro/internal/validation"
 )
 
 const (
@@ -64,7 +64,7 @@ type ProcessingWorkflowRequest struct {
 	ProcessingConfig string
 }
 
-func InitProcessingWorkflow(ctx context.Context, c client.Client, req *ProcessingWorkflowRequest) error {
+func InitProcessingWorkflow(ctx context.Context, c cadencesdk_client.Client, req *ProcessingWorkflowRequest) error {
 	if req.WorkflowID == "" {
 		req.WorkflowID = fmt.Sprintf("processing-workflow-%s", uuid.New().String())
 	}
@@ -72,11 +72,11 @@ func InitProcessingWorkflow(ctx context.Context, c client.Client, req *Processin
 	ctx, cancel := context.WithTimeout(ctx, time.Second*5)
 	defer cancel()
 
-	opts := client.StartWorkflowOptions{
+	opts := cadencesdk_client.StartWorkflowOptions{
 		ID:                           req.WorkflowID,
-		TaskList:                     cce.GlobalTaskListName,
+		TaskList:                     cadence.GlobalTaskListName,
 		ExecutionStartToCloseTimeout: ProcessingWorkflowStartToCloseTimeout,
-		WorkflowIDReusePolicy:        client.WorkflowIDReusePolicyAllowDuplicate,
+		WorkflowIDReusePolicy:        cadencesdk_client.WorkflowIDReusePolicyAllowDuplicate,
 	}
 	_, err := c.StartWorkflow(ctx, opts, ProcessingWorkflowName, req)
 

@@ -6,10 +6,11 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/artefactual-labs/enduro/internal/amclient"
-	amclientfake "github.com/artefactual-labs/enduro/internal/amclient/fake"
 	"github.com/golang/mock/gomock"
 	"gotest.tools/v3/assert"
+
+	"github.com/artefactual-labs/enduro/internal/amclient"
+	amclientfake "github.com/artefactual-labs/enduro/internal/amclient/fake"
 )
 
 func TestTransferStatus(t *testing.T) {

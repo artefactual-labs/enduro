@@ -1,25 +1,25 @@
 package errors
 
 import (
-	"go.uber.org/cadence"
-	"go.uber.org/cadence/.gen/go/shared"
-	"go.uber.org/cadence/workflow"
+	cadencesdk "go.uber.org/cadence"
+	cadencesdk_gen_shared "go.uber.org/cadence/.gen/go/shared"
+	cadencesdk_workflow "go.uber.org/cadence/workflow"
 )
 
 const NRE = "non retryable error"
 
 func NonRetryableError(err error) error {
-	return cadence.NewCustomError(NRE, err.Error())
+	return cadencesdk.NewCustomError(NRE, err.Error())
 }
 
 // HeartbeatTimeoutError determines if a given error is a heartbeat error.
 func HeartbeatTimeoutError(err error, details interface{}) bool {
-	timeoutErr, ok := err.(*workflow.TimeoutError)
+	timeoutErr, ok := err.(*cadencesdk_workflow.TimeoutError)
 	if !ok {
 		return false
 	}
 
-	if timeoutErr.TimeoutType() != shared.TimeoutTypeHeartbeat {
+	if timeoutErr.TimeoutType() != cadencesdk_gen_shared.TimeoutTypeHeartbeat {
 		return false
 	}
 

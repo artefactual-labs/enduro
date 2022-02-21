@@ -17,6 +17,12 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/go-logr/logr"
+	"github.com/gorilla/websocket"
+	goahttp "goa.design/goa/v3/http"
+	goahttpmwr "goa.design/goa/v3/http/middleware"
+	"goa.design/goa/v3/middleware"
+
 	"github.com/artefactual-labs/enduro/internal/api/gen/batch"
 	"github.com/artefactual-labs/enduro/internal/api/gen/collection"
 	batchsvr "github.com/artefactual-labs/enduro/internal/api/gen/http/batch/server"
@@ -28,12 +34,6 @@ import (
 	intcol "github.com/artefactual-labs/enduro/internal/collection"
 	intpipe "github.com/artefactual-labs/enduro/internal/pipeline"
 	"github.com/artefactual-labs/enduro/ui"
-	"github.com/gorilla/websocket"
-
-	"github.com/go-logr/logr"
-	goahttp "goa.design/goa/v3/http"
-	goahttpmwr "goa.design/goa/v3/http/middleware"
-	"goa.design/goa/v3/middleware"
 )
 
 func HTTPServer(

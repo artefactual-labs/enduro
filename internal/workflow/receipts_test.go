@@ -6,29 +6,29 @@ import (
 	"testing"
 	"time"
 
-	"github.com/artefactual-labs/enduro/internal/nha"
-	nha_activities "github.com/artefactual-labs/enduro/internal/nha/activities"
-
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	cadenceactivity "go.uber.org/cadence/activity"
-	cadencetestsuite "go.uber.org/cadence/testsuite"
+	cadencesdk_activity "go.uber.org/cadence/activity"
+	cadencesdk_testsuite "go.uber.org/cadence/testsuite"
+
+	"github.com/artefactual-labs/enduro/internal/nha"
+	nha_activities "github.com/artefactual-labs/enduro/internal/nha/activities"
 )
 
 // sendReceipts exits immediately after an activity error, ensuring that
 // receipt delivery is halted once one delivery has failed.
 func TestSendReceiptsSequentialBehavior(t *testing.T) {
-	wts := cadencetestsuite.WorkflowTestSuite{}
+	wts := cadencesdk_testsuite.WorkflowTestSuite{}
 	env := wts.NewTestWorkflowEnvironment()
 	m := buildManager(t, gomock.NewController(t))
 
 	AsyncCompletionActivityName = uuid.New().String()
-	cadenceactivity.RegisterWithOptions(NewAsyncCompletionActivity(m).Execute, cadenceactivity.RegisterOptions{Name: AsyncCompletionActivityName})
+	cadencesdk_activity.RegisterWithOptions(NewAsyncCompletionActivity(m).Execute, cadencesdk_activity.RegisterOptions{Name: AsyncCompletionActivityName})
 
 	nha_activities.UpdateHARIActivityName = uuid.New().String()
-	cadenceactivity.RegisterWithOptions(nha_activities.NewUpdateHARIActivity(m).Execute, cadenceactivity.RegisterOptions{Name: nha_activities.UpdateHARIActivityName})
+	cadencesdk_activity.RegisterWithOptions(nha_activities.NewUpdateHARIActivity(m).Execute, cadencesdk_activity.RegisterOptions{Name: nha_activities.UpdateHARIActivityName})
 
 	params := sendReceiptsParams{
 		SIPID:        "91e3ed2f-b798-4f4e-9133-74193f0d6a4f",
@@ -66,15 +66,15 @@ func TestSendReceiptsSequentialBehavior(t *testing.T) {
 }
 
 func TestSendReceipts(t *testing.T) {
-	wts := cadencetestsuite.WorkflowTestSuite{}
+	wts := cadencesdk_testsuite.WorkflowTestSuite{}
 	env := wts.NewTestWorkflowEnvironment()
 	m := buildManager(t, gomock.NewController(t))
 
 	nha_activities.UpdateHARIActivityName = uuid.New().String()
-	cadenceactivity.RegisterWithOptions(nha_activities.NewUpdateHARIActivity(m).Execute, cadenceactivity.RegisterOptions{Name: nha_activities.UpdateHARIActivityName})
+	cadencesdk_activity.RegisterWithOptions(nha_activities.NewUpdateHARIActivity(m).Execute, cadencesdk_activity.RegisterOptions{Name: nha_activities.UpdateHARIActivityName})
 
 	nha_activities.UpdateProductionSystemActivityName = uuid.New().String()
-	cadenceactivity.RegisterWithOptions(nha_activities.NewUpdateProductionSystemActivity(m).Execute, cadenceactivity.RegisterOptions{Name: nha_activities.UpdateProductionSystemActivityName})
+	cadencesdk_activity.RegisterWithOptions(nha_activities.NewUpdateProductionSystemActivity(m).Execute, cadencesdk_activity.RegisterOptions{Name: nha_activities.UpdateProductionSystemActivityName})
 
 	params := sendReceiptsParams{
 		SIPID:        "91e3ed2f-b798-4f4e-9133-74193f0d6a4f",

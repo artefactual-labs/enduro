@@ -6,17 +6,17 @@ import (
 	"testing"
 	"time"
 
-	"github.com/artefactual-labs/enduro/internal/workflow"
-
 	"github.com/stretchr/testify/assert"
-	cadence "go.uber.org/cadence"
-	cadenceactivity "go.uber.org/cadence/activity"
-	cadencetestsuite "go.uber.org/cadence/testsuite"
-	cadenceworkflow "go.uber.org/cadence/workflow"
+	cadencesdk "go.uber.org/cadence"
+	cadencesdk_activity "go.uber.org/cadence/activity"
+	cadencesdk_testsuite "go.uber.org/cadence/testsuite"
+	cadencesdk_workflow "go.uber.org/cadence/workflow"
+
+	"github.com/artefactual-labs/enduro/internal/workflow"
 )
 
 func TestTimer(t *testing.T) {
-	wts := cadencetestsuite.WorkflowTestSuite{}
+	wts := cadencesdk_testsuite.WorkflowTestSuite{}
 	env := wts.NewTestWorkflowEnvironment()
 
 	env.RegisterActivityWithOptions(
@@ -24,13 +24,13 @@ func TestTimer(t *testing.T) {
 			time.Sleep(time.Minute)
 			return nil
 		},
-		cadenceactivity.RegisterOptions{
+		cadencesdk_activity.RegisterOptions{
 			Name: "activity",
 		},
 	)
 
 	env.RegisterWorkflowWithOptions(
-		func(ctx cadenceworkflow.Context, duration time.Duration) error {
+		func(ctx cadencesdk_workflow.Context, duration time.Duration) error {
 			// Our timer implements a workflow goroutine that cancels the
 			// context when the timeout is exceeded. As a result, the activity
 			// should return a CanceledError.
@@ -38,8 +38,8 @@ func TestTimer(t *testing.T) {
 			ctx, cancel := timer.WithTimeout(ctx, duration)
 			defer cancel()
 
-			future := cadenceworkflow.ExecuteActivity(
-				cadenceworkflow.WithActivityOptions(ctx, cadenceworkflow.ActivityOptions{
+			future := cadencesdk_workflow.ExecuteActivity(
+				cadencesdk_workflow.WithActivityOptions(ctx, cadencesdk_workflow.ActivityOptions{
 					ScheduleToStartTimeout: time.Hour,
 					StartToCloseTimeout:    time.Hour,
 				}),
@@ -47,13 +47,13 @@ func TestTimer(t *testing.T) {
 			)
 
 			err := future.Get(ctx, nil)
-			if cadence.IsCanceledError(err) && timer.Exceeded() {
+			if cadencesdk.IsCanceledError(err) && timer.Exceeded() {
 				return fmt.Errorf("deadline exceeded: %s", duration)
 			}
 
 			return err
 		},
-		cadenceworkflow.RegisterOptions{
+		cadencesdk_workflow.RegisterOptions{
 			Name: "workflow",
 		},
 	)

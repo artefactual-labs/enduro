@@ -11,12 +11,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/artefactual-labs/enduro/internal/api/gen/collection"
+	cadencesdk_gen_shared "go.uber.org/cadence/.gen/go/shared"
+	cadencesdk_client "go.uber.org/cadence/client"
+
 	goacollection "github.com/artefactual-labs/enduro/internal/api/gen/collection"
 	"github.com/artefactual-labs/enduro/internal/cadence"
-	cadenceclient "go.uber.org/cadence/client"
-
-	"go.uber.org/cadence/.gen/go/shared"
 )
 
 var ErrBulkStatusUnavailable = errors.New("bulk status unavailable")
@@ -35,7 +34,7 @@ var patternMatchingCharReplacer = strings.NewReplacer(
 )
 
 // Monitor collection activity. It implements goacollection.Service.
-func (w *goaWrapper) Monitor(ctx context.Context, stream collection.MonitorServerStream) error {
+func (w *goaWrapper) Monitor(ctx context.Context, stream goacollection.MonitorServerStream) error {
 	defer stream.Close()
 
 	// Subscribe to the event service.
@@ -216,10 +215,10 @@ func (w *goaWrapper) Cancel(ctx context.Context, payload *goacollection.CancelPa
 
 	if err := w.cc.CancelWorkflow(ctx, *goacol.WorkflowID, *goacol.RunID); err != nil {
 		switch err.(type) {
-		case *shared.InternalServiceError:
-		case *shared.BadRequestError:
-		case *shared.EntityNotExistsError:
-		case *shared.WorkflowExecutionAlreadyCompletedError:
+		case *cadencesdk_gen_shared.InternalServiceError:
+		case *cadencesdk_gen_shared.BadRequestError:
+		case *cadencesdk_gen_shared.EntityNotExistsError:
+		case *cadencesdk_gen_shared.WorkflowExecutionAlreadyCompletedError:
 			// TODO: return custom errors
 		}
 		return err
@@ -240,7 +239,7 @@ func (w *goaWrapper) Retry(ctx context.Context, payload *goacollection.RetryPayl
 		return err
 	}
 
-	execution := &shared.WorkflowExecution{
+	execution := &cadencesdk_gen_shared.WorkflowExecution{
 		WorkflowId: goacol.WorkflowID,
 		RunId:      goacol.RunID,
 	}
@@ -250,7 +249,7 @@ func (w *goaWrapper) Retry(ctx context.Context, payload *goacollection.RetryPayl
 		return fmt.Errorf("error loading history of the previous workflow run: %w", err)
 	}
 
-	if historyEvent.GetEventType() != shared.EventTypeWorkflowExecutionStarted {
+	if historyEvent.GetEventType() != cadencesdk_gen_shared.EventTypeWorkflowExecutionStarted {
 		return fmt.Errorf("error loading history of the previous workflow run: initiator state not found")
 	}
 
@@ -286,7 +285,7 @@ func (w *goaWrapper) Workflow(ctx context.Context, payload *goacollection.Workfl
 	we, err := w.cc.DescribeWorkflowExecution(ctx, *goacol.WorkflowID, *goacol.RunID)
 	if err != nil {
 		switch err.(type) {
-		case *shared.EntityNotExistsError:
+		case *cadencesdk_gen_shared.EntityNotExistsError:
 			return nil, &goacollection.CollectionNotfound{Message: "not_found"}
 		default:
 			return nil, fmt.Errorf("error looking up history: %v", err)
@@ -299,7 +298,7 @@ func (w *goaWrapper) Workflow(ctx context.Context, payload *goacollection.Workfl
 	}
 	resp.Status = &status
 
-	iter := w.cc.GetWorkflowHistory(ctx, *goacol.WorkflowID, *goacol.RunID, false, shared.HistoryEventFilterTypeAllEvent)
+	iter := w.cc.GetWorkflowHistory(ctx, *goacol.WorkflowID, *goacol.RunID, false, cadencesdk_gen_shared.HistoryEventFilterTypeAllEvent)
 	for iter.HasNext() {
 		event, err := iter.Next()
 		if err != nil {
@@ -353,7 +352,7 @@ func (w *goaWrapper) Decide(ctx context.Context, payload *goacollection.DecidePa
 	return nil
 }
 
-func (w *goaWrapper) Bulk(ctx context.Context, payload *goacollection.BulkPayload) (*collection.BulkResult, error) {
+func (w *goaWrapper) Bulk(ctx context.Context, payload *goacollection.BulkPayload) (*goacollection.BulkResult, error) {
 	if payload.Size == 0 {
 		return nil, goacollection.MakeNotValid(errors.New("size is zero"))
 	}
@@ -363,9 +362,9 @@ func (w *goaWrapper) Bulk(ctx context.Context, payload *goacollection.BulkPayloa
 		Size:      payload.Size,
 	}
 
-	opts := cadenceclient.StartWorkflowOptions{
+	opts := cadencesdk_client.StartWorkflowOptions{
 		ID:                              BulkWorkflowID,
-		WorkflowIDReusePolicy:           cadenceclient.WorkflowIDReusePolicyAllowDuplicate,
+		WorkflowIDReusePolicy:           cadencesdk_client.WorkflowIDReusePolicyAllowDuplicate,
 		TaskList:                        cadence.GlobalTaskListName,
 		DecisionTaskStartToCloseTimeout: time.Second * 10,
 		ExecutionStartToCloseTimeout:    time.Hour,
@@ -373,7 +372,7 @@ func (w *goaWrapper) Bulk(ctx context.Context, payload *goacollection.BulkPayloa
 	exec, err := w.cc.StartWorkflow(ctx, opts, BulkWorkflowName, input)
 	if err != nil {
 		switch err := err.(type) {
-		case *shared.WorkflowExecutionAlreadyStartedError:
+		case *cadencesdk_gen_shared.WorkflowExecutionAlreadyStartedError:
 			return nil, goacollection.MakeNotAvailable(
 				fmt.Errorf("error starting bulk - operation is already in progress (workflowID=%s runID=%s)",
 					BulkWorkflowID, *err.RunId))
@@ -383,7 +382,7 @@ func (w *goaWrapper) Bulk(ctx context.Context, payload *goacollection.BulkPayloa
 		}
 	}
 
-	return &collection.BulkResult{
+	return &goacollection.BulkResult{
 		WorkflowID: exec.ID,
 		RunID:      exec.RunID,
 	}, nil
@@ -395,7 +394,7 @@ func (w *goaWrapper) BulkStatus(ctx context.Context) (*goacollection.BulkStatusR
 	resp, err := w.cc.DescribeWorkflowExecution(ctx, BulkWorkflowID, "")
 	if err != nil {
 		switch err := err.(type) {
-		case *shared.EntityNotExistsError:
+		case *cadencesdk_gen_shared.EntityNotExistsError:
 			// We've never seen a workflow run before.
 			return result, nil
 		default:

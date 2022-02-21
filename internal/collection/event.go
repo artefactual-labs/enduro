@@ -4,8 +4,9 @@ import (
 	"context"
 	"sync"
 
-	goacollection "github.com/artefactual-labs/enduro/internal/api/gen/collection"
 	"github.com/google/uuid"
+
+	goacollection "github.com/artefactual-labs/enduro/internal/api/gen/collection"
 )
 
 const (

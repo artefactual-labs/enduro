@@ -5,26 +5,26 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-logr/logr"
+	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/suite"
+	cadencesdk "go.uber.org/cadence"
+	cadencesdk_testsuite "go.uber.org/cadence/testsuite"
+
 	"github.com/artefactual-labs/enduro/internal/collection"
 	collectionfake "github.com/artefactual-labs/enduro/internal/collection/fake"
 	nha_activities "github.com/artefactual-labs/enduro/internal/nha/activities"
 	"github.com/artefactual-labs/enduro/internal/pipeline"
 	watcherfake "github.com/artefactual-labs/enduro/internal/watcher/fake"
 	"github.com/artefactual-labs/enduro/internal/workflow/manager"
-
-	"github.com/go-logr/logr"
-	"github.com/golang/mock/gomock"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/suite"
-	"go.uber.org/cadence"
-	cadencetestsuite "go.uber.org/cadence/testsuite"
 )
 
 type ProcessingWorkflowTestSuite struct {
 	suite.Suite
-	cadencetestsuite.WorkflowTestSuite
+	cadencesdk_testsuite.WorkflowTestSuite
 
-	env *cadencetestsuite.TestWorkflowEnvironment
+	env *cadencesdk_testsuite.TestWorkflowEnvironment
 
 	manager *manager.Manager
 
@@ -143,7 +143,7 @@ func assertNilWorkflowError(t *testing.T, err error) {
 		return
 	}
 
-	if perr, ok := err.(*cadence.CustomError); ok {
+	if perr, ok := err.(*cadencesdk.CustomError); ok {
 		var details string
 		perr.Details(&details)
 		t.Fatal(details)
