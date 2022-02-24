@@ -72,9 +72,11 @@ func (r *Registry) Names() []string {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
+	var idx int
 	names := make([]string, len(r.pipelines))
 	for name := range r.pipelines {
-		names = append(names, name)
+		names[idx] = name
+		idx++
 	}
 
 	return names
