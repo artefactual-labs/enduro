@@ -393,13 +393,17 @@ func (w *ProcessingWorkflow) Execute(ctx cadencesdk_workflow.Context, req *colle
 func (w *ProcessingWorkflow) SessionHandler(sessCtx cadencesdk_workflow.Context, attempt int, tinfo *TransferInfo, nameInfo nha.NameInfo, validationConfig validation.Config, timer *Timer) error {
 	defer cadencesdk_workflow.CompleteSession(sessCtx)
 
+	var release releaser
+
 	// Block until pipeline semaphore is acquired. The collection status is set
 	// to in-progress as soon as the operation succeeds.
 	{
-		acquired, err := acquirePipeline(sessCtx, w.manager, tinfo.PipelineName, tinfo.CollectionID)
+		var acquired bool
+		var err error
+		acquired, release, err = acquirePipeline(sessCtx, w.manager, tinfo.PipelineName, tinfo.CollectionID)
 		if acquired {
 			defer func() {
-				_ = releasePipeline(sessCtx, w.manager, tinfo.PipelineName)
+				_ = release(sessCtx, w.manager, tinfo.PipelineName)
 			}()
 		}
 		if err != nil {
@@ -460,6 +464,7 @@ func (w *ProcessingWorkflow) SessionHandler(sessCtx cadencesdk_workflow.Context,
 		}
 	}
 
+	// Transfer process which is made of multiple activities
 	{
 		// Use our timed context if this transfer has a deadline set.
 		duration := tinfo.PipelineConfig.TransferDeadline
@@ -474,6 +479,10 @@ func (w *ProcessingWorkflow) SessionHandler(sessCtx cadencesdk_workflow.Context,
 			return err
 		}
 	}
+
+	// We can release now. Other activities will re-use the session but will not
+	// need the pipeline.
+	_ = release(sessCtx, w.manager, tinfo.PipelineName)
 
 	// Deliver receipts.
 	{
