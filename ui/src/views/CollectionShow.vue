@@ -52,7 +52,7 @@
           <dd>{{ collection.transferId }}</dd>
         </template>
 
-        <template v-if="collection.status == 'done' && collection.aipId">
+        <template v-if="collection.aipId">
           <dt>AIP</dt>
           <dd>{{ collection.aipId }}</dd>
         </template>
