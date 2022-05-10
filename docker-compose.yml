@@ -44,7 +44,7 @@ services:
     environment:
       - "CADENCE_TCHANNEL_PEERS=cadence:7400"
     ports:
-      - "127.0.0.1:7440:8088"
+      - "0.0.0.0:7440:8088"
 
   minio:
     image: "minio/minio:RELEASE.2020-04-28T23-56-56Z"
@@ -52,7 +52,7 @@ services:
     volumes:
       - "./hack/minio-data:/data"
     ports:
-      - "127.0.0.1:7460:9000"
+      - "0.0.0.0:7460:9000"
 
   redis:
     image: "redis:5-alpine"
