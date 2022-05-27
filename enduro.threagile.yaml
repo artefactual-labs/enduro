@@ -1,0 +1,882 @@
+threagile_version: 1.0.0
+
+title: Enduro SDPS Threat Model
+
+date: 2022-05-27
+
+author:
+  name: Steve Breker
+  homepage: www.artefactual.com
+
+management_summary_comment: Threat model DFD for the Enduro SDPS (Secure Digital Preservation System)
+
+business_criticality: critical
+
+business_overview:
+  description: The SDPS has an inherent goal of protecting the data that passes through during the AIP generation process. Data integrity and confidentiality ratings in the analysis reflect this.
+  images:
+
+technical_overview:
+  description: SDPS is based around Temporal workflows which utilize a3m to generate AIPS. The system will run in a k8s based cluster such that AIP generation can scale up to meet user demands.
+  images:
+
+questions: # simply use "" as answer to signal "unanswered"
+  Can GLUU be used to provide OIDC authentication in a k8s env?: Yes
+
+abuse_cases:
+  Denial-of-Service: >
+    As a criminal I want to disturb the functionality of the backend system in order to cause indirect financial damage via unusable features.
+  CPU-Cycle Theft: >
+    As a criminal I want to steal CPU cycles in order to transform them into money via installed crypto currency miners.
+  Ransomware: >
+    As a criminal I want to encrypt the storage and file systems in order to demand ransom.
+  Identity Theft: >
+    As a criminal I want to steal identity data in order to reuse credentials and/or keys on other targets of the same company or outside.
+  PII Theft: >
+    As a criminal I want to steal PII (Personally Identifiable Information) data in order to blackmail the company and/or damage their repudiation by publishing the stolen data.
+
+security_requirements:
+  Input Validation: Strict input validation is required to reduce the overall attack surface.
+  Encryption between containers: Communication between Docker containers must be protected with TLS encryption.
+  Authentication: User must have an account to access the SDPS and it's data.
+  EU-GDPR: Mandatory EU-GDPR # are there more of these we should know about?
+
+tags_available:
+  - golang
+  - temporal
+  - gluu
+  - nginx
+  - enduro
+  - typescript
+  - vue
+  - python
+  - redis
+  - mysql
+  - opensearch
+  - index
+
+data_assets:
+  PreservationContent:
+    id: preservation-content
+    description: This is the digital files that are being packaged into an AIP.
+    usage: business
+    tags:
+    origin: User
+    owner: Content Owner
+    quantity: very-many
+    confidentiality: strictly-confidential # values: public, internal, restricted, confidential, strictly-confidential
+    integrity: mission-critical # values: archive, operational, important, critical, mission-critical
+    availability: important # values: archive, operational, important, critical, mission-critical
+    justification_cia_rating: >
+      This is the preservation content. Integrity and confidentiality are critical.
+
+  PreservationMetadata:
+    id: preservation-metadata
+    description: Preservation metadata passed to Temporal.
+    usage: business
+    tags:
+    origin: Preservation items.
+    owner: User
+    quantity: very-many
+    confidentiality: confidential
+    integrity: critical
+    availability: important
+    justification_cia_rating:
+
+  OIDCIdToken:
+    id: id-token
+    description: ID Token issues by authentication service.
+    usage: business
+    tags:
+      - gluu
+    origin: gluu OIDC service.
+    owner: Artefactual
+    quantity: very-few
+    confidentiality: strictly-confidential
+    integrity: mission-critical
+    availability: important
+    justification_cia_rating: >
+      Integrity and confidentiality are critical.
+
+  OAuth2.0AccessToken:
+    id: access-token
+    description: Access Token used for API Authorization issued by authorization service.
+    usage: business
+    tags:
+      - gluu
+    origin: gluu oauth2 service.
+    owner: Artefactual
+    quantity: very-few
+    confidentiality: strictly-confidential
+    integrity: mission-critical
+    availability: important
+    justification_cia_rating: >
+      Integrity and confidentiality are critical.
+
+  UserCredentials:
+    id: user-credentials
+    description: User credentials protecting access to Enduro API.
+    usage: business
+    tags:
+    origin: User
+    owner: Artefactual
+    quantity: very-few
+    confidentiality: strictly-confidential
+    integrity: mission-critical
+    availability: important
+    justification_cia_rating: >
+      Integrity and confidentiality are critical.
+
+  ClientApplicationCode:
+    id: client-application-code
+    description: Vue and other client-side code delivered by the application.
+    usage: devops
+    tags:
+      - typescript
+      - vue
+    origin: Artefactual
+    owner: Artefactual
+    quantity: very-few
+    confidentiality: public
+    integrity: critical
+    availability: important
+    justification_cia_rating:
+
+  FileBlobDetails:
+    id: file-blob-details
+    description: This is created by Minio and inserted into Redis as a signal to Enduro that files are ready for processing.
+    usage: business
+    tags:
+    origin: Minio
+    owner: Artefactual
+    quantity: very-many
+    confidentiality: confidential
+    integrity: critical
+    availability: important
+    justification_cia_rating:
+
+  GrpcTransferStartRequest:
+    id: transfer-start-request
+    description: GRPC Transfer start request.
+    usage: business
+    tags:
+    origin: a3m worker
+    owner: Artefactual
+    quantity: many
+    confidentiality: confidential
+    integrity: critical
+    availability: important
+    justification_cia_rating:
+
+  CollectionWorkflowStatus:
+    id: collection-workflow-status
+    description: Details about a collection workflow's current status
+    usage: business
+    tags:
+    origin: Temporal
+    owner: Artefactual
+    quantity: many
+    confidentiality: confidential
+    integrity: critical
+    availability: important
+    justification_cia_rating:
+
+technical_assets:
+  UserWebClient:
+    id: web-client
+    description: Archives User Web Client
+    type: external-entity
+    usage: business
+    used_as_client_by_human: true
+    out_of_scope: true
+    justification_out_of_scope: Owned and managed by user.
+    size: application
+    technology: browser
+    tags:
+    internet: true
+    machine: physical
+    encryption: none
+    owner: User
+    confidentiality: public
+    integrity: operational
+    availability: operational
+    justification_cia_rating: >
+      The client used by the user to access the system.
+    multi_tenant: false
+    redundant: false
+    custom_developed_parts: false
+    data_assets_processed:
+      - preservation-content
+      - client-application-code
+    data_assets_stored:
+    data_formats_accepted: # sequence of formats like: json, xml, serialization, file, csv
+    communication_links:
+      EnduroDashboardRequestTraffic:
+        target: ingress-controller
+        description: reverse proxy https endpoint
+        protocol: https
+        authentication: none # values: none, credentials, session-id, token, client-certificate, two-factor
+        authorization: none # values: none, technical-user, enduser-identity-propagation
+        tags:
+        vpn: true
+        ip_filtered: true
+        readonly: true
+        usage: business
+        data_assets_sent:
+        data_assets_received:
+          - client-application-code
+      EnduroAPIRequestTraffic:
+        target: ingress-controller
+        description: reverse proxy https endpoint
+        protocol: binary-encrypted
+        authentication: token
+        authorization: enduser-identity-propagation
+        tags:
+        vpn: true
+        ip_filtered: true
+        readonly: true
+        usage: business
+        data_assets_sent:
+          - preservation-content
+          - access-token
+          - id-token
+        data_assets_received:
+          - preservation-content
+      CredentialCheckTrafficOIDC:
+        target: ingress-controller
+        description: Link to the OIDC server
+        protocol: https
+        authentication: credentials
+        authorization: none
+        tags:
+        vpn: true
+        ip_filtered: true
+        readonly: false
+        usage: business
+        data_assets_sent:
+          - user-credentials
+        data_assets_received:
+          - access-token
+          - id-token
+
+  IngressController:
+    id: ingress-controller
+    description: Ingress contoller. Rate limiting and monitoring of incoming connections should happen here.
+    type: process
+    usage: business
+    used_as_client_by_human: false
+    out_of_scope: false
+    justification_out_of_scope: >
+      Out of scope for self-installation by customers on prem. In scope for hosted Artefactual customers.
+    size: service
+    technology: reverse-proxy
+    tags:
+    internet: true
+    machine: container
+    encryption: transparent # values: none, transparent, data-with-symmetric-shared-key, data-with-asymmetric-shared-key, data-with-enduser-individual-key
+    owner: Artefactual
+    confidentiality: public
+    integrity: critical
+    availability: important
+    justification_cia_rating: >
+      The correct configuration and reachability of the load balancer is mandatory for all customer use.
+    multi_tenant: false
+    redundant: false
+    custom_developed_parts: false
+    data_assets_processed:
+    data_assets_stored:
+    data_formats_accepted:
+    communication_links:
+      EnduroDashboardRequestTraffic:
+        target: enduro-dashboard-server
+        description: reverse proxy https endpoint
+        protocol: https
+        authentication: none # values: none, credentials, session-id, token, client-certificate, two-factor
+        authorization: none # values: none, technical-user, enduser-identity-propagation
+        tags:
+        vpn: true
+        ip_filtered: true
+        readonly: true
+        usage: business
+        data_assets_sent:
+        data_assets_received:
+          - client-application-code
+      EnduroAPIRequestTraffic:
+        target: enduro-api
+        description: reverse proxy https endpoint
+        protocol: binary-encrypted
+        authentication: token # values: none, credentials, session-id, token, client-certificate, two-factor
+        authorization: enduser-identity-propagation # values: none, technical-user, enduser-identity-propagation
+        tags:
+        vpn: true
+        ip_filtered: true
+        readonly: true
+        usage: business
+        data_assets_sent:
+          - preservation-content
+          - access-token
+          - id-token
+        data_assets_received:
+          - preservation-content
+      CredentialCheckTrafficOIDC:
+        target: identity-provider
+        description: Link to the OIDC server
+        protocol: https
+        authentication: credentials # values: none, credentials, session-id, token, client-certificate, two-factor
+        authorization: none # values: none, technical-user, enduser-identity-propagation
+        tags:
+        vpn: true
+        ip_filtered: true
+        readonly: false
+        usage: business
+        data_assets_sent:
+          - user-credentials
+        data_assets_received:
+          - access-token
+          - id-token
+
+  EnduroDashboardServer:
+    id: enduro-dashboard-server
+    description: Nginx. Serves SPA, routes to /api.
+    type: process
+    usage: business
+    used_as_client_by_human: false
+    out_of_scope: false
+    justification_out_of_scope: null
+    size: component
+    technology: web-server
+    tags:
+      - nginx
+    internet: true
+    machine: container
+    encryption: transparent # values: none, transparent, data-with-symmetric-shared-key, data-with-asymmetric-shared-key, data-with-enduser-individual-key
+    owner: Artefactual
+    confidentiality: public # values: public, internal, restricted, confidential, strictly-confidential
+    integrity: critical # values: archive, operational, important, critical, mission-critical
+    availability: important
+    justification_cia_rating: >
+      The correct configuration and reachability of the load balancer is mandatory is necessary for correct routing and security.
+    multi_tenant: false
+    redundant: false
+    custom_developed_parts: false
+    data_assets_processed:
+    data_assets_stored:
+      - client-application-code
+    data_formats_accepted:
+    communication_links:
+
+  EnduroAPI:
+    id: enduro-api
+    description: Enduro Application Interface
+    type: process
+    usage: business
+    used_as_client_by_human: false
+    out_of_scope: false
+    justification_out_of_scope: null
+    size: component
+    technology: batch-processing
+    tags:
+      - golang
+      - temporal
+    internet: false
+    machine: container
+    encryption: transparent # values: none, transparent, data-with-symmetric-shared-key, data-with-asymmetric-shared-key, data-with-enduser-individual-key
+    owner: Artefactual
+    confidentiality: strictly-confidential # values: public, internal, restricted, confidential, strictly-confidential
+    integrity: mission-critical # values: archive, operational, important, critical, mission-critical
+    availability: important
+    justification_cia_rating: Integrity and confidentiality are critical.
+    multi_tenant: false
+    redundant: true
+    custom_developed_parts: true
+    data_assets_processed:
+      - preservation-content
+      - access-token
+    data_assets_stored:
+    data_formats_accepted:
+    diagram_tweak_order: 0
+    communication_links:
+      OAUTHAuthorizationCheckTraffic:
+        target: identity-provider
+        description: Link to the OAUTH 2.0 server
+        protocol: https
+        authentication: token # values: none, credentials, session-id, token, client-certificate, two-factor
+        authorization: enduser-identity-propagation # values: none, technical-user, enduser-identity-propagation
+        tags:
+        vpn: true
+        ip_filtered: true
+        readonly: false
+        usage: business
+        data_assets_sent:
+          - access-token
+          - id-token
+        data_assets_received:
+      BlobStorageTraffic:
+        target: blob-storage
+        description: Link to the object storage
+        protocol: https
+        authentication: token # values: none, credentials, session-id, token, client-certificate, two-factor
+        authorization: enduser-identity-propagation # values: none, technical-user, enduser-identity-propagation
+        tags:
+        vpn: true
+        ip_filtered: true
+        readonly: false
+        usage: business
+        data_assets_sent:
+          - preservation-content
+        data_assets_received:
+          - preservation-content
+      FileBlobDetailsTraffic:
+        target: redis
+        description: This is Minio file blob data that is inserted into Redis. Enduro monitors Redis for new file blob details.
+        protocol: https
+        authentication: none
+        authorization: none
+        tags:
+        vpn: true
+        ip_filtered: true
+        readonly: false
+        usage: business
+        data_assets_sent:
+          - file-blob-details
+        data_assets_received:
+      OpensearchTraffic:
+        target: opensearch
+        description: Search requests.
+        protocol: https
+        authentication: none
+        authorization: none
+        tags:
+          - opensearch
+        vpn: true
+        ip_filtered: true
+        readonly: false
+        usage: business
+        data_assets_sent:
+          - preservation-metadata
+        data_assets_received:
+          - preservation-metadata
+
+  IdentityProvider:
+    id: identity-provider
+    description: Identity provider server
+    type: process
+    usage: business
+    used_as_client_by_human: false
+    out_of_scope: false
+    justification_out_of_scope: null
+    size: service
+    technology: identity-provider
+    tags:
+      - gluu
+    internet: false
+    machine: container
+    encryption: transparent # values: none, transparent, data-with-symmetric-shared-key, data-with-asymmetric-shared-key, data-with-enduser-individual-key
+    owner: Artefactual
+    confidentiality: strictly-confidential # values: public, internal, restricted, confidential, strictly-confidential
+    integrity: mission-critical # values: archive, operational, important, critical, mission-critical
+    availability: important # values: archive, operational, important, critical, mission-critical
+    justification_cia_rating: >
+      The auth data of the application.
+    multi_tenant: false
+    redundant: false
+    custom_developed_parts: false
+    data_assets_processed:
+      - user-credentials
+    data_assets_stored:
+    data_formats_accepted:
+    communication_links:
+
+  BlobStorageService:
+    id: blob-storage
+    description: Storage service for preservation content.
+    type: datastore
+    usage: business
+    used_as_client_by_human: false
+    out_of_scope: false
+    justification_out_of_scope: null
+    size: service
+    technology: file-server
+    tags:
+    internet: false
+    machine: container
+    encryption: data-with-enduser-individual-key # values: none, transparent, data-with-symmetric-shared-key, data-with-asymmetric-shared-key, data-with-enduser-individual-key
+    owner: Artefactual
+    confidentiality: strictly-confidential # values: public, internal, restricted, confidential, strictly-confidential
+    integrity: mission-critical # values: archive, operational, important, critical, mission-critical
+    availability: important # values: archive, operational, important, critical, mission-critical
+    justification_cia_rating:
+    multi_tenant: false
+    redundant: false
+    custom_developed_parts: false
+    data_assets_processed:
+    data_assets_stored:
+      - preservation-content
+    data_formats_accepted:
+
+  EnduroA3MWorker:
+    id: enduro-a3m-worker
+    description: This is the golang written code that launches an instance of a3m.
+    type: process
+    usage: business
+    used_as_client_by_human: false
+    out_of_scope: false
+    justification_out_of_scope: null
+    size: service
+    technology: batch-processing
+    tags:
+      - golang
+    internet: false
+    machine: container
+    encryption: none # values: none, transparent, data-with-symmetric-shared-key, data-with-asymmetric-shared-key, data-with-enduser-individual-key
+    owner: Artefactual
+    confidentiality: restricted # values: public, internal, restricted, confidential, strictly-confidential
+    integrity: critical # values: archive, operational, important, critical, mission-critical
+    availability: important # values: archive, operational, important, critical, mission-critical
+    justification_cia_rating: null
+    multi_tenant: false
+    redundant: true
+    custom_developed_parts: true
+    data_assets_processed:
+    data_assets_stored:
+    data_formats_accepted:
+    communication_links:
+      BlobStorageTraffic:
+        target: blob-storage
+        description: Link to the object storage
+        protocol: https
+        authentication: token # values: none, credentials, session-id, token, client-certificate, two-factor
+        authorization: enduser-identity-propagation # values: none, technical-user, enduser-identity-propagation
+        tags:
+        vpn: true
+        ip_filtered: true
+        readonly: false
+        usage: business
+        data_assets_sent:
+          - preservation-content
+        data_assets_received:
+          - preservation-content
+      StartProcessingSignal:
+        target: a3m
+        description: The worker will trigger a3m to begin processing.
+        protocol: binary-encrypted
+        authentication: none
+        authorization: none
+        tags:
+        vpn: true
+        ip_filtered: true
+        readonly: false
+        usage: business
+        data_assets_sent:
+          - transfer-start-request
+        data_assets_received:
+      OpensearchTraffic:
+        target: opensearch
+        description: Search requests.
+        protocol: https
+        authentication: none # values: none, credentials, session-id, token, client-certificate, two-factor
+        authorization: none # values: none, technical-user, enduser-identity-propagation
+        tags:
+          - opensearch
+        vpn: true
+        ip_filtered: true
+        readonly: false
+        usage: business
+        data_assets_sent:
+          - preservation-metadata
+        data_assets_received:
+          - preservation-metadata
+
+  A3M:
+    id: a3m
+    description: This is a3m.
+    type: process
+    usage: business
+    used_as_client_by_human: false
+    out_of_scope: false
+    justification_out_of_scope: null
+    size: service
+    technology: function
+    tags:
+      - python
+    internet: false
+    machine: container
+    encryption: none # values: none, transparent, data-with-symmetric-shared-key, data-with-asymmetric-shared-key, data-with-enduser-individual-key
+    owner: Artefactual
+    confidentiality: restricted # values: public, internal, restricted, confidential, strictly-confidential
+    integrity: critical # values: archive, operational, important, critical, mission-critical
+    availability: important # values: archive, operational, important, critical, mission-critical
+    justification_cia_rating: null
+    multi_tenant: false
+    redundant: true
+    custom_developed_parts: true
+    data_assets_processed:
+    data_assets_stored:
+    data_formats_accepted:
+    communication_links:
+
+  Temporal:
+    id: temporal
+    description: Temporal service.
+    type: process
+    usage: business
+    used_as_client_by_human: false
+    out_of_scope: false
+    justification_out_of_scope: null
+    size: service
+    technology: scheduler
+    tags:
+    internet: false
+    machine: container
+    encryption: none # values: none, transparent, data-with-symmetric-shared-key, data-with-asymmetric-shared-key, data-with-enduser-individual-key
+    owner: Artefactual
+    confidentiality: confidential # values: public, internal, restricted, confidential, strictly-confidential
+    integrity: critical # values: archive, operational, important, critical, mission-critical
+    availability: important # values: archive, operational, important, critical, mission-critical
+    justification_cia_rating: null
+    multi_tenant: false
+    redundant: false
+    custom_developed_parts: false
+    data_assets_processed:
+    data_assets_stored:
+    data_formats_accepted:
+    communication_links:
+      WorkflowDetailsTraffic:
+        target: mysql
+        description: Update and retrieve collection info in mysql db.
+        protocol: binary-encrypted
+        authentication: credentials # values: none, credentials, session-id, token, client-certificate, two-factor
+        authorization: none # values: none, technical-user, enduser-identity-propagation
+        tags:
+          - mysql
+        vpn: true
+        ip_filtered: true
+        readonly: false
+        usage: business
+        data_assets_sent:
+          - collection-workflow-status
+          - preservation-metadata
+        data_assets_received:
+          - collection-workflow-status
+
+  MySQL:
+    id: mysql
+    description: MySQL service used by Temporal.
+    type: datastore
+    usage: business
+    used_as_client_by_human: false
+    out_of_scope: false
+    justification_out_of_scope: null
+    size: component
+    technology: database
+    tags:
+      - mysql
+    internet: false
+    machine: container
+    encryption: data-with-asymmetric-shared-key # values: none, transparent, data-with-symmetric-shared-key, data-with-asymmetric-shared-key, data-with-enduser-individual-key
+    owner: Artefactual
+    confidentiality: confidential # values: public, internal, restricted, confidential, strictly-confidential
+    integrity: critical # values: archive, operational, important, critical, mission-critical
+    availability: important # values: archive, operational, important, critical, mission-critical
+    justification_cia_rating: null
+    multi_tenant: false
+    redundant: false
+    custom_developed_parts: false
+    data_assets_processed:
+    data_assets_stored:
+      - collection-workflow-status
+    data_formats_accepted:
+    communication_links:
+
+  OpenSearch:
+    id: opensearch
+    description: Opensearch service.
+    type: datastore
+    usage: business
+    used_as_client_by_human: false
+    out_of_scope: false
+    justification_out_of_scope: null
+    size: component
+    technology: database
+    tags:
+      - opensearch
+      - index
+    internet: false
+    machine: container
+    encryption: none
+    owner: Artefactual
+    confidentiality: confidential
+    integrity: important
+    availability: important
+    justification_cia_rating: null
+    multi_tenant: false
+    redundant: false
+    custom_developed_parts: false
+    data_assets_processed:
+    data_assets_stored:
+      - preservation-metadata
+    data_formats_accepted:
+    communication_links:
+
+  Enduro:
+    id: enduro
+    description: This is the Enduro application, minus the API and UI.
+    type: process
+    usage: business
+    used_as_client_by_human: false
+    out_of_scope: false
+    justification_out_of_scope: null
+    size: application
+    technology: event-listener
+    tags:
+      - golang
+    internet: false
+    machine: container
+    encryption: data-with-symmetric-shared-key # values: none, transparent, data-with-symmetric-shared-key, data-with-asymmetric-shared-key, data-with-enduser-individual-key
+    owner: Artefactual
+    confidentiality: confidential # values: public, internal, restricted, confidential, strictly-confidential
+    integrity: critical # values: archive, operational, important, critical, mission-critical
+    availability: important # values: archive, operational, important, critical, mission-critical
+    justification_cia_rating: null
+    multi_tenant: false
+    redundant: false
+    custom_developed_parts: true
+    data_assets_processed:
+    data_assets_stored:
+    data_formats_accepted:
+    communication_links:
+      FileBlobDetailsTraffic:
+        target: redis
+        description: This is Minio file blob data that is inserted into Redis. Enduro monitors Redis for new file blob details.
+        protocol: https
+        authentication: none # values: none, credentials, session-id, token, client-certificate, two-factor
+        authorization: none # values: none, technical-user, enduser-identity-propagation
+        tags:
+        vpn: true
+        ip_filtered: true
+        readonly: false
+        usage: business
+        data_assets_sent:
+        data_assets_received:
+          - file-blob-details
+      WorkflowDetailsTraffic:
+        target: mysql
+        description: Update and retrieve collection info in mysql db.
+        protocol: binary-encrypted
+        authentication: credentials # values: none, credentials, session-id, token, client-certificate, two-factor
+        authorization: none # values: none, technical-user, enduser-identity-propagation
+        tags:
+          - mysql
+        vpn: true
+        ip_filtered: true
+        readonly: false
+        usage: business
+        data_assets_sent:
+          - collection-workflow-status
+        data_assets_received:
+          - collection-workflow-status
+      TemporalTraffic:
+        target: temporal
+        description: description
+        protocol: binary-encrypted
+        authentication: none # values: none, credentials, session-id, token, client-certificate, two-factor
+        authorization: enduser-identity-propagation # values: none, technical-user, enduser-identity-propagation
+        tags:
+        vpn: true
+        ip_filtered: true
+        readonly: false
+        usage: business
+        data_assets_sent:
+          - preservation-metadata
+        data_assets_received:
+
+  Redis:
+    id: redis
+    description: Redis instance
+    type: datastore
+    usage: business
+    used_as_client_by_human: false
+    out_of_scope: false
+    justification_out_of_scope: null
+    size: service
+    technology: database
+    tags:
+      - redis
+    internet: false
+    machine: container
+    encryption: none # values: none, transparent, data-with-symmetric-shared-key, data-with-asymmetric-shared-key, data-with-enduser-individual-key
+    owner: Artefactual
+    confidentiality: confidential # values: public, internal, restricted, confidential, strictly-confidential
+    integrity: critical # values: archive, operational, important, critical, mission-critical
+    availability: important # values: archive, operational, important, critical, mission-critical
+    justification_cia_rating: null
+    multi_tenant: false
+    redundant: false
+    custom_developed_parts: false
+    data_assets_processed:
+    data_assets_stored:
+      - file-blob-details
+    data_formats_accepted:
+    communication_links:
+
+trust_boundaries:
+  ApplicationNetwork:
+    id: web-dmz
+    description: Network accessible web dmz.
+    type: network-cloud-security-group
+    tags:
+    technical_assets_inside:
+      - ingress-controller
+      - enduro-dashboard-server
+    trust_boundaries_nested:
+      - auth-network
+      - enduro-network
+
+  AuthenticationNetwork:
+    id: auth-network
+    description: Authentication Network
+    type: network-cloud-security-group
+    tags:
+    technical_assets_inside:
+      - identity-provider
+    trust_boundaries_nested: null
+
+  EnduroA3mWorkerPod:
+    id: enduro-a3m-worker-pod
+    description: This is the scaling unit of one Enduro a3m worker and one a3m instance.
+    type: network-cloud-security-group
+    tags:
+    technical_assets_inside:
+      - enduro-a3m-worker
+      - a3m
+    trust_boundaries_nested:
+
+  EnduroNetwork:
+    id: enduro-network
+    description: Enduro API Network
+    type: network-cloud-security-group
+    tags:
+    technical_assets_inside:
+      - enduro-api
+      - enduro
+      - blob-storage
+      - redis
+      - temporal
+      - mysql
+      - opensearch
+    trust_boundaries_nested:
+      - enduro-a3m-worker-pod
+
+#shared_runtimes:
+#  !ta-shared-
+
+individual_risk_categories:
+# NOTE:
+# For risk tracking each risk-id needs to be defined (the string with the @ sign in it). These unique risk IDs are visible in the PDF report (the small grey string under each risk), the Excel (column "ID"), as well as the JSON responses.
+# Some risk IDs have only one @ sign in them, while others multiple. The idea is to allow for unique but still speaking IDs.
+# Therefore each risk instance creates its individual ID by taking all affected elements causing the risk to be within an @-delimited part.
+# Using wildcards (the * sign) for parts delimited by @ signs allows to handle groups of certain risks at once. Best is to lookup the IDs to use in the created Excel file. Alternatively a model macro "seed-risk-tracking" is available that helps in initially
+# seeding the risk tracking part here based on already identified and not yet handled risks.
+#!ta-ind-
+
+risk_tracking: null
