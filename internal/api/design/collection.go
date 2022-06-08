@@ -20,14 +20,7 @@ var _ = Service("collection", func() {
 		Description("List all stored collections")
 		Payload(func() {
 			Attribute("name", String)
-			Attribute("original_id", String)
-			Attribute("transfer_id", String, func() {
-				Format(FormatUUID)
-			})
 			Attribute("aip_id", String, func() {
-				Format(FormatUUID)
-			})
-			Attribute("pipeline_id", String, func() {
 				Format(FormatUUID)
 			})
 			Attribute("earliest_created_time", String, func() {
@@ -47,10 +40,7 @@ var _ = Service("collection", func() {
 			Response(StatusOK)
 			Params(func() {
 				Param("name")
-				Param("original_id")
-				Param("transfer_id")
 				Param("aip_id")
-				Param("pipeline_id")
 				Param("earliest_created_time")
 				Param("latest_created_time")
 				Param("status")
@@ -143,25 +133,6 @@ var _ = Service("collection", func() {
 			Response("not_found", StatusNotFound)
 		})
 	})
-	Method("decide", func() {
-		Description("Make decision for a pending collection by ID")
-		Payload(func() {
-			Attribute("id", UInt, "Identifier of collection to look up")
-			Attribute("option", String, "Decision option to proceed with")
-			Required("id", "option")
-		})
-		Error("not_found", CollectionNotFound, "Collection not found")
-		Error("not_valid")
-		HTTP(func() {
-			POST("/{id}/decision")
-			Body(func() {
-				Attribute("option")
-			})
-			Response(StatusOK)
-			Response("not_found", StatusNotFound)
-			Response("not_valid", StatusBadRequest)
-		})
-	})
 	Method("bulk", func() {
 		Description("Bulk operations (retry, cancel...).")
 		Payload(func() {
@@ -194,6 +165,20 @@ var _ = Service("collection", func() {
 			Response(StatusOK)
 		})
 	})
+	Method("preservation-actions", func() {
+		Description("List all preservation actions by ID")
+		Payload(func() {
+			Attribute("id", UInt, "Identifier of collection to look up")
+			Required("id")
+		})
+		Result(PreservationActions)
+		Error("not_found", CollectionNotFound, "Collection not found")
+		HTTP(func() {
+			GET("/{id}/preservation-actions")
+			Response(StatusOK)
+			Response("not_found", StatusNotFound)
+		})
+	})
 })
 
 var EnumCollectionStatus = func() {
@@ -213,14 +198,7 @@ var Collection = Type("Collection", func() {
 	Attribute("run_id", String, "Identifier of latest processing workflow run", func() {
 		Format(FormatUUID)
 	})
-	Attribute("transfer_id", String, "Identifier of Archivematica transfer", func() {
-		Format(FormatUUID)
-	})
 	Attribute("aip_id", String, "Identifier of Archivematica AIP", func() {
-		Format(FormatUUID)
-	})
-	Attribute("original_id", String, "Identifier provided by the client")
-	Attribute("pipeline_id", String, "Identifier of Archivematica pipeline", func() {
 		Format(FormatUUID)
 	})
 	Attribute("created_at", String, "Creation datetime", func() {
@@ -244,10 +222,7 @@ var StoredCollection = ResultType("application/vnd.enduro.stored-collection", fu
 		Attribute("status")
 		Attribute("workflow_id")
 		Attribute("run_id")
-		Attribute("transfer_id")
 		Attribute("aip_id")
-		Attribute("original_id")
-		Attribute("pipeline_id")
 		Attribute("created_at")
 		Attribute("started_at")
 		Attribute("completed_at")
@@ -258,10 +233,7 @@ var StoredCollection = ResultType("application/vnd.enduro.stored-collection", fu
 		Attribute("status")
 		Attribute("workflow_id")
 		Attribute("run_id")
-		Attribute("transfer_id")
 		Attribute("aip_id")
-		Attribute("original_id")
-		Attribute("pipeline_id")
 		Attribute("created_at")
 		Attribute("started_at")
 		Attribute("completed_at")
@@ -283,7 +255,7 @@ var WorkflowStatus = ResultType("application/vnd.enduro.collection-workflow-stat
 })
 
 var WorkflowHistoryEvent = ResultType("application/vnd.enduro.collection-workflow-history", func() {
-	Description("WorkflowHistoryEvent describes a history event in Cadence.")
+	Description("WorkflowHistoryEvent describes a history event in Temporal.")
 	Attributes(func() {
 		Attribute("id", UInt, "Identifier of collection")
 		Attribute("type", String, "Type of the event")
@@ -318,4 +290,29 @@ var BulkStatusResult = Type("BulkStatusResult", func() {
 	Attribute("workflow_id", String)
 	Attribute("run_id", String)
 	Required("running")
+})
+
+var EnumPreservationActionStatus = func() {
+	Enum("unspecified", "complete", "processing", "failed")
+}
+
+var PreservationActions = ResultType("application/vnd.enduro.collection-preservation-actions", func() {
+	Description("PreservationActions describes the preservation actions of a collection.")
+	Attribute("actions", CollectionOf(PreservationAction))
+})
+
+var PreservationAction = ResultType("application/vnd.enduro.collection-preservation-actions-action", func() {
+	Description("PreservationAction describes a preservation action.")
+	Attributes(func() {
+		Attribute("id", UInt)
+		Attribute("action_id", String)
+		Attribute("name", String)
+		Attribute("status", String, func() {
+			EnumPreservationActionStatus()
+		})
+		Attribute("started_at", String, func() {
+			Format(FormatDateTime)
+		})
+	})
+	Required("id", "action_id", "name", "status", "started_at")
 })

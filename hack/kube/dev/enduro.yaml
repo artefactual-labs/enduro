@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: enduro
+  labels:
+    app: enduro
+spec:
+  selector:
+    matchLabels:
+      app: enduro
+  template:
+    metadata:
+      labels:
+        app: enduro
+    spec:
+      initContainers:
+        - name: check-temporal
+          image: busybox
+          imagePullPolicy: IfNotPresent
+          command:
+            [
+              "sh",
+              "-c",
+              "until echo STATUS | nc -w 2 temporal 7233; do echo waiting for temporal to start; sleep 1; done;",
+            ]
+      containers:
+        - name: enduro
+          image: enduro:dev
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 9000
+          resources: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: enduro
+  labels:
+    app: enduro
+spec:
+  selector:
+    app: enduro
+  ports:
+    - port: 9000

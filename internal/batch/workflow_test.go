@@ -34,25 +34,19 @@ func TestBatchActivityStartsProcessingWorkflows(t *testing.T) {
 
 	// Expectations: the activity starts a processing workflow for each subdirectory.
 	serviceMock.EXPECT().InitProcessingWorkflow(ctx, &collection.ProcessingWorkflowRequest{
-		BatchDir:         batchPath,
-		Key:              "transfer1",
-		IsDir:            true,
-		PipelineNames:    []string{"am"},
-		ProcessingConfig: "automated",
+		BatchDir: batchPath,
+		Key:      "transfer1",
+		IsDir:    true,
 	})
 	serviceMock.EXPECT().InitProcessingWorkflow(ctx, &collection.ProcessingWorkflowRequest{
-		BatchDir:         batchPath,
-		Key:              "transfer2",
-		IsDir:            true,
-		PipelineNames:    []string{"am"},
-		ProcessingConfig: "automated",
+		BatchDir: batchPath,
+		Key:      "transfer2",
+		IsDir:    true,
 	})
 
 	// Execute the activity.
 	err := a.Execute(ctx, BatchWorkflowInput{
-		Path:             batchPath,
-		PipelineName:     "am",
-		ProcessingConfig: "automated",
+		Path: batchPath,
 	})
 	assert.NilError(t, err)
 }
@@ -66,8 +60,7 @@ func TestBatchActivityFailsWithBogusBatchPath(t *testing.T) {
 
 	// Execute the activity passing a bogus path.
 	err := a.Execute(ctx, BatchWorkflowInput{
-		Path:         "/non/existent/path",
-		PipelineName: "am",
+		Path: "/non/existent/path",
 	})
-	assert.Error(t, err, "non retryable error")
+	assert.Error(t, err, "non retryable error: open /non/existent/path: no such file or directory")
 }

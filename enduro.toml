@@ -3,62 +3,47 @@
 debug = true
 debugListen = "127.0.0.1:9001"
 
-[cadence]
-domain = "enduro"
-address = "127.0.0.1:7400"
+[temporal]
+namespace = "default"
+address = "temporal:7233"
+taskqueue = "global"
 
 [api]
-listen = "127.0.0.1:9000"
+listen = "0.0.0.0:9000"
 debug = false
 
 [database]
-dsn = "enduro:enduro123@tcp(127.0.0.1:7450)/enduro"
+dsn = "enduro:enduro123@tcp(mysql:3306)/enduro"
+
+[search]
+addresses = ["http://opensearch:9200"]
+username = "admin"
+password = "admin"
 
 [[watcher.minio]]
 name = "dev-minio"
-redisAddress = "redis://127.0.0.1:7470"
+redisAddress = "redis://redis:6379"
 redisList = "minio-events"
-endpoint = "http://127.0.0.1:7460"
+endpoint = "http://minio:9000"
 pathStyle = true
 key = "minio"
 secret = "minio123"
 region = "us-west-1"
 bucket = "sips"
-pipeline = "am"
 retentionPeriod = "10s"
 stripTopLevelDir = true
-
-[[watcher.filesystem]]
-name = "dev-fs"
-path = "./hack/watched-dir"
-inotify = false
-pipeline = "am"
-completedDir = "./hack/landfill"
-ignore = '(^\.gitkeep)|(^*\.mft)$'
-stripTopLevelDir = true
-
-[[pipeline]]
-name = "am"
-baseURL = "http://127.0.0.1:62080"
-user = "test"
-key = "test"
-transferDir = "~/.am/ss-location-data"
-processingDir = ""
-processingConfig = "automated"
-# transferLocationID = "88f6b517-c0cc-411b-8abf-79544ce96f54"
-storageServiceURL = "http://test:test@127.0.0.1:62081"
-capacity = 3
-retryDeadline = "10m"
-transferDeadline = "24h"
 
 [validation]
 checksumsCheckEnabled = false
 
-[[hooks."hari"]]
-baseURL = "" # E.g.: "https://192.168.1.50:8080/api"
-mock = true
-disabled = true
+[aipstore]
+endpoint = "http://minio:9000"
+pathStyle = true
+key = "minio"
+secret = "minio123"
+region = "us-west-1"
+bucket = "aips"
 
-[[hooks."prod"]]
-receiptPath = "./hack/production-system-interface"
-disabled = true
+[a3m]
+address = "127.0.0.1:7000"
+shareDir = "/home/a3m/.local/share/a3m/share"

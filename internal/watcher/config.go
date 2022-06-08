@@ -33,7 +33,6 @@ type FilesystemConfig struct {
 	Inotify bool
 	Ignore  string
 
-	Pipeline         []string
 	RetentionPeriod  *time.Duration
 	CompletedDir     string
 	StripTopLevelDir bool
@@ -53,7 +52,6 @@ type MinioConfig struct {
 	Token        string
 	Bucket       string
 
-	Pipeline         []string
 	RetentionPeriod  *time.Duration
 	StripTopLevelDir bool
 }

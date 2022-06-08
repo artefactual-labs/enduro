@@ -33,12 +33,12 @@ type Service interface {
 	Workflow(context.Context, *WorkflowPayload) (res *EnduroCollectionWorkflowStatus, err error)
 	// Download collection by ID
 	Download(context.Context, *DownloadPayload) (res []byte, err error)
-	// Make decision for a pending collection by ID
-	Decide(context.Context, *DecidePayload) (err error)
 	// Bulk operations (retry, cancel...).
 	Bulk(context.Context, *BulkPayload) (res *BulkResult, err error)
 	// Retrieve status of current bulk operation.
 	BulkStatus(context.Context) (res *BulkStatusResult, err error)
+	// List all preservation actions by ID
+	PreservationActions(context.Context, *PreservationActionsPayload) (res *EnduroCollectionPreservationActions, err error)
 }
 
 // ServiceName is the name of the service as defined in the design. This is the
@@ -49,7 +49,7 @@ const ServiceName = "collection"
 // MethodNames lists the service method names as defined in the design. These
 // are the same values that are set in the endpoint request contexts under the
 // MethodKey key.
-var MethodNames = [11]string{"monitor", "list", "show", "delete", "cancel", "retry", "workflow", "download", "decide", "bulk", "bulk_status"}
+var MethodNames = [11]string{"monitor", "list", "show", "delete", "cancel", "retry", "workflow", "download", "bulk", "bulk_status", "preservation-actions"}
 
 // MonitorServerStream is the interface a "monitor" endpoint server stream must
 // satisfy.
@@ -81,10 +81,7 @@ type EnduroMonitorUpdate struct {
 // ListPayload is the payload type of the collection service list method.
 type ListPayload struct {
 	Name                *string
-	OriginalID          *string
-	TransferID          *string
 	AipID               *string
-	PipelineID          *string
 	EarliestCreatedTime *string
 	LatestCreatedTime   *string
 	Status              *string
@@ -117,14 +114,8 @@ type EnduroStoredCollection struct {
 	WorkflowID *string
 	// Identifier of latest processing workflow run
 	RunID *string
-	// Identifier of Archivematica transfer
-	TransferID *string
 	// Identifier of Archivematica AIP
 	AipID *string
-	// Identifier provided by the client
-	OriginalID *string
-	// Identifier of Archivematica pipeline
-	PipelineID *string
 	// Creation datetime
 	CreatedAt string
 	// Start datetime
@@ -172,14 +163,6 @@ type DownloadPayload struct {
 	ID uint
 }
 
-// DecidePayload is the payload type of the collection service decide method.
-type DecidePayload struct {
-	// Identifier of collection to look up
-	ID uint
-	// Decision option to proceed with
-	Option string
-}
-
 // BulkPayload is the payload type of the collection service bulk method.
 type BulkPayload struct {
 	Operation string
@@ -204,11 +187,24 @@ type BulkStatusResult struct {
 	RunID      *string
 }
 
+// PreservationActionsPayload is the payload type of the collection service
+// preservation-actions method.
+type PreservationActionsPayload struct {
+	// Identifier of collection to look up
+	ID uint
+}
+
+// EnduroCollectionPreservationActions is the result type of the collection
+// service preservation-actions method.
+type EnduroCollectionPreservationActions struct {
+	Actions EnduroCollectionPreservationActionsActionCollection
+}
+
 type EnduroStoredCollectionCollection []*EnduroStoredCollection
 
 type EnduroCollectionWorkflowHistoryCollection []*EnduroCollectionWorkflowHistory
 
-// WorkflowHistoryEvent describes a history event in Cadence.
+// WorkflowHistoryEvent describes a history event in Temporal.
 type EnduroCollectionWorkflowHistory struct {
 	// Identifier of collection
 	ID *uint
@@ -216,6 +212,17 @@ type EnduroCollectionWorkflowHistory struct {
 	Type *string
 	// Contents of the event
 	Details interface{}
+}
+
+type EnduroCollectionPreservationActionsActionCollection []*EnduroCollectionPreservationActionsAction
+
+// PreservationAction describes a preservation action.
+type EnduroCollectionPreservationActionsAction struct {
+	ID        uint
+	ActionID  string
+	Name      string
+	Status    string
+	StartedAt string
 }
 
 // Collection not found.
@@ -245,19 +252,19 @@ func MakeNotRunning(err error) *goa.ServiceError {
 	}
 }
 
-// MakeNotValid builds a goa.ServiceError from an error.
-func MakeNotValid(err error) *goa.ServiceError {
+// MakeNotAvailable builds a goa.ServiceError from an error.
+func MakeNotAvailable(err error) *goa.ServiceError {
 	return &goa.ServiceError{
-		Name:    "not_valid",
+		Name:    "not_available",
 		ID:      goa.NewErrorID(),
 		Message: err.Error(),
 	}
 }
 
-// MakeNotAvailable builds a goa.ServiceError from an error.
-func MakeNotAvailable(err error) *goa.ServiceError {
+// MakeNotValid builds a goa.ServiceError from an error.
+func MakeNotValid(err error) *goa.ServiceError {
 	return &goa.ServiceError{
-		Name:    "not_available",
+		Name:    "not_valid",
 		ID:      goa.NewErrorID(),
 		Message: err.Error(),
 	}
@@ -306,6 +313,21 @@ func NewViewedEnduroCollectionWorkflowStatus(res *EnduroCollectionWorkflowStatus
 	return &collectionviews.EnduroCollectionWorkflowStatus{Projected: p, View: "default"}
 }
 
+// NewEnduroCollectionPreservationActions initializes result type
+// EnduroCollectionPreservationActions from viewed result type
+// EnduroCollectionPreservationActions.
+func NewEnduroCollectionPreservationActions(vres *collectionviews.EnduroCollectionPreservationActions) *EnduroCollectionPreservationActions {
+	return newEnduroCollectionPreservationActions(vres.Projected)
+}
+
+// NewViewedEnduroCollectionPreservationActions initializes viewed result type
+// EnduroCollectionPreservationActions from result type
+// EnduroCollectionPreservationActions using the given view.
+func NewViewedEnduroCollectionPreservationActions(res *EnduroCollectionPreservationActions, view string) *collectionviews.EnduroCollectionPreservationActions {
+	p := newEnduroCollectionPreservationActionsView(res)
+	return &collectionviews.EnduroCollectionPreservationActions{Projected: p, View: "default"}
+}
+
 // newEnduroMonitorUpdate converts projected type EnduroMonitorUpdate to
 // service type EnduroMonitorUpdate.
 func newEnduroMonitorUpdate(vres *collectionviews.EnduroMonitorUpdateView) *EnduroMonitorUpdate {
@@ -342,10 +364,7 @@ func newEnduroStoredCollection(vres *collectionviews.EnduroStoredCollectionView)
 		Name:        vres.Name,
 		WorkflowID:  vres.WorkflowID,
 		RunID:       vres.RunID,
-		TransferID:  vres.TransferID,
 		AipID:       vres.AipID,
-		OriginalID:  vres.OriginalID,
-		PipelineID:  vres.PipelineID,
 		StartedAt:   vres.StartedAt,
 		CompletedAt: vres.CompletedAt,
 	}
@@ -373,10 +392,7 @@ func newEnduroStoredCollectionView(res *EnduroStoredCollection) *collectionviews
 		Status:      &res.Status,
 		WorkflowID:  res.WorkflowID,
 		RunID:       res.RunID,
-		TransferID:  res.TransferID,
 		AipID:       res.AipID,
-		OriginalID:  res.OriginalID,
-		PipelineID:  res.PipelineID,
 		CreatedAt:   &res.CreatedAt,
 		StartedAt:   res.StartedAt,
 		CompletedAt: res.CompletedAt,
@@ -452,6 +468,88 @@ func newEnduroCollectionWorkflowHistoryView(res *EnduroCollectionWorkflowHistory
 		ID:      res.ID,
 		Type:    res.Type,
 		Details: res.Details,
+	}
+	return vres
+}
+
+// newEnduroCollectionPreservationActions converts projected type
+// EnduroCollectionPreservationActions to service type
+// EnduroCollectionPreservationActions.
+func newEnduroCollectionPreservationActions(vres *collectionviews.EnduroCollectionPreservationActionsView) *EnduroCollectionPreservationActions {
+	res := &EnduroCollectionPreservationActions{}
+	if vres.Actions != nil {
+		res.Actions = newEnduroCollectionPreservationActionsActionCollection(vres.Actions)
+	}
+	return res
+}
+
+// newEnduroCollectionPreservationActionsView projects result type
+// EnduroCollectionPreservationActions to projected type
+// EnduroCollectionPreservationActionsView using the "default" view.
+func newEnduroCollectionPreservationActionsView(res *EnduroCollectionPreservationActions) *collectionviews.EnduroCollectionPreservationActionsView {
+	vres := &collectionviews.EnduroCollectionPreservationActionsView{}
+	if res.Actions != nil {
+		vres.Actions = newEnduroCollectionPreservationActionsActionCollectionView(res.Actions)
+	}
+	return vres
+}
+
+// newEnduroCollectionPreservationActionsActionCollection converts projected
+// type EnduroCollectionPreservationActionsActionCollection to service type
+// EnduroCollectionPreservationActionsActionCollection.
+func newEnduroCollectionPreservationActionsActionCollection(vres collectionviews.EnduroCollectionPreservationActionsActionCollectionView) EnduroCollectionPreservationActionsActionCollection {
+	res := make(EnduroCollectionPreservationActionsActionCollection, len(vres))
+	for i, n := range vres {
+		res[i] = newEnduroCollectionPreservationActionsAction(n)
+	}
+	return res
+}
+
+// newEnduroCollectionPreservationActionsActionCollectionView projects result
+// type EnduroCollectionPreservationActionsActionCollection to projected type
+// EnduroCollectionPreservationActionsActionCollectionView using the "default"
+// view.
+func newEnduroCollectionPreservationActionsActionCollectionView(res EnduroCollectionPreservationActionsActionCollection) collectionviews.EnduroCollectionPreservationActionsActionCollectionView {
+	vres := make(collectionviews.EnduroCollectionPreservationActionsActionCollectionView, len(res))
+	for i, n := range res {
+		vres[i] = newEnduroCollectionPreservationActionsActionView(n)
+	}
+	return vres
+}
+
+// newEnduroCollectionPreservationActionsAction converts projected type
+// EnduroCollectionPreservationActionsAction to service type
+// EnduroCollectionPreservationActionsAction.
+func newEnduroCollectionPreservationActionsAction(vres *collectionviews.EnduroCollectionPreservationActionsActionView) *EnduroCollectionPreservationActionsAction {
+	res := &EnduroCollectionPreservationActionsAction{}
+	if vres.ID != nil {
+		res.ID = *vres.ID
+	}
+	if vres.ActionID != nil {
+		res.ActionID = *vres.ActionID
+	}
+	if vres.Name != nil {
+		res.Name = *vres.Name
+	}
+	if vres.Status != nil {
+		res.Status = *vres.Status
+	}
+	if vres.StartedAt != nil {
+		res.StartedAt = *vres.StartedAt
+	}
+	return res
+}
+
+// newEnduroCollectionPreservationActionsActionView projects result type
+// EnduroCollectionPreservationActionsAction to projected type
+// EnduroCollectionPreservationActionsActionView using the "default" view.
+func newEnduroCollectionPreservationActionsActionView(res *EnduroCollectionPreservationActionsAction) *collectionviews.EnduroCollectionPreservationActionsActionView {
+	vres := &collectionviews.EnduroCollectionPreservationActionsActionView{
+		ID:        &res.ID,
+		ActionID:  &res.ActionID,
+		Name:      &res.Name,
+		Status:    &res.Status,
+		StartedAt: &res.StartedAt,
 	}
 	return vres
 }

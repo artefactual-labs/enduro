@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"net"
@@ -9,52 +10,35 @@ import (
 	"net/http/pprof"
 	"os"
 	"os/signal"
-	"runtime"
 	"syscall"
 	"time"
 
-	"github.com/go-logr/logr"
-	"github.com/go-logr/zapr"
 	"github.com/oklog/run"
+	"github.com/opensearch-project/opensearch-go"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/pflag"
-	"github.com/spf13/viper"
-	cadencesdk_activity "go.uber.org/cadence/activity"
-	cadencesdk_client "go.uber.org/cadence/client"
-	cadencesdk_workflow "go.uber.org/cadence/workflow"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
+	temporalsdk_activity "go.temporal.io/sdk/activity"
+	temporalsdk_client "go.temporal.io/sdk/client"
+	temporalsdk_worker "go.temporal.io/sdk/worker"
+	temporalsdk_workflow "go.temporal.io/sdk/workflow"
 
 	"github.com/artefactual-labs/enduro/internal/api"
 	"github.com/artefactual-labs/enduro/internal/batch"
-	"github.com/artefactual-labs/enduro/internal/cadence"
 	"github.com/artefactual-labs/enduro/internal/collection"
+	"github.com/artefactual-labs/enduro/internal/config"
 	"github.com/artefactual-labs/enduro/internal/db"
-	nha_activities "github.com/artefactual-labs/enduro/internal/nha/activities"
-	"github.com/artefactual-labs/enduro/internal/pipeline"
-	"github.com/artefactual-labs/enduro/internal/validation"
+	"github.com/artefactual-labs/enduro/internal/log"
+	"github.com/artefactual-labs/enduro/internal/temporal"
+	"github.com/artefactual-labs/enduro/internal/version"
 	"github.com/artefactual-labs/enduro/internal/watcher"
 	"github.com/artefactual-labs/enduro/internal/workflow"
 	"github.com/artefactual-labs/enduro/internal/workflow/activities"
-	"github.com/artefactual-labs/enduro/internal/workflow/manager"
 )
 
 const appName = "enduro"
 
-var (
-	version   = "(dev-version)"
-	gitCommit = "(dev-commit)"
-	buildTime = "(dev-buildtime)"
-	goVersion = runtime.Version()
-)
-
 func main() {
-	var (
-		v = viper.New()
-		p = pflag.NewFlagSet(appName, pflag.ExitOnError)
-	)
-
-	configureViper(v)
+	p := pflag.NewFlagSet(appName, pflag.ExitOnError)
 
 	p.String("config", "", "Configuration file")
 	p.Bool("version", false, "Show version information")
@@ -63,46 +47,28 @@ func main() {
 	if v, _ := p.GetBool("version"); v {
 		fmt.Printf(
 			"%s version %s (commit=%s) built on %s using %s\n",
-			appName, version, gitCommit, buildTime, goVersion)
+			appName, version.Version, version.GitCommit, version.BuildTime, version.GoVersion)
 		os.Exit(0)
 	}
 
-	var config configuration
+	var cfg config.Configuration
 	configFile, _ := p.GetString("config")
-	configFileFound, err := readConfig(v, &config, configFile)
+	configFileFound, configFileUsed, err := config.Read(&cfg, configFile)
 	if err != nil {
 		fmt.Printf("Failed to read configuration: %v\n", err)
 		os.Exit(1)
 	}
 
-	// Logging configuration.
-	var logger logr.Logger
-	var zlogger *zap.Logger
-	{
-		var zconfig zap.Config
-		if config.Debug {
-			encoderConfig := zap.NewDevelopmentEncoderConfig()
-			encoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
-			zconfig = zap.NewDevelopmentConfig()
-			zconfig.EncoderConfig = encoderConfig
-		} else {
-			zconfig = zap.NewProductionConfig()
-		}
-
-		zlogger, err = zconfig.Build(zap.AddCallerSkip(1))
-		zlogger = zlogger.Named(appName)
-		defer func() { _ = zlogger.Sync() }()
-		if err != nil {
-			fmt.Printf("Failed to set up logger %v", err)
-			os.Exit(1)
-		}
-
-		logger = zapr.NewLogger(zlogger)
-		logger.Info("Starting...", "version", version, "pid", os.Getpid())
+	logger, err := log.Logger(appName, cfg.Debug)
+	if err != nil {
+		fmt.Printf("Failed to create logger: %v\n", err)
+		os.Exit(1)
 	}
 
+	logger.Info("Starting...", "version", version.Version, "pid", os.Getpid())
+
 	if configFileFound {
-		logger.Info("Configuration file loaded.", "path", v.ConfigFileUsed())
+		logger.Info("Configuration file loaded.", "path", configFileUsed)
 	} else {
 		logger.Info("Configuration file not found.")
 	}
@@ -110,51 +76,63 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	database, err := db.Connect(config.Database.DSN)
+	database, err := db.Connect(cfg.Database.DSN)
 	if err != nil {
 		logger.Error(err, "Database configuration failed.")
 		os.Exit(1)
 	}
 	_ = database.Ping()
 
-	var workflowClient cadencesdk_client.Client
-	{
-		workflowClient, err = cadence.NewWorkflowClient(zlogger.Named("cadence-client"), appName, config.Cadence)
-		if err != nil {
-			logger.Error(err, "Cadence workflow client creation failed.")
-			os.Exit(1)
-		}
-	}
-
-	// Set up the pipeline registry.
-	pipelineRegistry, err := pipeline.NewPipelineRegistry(logger.WithName("registry"), config.Pipeline)
+	temporalClient, err := temporalsdk_client.NewClient(temporalsdk_client.Options{
+		Namespace: cfg.Temporal.Namespace,
+		HostPort:  cfg.Temporal.Address,
+		Logger:    temporal.Logger(logger.WithName("temporal-client")),
+	})
 	if err != nil {
-		logger.Error(err, "Pipeline registry cannot be initialized.")
+		logger.Error(err, "Error creating Temporal client.")
 		os.Exit(1)
 	}
 
-	// Set up the pipeline service.
-	var pipesvc pipeline.Service
-	{
-		pipesvc = pipeline.NewService(logger.WithName("pipeline"), pipelineRegistry)
+	searchConfig := opensearch.Config{
+		Addresses: cfg.Search.Addresses,
+		Username:  cfg.Search.Username,
+		Password:  cfg.Search.Password,
+		Transport: &http.Transport{
+			MaxIdleConnsPerHost:   10,
+			ResponseHeaderTimeout: time.Second,
+			DialContext:           (&net.Dialer{Timeout: time.Second}).DialContext,
+			TLSClientConfig: &tls.Config{
+				MinVersion: tls.VersionTLS11,
+			},
+		},
 	}
+	searchClient, err := opensearch.NewClient(searchConfig)
+	if err != nil {
+		logger.Error(err, "Search configuration failed.")
+		os.Exit(1)
+	}
+	_, err = searchClient.API.Ping()
+	if err != nil {
+		logger.Info("Search server not available.", "msg", err, "retries", !searchConfig.DisableRetry)
+	}
+	logger.Info("Search client configured")
 
 	// Set up the batch service.
 	var batchsvc batch.Service
 	{
-		batchsvc = batch.NewService(logger.WithName("batch"), workflowClient, config.Watcher.CompletedDirs())
+		batchsvc = batch.NewService(logger.WithName("batch"), temporalClient, cfg.Watcher.CompletedDirs())
 	}
 
 	// Set up the collection service.
 	var colsvc collection.Service
 	{
-		colsvc = collection.NewService(logger.WithName("collection"), database, workflowClient, pipelineRegistry)
+		colsvc = collection.NewService(logger.WithName("collection"), database, temporalClient)
 	}
 
 	// Set up the watcher service.
 	var wsvc watcher.Service
 	{
-		wsvc, err = watcher.New(ctx, &config.Watcher)
+		wsvc, err = watcher.New(ctx, &cfg.Watcher)
 		if err != nil {
 			logger.Error(err, "Error setting up watchers.")
 			os.Exit(1)
@@ -169,7 +147,7 @@ func main() {
 
 		g.Add(
 			func() error {
-				srv = api.HTTPServer(logger, &config.API, pipesvc, batchsvc, colsvc)
+				srv = api.HTTPServer(logger, &cfg.API, batchsvc, colsvc)
 				return srv.ListenAndServe()
 			},
 			func(err error) {
@@ -203,15 +181,14 @@ func main() {
 							go func() {
 								req := collection.ProcessingWorkflowRequest{
 									WatcherName:      event.WatcherName,
-									PipelineNames:    event.PipelineName,
 									RetentionPeriod:  event.RetentionPeriod,
 									CompletedDir:     event.CompletedDir,
 									StripTopLevelDir: event.StripTopLevelDir,
 									Key:              event.Key,
 									IsDir:            event.IsDir,
-									ValidationConfig: config.Validation,
+									ValidationConfig: cfg.Validation,
 								}
-								if err := collection.InitProcessingWorkflow(ctx, workflowClient, &req); err != nil {
+								if err := collection.InitProcessingWorkflow(ctx, temporalClient, &req); err != nil {
 									logger.Error(err, "Error initializing processing workflow.")
 								}
 							}()
@@ -225,43 +202,35 @@ func main() {
 		}
 	}
 
-	// Create workflow workers which manage workflow and activity executions.
-	// This section could be executed as a different process and have replicas.
+	// Workflow and activity worker.
 	{
-		// TODO: this is a temporary workaround for dependency injection until we
-		// figure out what's the depdencency tree is going to look like after POC.
-		// The share-everything pattern should be avoided.
-		m := manager.NewManager(logger, colsvc, wsvc, pipelineRegistry, config.Hooks)
-
-		done := make(chan struct{})
-		w, err := cadence.NewWorker(zlogger.Named("cadence-worker"), appName, config.Cadence)
+		temporalClient, err := temporalsdk_client.NewClient(temporalsdk_client.Options{
+			Namespace: cfg.Temporal.Namespace,
+			HostPort:  cfg.Temporal.Address,
+			Logger:    temporal.Logger(logger.WithName("temporal-worker")),
+		})
 		if err != nil {
-			logger.Error(err, "Error creating Cadence worker.")
+			logger.Error(err, "Error creating Temporal client.")
 			os.Exit(1)
 		}
 
-		w.RegisterWorkflowWithOptions(workflow.NewProcessingWorkflow(m).Execute, cadencesdk_workflow.RegisterOptions{Name: collection.ProcessingWorkflowName})
-		w.RegisterActivityWithOptions(activities.NewAcquirePipelineActivity(m).Execute, cadencesdk_activity.RegisterOptions{Name: activities.AcquirePipelineActivityName})
-		w.RegisterActivityWithOptions(activities.NewDownloadActivity(m).Execute, cadencesdk_activity.RegisterOptions{Name: activities.DownloadActivityName})
-		w.RegisterActivityWithOptions(activities.NewBundleActivity(m).Execute, cadencesdk_activity.RegisterOptions{Name: activities.BundleActivityName})
-		w.RegisterActivityWithOptions(activities.NewValidateTransferActivity().Execute, cadencesdk_activity.RegisterOptions{Name: activities.ValidateTransferActivityName})
-		w.RegisterActivityWithOptions(activities.NewTransferActivity(m).Execute, cadencesdk_activity.RegisterOptions{Name: activities.TransferActivityName})
-		w.RegisterActivityWithOptions(activities.NewPollTransferActivity(m).Execute, cadencesdk_activity.RegisterOptions{Name: activities.PollTransferActivityName})
-		w.RegisterActivityWithOptions(activities.NewPollIngestActivity(m).Execute, cadencesdk_activity.RegisterOptions{Name: activities.PollIngestActivityName})
-		w.RegisterActivityWithOptions(activities.NewCleanUpActivity(m).Execute, cadencesdk_activity.RegisterOptions{Name: activities.CleanUpActivityName})
-		w.RegisterActivityWithOptions(activities.NewHidePackageActivity(m).Execute, cadencesdk_activity.RegisterOptions{Name: activities.HidePackageActivityName})
-		w.RegisterActivityWithOptions(activities.NewDeleteOriginalActivity(m).Execute, cadencesdk_activity.RegisterOptions{Name: activities.DeleteOriginalActivityName})
-		w.RegisterActivityWithOptions(activities.NewDisposeOriginalActivity(m).Execute, cadencesdk_activity.RegisterOptions{Name: activities.DisposeOriginalActivityName})
+		done := make(chan struct{})
+		workerOpts := temporalsdk_worker.Options{}
+		w := temporalsdk_worker.New(temporalClient, temporal.GlobalTaskQueue, workerOpts)
+		if err != nil {
+			logger.Error(err, "Error creating Temporal worker.")
+			os.Exit(1)
+		}
 
-		w.RegisterActivityWithOptions(workflow.NewAsyncCompletionActivity(m).Execute, cadencesdk_activity.RegisterOptions{Name: workflow.AsyncCompletionActivityName})
-		w.RegisterActivityWithOptions(nha_activities.NewUpdateHARIActivity(m).Execute, cadencesdk_activity.RegisterOptions{Name: nha_activities.UpdateHARIActivityName})
-		w.RegisterActivityWithOptions(nha_activities.NewUpdateProductionSystemActivity(m).Execute, cadencesdk_activity.RegisterOptions{Name: nha_activities.UpdateProductionSystemActivityName})
+		w.RegisterWorkflowWithOptions(workflow.NewProcessingWorkflow(logger, colsvc, wsvc).Execute, temporalsdk_workflow.RegisterOptions{Name: collection.ProcessingWorkflowName})
+		w.RegisterActivityWithOptions(activities.NewDeleteOriginalActivity(wsvc).Execute, temporalsdk_activity.RegisterOptions{Name: activities.DeleteOriginalActivityName})
+		w.RegisterActivityWithOptions(activities.NewDisposeOriginalActivity(wsvc).Execute, temporalsdk_activity.RegisterOptions{Name: activities.DisposeOriginalActivityName})
 
-		w.RegisterWorkflowWithOptions(collection.BulkWorkflow, cadencesdk_workflow.RegisterOptions{Name: collection.BulkWorkflowName})
-		w.RegisterActivityWithOptions(collection.NewBulkActivity(colsvc).Execute, cadencesdk_activity.RegisterOptions{Name: collection.BulkActivityName})
+		w.RegisterWorkflowWithOptions(collection.BulkWorkflow, temporalsdk_workflow.RegisterOptions{Name: collection.BulkWorkflowName})
+		w.RegisterActivityWithOptions(collection.NewBulkActivity(colsvc).Execute, temporalsdk_activity.RegisterOptions{Name: collection.BulkActivityName})
 
-		w.RegisterWorkflowWithOptions(batch.BatchWorkflow, cadencesdk_workflow.RegisterOptions{Name: batch.BatchWorkflowName})
-		w.RegisterActivityWithOptions(batch.NewBatchActivity(batchsvc).Execute, cadencesdk_activity.RegisterOptions{Name: batch.BatchActivityName})
+		w.RegisterWorkflowWithOptions(batch.BatchWorkflow, temporalsdk_workflow.RegisterOptions{Name: batch.BatchWorkflowName})
+		w.RegisterActivityWithOptions(batch.NewBatchActivity(batchsvc).Execute, temporalsdk_activity.RegisterOptions{Name: batch.BatchActivityName})
 
 		g.Add(
 			func() error {
@@ -278,8 +247,9 @@ func main() {
 		)
 	}
 
+	// Observability server.
 	{
-		ln, err := net.Listen("tcp", config.DebugListen)
+		ln, err := net.Listen("tcp", cfg.DebugListen)
 		if err != nil {
 			logger.Error(err, "Error setting up the debug interface.")
 			os.Exit(1)
@@ -341,61 +311,10 @@ func main() {
 		)
 	}
 
-	logger.Error(g.Run(), "Bye!")
-}
-
-type configuration struct {
-	Debug       bool
-	DebugListen string
-	API         api.Config
-	Database    db.Config
-	Cadence     cadence.Config
-	Watcher     watcher.Config
-	Pipeline    []pipeline.Config
-	Validation  validation.Config
-
-	// This is a workaround for client-specific functionality.
-	// Simple mechanism to support an arbitrary number of hooks and parameters.
-	Hooks map[string]map[string]interface{}
-}
-
-func (c configuration) Validate() error {
-	return nil
-}
-
-func configureViper(v *viper.Viper) {
-	v.AddConfigPath(".")
-	v.AddConfigPath("$HOME/.config/")
-	v.AddConfigPath("/etc")
-	v.SetConfigName(appName)
-	v.SetDefault("debugListen", "127.0.0.1:9001")
-	v.SetDefault("api.listen", "127.0.0.1:9000")
-	v.SetDefault("cadence.address", ":7933")
-	v.Set("api.appVersion", version)
-}
-
-func readConfig(v *viper.Viper, config *configuration, configFile string) (found bool, err error) {
-	if configFile != "" {
-		v.SetConfigFile(configFile)
-	}
-
-	err = v.ReadInConfig()
-	_, ok := err.(viper.ConfigFileNotFoundError)
-	if !ok {
-		found = true
-	}
-	if found && err != nil {
-		return found, fmt.Errorf("Failed to read configuration file: %w", err)
-	}
-
-	err = v.Unmarshal(config)
+	err = g.Run()
 	if err != nil {
-		return found, fmt.Errorf("Failed to unmarshal configuration: %w", err)
+		logger.Error(err, "Application failure.")
+		os.Exit(1)
 	}
-
-	if err := config.Validate(); err != nil {
-		return found, fmt.Errorf("Failed to validate the provided config: %w", err)
-	}
-
-	return found, nil
+	logger.Info("Bye!")
 }

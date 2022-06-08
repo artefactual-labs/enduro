@@ -1,8 +1,13 @@
 {
-    "git.ignoreLimitWarning": true,
-    "files.exclude": {
-        "**/dist": true,
-        "**/build": true,
-        "**/node_modules": true
-    }
+  "git.ignoreLimitWarning": true,
+  "files.exclude": {
+    "**/dist": true,
+    "**/build": true,
+    "**/node_modules": true
+  },
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnSave": true,
+  "[go]": {
+    "editor.defaultFormatter": "golang.go"
+  }
 }

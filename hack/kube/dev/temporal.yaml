@@ -1,0 +1,109 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: temporal
+  labels:
+    app: temporal
+spec:
+  selector:
+    matchLabels:
+      app: temporal
+  template:
+    metadata:
+      labels:
+        app: temporal
+    spec:
+      initContainers:
+        - name: check-mysql
+          image: busybox
+          imagePullPolicy: IfNotPresent
+          command:
+            [
+              "sh",
+              "-c",
+              "until echo STATUS | nc -w 2 mysql 3306; do echo waiting for mysql to start; sleep 1; done;",
+            ]
+      containers:
+        - name: temporal
+          image: temporalio/auto-setup:1.16.2
+          env:
+            - name: DB
+              value: mysql
+            - name: DB_PORT
+              value: "3306"
+            - name: MYSQL_USER
+              value: enduro
+            - name: MYSQL_PWD
+              value: enduro123
+            - name: MYSQL_SEEDS
+              value: mysql
+            - name: DYNAMIC_CONFIG_FILE_PATH
+              value: config/dynamicconfig/development.yaml
+          ports:
+            - containerPort: 7233
+          volumeMounts:
+            - name: config
+              mountPath: /etc/temporal/config/dynamicconfig
+          resources: {}
+      volumes:
+        - name: config
+          configMap:
+            name: temporal-configmap
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: temporal
+  labels:
+    app: temporal
+spec:
+  selector:
+    app: temporal
+  ports:
+    - port: 7233
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: temporal-configmap
+data:
+  development.yaml: |
+    frontend.enableClientVersionCheck:
+    - value: true
+      constraints: {}
+    history.persistenceMaxQPS:
+    - value: 3000
+      constraints: {}
+    frontend.persistenceMaxQPS:
+    - value: 3000
+      constraints: {}
+    frontend.historyMgrNumConns:
+    - value: 10
+      constraints: {}
+    frontend.throttledLogRPS:
+    - value: 20
+      constraints: {}
+    history.historyMgrNumConns:
+    - value: 50
+      constraints: {}
+    history.defaultActivityRetryPolicy:
+    - value:
+        InitialIntervalInSeconds: 1
+        MaximumIntervalCoefficient: 100.0
+        BackoffCoefficient: 2.0
+        MaximumAttempts: 0
+    history.defaultWorkflowRetryPolicy:
+    - value:
+        InitialIntervalInSeconds: 1
+        MaximumIntervalCoefficient: 100.0
+        BackoffCoefficient: 2.0
+        MaximumAttempts: 0
+    system.advancedVisibilityWritingMode:
+      - value: "off"
+        constraints: {}
+    limit.maxIDLength:
+      - value: 255
+        constraints: {}
+    system.forceSearchAttributesCacheRefreshOnRead:
+      - value: true # Dev setup only. Please don't turn this on in production.
+        constraints: {}

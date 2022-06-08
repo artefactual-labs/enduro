@@ -23,9 +23,6 @@ type Watcher interface {
 
 	// OpenBucket returns the bucket where the blobs can be found.
 	OpenBucket(ctx context.Context) (*blob.Bucket, error)
-
-	// Pipelines retunrs the names of the subset of pipelines to be used.
-	Pipelines() []string
 	RetentionPeriod() *time.Duration
 	CompletedDir() string
 	StripTopLevelDir() bool
@@ -38,7 +35,6 @@ type Watcher interface {
 
 type commonWatcherImpl struct {
 	name             string
-	pipeline         []string
 	retentionPeriod  *time.Duration
 	completedDir     string
 	stripTopLevelDir bool
@@ -46,10 +42,6 @@ type commonWatcherImpl struct {
 
 func (w *commonWatcherImpl) String() string {
 	return w.name
-}
-
-func (w *commonWatcherImpl) Pipelines() []string {
-	return w.pipeline
 }
 
 func (w *commonWatcherImpl) RetentionPeriod() *time.Duration {

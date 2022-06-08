@@ -1,5 +1,5 @@
 .bingo/** linguist-generated
 .bingo/variables.env -linguist-generated
+dashboard/src/openapi-generator/** linguist-generated
 internal/api/gen/** linguist-generated
-ui/src/openapi-generator/** linguist-generated
 website/** linguist-documentation

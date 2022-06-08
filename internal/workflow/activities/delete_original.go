@@ -5,22 +5,22 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/artefactual-labs/enduro/internal/workflow/manager"
+	"github.com/artefactual-labs/enduro/internal/watcher"
 )
 
 type DeleteOriginalActivity struct {
-	manager *manager.Manager
+	wsvc watcher.Service
 }
 
-func NewDeleteOriginalActivity(m *manager.Manager) *DeleteOriginalActivity {
-	return &DeleteOriginalActivity{manager: m}
+func NewDeleteOriginalActivity(wsvc watcher.Service) *DeleteOriginalActivity {
+	return &DeleteOriginalActivity{wsvc: wsvc}
 }
 
 func (a *DeleteOriginalActivity) Execute(ctx context.Context, watcherName, batchDir, key string) error {
 	if batchDir != "" {
 		return deleteOriginalFromBatch(batchDir, key)
 	}
-	return a.manager.Watcher.Delete(ctx, watcherName, key)
+	return a.wsvc.Delete(ctx, watcherName, key)
 }
 
 func deleteOriginalFromBatch(batchDir, key string) error {

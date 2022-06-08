@@ -52,11 +52,6 @@ func DownloadCollectionPath(id uint) string {
 	return fmt.Sprintf("/collection/%v/download", id)
 }
 
-// DecideCollectionPath returns the URL path to the collection service decide HTTP endpoint.
-func DecideCollectionPath(id uint) string {
-	return fmt.Sprintf("/collection/%v/decision", id)
-}
-
 // BulkCollectionPath returns the URL path to the collection service bulk HTTP endpoint.
 func BulkCollectionPath() string {
 	return "/collection/bulk"
@@ -65,4 +60,9 @@ func BulkCollectionPath() string {
 // BulkStatusCollectionPath returns the URL path to the collection service bulk_status HTTP endpoint.
 func BulkStatusCollectionPath() string {
 	return "/collection/bulk"
+}
+
+// PreservationActionsCollectionPath returns the URL path to the collection service preservation-actions HTTP endpoint.
+func PreservationActionsCollectionPath(id uint) string {
+	return fmt.Sprintf("/collection/%v/preservation-actions", id)
 }

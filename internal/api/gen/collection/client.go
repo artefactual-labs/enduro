@@ -16,33 +16,33 @@ import (
 
 // Client is the "collection" service client.
 type Client struct {
-	MonitorEndpoint    goa.Endpoint
-	ListEndpoint       goa.Endpoint
-	ShowEndpoint       goa.Endpoint
-	DeleteEndpoint     goa.Endpoint
-	CancelEndpoint     goa.Endpoint
-	RetryEndpoint      goa.Endpoint
-	WorkflowEndpoint   goa.Endpoint
-	DownloadEndpoint   goa.Endpoint
-	DecideEndpoint     goa.Endpoint
-	BulkEndpoint       goa.Endpoint
-	BulkStatusEndpoint goa.Endpoint
+	MonitorEndpoint             goa.Endpoint
+	ListEndpoint                goa.Endpoint
+	ShowEndpoint                goa.Endpoint
+	DeleteEndpoint              goa.Endpoint
+	CancelEndpoint              goa.Endpoint
+	RetryEndpoint               goa.Endpoint
+	WorkflowEndpoint            goa.Endpoint
+	DownloadEndpoint            goa.Endpoint
+	BulkEndpoint                goa.Endpoint
+	BulkStatusEndpoint          goa.Endpoint
+	PreservationActionsEndpoint goa.Endpoint
 }
 
 // NewClient initializes a "collection" service client given the endpoints.
-func NewClient(monitor, list, show, delete_, cancel, retry, workflow, download, decide, bulk, bulkStatus goa.Endpoint) *Client {
+func NewClient(monitor, list, show, delete_, cancel, retry, workflow, download, bulk, bulkStatus, preservationActions goa.Endpoint) *Client {
 	return &Client{
-		MonitorEndpoint:    monitor,
-		ListEndpoint:       list,
-		ShowEndpoint:       show,
-		DeleteEndpoint:     delete_,
-		CancelEndpoint:     cancel,
-		RetryEndpoint:      retry,
-		WorkflowEndpoint:   workflow,
-		DownloadEndpoint:   download,
-		DecideEndpoint:     decide,
-		BulkEndpoint:       bulk,
-		BulkStatusEndpoint: bulkStatus,
+		MonitorEndpoint:             monitor,
+		ListEndpoint:                list,
+		ShowEndpoint:                show,
+		DeleteEndpoint:              delete_,
+		CancelEndpoint:              cancel,
+		RetryEndpoint:               retry,
+		WorkflowEndpoint:            workflow,
+		DownloadEndpoint:            download,
+		BulkEndpoint:                bulk,
+		BulkStatusEndpoint:          bulkStatus,
+		PreservationActionsEndpoint: preservationActions,
 	}
 }
 
@@ -134,16 +134,6 @@ func (c *Client) Download(ctx context.Context, p *DownloadPayload) (res []byte, 
 	return ires.([]byte), nil
 }
 
-// Decide calls the "decide" endpoint of the "collection" service.
-// Decide may return the following errors:
-//	- "not_found" (type *CollectionNotfound): Collection not found
-//	- "not_valid" (type *goa.ServiceError)
-//	- error: internal error
-func (c *Client) Decide(ctx context.Context, p *DecidePayload) (err error) {
-	_, err = c.DecideEndpoint(ctx, p)
-	return
-}
-
 // Bulk calls the "bulk" endpoint of the "collection" service.
 // Bulk may return the following errors:
 //	- "not_available" (type *goa.ServiceError)
@@ -166,4 +156,18 @@ func (c *Client) BulkStatus(ctx context.Context) (res *BulkStatusResult, err err
 		return
 	}
 	return ires.(*BulkStatusResult), nil
+}
+
+// PreservationActions calls the "preservation-actions" endpoint of the
+// "collection" service.
+// PreservationActions may return the following errors:
+//	- "not_found" (type *CollectionNotfound): Collection not found
+//	- error: internal error
+func (c *Client) PreservationActions(ctx context.Context, p *PreservationActionsPayload) (res *EnduroCollectionPreservationActions, err error) {
+	var ires interface{}
+	ires, err = c.PreservationActionsEndpoint(ctx, p)
+	if err != nil {
+		return
+	}
+	return ires.(*EnduroCollectionPreservationActions), nil
 }

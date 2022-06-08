@@ -1,17 +1,2 @@
 /build
 /dist
-/enduro
-
-/hack/minio-data/sips/*
-!/hack/minio-data/sips/archivematica.png
-/hack/minio-data/.minio.sys/buckets/sips/*
-!/hack/minio-data/.minio.sys/buckets/sips/archivematica.png/
-/hack/minio-data/.minio.sys/**/*.bin
-/hack/minio-data/.minio.sys/buckets/.minio.sys/
-/hack/minio-data/.minio.sys/buckets/.usage.json
-
-/hack/landfill/*
-/hack/watched-dir/*
-/hack/production-system-interface/*
-
-/hack/stuff

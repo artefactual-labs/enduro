@@ -22,7 +22,7 @@ coverage:
 ignore:
 - "build"
 - "hack"
-- "ui"
+- "dashboard"
 - "website"
 - "fake"
 - "gen"

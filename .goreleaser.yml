@@ -1,9 +1,5 @@
 project_name: enduro
 
-before:
-  hooks:
-  - make tools ui
-
 changelog:
   sort: asc
   filters:
@@ -21,9 +17,9 @@ builds:
   flags:
   - -trimpath
   ldflags:
-  - -X "main.buildTime={{.Date}}"
-  - -X "main.gitCommit={{.Commit}}"
-  - -X "main.version={{.Version}}"
+  - -X "github.com/artefactual-labs/enduro/internal/version.BuildTime={{.Date}}"
+  - -X "github.com/artefactual-labs/enduro/internal/version.GitCommit={{.Commit}}"
+  - -X "github.com/artefactual-labs/enduro/internal/version.Version={{.Version}}"
 
 archives:
 - wrap_in_directory: true

@@ -111,17 +111,8 @@ func EncodeListRequest(encoder func(*http.Request) goahttp.Encoder) func(*http.R
 		if p.Name != nil {
 			values.Add("name", *p.Name)
 		}
-		if p.OriginalID != nil {
-			values.Add("original_id", *p.OriginalID)
-		}
-		if p.TransferID != nil {
-			values.Add("transfer_id", *p.TransferID)
-		}
 		if p.AipID != nil {
 			values.Add("aip_id", *p.AipID)
-		}
-		if p.PipelineID != nil {
-			values.Add("pipeline_id", *p.PipelineID)
 		}
 		if p.EarliestCreatedTime != nil {
 			values.Add("earliest_created_time", *p.EarliestCreatedTime)
@@ -662,106 +653,6 @@ func DecodeDownloadResponse(decoder func(*http.Response) goahttp.Decoder, restor
 	}
 }
 
-// BuildDecideRequest instantiates a HTTP request object with method and path
-// set to call the "collection" service "decide" endpoint
-func (c *Client) BuildDecideRequest(ctx context.Context, v interface{}) (*http.Request, error) {
-	var (
-		id uint
-	)
-	{
-		p, ok := v.(*collection.DecidePayload)
-		if !ok {
-			return nil, goahttp.ErrInvalidType("collection", "decide", "*collection.DecidePayload", v)
-		}
-		id = p.ID
-	}
-	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: DecideCollectionPath(id)}
-	req, err := http.NewRequest("POST", u.String(), nil)
-	if err != nil {
-		return nil, goahttp.ErrInvalidURL("collection", "decide", u.String(), err)
-	}
-	if ctx != nil {
-		req = req.WithContext(ctx)
-	}
-
-	return req, nil
-}
-
-// EncodeDecideRequest returns an encoder for requests sent to the collection
-// decide server.
-func EncodeDecideRequest(encoder func(*http.Request) goahttp.Encoder) func(*http.Request, interface{}) error {
-	return func(req *http.Request, v interface{}) error {
-		p, ok := v.(*collection.DecidePayload)
-		if !ok {
-			return goahttp.ErrInvalidType("collection", "decide", "*collection.DecidePayload", v)
-		}
-		body := p
-		if err := encoder(req).Encode(&body); err != nil {
-			return goahttp.ErrEncodingError("collection", "decide", err)
-		}
-		return nil
-	}
-}
-
-// DecodeDecideResponse returns a decoder for responses returned by the
-// collection decide endpoint. restoreBody controls whether the response body
-// should be restored after having been read.
-// DecodeDecideResponse may return the following errors:
-//	- "not_found" (type *collection.CollectionNotfound): http.StatusNotFound
-//	- "not_valid" (type *goa.ServiceError): http.StatusBadRequest
-//	- error: internal error
-func DecodeDecideResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (interface{}, error) {
-	return func(resp *http.Response) (interface{}, error) {
-		if restoreBody {
-			b, err := ioutil.ReadAll(resp.Body)
-			if err != nil {
-				return nil, err
-			}
-			resp.Body = ioutil.NopCloser(bytes.NewBuffer(b))
-			defer func() {
-				resp.Body = ioutil.NopCloser(bytes.NewBuffer(b))
-			}()
-		} else {
-			defer resp.Body.Close()
-		}
-		switch resp.StatusCode {
-		case http.StatusOK:
-			return nil, nil
-		case http.StatusNotFound:
-			var (
-				body DecideNotFoundResponseBody
-				err  error
-			)
-			err = decoder(resp).Decode(&body)
-			if err != nil {
-				return nil, goahttp.ErrDecodingError("collection", "decide", err)
-			}
-			err = ValidateDecideNotFoundResponseBody(&body)
-			if err != nil {
-				return nil, goahttp.ErrValidationError("collection", "decide", err)
-			}
-			return nil, NewDecideNotFound(&body)
-		case http.StatusBadRequest:
-			var (
-				body DecideNotValidResponseBody
-				err  error
-			)
-			err = decoder(resp).Decode(&body)
-			if err != nil {
-				return nil, goahttp.ErrDecodingError("collection", "decide", err)
-			}
-			err = ValidateDecideNotValidResponseBody(&body)
-			if err != nil {
-				return nil, goahttp.ErrValidationError("collection", "decide", err)
-			}
-			return nil, NewDecideNotValid(&body)
-		default:
-			body, _ := ioutil.ReadAll(resp.Body)
-			return nil, goahttp.ErrInvalidResponse("collection", "decide", resp.StatusCode, string(body))
-		}
-	}
-}
-
 // BuildBulkRequest instantiates a HTTP request object with method and path set
 // to call the "collection" service "bulk" endpoint
 func (c *Client) BuildBulkRequest(ctx context.Context, v interface{}) (*http.Request, error) {
@@ -920,6 +811,91 @@ func DecodeBulkStatusResponse(decoder func(*http.Response) goahttp.Decoder, rest
 	}
 }
 
+// BuildPreservationActionsRequest instantiates a HTTP request object with
+// method and path set to call the "collection" service "preservation-actions"
+// endpoint
+func (c *Client) BuildPreservationActionsRequest(ctx context.Context, v interface{}) (*http.Request, error) {
+	var (
+		id uint
+	)
+	{
+		p, ok := v.(*collection.PreservationActionsPayload)
+		if !ok {
+			return nil, goahttp.ErrInvalidType("collection", "preservation-actions", "*collection.PreservationActionsPayload", v)
+		}
+		id = p.ID
+	}
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: PreservationActionsCollectionPath(id)}
+	req, err := http.NewRequest("GET", u.String(), nil)
+	if err != nil {
+		return nil, goahttp.ErrInvalidURL("collection", "preservation-actions", u.String(), err)
+	}
+	if ctx != nil {
+		req = req.WithContext(ctx)
+	}
+
+	return req, nil
+}
+
+// DecodePreservationActionsResponse returns a decoder for responses returned
+// by the collection preservation-actions endpoint. restoreBody controls
+// whether the response body should be restored after having been read.
+// DecodePreservationActionsResponse may return the following errors:
+//	- "not_found" (type *collection.CollectionNotfound): http.StatusNotFound
+//	- error: internal error
+func DecodePreservationActionsResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (interface{}, error) {
+	return func(resp *http.Response) (interface{}, error) {
+		if restoreBody {
+			b, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			resp.Body = ioutil.NopCloser(bytes.NewBuffer(b))
+			defer func() {
+				resp.Body = ioutil.NopCloser(bytes.NewBuffer(b))
+			}()
+		} else {
+			defer resp.Body.Close()
+		}
+		switch resp.StatusCode {
+		case http.StatusOK:
+			var (
+				body PreservationActionsResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("collection", "preservation-actions", err)
+			}
+			p := NewPreservationActionsEnduroCollectionPreservationActionsOK(&body)
+			view := "default"
+			vres := &collectionviews.EnduroCollectionPreservationActions{Projected: p, View: view}
+			if err = collectionviews.ValidateEnduroCollectionPreservationActions(vres); err != nil {
+				return nil, goahttp.ErrValidationError("collection", "preservation-actions", err)
+			}
+			res := collection.NewEnduroCollectionPreservationActions(vres)
+			return res, nil
+		case http.StatusNotFound:
+			var (
+				body PreservationActionsNotFoundResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("collection", "preservation-actions", err)
+			}
+			err = ValidatePreservationActionsNotFoundResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("collection", "preservation-actions", err)
+			}
+			return nil, NewPreservationActionsNotFound(&body)
+		default:
+			body, _ := ioutil.ReadAll(resp.Body)
+			return nil, goahttp.ErrInvalidResponse("collection", "preservation-actions", resp.StatusCode, string(body))
+		}
+	}
+}
+
 // unmarshalEnduroStoredCollectionResponseBodyToCollectionviewsEnduroStoredCollectionView
 // builds a value of type *collectionviews.EnduroStoredCollectionView from a
 // value of type *EnduroStoredCollectionResponseBody.
@@ -933,10 +909,7 @@ func unmarshalEnduroStoredCollectionResponseBodyToCollectionviewsEnduroStoredCol
 		Status:      v.Status,
 		WorkflowID:  v.WorkflowID,
 		RunID:       v.RunID,
-		TransferID:  v.TransferID,
 		AipID:       v.AipID,
-		OriginalID:  v.OriginalID,
-		PipelineID:  v.PipelineID,
 		CreatedAt:   v.CreatedAt,
 		StartedAt:   v.StartedAt,
 		CompletedAt: v.CompletedAt,
@@ -955,10 +928,7 @@ func unmarshalEnduroStoredCollectionResponseBodyToCollectionEnduroStoredCollecti
 		Status:      *v.Status,
 		WorkflowID:  v.WorkflowID,
 		RunID:       v.RunID,
-		TransferID:  v.TransferID,
 		AipID:       v.AipID,
-		OriginalID:  v.OriginalID,
-		PipelineID:  v.PipelineID,
 		CreatedAt:   *v.CreatedAt,
 		StartedAt:   v.StartedAt,
 		CompletedAt: v.CompletedAt,
@@ -978,6 +948,25 @@ func unmarshalEnduroCollectionWorkflowHistoryResponseBodyToCollectionviewsEnduro
 		ID:      v.ID,
 		Type:    v.Type,
 		Details: v.Details,
+	}
+
+	return res
+}
+
+// unmarshalEnduroCollectionPreservationActionsActionResponseBodyToCollectionviewsEnduroCollectionPreservationActionsActionView
+// builds a value of type
+// *collectionviews.EnduroCollectionPreservationActionsActionView from a value
+// of type *EnduroCollectionPreservationActionsActionResponseBody.
+func unmarshalEnduroCollectionPreservationActionsActionResponseBodyToCollectionviewsEnduroCollectionPreservationActionsActionView(v *EnduroCollectionPreservationActionsActionResponseBody) *collectionviews.EnduroCollectionPreservationActionsActionView {
+	if v == nil {
+		return nil
+	}
+	res := &collectionviews.EnduroCollectionPreservationActionsActionView{
+		ID:        v.ID,
+		ActionID:  v.ActionID,
+		Name:      v.Name,
+		Status:    v.Status,
+		StartedAt: v.StartedAt,
 	}
 
 	return res

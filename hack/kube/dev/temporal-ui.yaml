@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: temporal-ui
+  labels:
+    app: temporal-ui
+spec:
+  selector:
+    matchLabels:
+      app: temporal-ui
+  template:
+    metadata:
+      labels:
+        app: temporal-ui
+    spec:
+      initContainers:
+        - name: check-temporal
+          image: busybox
+          imagePullPolicy: IfNotPresent
+          command:
+            [
+              "sh",
+              "-c",
+              "until echo STATUS | nc -w 2 temporal 7233; do echo waiting for temporal to start; sleep 1; done;",
+            ]
+      containers:
+        - name: temporal-ui
+          image: temporalio/ui:0.13.2
+          env:
+            - name: TEMPORAL_ADDRESS
+              value: temporal:7233
+            - name: TEMPORAL_CORS_ORIGINS
+              value: '"*"'
+            - name: TEMPORAL_UI_PORT
+              value: "8080"
+          ports:
+            - containerPort: 8080
+          resources: {}

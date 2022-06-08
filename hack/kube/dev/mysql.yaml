@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql
+  labels:
+    app: mysql
+spec:
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+        - name: mysql
+          image: mysql:8.0
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              value: root123
+            - name: MYSQL_USER
+              value: enduro
+            - name: MYSQL_PASSWORD
+              value: enduro123
+          ports:
+            - containerPort: 3306
+          volumeMounts:
+            - name: mysql-initdb
+              mountPath: /docker-entrypoint-initdb.d
+            - name: mysql-data
+              mountPath: /var/lib/mysql
+          resources: {}
+      volumes:
+        - name: mysql-data
+          persistentVolumeClaim:
+            claimName: mysql-persistentvolumeclaim
+        - name: mysql-initdb
+          configMap:
+            name: mysql-configmap
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql
+  labels:
+    app: mysql
+spec:
+  selector:
+    app: mysql
+  ports:
+    - port: 3306
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-persistentvolumeclaim
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-configmap
+data:
+  initdb.sql: |
+    CREATE DATABASE IF NOT EXISTS enduro;
+    GRANT ALL PRIVILEGES ON enduro.* TO 'enduro'@'%';
+    CREATE DATABASE IF NOT EXISTS temporal;
+    GRANT ALL PRIVILEGES ON temporal.* TO 'enduro'@'%';
+    CREATE DATABASE IF NOT EXISTS temporal_visibility;
+    GRANT ALL PRIVILEGES ON temporal_visibility.* TO 'enduro'@'%';

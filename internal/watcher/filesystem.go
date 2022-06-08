@@ -72,7 +72,6 @@ func NewFilesystemWatcher(ctx context.Context, config *FilesystemConfig) (*files
 		regex: regex,
 		commonWatcherImpl: &commonWatcherImpl{
 			name:             config.Name,
-			pipeline:         config.Pipeline,
 			retentionPeriod:  config.RetentionPeriod,
 			completedDir:     config.CompletedDir,
 			stripTopLevelDir: config.StripTopLevelDir,

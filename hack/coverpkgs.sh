@@ -21,6 +21,5 @@ go list ./... \
 	| grep -v "/artefactual-labs/enduro/hack" \
 	| grep -v "/artefactual-labs/enduro/internal/api/gen" \
 	| grep -v "/artefactual-labs/enduro/internal/api/design" \
-	| grep -v "/artefactual-labs/enduro/ui" \
 	| grep -v "/fake" \
 	| paste -sd","

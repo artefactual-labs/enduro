@@ -13,19 +13,18 @@ import (
 	"github.com/mholt/archiver/v3"
 	"github.com/otiai10/copy"
 
-	"github.com/artefactual-labs/enduro/internal/amclient/bundler"
 	"github.com/artefactual-labs/enduro/internal/bagit"
+	"github.com/artefactual-labs/enduro/internal/bundler"
+	"github.com/artefactual-labs/enduro/internal/temporal"
 	"github.com/artefactual-labs/enduro/internal/watcher"
-	wferrors "github.com/artefactual-labs/enduro/internal/workflow/errors"
-	"github.com/artefactual-labs/enduro/internal/workflow/manager"
 )
 
 type BundleActivity struct {
-	manager *manager.Manager
+	wsvc watcher.Service
 }
 
-func NewBundleActivity(m *manager.Manager) *BundleActivity {
-	return &BundleActivity{manager: m}
+func NewBundleActivity(wsvc watcher.Service) *BundleActivity {
+	return &BundleActivity{wsvc: wsvc}
 }
 
 type BundleActivityParams struct {
@@ -50,9 +49,16 @@ func (a *BundleActivity) Execute(ctx context.Context, params *BundleActivityPara
 		err error
 	)
 
+	if params.TransferDir == "" {
+		params.TransferDir, err = os.MkdirTemp("", "*-enduro-a3m-worker")
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	defer func() {
 		if err != nil {
-			err = wferrors.NonRetryableError(err)
+			err = temporal.NonRetryableError(err)
 		}
 	}()
 
@@ -60,7 +66,7 @@ func (a *BundleActivity) Execute(ctx context.Context, params *BundleActivityPara
 		var batchDirIsInTransferDir bool
 		batchDirIsInTransferDir, err = isSubPath(params.TransferDir, params.BatchDir)
 		if err != nil {
-			return nil, wferrors.NonRetryableError(err)
+			return nil, temporal.NonRetryableError(err)
 		}
 		if batchDirIsInTransferDir {
 			res.FullPath = filepath.Join(params.BatchDir, params.Key)
@@ -73,7 +79,7 @@ func (a *BundleActivity) Execute(ctx context.Context, params *BundleActivityPara
 		}
 	} else if params.IsDir {
 		var w watcher.Watcher
-		w, err = a.manager.Watcher.ByName(params.WatcherName)
+		w, err = a.wsvc.ByName(params.WatcherName)
 		if err == nil {
 			src := filepath.Join(w.Path(), params.Key)
 			dst := params.TransferDir
@@ -89,12 +95,12 @@ func (a *BundleActivity) Execute(ctx context.Context, params *BundleActivityPara
 		}
 	}
 	if err != nil {
-		return nil, wferrors.NonRetryableError(err)
+		return nil, temporal.NonRetryableError(err)
 	}
 
 	err = unbag(res.FullPath)
 	if err != nil {
-		return nil, wferrors.NonRetryableError(err)
+		return nil, temporal.NonRetryableError(err)
 	}
 
 	res.RelPath, err = filepath.Rel(params.TransferDir, res.FullPath)

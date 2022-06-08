@@ -39,6 +39,15 @@ type EnduroCollectionWorkflowStatus struct {
 	View string
 }
 
+// EnduroCollectionPreservationActions is the viewed result type that is
+// projected based on a view.
+type EnduroCollectionPreservationActions struct {
+	// Type to project
+	Projected *EnduroCollectionPreservationActionsView
+	// View to render
+	View string
+}
+
 // EnduroMonitorUpdateView is a type that runs validations on a projected type.
 type EnduroMonitorUpdateView struct {
 	// Identifier of collection
@@ -62,14 +71,8 @@ type EnduroStoredCollectionView struct {
 	WorkflowID *string
 	// Identifier of latest processing workflow run
 	RunID *string
-	// Identifier of Archivematica transfer
-	TransferID *string
 	// Identifier of Archivematica AIP
 	AipID *string
-	// Identifier provided by the client
-	OriginalID *string
-	// Identifier of Archivematica pipeline
-	PipelineID *string
 	// Creation datetime
 	CreatedAt *string
 	// Start datetime
@@ -100,6 +103,26 @@ type EnduroCollectionWorkflowHistoryView struct {
 	Details interface{}
 }
 
+// EnduroCollectionPreservationActionsView is a type that runs validations on a
+// projected type.
+type EnduroCollectionPreservationActionsView struct {
+	Actions EnduroCollectionPreservationActionsActionCollectionView
+}
+
+// EnduroCollectionPreservationActionsActionCollectionView is a type that runs
+// validations on a projected type.
+type EnduroCollectionPreservationActionsActionCollectionView []*EnduroCollectionPreservationActionsActionView
+
+// EnduroCollectionPreservationActionsActionView is a type that runs
+// validations on a projected type.
+type EnduroCollectionPreservationActionsActionView struct {
+	ID        *uint
+	ActionID  *string
+	Name      *string
+	Status    *string
+	StartedAt *string
+}
+
 var (
 	// EnduroMonitorUpdateMap is a map indexing the attribute names of
 	// EnduroMonitorUpdate by view name.
@@ -119,10 +142,7 @@ var (
 			"status",
 			"workflow_id",
 			"run_id",
-			"transfer_id",
 			"aip_id",
-			"original_id",
-			"pipeline_id",
 			"created_at",
 			"started_at",
 			"completed_at",
@@ -134,6 +154,13 @@ var (
 		"default": {
 			"status",
 			"history",
+		},
+	}
+	// EnduroCollectionPreservationActionsMap is a map indexing the attribute names
+	// of EnduroCollectionPreservationActions by view name.
+	EnduroCollectionPreservationActionsMap = map[string][]string{
+		"default": {
+			"actions",
 		},
 	}
 	// EnduroCollectionWorkflowHistoryCollectionMap is a map indexing the attribute
@@ -152,6 +179,29 @@ var (
 			"id",
 			"type",
 			"details",
+		},
+	}
+	// EnduroCollectionPreservationActionsActionCollectionMap is a map indexing the
+	// attribute names of EnduroCollectionPreservationActionsActionCollection by
+	// view name.
+	EnduroCollectionPreservationActionsActionCollectionMap = map[string][]string{
+		"default": {
+			"id",
+			"action_id",
+			"name",
+			"status",
+			"started_at",
+		},
+	}
+	// EnduroCollectionPreservationActionsActionMap is a map indexing the attribute
+	// names of EnduroCollectionPreservationActionsAction by view name.
+	EnduroCollectionPreservationActionsActionMap = map[string][]string{
+		"default": {
+			"id",
+			"action_id",
+			"name",
+			"status",
+			"started_at",
 		},
 	}
 )
@@ -186,6 +236,18 @@ func ValidateEnduroCollectionWorkflowStatus(result *EnduroCollectionWorkflowStat
 	switch result.View {
 	case "default", "":
 		err = ValidateEnduroCollectionWorkflowStatusView(result.Projected)
+	default:
+		err = goa.InvalidEnumValueError("view", result.View, []interface{}{"default"})
+	}
+	return
+}
+
+// ValidateEnduroCollectionPreservationActions runs the validations defined on
+// the viewed result type EnduroCollectionPreservationActions.
+func ValidateEnduroCollectionPreservationActions(result *EnduroCollectionPreservationActions) (err error) {
+	switch result.View {
+	case "default", "":
+		err = ValidateEnduroCollectionPreservationActionsView(result.Projected)
 	default:
 		err = goa.InvalidEnumValueError("view", result.View, []interface{}{"default"})
 	}
@@ -232,14 +294,8 @@ func ValidateEnduroStoredCollectionView(result *EnduroStoredCollectionView) (err
 	if result.RunID != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("result.run_id", *result.RunID, goa.FormatUUID))
 	}
-	if result.TransferID != nil {
-		err = goa.MergeErrors(err, goa.ValidateFormat("result.transfer_id", *result.TransferID, goa.FormatUUID))
-	}
 	if result.AipID != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("result.aip_id", *result.AipID, goa.FormatUUID))
-	}
-	if result.PipelineID != nil {
-		err = goa.MergeErrors(err, goa.ValidateFormat("result.pipeline_id", *result.PipelineID, goa.FormatUUID))
 	}
 	if result.CreatedAt != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("result.created_at", *result.CreatedAt, goa.FormatDateTime))
@@ -281,5 +337,60 @@ func ValidateEnduroCollectionWorkflowHistoryCollectionView(result EnduroCollecti
 // EnduroCollectionWorkflowHistoryView using the "default" view.
 func ValidateEnduroCollectionWorkflowHistoryView(result *EnduroCollectionWorkflowHistoryView) (err error) {
 
+	return
+}
+
+// ValidateEnduroCollectionPreservationActionsView runs the validations defined
+// on EnduroCollectionPreservationActionsView using the "default" view.
+func ValidateEnduroCollectionPreservationActionsView(result *EnduroCollectionPreservationActionsView) (err error) {
+
+	if result.Actions != nil {
+		if err2 := ValidateEnduroCollectionPreservationActionsActionCollectionView(result.Actions); err2 != nil {
+			err = goa.MergeErrors(err, err2)
+		}
+	}
+	return
+}
+
+// ValidateEnduroCollectionPreservationActionsActionCollectionView runs the
+// validations defined on
+// EnduroCollectionPreservationActionsActionCollectionView using the "default"
+// view.
+func ValidateEnduroCollectionPreservationActionsActionCollectionView(result EnduroCollectionPreservationActionsActionCollectionView) (err error) {
+	for _, item := range result {
+		if err2 := ValidateEnduroCollectionPreservationActionsActionView(item); err2 != nil {
+			err = goa.MergeErrors(err, err2)
+		}
+	}
+	return
+}
+
+// ValidateEnduroCollectionPreservationActionsActionView runs the validations
+// defined on EnduroCollectionPreservationActionsActionView using the "default"
+// view.
+func ValidateEnduroCollectionPreservationActionsActionView(result *EnduroCollectionPreservationActionsActionView) (err error) {
+	if result.ID == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("id", "result"))
+	}
+	if result.ActionID == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("action_id", "result"))
+	}
+	if result.Name == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("name", "result"))
+	}
+	if result.Status == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("status", "result"))
+	}
+	if result.StartedAt == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("started_at", "result"))
+	}
+	if result.Status != nil {
+		if !(*result.Status == "unspecified" || *result.Status == "complete" || *result.Status == "processing" || *result.Status == "failed") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("result.status", *result.Status, []interface{}{"unspecified", "complete", "processing", "failed"}))
+		}
+	}
+	if result.StartedAt != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("result.started_at", *result.StartedAt, goa.FormatDateTime))
+	}
 	return
 }

@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minio
+  labels:
+    app: minio
+spec:
+  selector:
+    matchLabels:
+      app: minio
+  template:
+    metadata:
+      labels:
+        app: minio
+    spec:
+      containers:
+        - name: minio
+          image: minio/minio
+          command:
+            ["sh", "-c", 'minio server --console-address ":9001" /storage']
+          env:
+            - name: MINIO_ROOT_USER
+              value: minio
+            - name: MINIO_ROOT_PASSWORD
+              value: minio123
+            - name: MINIO_NOTIFY_REDIS_ENABLE_PRIMARY
+              value: "on"
+            - name: MINIO_NOTIFY_REDIS_ADDRESS_PRIMARY
+              value: "redis:6379"
+            - name: MINIO_NOTIFY_REDIS_KEY_PRIMARY
+              value: "minio-events"
+            - name: MINIO_NOTIFY_REDIS_FORMAT_PRIMARY
+              value: "access"
+            - name: MINIO_NOTIFY_REDIS_QUEUE_DIR_PRIMARY
+              value: "/tmp/events"
+            - name: MINIO_NOTIFY_REDIS_QUEUE_LIMIT_PRIMARY
+              value: "10000"
+          ports:
+            - containerPort: 9000
+            - containerPort: 9001
+          volumeMounts:
+            - name: storage
+              mountPath: /storage
+          resources: {}
+      volumes:
+        - name: storage
+          persistentVolumeClaim:
+            claimName: minio-persistentvolumeclaim
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio
+  labels:
+    app: minio
+spec:
+  selector:
+    app: minio
+  ports:
+    - port: 9000
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: minio-persistentvolumeclaim
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi

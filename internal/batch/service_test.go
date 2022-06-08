@@ -7,9 +7,12 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/stretchr/testify/mock"
-	cadencesdk_gen_shared "go.uber.org/cadence/.gen/go/shared"
-	cadencesdk_mocks "go.uber.org/cadence/mocks"
-	cadencesdk_workflow "go.uber.org/cadence/workflow"
+	temporalapi_common "go.temporal.io/api/common/v1"
+	temporalapi_enums "go.temporal.io/api/enums/v1"
+	temporalapi_serviceerror "go.temporal.io/api/serviceerror"
+	temporalapi_workflow "go.temporal.io/api/workflow/v1"
+	temporalapi_workflowservice "go.temporal.io/api/workflowservice/v1"
+	temporalsdk_mocks "go.temporal.io/sdk/mocks"
 	"gotest.tools/v3/assert"
 
 	goabatch "github.com/artefactual-labs/enduro/internal/api/gen/batch"
@@ -21,48 +24,67 @@ var completedDirs = []string{"/tmp/xyz"}
 func TestBatchServiceSubmit(t *testing.T) {
 	ctx := context.Background()
 	logger := logr.Discard()
-	pipeline := "am"
 
 	t.Run("Fails with empty or invalid parameters parameters", func(t *testing.T) {
-		client := &cadencesdk_mocks.Client{}
+		client := &temporalsdk_mocks.Client{}
 		batchsvc := NewService(logger, client, completedDirs)
 
-		_, err := batchsvc.Submit(ctx, &goabatch.SubmitPayload{Pipeline: &pipeline})
+		_, err := batchsvc.Submit(ctx, &goabatch.SubmitPayload{})
 		assert.Error(t, err, "error starting batch - path is empty")
 
 		rp := "invalid-duration-format"
-		_, err = batchsvc.Submit(ctx, &goabatch.SubmitPayload{Pipeline: &pipeline, Path: "/some/path", RetentionPeriod: &rp})
+		_, err = batchsvc.Submit(ctx, &goabatch.SubmitPayload{Path: "/some/path", RetentionPeriod: &rp})
 		assert.Error(t, err, "error starting batch - retention period format is invalid")
 	})
 
-	t.Run("Fails with empty parameters", func(t *testing.T) {
-		client := &cadencesdk_mocks.Client{}
-		processingConfig, completedDir, retentionPeriod := "default", "/tmp", "2h"
+	t.Run("Fails when workflow engine is unavailable", func(t *testing.T) {
+		client := &temporalsdk_mocks.Client{}
+
+		client.On(
+			"ExecuteWorkflow",
+			mock.AnythingOfType("*context.emptyCtx"),
+			mock.AnythingOfType("internal.StartWorkflowOptions"),
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("batch.BatchWorkflowInput"),
+		).Return(
+			&temporalsdk_mocks.WorkflowRun{},
+			&temporalapi_serviceerror.InvalidArgument{},
+		)
+
+		batchsvc := NewService(logger, client, completedDirs)
+		_, err := batchsvc.Submit(ctx, &goabatch.SubmitPayload{Path: "asdf"})
+
+		assert.ErrorContains(t, err, "error starting batch")
+	})
+
+	t.Run("Returns batch result", func(t *testing.T) {
+		client := &temporalsdk_mocks.Client{}
+		completedDir, retentionPeriod := "/tmp", "2h"
+
+		workflowRun := &temporalsdk_mocks.WorkflowRun{}
+		workflowRun.On("GetID").Return("batch-workflow")
+		workflowRun.On("GetRunID").Return("some-run-id")
 
 		dur := time.Duration(time.Hour * 2)
 		client.On(
-			"StartWorkflow", mock.Anything, mock.Anything, "batch-workflow",
+			"ExecuteWorkflow",
+			mock.AnythingOfType("*context.emptyCtx"),
+			mock.AnythingOfType("internal.StartWorkflowOptions"),
+			"batch-workflow",
 			BatchWorkflowInput{
-				Path:             "/some/path",
-				PipelineName:     "am",
-				ProcessingConfig: processingConfig,
-				CompletedDir:     completedDir,
-				RetentionPeriod:  &dur,
+				Path:            "/some/path",
+				CompletedDir:    completedDir,
+				RetentionPeriod: &dur,
 			},
 		).Return(
-			&cadencesdk_workflow.Execution{
-				ID:    "batch-workflow",
-				RunID: "some-run-id",
-			}, nil,
+			workflowRun, nil,
 		)
 
 		batchsvc := NewService(logger, client, completedDirs)
 		result, err := batchsvc.Submit(ctx, &goabatch.SubmitPayload{
-			Path:             "/some/path",
-			Pipeline:         &pipeline,
-			ProcessingConfig: &processingConfig,
-			CompletedDir:     &completedDir,
-			RetentionPeriod:  &retentionPeriod,
+			Path:            "/some/path",
+			CompletedDir:    &completedDir,
+			RetentionPeriod: &retentionPeriod,
 		})
 
 		assert.NilError(t, err)
@@ -79,8 +101,8 @@ func TestBatchServiceStatus(t *testing.T) {
 	wid, rid := "batch-workflow", "some-run-id"
 
 	t.Run("Fails if the workflow information is unavailable", func(t *testing.T) {
-		client := &cadencesdk_mocks.Client{}
-		client.On("DescribeWorkflowExecution", mock.Anything, "batch-workflow", "").Return(nil, &cadencesdk_gen_shared.ServiceBusyError{})
+		client := &temporalsdk_mocks.Client{}
+		client.On("DescribeWorkflowExecution", mock.AnythingOfType("*context.emptyCtx"), "batch-workflow", "").Return(nil, &temporalapi_serviceerror.Unavailable{})
 
 		batchsvc := NewService(logger, client, completedDirs)
 		_, err := batchsvc.Status(ctx)
@@ -89,8 +111,8 @@ func TestBatchServiceStatus(t *testing.T) {
 	})
 
 	t.Run("Fails if the workflow information is incomplete", func(t *testing.T) {
-		client := &cadencesdk_mocks.Client{}
-		client.On("DescribeWorkflowExecution", mock.Anything, "batch-workflow", "").Return(&cadencesdk_gen_shared.DescribeWorkflowExecutionResponse{}, nil)
+		client := &temporalsdk_mocks.Client{}
+		client.On("DescribeWorkflowExecution", mock.AnythingOfType("*context.emptyCtx"), "batch-workflow", "").Return(&temporalapi_workflowservice.DescribeWorkflowExecutionResponse{}, nil)
 
 		batchsvc := NewService(logger, client, completedDirs)
 		_, err := batchsvc.Status(ctx)
@@ -99,8 +121,8 @@ func TestBatchServiceStatus(t *testing.T) {
 	})
 
 	t.Run("Identifies a non-running batch", func(t *testing.T) {
-		client := &cadencesdk_mocks.Client{}
-		client.On("DescribeWorkflowExecution", mock.Anything, "batch-workflow", "").Return(nil, &cadencesdk_gen_shared.EntityNotExistsError{})
+		client := &temporalsdk_mocks.Client{}
+		client.On("DescribeWorkflowExecution", mock.AnythingOfType("*context.emptyCtx"), "batch-workflow", "").Return(nil, &temporalapi_serviceerror.NotFound{})
 
 		batchsvc := NewService(logger, client, completedDirs)
 		result, err := batchsvc.Status(ctx)
@@ -112,13 +134,14 @@ func TestBatchServiceStatus(t *testing.T) {
 	})
 
 	t.Run("Identifies a running batch", func(t *testing.T) {
-		client := &cadencesdk_mocks.Client{}
-		client.On("DescribeWorkflowExecution", mock.Anything, "batch-workflow", "").Return(&cadencesdk_gen_shared.DescribeWorkflowExecutionResponse{
-			WorkflowExecutionInfo: &cadencesdk_gen_shared.WorkflowExecutionInfo{
-				Execution: &cadencesdk_gen_shared.WorkflowExecution{
-					WorkflowId: &wid,
-					RunId:      &rid,
+		client := &temporalsdk_mocks.Client{}
+		client.On("DescribeWorkflowExecution", mock.AnythingOfType("*context.emptyCtx"), "batch-workflow", "").Return(&temporalapi_workflowservice.DescribeWorkflowExecutionResponse{
+			WorkflowExecutionInfo: &temporalapi_workflow.WorkflowExecutionInfo{
+				Execution: &temporalapi_common.WorkflowExecution{
+					WorkflowId: wid,
+					RunId:      rid,
 				},
+				Status: temporalapi_enums.WORKFLOW_EXECUTION_STATUS_RUNNING,
 			},
 		}, nil)
 
@@ -134,14 +157,14 @@ func TestBatchServiceStatus(t *testing.T) {
 	})
 
 	t.Run("Identifies a closed batch", func(t *testing.T) {
-		client := &cadencesdk_mocks.Client{}
-		client.On("DescribeWorkflowExecution", mock.Anything, "batch-workflow", "").Return(&cadencesdk_gen_shared.DescribeWorkflowExecutionResponse{
-			WorkflowExecutionInfo: &cadencesdk_gen_shared.WorkflowExecutionInfo{
-				Execution: &cadencesdk_gen_shared.WorkflowExecution{
-					WorkflowId: &wid,
-					RunId:      &rid,
+		client := &temporalsdk_mocks.Client{}
+		client.On("DescribeWorkflowExecution", mock.AnythingOfType("*context.emptyCtx"), "batch-workflow", "").Return(&temporalapi_workflowservice.DescribeWorkflowExecutionResponse{
+			WorkflowExecutionInfo: &temporalapi_workflow.WorkflowExecutionInfo{
+				Execution: &temporalapi_common.WorkflowExecution{
+					WorkflowId: wid,
+					RunId:      rid,
 				},
-				CloseStatus: cadencesdk_gen_shared.WorkflowExecutionCloseStatusCompleted.Ptr(),
+				Status: temporalapi_enums.WORKFLOW_EXECUTION_STATUS_COMPLETED,
 			},
 		}, nil)
 
@@ -162,7 +185,7 @@ func TestBatchServiceStatus(t *testing.T) {
 func TestBatchServiceHints(t *testing.T) {
 	ctx := context.Background()
 	logger := logr.Discard()
-	client := &cadencesdk_mocks.Client{}
+	client := &temporalsdk_mocks.Client{}
 
 	batchsvc := NewService(logger, client, completedDirs)
 	result, err := batchsvc.Hints(ctx)
@@ -176,20 +199,20 @@ func TestBatchServiceHints(t *testing.T) {
 func TestBatchServiceInitProcessingWorkflow(t *testing.T) {
 	ctx := context.Background()
 	logger := logr.Discard()
-	client := &cadencesdk_mocks.Client{}
+	client := &temporalsdk_mocks.Client{}
 	client.On(
-		"StartWorkflow",
+		"ExecuteWorkflow",
 		mock.AnythingOfType("*context.timerCtx"),
 		mock.AnythingOfType("internal.StartWorkflowOptions"),
 		mock.AnythingOfType("string"),
 		mock.AnythingOfType("*collection.ProcessingWorkflowRequest"),
 	).Return(
 		nil,
-		&cadencesdk_gen_shared.InternalServiceError{},
+		&temporalapi_serviceerror.Internal{},
 	)
 
 	batchsvc := NewService(logger, client, completedDirs)
 	err := batchsvc.InitProcessingWorkflow(ctx, &collection.ProcessingWorkflowRequest{})
 
-	assert.ErrorType(t, err, &cadencesdk_gen_shared.InternalServiceError{})
+	assert.ErrorType(t, err, &temporalapi_serviceerror.Internal{})
 }

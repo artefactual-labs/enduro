@@ -47,15 +47,16 @@ type Client struct {
 	// endpoint.
 	DownloadDoer goahttp.Doer
 
-	// Decide Doer is the HTTP client used to make requests to the decide endpoint.
-	DecideDoer goahttp.Doer
-
 	// Bulk Doer is the HTTP client used to make requests to the bulk endpoint.
 	BulkDoer goahttp.Doer
 
 	// BulkStatus Doer is the HTTP client used to make requests to the bulk_status
 	// endpoint.
 	BulkStatusDoer goahttp.Doer
+
+	// PreservationActions Doer is the HTTP client used to make requests to the
+	// preservation-actions endpoint.
+	PreservationActionsDoer goahttp.Doer
 
 	// CORS Doer is the HTTP client used to make requests to the  endpoint.
 	CORSDoer goahttp.Doer
@@ -87,25 +88,25 @@ func NewClient(
 		cfn = &ConnConfigurer{}
 	}
 	return &Client{
-		MonitorDoer:         doer,
-		ListDoer:            doer,
-		ShowDoer:            doer,
-		DeleteDoer:          doer,
-		CancelDoer:          doer,
-		RetryDoer:           doer,
-		WorkflowDoer:        doer,
-		DownloadDoer:        doer,
-		DecideDoer:          doer,
-		BulkDoer:            doer,
-		BulkStatusDoer:      doer,
-		CORSDoer:            doer,
-		RestoreResponseBody: restoreBody,
-		scheme:              scheme,
-		host:                host,
-		decoder:             dec,
-		encoder:             enc,
-		dialer:              dialer,
-		configurer:          cfn,
+		MonitorDoer:             doer,
+		ListDoer:                doer,
+		ShowDoer:                doer,
+		DeleteDoer:              doer,
+		CancelDoer:              doer,
+		RetryDoer:               doer,
+		WorkflowDoer:            doer,
+		DownloadDoer:            doer,
+		BulkDoer:                doer,
+		BulkStatusDoer:          doer,
+		PreservationActionsDoer: doer,
+		CORSDoer:                doer,
+		RestoreResponseBody:     restoreBody,
+		scheme:                  scheme,
+		host:                    host,
+		decoder:                 dec,
+		encoder:                 enc,
+		dialer:                  dialer,
+		configurer:              cfn,
 	}
 }
 
@@ -284,30 +285,6 @@ func (c *Client) Download() goa.Endpoint {
 	}
 }
 
-// Decide returns an endpoint that makes HTTP requests to the collection
-// service decide server.
-func (c *Client) Decide() goa.Endpoint {
-	var (
-		encodeRequest  = EncodeDecideRequest(c.encoder)
-		decodeResponse = DecodeDecideResponse(c.decoder, c.RestoreResponseBody)
-	)
-	return func(ctx context.Context, v interface{}) (interface{}, error) {
-		req, err := c.BuildDecideRequest(ctx, v)
-		if err != nil {
-			return nil, err
-		}
-		err = encodeRequest(req, v)
-		if err != nil {
-			return nil, err
-		}
-		resp, err := c.DecideDoer.Do(req)
-		if err != nil {
-			return nil, goahttp.ErrRequestError("collection", "decide", err)
-		}
-		return decodeResponse(resp)
-	}
-}
-
 // Bulk returns an endpoint that makes HTTP requests to the collection service
 // bulk server.
 func (c *Client) Bulk() goa.Endpoint {
@@ -346,6 +323,25 @@ func (c *Client) BulkStatus() goa.Endpoint {
 		resp, err := c.BulkStatusDoer.Do(req)
 		if err != nil {
 			return nil, goahttp.ErrRequestError("collection", "bulk_status", err)
+		}
+		return decodeResponse(resp)
+	}
+}
+
+// PreservationActions returns an endpoint that makes HTTP requests to the
+// collection service preservation-actions server.
+func (c *Client) PreservationActions() goa.Endpoint {
+	var (
+		decodeResponse = DecodePreservationActionsResponse(c.decoder, c.RestoreResponseBody)
+	)
+	return func(ctx context.Context, v interface{}) (interface{}, error) {
+		req, err := c.BuildPreservationActionsRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.PreservationActionsDoer.Do(req)
+		if err != nil {
+			return nil, goahttp.ErrRequestError("collection", "preservation-actions", err)
 		}
 		return decodeResponse(resp)
 	}

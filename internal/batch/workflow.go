@@ -5,10 +5,11 @@ import (
 	"io/ioutil"
 	"time"
 
-	cadencesdk_workflow "go.uber.org/cadence/workflow"
+	temporalsdk_temporal "go.temporal.io/sdk/temporal"
+	temporalsdk_workflow "go.temporal.io/sdk/workflow"
 
 	"github.com/artefactual-labs/enduro/internal/collection"
-	wferrors "github.com/artefactual-labs/enduro/internal/workflow/errors"
+	"github.com/artefactual-labs/enduro/internal/temporal"
 )
 
 const (
@@ -22,20 +23,20 @@ type BatchProgress struct {
 }
 
 type BatchWorkflowInput struct {
-	Path             string
-	PipelineName     string
-	ProcessingConfig string
-	CompletedDir     string
-	RetentionPeriod  *time.Duration
+	Path            string
+	CompletedDir    string
+	RetentionPeriod *time.Duration
 }
 
-func BatchWorkflow(ctx cadencesdk_workflow.Context, params BatchWorkflowInput) error {
-	opts := cadencesdk_workflow.WithActivityOptions(ctx, cadencesdk_workflow.ActivityOptions{
-		ScheduleToStartTimeout: time.Hour * 24 * 365,
-		StartToCloseTimeout:    time.Hour * 24 * 365,
-		WaitForCancellation:    true,
+func BatchWorkflow(ctx temporalsdk_workflow.Context, params BatchWorkflowInput) error {
+	opts := temporalsdk_workflow.WithActivityOptions(ctx, temporalsdk_workflow.ActivityOptions{
+		StartToCloseTimeout: time.Hour * 24 * 365,
+		WaitForCancellation: true,
+		RetryPolicy: &temporalsdk_temporal.RetryPolicy{
+			MaximumAttempts: 1,
+		},
 	})
-	return cadencesdk_workflow.ExecuteActivity(opts, BatchActivityName, params).Get(opts, nil)
+	return temporalsdk_workflow.ExecuteActivity(opts, BatchActivityName, params).Get(opts, nil)
 }
 
 type BatchActivity struct {
@@ -51,21 +52,15 @@ func NewBatchActivity(batchsvc Service) *BatchActivity {
 func (a *BatchActivity) Execute(ctx context.Context, params BatchWorkflowInput) error {
 	files, err := ioutil.ReadDir(params.Path)
 	if err != nil {
-		return wferrors.NonRetryableError(err)
-	}
-	pipelines := []string{}
-	if params.PipelineName != "" {
-		pipelines = append(pipelines, params.PipelineName)
+		return temporal.NonRetryableError(err)
 	}
 	for _, file := range files {
 		req := collection.ProcessingWorkflowRequest{
-			BatchDir:         params.Path,
-			Key:              file.Name(),
-			IsDir:            file.IsDir(),
-			PipelineNames:    pipelines,
-			ProcessingConfig: params.ProcessingConfig,
-			CompletedDir:     params.CompletedDir,
-			RetentionPeriod:  params.RetentionPeriod,
+			BatchDir:        params.Path,
+			Key:             file.Name(),
+			IsDir:           file.IsDir(),
+			CompletedDir:    params.CompletedDir,
+			RetentionPeriod: params.RetentionPeriod,
 		}
 		_ = a.batchsvc.InitProcessingWorkflow(ctx, &req)
 	}

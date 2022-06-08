@@ -19,30 +19,12 @@ import (
 
 // BuildListPayload builds the payload for the collection list endpoint from
 // CLI flags.
-func BuildListPayload(collectionListName string, collectionListOriginalID string, collectionListTransferID string, collectionListAipID string, collectionListPipelineID string, collectionListEarliestCreatedTime string, collectionListLatestCreatedTime string, collectionListStatus string, collectionListCursor string) (*collection.ListPayload, error) {
+func BuildListPayload(collectionListName string, collectionListAipID string, collectionListEarliestCreatedTime string, collectionListLatestCreatedTime string, collectionListStatus string, collectionListCursor string) (*collection.ListPayload, error) {
 	var err error
 	var name *string
 	{
 		if collectionListName != "" {
 			name = &collectionListName
-		}
-	}
-	var originalID *string
-	{
-		if collectionListOriginalID != "" {
-			originalID = &collectionListOriginalID
-		}
-	}
-	var transferID *string
-	{
-		if collectionListTransferID != "" {
-			transferID = &collectionListTransferID
-			if transferID != nil {
-				err = goa.MergeErrors(err, goa.ValidateFormat("transferID", *transferID, goa.FormatUUID))
-			}
-			if err != nil {
-				return nil, err
-			}
 		}
 	}
 	var aipID *string
@@ -51,18 +33,6 @@ func BuildListPayload(collectionListName string, collectionListOriginalID string
 			aipID = &collectionListAipID
 			if aipID != nil {
 				err = goa.MergeErrors(err, goa.ValidateFormat("aipID", *aipID, goa.FormatUUID))
-			}
-			if err != nil {
-				return nil, err
-			}
-		}
-	}
-	var pipelineID *string
-	{
-		if collectionListPipelineID != "" {
-			pipelineID = &collectionListPipelineID
-			if pipelineID != nil {
-				err = goa.MergeErrors(err, goa.ValidateFormat("pipelineID", *pipelineID, goa.FormatUUID))
 			}
 			if err != nil {
 				return nil, err
@@ -115,10 +85,7 @@ func BuildListPayload(collectionListName string, collectionListOriginalID string
 	}
 	v := &collection.ListPayload{}
 	v.Name = name
-	v.OriginalID = originalID
-	v.TransferID = transferID
 	v.AipID = aipID
-	v.PipelineID = pipelineID
 	v.EarliestCreatedTime = earliestCreatedTime
 	v.LatestCreatedTime = latestCreatedTime
 	v.Status = status
@@ -241,38 +208,6 @@ func BuildDownloadPayload(collectionDownloadID string) (*collection.DownloadPayl
 	return v, nil
 }
 
-// BuildDecidePayload builds the payload for the collection decide endpoint
-// from CLI flags.
-func BuildDecidePayload(collectionDecideBody string, collectionDecideID string) (*collection.DecidePayload, error) {
-	var err error
-	var body struct {
-		// Decision option to proceed with
-		Option *string `form:"option" json:"option" xml:"option"`
-	}
-	{
-		err = json.Unmarshal([]byte(collectionDecideBody), &body)
-		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"option\": \"Optio non a officia sint.\"\n   }'")
-		}
-	}
-	var id uint
-	{
-		var v uint64
-		v, err = strconv.ParseUint(collectionDecideID, 10, 64)
-		id = uint(v)
-		if err != nil {
-			return nil, fmt.Errorf("invalid value for id, must be UINT")
-		}
-	}
-	v := &collection.DecidePayload{}
-	if body.Option != nil {
-		v.Option = *body.Option
-	}
-	v.ID = id
-
-	return v, nil
-}
-
 // BuildBulkPayload builds the payload for the collection bulk endpoint from
 // CLI flags.
 func BuildBulkPayload(collectionBulkBody string) (*collection.BulkPayload, error) {
@@ -281,7 +216,7 @@ func BuildBulkPayload(collectionBulkBody string) (*collection.BulkPayload, error
 	{
 		err = json.Unmarshal([]byte(collectionBulkBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"operation\": \"cancel\",\n      \"size\": 11998998615337084245,\n      \"status\": \"done\"\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"operation\": \"cancel\",\n      \"size\": 3764210318943693810,\n      \"status\": \"in progress\"\n   }'")
 		}
 		if !(body.Operation == "retry" || body.Operation == "cancel" || body.Operation == "abandon") {
 			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.operation", body.Operation, []interface{}{"retry", "cancel", "abandon"}))
@@ -304,6 +239,25 @@ func BuildBulkPayload(collectionBulkBody string) (*collection.BulkPayload, error
 			v.Size = 100
 		}
 	}
+
+	return v, nil
+}
+
+// BuildPreservationActionsPayload builds the payload for the collection
+// preservation-actions endpoint from CLI flags.
+func BuildPreservationActionsPayload(collectionPreservationActionsID string) (*collection.PreservationActionsPayload, error) {
+	var err error
+	var id uint
+	{
+		var v uint64
+		v, err = strconv.ParseUint(collectionPreservationActionsID, 10, 64)
+		id = uint(v)
+		if err != nil {
+			return nil, fmt.Errorf("invalid value for id, must be UINT")
+		}
+	}
+	v := &collection.PreservationActionsPayload{}
+	v.ID = id
 
 	return v, nil
 }

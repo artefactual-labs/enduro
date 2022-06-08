@@ -38,10 +38,7 @@ func DecodeListRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.De
 	return func(r *http.Request) (interface{}, error) {
 		var (
 			name                *string
-			originalID          *string
-			transferID          *string
 			aipID               *string
-			pipelineID          *string
 			earliestCreatedTime *string
 			latestCreatedTime   *string
 			status              *string
@@ -52,30 +49,12 @@ func DecodeListRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.De
 		if nameRaw != "" {
 			name = &nameRaw
 		}
-		originalIDRaw := r.URL.Query().Get("original_id")
-		if originalIDRaw != "" {
-			originalID = &originalIDRaw
-		}
-		transferIDRaw := r.URL.Query().Get("transfer_id")
-		if transferIDRaw != "" {
-			transferID = &transferIDRaw
-		}
-		if transferID != nil {
-			err = goa.MergeErrors(err, goa.ValidateFormat("transferID", *transferID, goa.FormatUUID))
-		}
 		aipIDRaw := r.URL.Query().Get("aip_id")
 		if aipIDRaw != "" {
 			aipID = &aipIDRaw
 		}
 		if aipID != nil {
 			err = goa.MergeErrors(err, goa.ValidateFormat("aipID", *aipID, goa.FormatUUID))
-		}
-		pipelineIDRaw := r.URL.Query().Get("pipeline_id")
-		if pipelineIDRaw != "" {
-			pipelineID = &pipelineIDRaw
-		}
-		if pipelineID != nil {
-			err = goa.MergeErrors(err, goa.ValidateFormat("pipelineID", *pipelineID, goa.FormatUUID))
 		}
 		earliestCreatedTimeRaw := r.URL.Query().Get("earliest_created_time")
 		if earliestCreatedTimeRaw != "" {
@@ -107,7 +86,7 @@ func DecodeListRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.De
 		if err != nil {
 			return nil, err
 		}
-		payload := NewListPayload(name, originalID, transferID, aipID, pipelineID, earliestCreatedTime, latestCreatedTime, status, cursor)
+		payload := NewListPayload(name, aipID, earliestCreatedTime, latestCreatedTime, status, cursor)
 
 		return payload, nil
 	}
@@ -530,96 +509,6 @@ func EncodeDownloadError(encoder func(context.Context, http.ResponseWriter) goah
 	}
 }
 
-// EncodeDecideResponse returns an encoder for responses returned by the
-// collection decide endpoint.
-func EncodeDecideResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, interface{}) error {
-	return func(ctx context.Context, w http.ResponseWriter, v interface{}) error {
-		w.WriteHeader(http.StatusOK)
-		return nil
-	}
-}
-
-// DecodeDecideRequest returns a decoder for requests sent to the collection
-// decide endpoint.
-func DecodeDecideRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (interface{}, error) {
-	return func(r *http.Request) (interface{}, error) {
-		var (
-			body struct {
-				// Decision option to proceed with
-				Option *string `form:"option" json:"option" xml:"option"`
-			}
-			err error
-		)
-		err = decoder(r).Decode(&body)
-		if err != nil {
-			if err == io.EOF {
-				return nil, goa.MissingPayloadError()
-			}
-			return nil, goa.DecodePayloadError(err.Error())
-		}
-
-		var (
-			id uint
-
-			params = mux.Vars(r)
-		)
-		{
-			idRaw := params["id"]
-			v, err2 := strconv.ParseUint(idRaw, 10, strconv.IntSize)
-			if err2 != nil {
-				err = goa.MergeErrors(err, goa.InvalidFieldTypeError("id", idRaw, "unsigned integer"))
-			}
-			id = uint(v)
-		}
-		if err != nil {
-			return nil, err
-		}
-		payload := NewDecidePayload(body, id)
-
-		return payload, nil
-	}
-}
-
-// EncodeDecideError returns an encoder for errors returned by the decide
-// collection endpoint.
-func EncodeDecideError(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder, formatter func(err error) goahttp.Statuser) func(context.Context, http.ResponseWriter, error) error {
-	encodeError := goahttp.ErrorEncoder(encoder, formatter)
-	return func(ctx context.Context, w http.ResponseWriter, v error) error {
-		en, ok := v.(ErrorNamer)
-		if !ok {
-			return encodeError(ctx, w, v)
-		}
-		switch en.ErrorName() {
-		case "not_found":
-			res := v.(*collection.CollectionNotfound)
-			enc := encoder(ctx, w)
-			var body interface{}
-			if formatter != nil {
-				body = formatter(res)
-			} else {
-				body = NewDecideNotFoundResponseBody(res)
-			}
-			w.Header().Set("goa-error", res.ErrorName())
-			w.WriteHeader(http.StatusNotFound)
-			return enc.Encode(body)
-		case "not_valid":
-			res := v.(*goa.ServiceError)
-			enc := encoder(ctx, w)
-			var body interface{}
-			if formatter != nil {
-				body = formatter(res)
-			} else {
-				body = NewDecideNotValidResponseBody(res)
-			}
-			w.Header().Set("goa-error", res.ErrorName())
-			w.WriteHeader(http.StatusBadRequest)
-			return enc.Encode(body)
-		default:
-			return encodeError(ctx, w, v)
-		}
-	}
-}
-
 // EncodeBulkResponse returns an encoder for responses returned by the
 // collection bulk endpoint.
 func EncodeBulkResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, interface{}) error {
@@ -709,6 +598,73 @@ func EncodeBulkStatusResponse(encoder func(context.Context, http.ResponseWriter)
 	}
 }
 
+// EncodePreservationActionsResponse returns an encoder for responses returned
+// by the collection preservation-actions endpoint.
+func EncodePreservationActionsResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, interface{}) error {
+	return func(ctx context.Context, w http.ResponseWriter, v interface{}) error {
+		res := v.(*collectionviews.EnduroCollectionPreservationActions)
+		enc := encoder(ctx, w)
+		body := NewPreservationActionsResponseBody(res.Projected)
+		w.WriteHeader(http.StatusOK)
+		return enc.Encode(body)
+	}
+}
+
+// DecodePreservationActionsRequest returns a decoder for requests sent to the
+// collection preservation-actions endpoint.
+func DecodePreservationActionsRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (interface{}, error) {
+	return func(r *http.Request) (interface{}, error) {
+		var (
+			id  uint
+			err error
+
+			params = mux.Vars(r)
+		)
+		{
+			idRaw := params["id"]
+			v, err2 := strconv.ParseUint(idRaw, 10, strconv.IntSize)
+			if err2 != nil {
+				err = goa.MergeErrors(err, goa.InvalidFieldTypeError("id", idRaw, "unsigned integer"))
+			}
+			id = uint(v)
+		}
+		if err != nil {
+			return nil, err
+		}
+		payload := NewPreservationActionsPayload(id)
+
+		return payload, nil
+	}
+}
+
+// EncodePreservationActionsError returns an encoder for errors returned by the
+// preservation-actions collection endpoint.
+func EncodePreservationActionsError(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder, formatter func(err error) goahttp.Statuser) func(context.Context, http.ResponseWriter, error) error {
+	encodeError := goahttp.ErrorEncoder(encoder, formatter)
+	return func(ctx context.Context, w http.ResponseWriter, v error) error {
+		en, ok := v.(ErrorNamer)
+		if !ok {
+			return encodeError(ctx, w, v)
+		}
+		switch en.ErrorName() {
+		case "not_found":
+			res := v.(*collection.CollectionNotfound)
+			enc := encoder(ctx, w)
+			var body interface{}
+			if formatter != nil {
+				body = formatter(res)
+			} else {
+				body = NewPreservationActionsNotFoundResponseBody(res)
+			}
+			w.Header().Set("goa-error", res.ErrorName())
+			w.WriteHeader(http.StatusNotFound)
+			return enc.Encode(body)
+		default:
+			return encodeError(ctx, w, v)
+		}
+	}
+}
+
 // marshalCollectionviewsEnduroStoredCollectionViewToEnduroStoredCollectionResponseBody
 // builds a value of type *EnduroStoredCollectionResponseBody from a value of
 // type *collectionviews.EnduroStoredCollectionView.
@@ -722,10 +678,7 @@ func marshalCollectionviewsEnduroStoredCollectionViewToEnduroStoredCollectionRes
 		Status:      *v.Status,
 		WorkflowID:  v.WorkflowID,
 		RunID:       v.RunID,
-		TransferID:  v.TransferID,
 		AipID:       v.AipID,
-		OriginalID:  v.OriginalID,
-		PipelineID:  v.PipelineID,
 		CreatedAt:   *v.CreatedAt,
 		StartedAt:   v.StartedAt,
 		CompletedAt: v.CompletedAt,
@@ -744,10 +697,7 @@ func marshalCollectionEnduroStoredCollectionToEnduroStoredCollectionResponseBody
 		Status:      v.Status,
 		WorkflowID:  v.WorkflowID,
 		RunID:       v.RunID,
-		TransferID:  v.TransferID,
 		AipID:       v.AipID,
-		OriginalID:  v.OriginalID,
-		PipelineID:  v.PipelineID,
 		CreatedAt:   v.CreatedAt,
 		StartedAt:   v.StartedAt,
 		CompletedAt: v.CompletedAt,
@@ -767,6 +717,25 @@ func marshalCollectionviewsEnduroCollectionWorkflowHistoryViewToEnduroCollection
 		ID:      v.ID,
 		Type:    v.Type,
 		Details: v.Details,
+	}
+
+	return res
+}
+
+// marshalCollectionviewsEnduroCollectionPreservationActionsActionViewToEnduroCollectionPreservationActionsActionResponseBody
+// builds a value of type
+// *EnduroCollectionPreservationActionsActionResponseBody from a value of type
+// *collectionviews.EnduroCollectionPreservationActionsActionView.
+func marshalCollectionviewsEnduroCollectionPreservationActionsActionViewToEnduroCollectionPreservationActionsActionResponseBody(v *collectionviews.EnduroCollectionPreservationActionsActionView) *EnduroCollectionPreservationActionsActionResponseBody {
+	if v == nil {
+		return nil
+	}
+	res := &EnduroCollectionPreservationActionsActionResponseBody{
+		ID:        *v.ID,
+		ActionID:  *v.ActionID,
+		Name:      *v.Name,
+		Status:    *v.Status,
+		StartedAt: *v.StartedAt,
 	}
 
 	return res

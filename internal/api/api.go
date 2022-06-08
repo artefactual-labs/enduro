@@ -27,18 +27,13 @@ import (
 	"github.com/artefactual-labs/enduro/internal/api/gen/collection"
 	batchsvr "github.com/artefactual-labs/enduro/internal/api/gen/http/batch/server"
 	collectionsvr "github.com/artefactual-labs/enduro/internal/api/gen/http/collection/server"
-	pipelinesvr "github.com/artefactual-labs/enduro/internal/api/gen/http/pipeline/server"
 	swaggersvr "github.com/artefactual-labs/enduro/internal/api/gen/http/swagger/server"
-	"github.com/artefactual-labs/enduro/internal/api/gen/pipeline"
 	intbatch "github.com/artefactual-labs/enduro/internal/batch"
 	intcol "github.com/artefactual-labs/enduro/internal/collection"
-	intpipe "github.com/artefactual-labs/enduro/internal/pipeline"
-	"github.com/artefactual-labs/enduro/ui"
 )
 
 func HTTPServer(
 	logger logr.Logger, config *Config,
-	pipesvc intpipe.Service,
 	batchsvc intbatch.Service,
 	colsvc intcol.Service,
 ) *http.Server {
@@ -51,12 +46,6 @@ func HTTPServer(
 		CheckOrigin:      sameOriginChecker(logger),
 	}
 
-	// Pipeline service.
-	var pipelineEndpoints *pipeline.Endpoints = pipeline.NewEndpoints(pipesvc)
-	pipelineErrorHandler := errorHandler(logger, "Pipeline error.")
-	var pipelineServer *pipelinesvr.Server = pipelinesvr.New(pipelineEndpoints, mux, dec, enc, pipelineErrorHandler, nil)
-	pipelinesvr.Mount(mux, pipelineServer)
-
 	// Batch service.
 	var batchEndpoints *batch.Endpoints = batch.NewEndpoints(batchsvc)
 	batchErrorHandler := errorHandler(logger, "Batch error.")
@@ -67,18 +56,11 @@ func HTTPServer(
 	var collectionEndpoints *collection.Endpoints = collection.NewEndpoints(colsvc.Goa())
 	collectionErrorHandler := errorHandler(logger, "Collection error.")
 	var collectionServer *collectionsvr.Server = collectionsvr.New(collectionEndpoints, mux, dec, enc, collectionErrorHandler, nil, websocketUpgrader, nil)
-	// Intercept request in Download endpoint so we can serve the file directly.
-	collectionServer.Download = colsvc.HTTPDownload(mux, dec)
 	collectionsvr.Mount(mux, collectionServer)
 
 	// Swagger service.
 	var swaggerService *swaggersvr.Server = swaggersvr.New(nil, nil, nil, nil, nil, nil, nil)
 	swaggersvr.Mount(mux, swaggerService)
-
-	// Web handler.
-	web := ui.SPAHandler()
-	mux.Handle("GET", "/", web)
-	mux.Handle("GET", "/{*filename}", web)
 
 	// Global middlewares.
 	var handler http.Handler = mux

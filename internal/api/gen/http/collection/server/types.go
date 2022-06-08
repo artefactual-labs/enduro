@@ -53,14 +53,8 @@ type ShowResponseBody struct {
 	WorkflowID *string `form:"workflow_id,omitempty" json:"workflow_id,omitempty" xml:"workflow_id,omitempty"`
 	// Identifier of latest processing workflow run
 	RunID *string `form:"run_id,omitempty" json:"run_id,omitempty" xml:"run_id,omitempty"`
-	// Identifier of Archivematica transfer
-	TransferID *string `form:"transfer_id,omitempty" json:"transfer_id,omitempty" xml:"transfer_id,omitempty"`
 	// Identifier of Archivematica AIP
 	AipID *string `form:"aip_id,omitempty" json:"aip_id,omitempty" xml:"aip_id,omitempty"`
-	// Identifier provided by the client
-	OriginalID *string `form:"original_id,omitempty" json:"original_id,omitempty" xml:"original_id,omitempty"`
-	// Identifier of Archivematica pipeline
-	PipelineID *string `form:"pipeline_id,omitempty" json:"pipeline_id,omitempty" xml:"pipeline_id,omitempty"`
 	// Creation datetime
 	CreatedAt string `form:"created_at" json:"created_at" xml:"created_at"`
 	// Start datetime
@@ -92,6 +86,12 @@ type BulkStatusResponseBody struct {
 	Status     *string `form:"status,omitempty" json:"status,omitempty" xml:"status,omitempty"`
 	WorkflowID *string `form:"workflow_id,omitempty" json:"workflow_id,omitempty" xml:"workflow_id,omitempty"`
 	RunID      *string `form:"run_id,omitempty" json:"run_id,omitempty" xml:"run_id,omitempty"`
+}
+
+// PreservationActionsResponseBody is the type of the "collection" service
+// "preservation-actions" endpoint HTTP response body.
+type PreservationActionsResponseBody struct {
+	Actions EnduroCollectionPreservationActionsActionResponseBodyCollection `form:"actions,omitempty" json:"actions,omitempty" xml:"actions,omitempty"`
 }
 
 // ShowNotFoundResponseBody is the type of the "collection" service "show"
@@ -184,33 +184,6 @@ type DownloadNotFoundResponseBody struct {
 	ID uint `form:"id" json:"id" xml:"id"`
 }
 
-// DecideNotFoundResponseBody is the type of the "collection" service "decide"
-// endpoint HTTP response body for the "not_found" error.
-type DecideNotFoundResponseBody struct {
-	// Message of error
-	Message string `form:"message" json:"message" xml:"message"`
-	// Identifier of missing collection
-	ID uint `form:"id" json:"id" xml:"id"`
-}
-
-// DecideNotValidResponseBody is the type of the "collection" service "decide"
-// endpoint HTTP response body for the "not_valid" error.
-type DecideNotValidResponseBody struct {
-	// Name is the name of this class of errors.
-	Name string `form:"name" json:"name" xml:"name"`
-	// ID is a unique identifier for this particular occurrence of the problem.
-	ID string `form:"id" json:"id" xml:"id"`
-	// Message is a human-readable explanation specific to this occurrence of the
-	// problem.
-	Message string `form:"message" json:"message" xml:"message"`
-	// Is the error temporary?
-	Temporary bool `form:"temporary" json:"temporary" xml:"temporary"`
-	// Is the error a timeout?
-	Timeout bool `form:"timeout" json:"timeout" xml:"timeout"`
-	// Is the error a server-side fault?
-	Fault bool `form:"fault" json:"fault" xml:"fault"`
-}
-
 // BulkNotAvailableResponseBody is the type of the "collection" service "bulk"
 // endpoint HTTP response body for the "not_available" error.
 type BulkNotAvailableResponseBody struct {
@@ -247,6 +220,16 @@ type BulkNotValidResponseBody struct {
 	Fault bool `form:"fault" json:"fault" xml:"fault"`
 }
 
+// PreservationActionsNotFoundResponseBody is the type of the "collection"
+// service "preservation-actions" endpoint HTTP response body for the
+// "not_found" error.
+type PreservationActionsNotFoundResponseBody struct {
+	// Message of error
+	Message string `form:"message" json:"message" xml:"message"`
+	// Identifier of missing collection
+	ID uint `form:"id" json:"id" xml:"id"`
+}
+
 // EnduroStoredCollectionResponseBody is used to define fields on response body
 // types.
 type EnduroStoredCollectionResponseBody struct {
@@ -260,14 +243,8 @@ type EnduroStoredCollectionResponseBody struct {
 	WorkflowID *string `form:"workflow_id,omitempty" json:"workflow_id,omitempty" xml:"workflow_id,omitempty"`
 	// Identifier of latest processing workflow run
 	RunID *string `form:"run_id,omitempty" json:"run_id,omitempty" xml:"run_id,omitempty"`
-	// Identifier of Archivematica transfer
-	TransferID *string `form:"transfer_id,omitempty" json:"transfer_id,omitempty" xml:"transfer_id,omitempty"`
 	// Identifier of Archivematica AIP
 	AipID *string `form:"aip_id,omitempty" json:"aip_id,omitempty" xml:"aip_id,omitempty"`
-	// Identifier provided by the client
-	OriginalID *string `form:"original_id,omitempty" json:"original_id,omitempty" xml:"original_id,omitempty"`
-	// Identifier of Archivematica pipeline
-	PipelineID *string `form:"pipeline_id,omitempty" json:"pipeline_id,omitempty" xml:"pipeline_id,omitempty"`
 	// Creation datetime
 	CreatedAt string `form:"created_at" json:"created_at" xml:"created_at"`
 	// Start datetime
@@ -293,6 +270,20 @@ type EnduroCollectionWorkflowHistoryResponseBody struct {
 	Type *string `form:"type,omitempty" json:"type,omitempty" xml:"type,omitempty"`
 	// Contents of the event
 	Details interface{} `form:"details,omitempty" json:"details,omitempty" xml:"details,omitempty"`
+}
+
+// EnduroCollectionPreservationActionsActionResponseBodyCollection is used to
+// define fields on response body types.
+type EnduroCollectionPreservationActionsActionResponseBodyCollection []*EnduroCollectionPreservationActionsActionResponseBody
+
+// EnduroCollectionPreservationActionsActionResponseBody is used to define
+// fields on response body types.
+type EnduroCollectionPreservationActionsActionResponseBody struct {
+	ID        uint   `form:"id" json:"id" xml:"id"`
+	ActionID  string `form:"action_id" json:"action_id" xml:"action_id"`
+	Name      string `form:"name" json:"name" xml:"name"`
+	Status    string `form:"status" json:"status" xml:"status"`
+	StartedAt string `form:"started_at" json:"started_at" xml:"started_at"`
 }
 
 // NewMonitorResponseBody builds the HTTP response body from the result of the
@@ -332,10 +323,7 @@ func NewShowResponseBody(res *collectionviews.EnduroStoredCollectionView) *ShowR
 		Status:      *res.Status,
 		WorkflowID:  res.WorkflowID,
 		RunID:       res.RunID,
-		TransferID:  res.TransferID,
 		AipID:       res.AipID,
-		OriginalID:  res.OriginalID,
-		PipelineID:  res.PipelineID,
 		CreatedAt:   *res.CreatedAt,
 		StartedAt:   res.StartedAt,
 		CompletedAt: res.CompletedAt,
@@ -378,6 +366,19 @@ func NewBulkStatusResponseBody(res *collection.BulkStatusResult) *BulkStatusResp
 		Status:     res.Status,
 		WorkflowID: res.WorkflowID,
 		RunID:      res.RunID,
+	}
+	return body
+}
+
+// NewPreservationActionsResponseBody builds the HTTP response body from the
+// result of the "preservation-actions" endpoint of the "collection" service.
+func NewPreservationActionsResponseBody(res *collectionviews.EnduroCollectionPreservationActionsView) *PreservationActionsResponseBody {
+	body := &PreservationActionsResponseBody{}
+	if res.Actions != nil {
+		body.Actions = make([]*EnduroCollectionPreservationActionsActionResponseBody, len(res.Actions))
+		for i, val := range res.Actions {
+			body.Actions[i] = marshalCollectionviewsEnduroCollectionPreservationActionsActionViewToEnduroCollectionPreservationActionsActionResponseBody(val)
+		}
 	}
 	return body
 }
@@ -470,30 +471,6 @@ func NewDownloadNotFoundResponseBody(res *collection.CollectionNotfound) *Downlo
 	return body
 }
 
-// NewDecideNotFoundResponseBody builds the HTTP response body from the result
-// of the "decide" endpoint of the "collection" service.
-func NewDecideNotFoundResponseBody(res *collection.CollectionNotfound) *DecideNotFoundResponseBody {
-	body := &DecideNotFoundResponseBody{
-		Message: res.Message,
-		ID:      res.ID,
-	}
-	return body
-}
-
-// NewDecideNotValidResponseBody builds the HTTP response body from the result
-// of the "decide" endpoint of the "collection" service.
-func NewDecideNotValidResponseBody(res *goa.ServiceError) *DecideNotValidResponseBody {
-	body := &DecideNotValidResponseBody{
-		Name:      res.Name,
-		ID:        res.ID,
-		Message:   res.Message,
-		Temporary: res.Temporary,
-		Timeout:   res.Timeout,
-		Fault:     res.Fault,
-	}
-	return body
-}
-
 // NewBulkNotAvailableResponseBody builds the HTTP response body from the
 // result of the "bulk" endpoint of the "collection" service.
 func NewBulkNotAvailableResponseBody(res *goa.ServiceError) *BulkNotAvailableResponseBody {
@@ -522,14 +499,22 @@ func NewBulkNotValidResponseBody(res *goa.ServiceError) *BulkNotValidResponseBod
 	return body
 }
 
+// NewPreservationActionsNotFoundResponseBody builds the HTTP response body
+// from the result of the "preservation-actions" endpoint of the "collection"
+// service.
+func NewPreservationActionsNotFoundResponseBody(res *collection.CollectionNotfound) *PreservationActionsNotFoundResponseBody {
+	body := &PreservationActionsNotFoundResponseBody{
+		Message: res.Message,
+		ID:      res.ID,
+	}
+	return body
+}
+
 // NewListPayload builds a collection service list endpoint payload.
-func NewListPayload(name *string, originalID *string, transferID *string, aipID *string, pipelineID *string, earliestCreatedTime *string, latestCreatedTime *string, status *string, cursor *string) *collection.ListPayload {
+func NewListPayload(name *string, aipID *string, earliestCreatedTime *string, latestCreatedTime *string, status *string, cursor *string) *collection.ListPayload {
 	v := &collection.ListPayload{}
 	v.Name = name
-	v.OriginalID = originalID
-	v.TransferID = transferID
 	v.AipID = aipID
-	v.PipelineID = pipelineID
 	v.EarliestCreatedTime = earliestCreatedTime
 	v.LatestCreatedTime = latestCreatedTime
 	v.Status = status
@@ -586,20 +571,6 @@ func NewDownloadPayload(id uint) *collection.DownloadPayload {
 	return v
 }
 
-// NewDecidePayload builds a collection service decide endpoint payload.
-func NewDecidePayload(body struct {
-	// Decision option to proceed with
-	Option *string `form:"option" json:"option" xml:"option"`
-}, id uint) *collection.DecidePayload {
-	v := &collection.DecidePayload{}
-	if body.Option != nil {
-		v.Option = *body.Option
-	}
-	v.ID = id
-
-	return v
-}
-
 // NewBulkPayload builds a collection service bulk endpoint payload.
 func NewBulkPayload(body *BulkRequestBody) *collection.BulkPayload {
 	v := &collection.BulkPayload{
@@ -612,6 +583,15 @@ func NewBulkPayload(body *BulkRequestBody) *collection.BulkPayload {
 	if body.Size == nil {
 		v.Size = 100
 	}
+
+	return v
+}
+
+// NewPreservationActionsPayload builds a collection service
+// preservation-actions endpoint payload.
+func NewPreservationActionsPayload(id uint) *collection.PreservationActionsPayload {
+	v := &collection.PreservationActionsPayload{}
+	v.ID = id
 
 	return v
 }

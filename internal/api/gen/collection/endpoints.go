@@ -16,17 +16,17 @@ import (
 
 // Endpoints wraps the "collection" service endpoints.
 type Endpoints struct {
-	Monitor    goa.Endpoint
-	List       goa.Endpoint
-	Show       goa.Endpoint
-	Delete     goa.Endpoint
-	Cancel     goa.Endpoint
-	Retry      goa.Endpoint
-	Workflow   goa.Endpoint
-	Download   goa.Endpoint
-	Decide     goa.Endpoint
-	Bulk       goa.Endpoint
-	BulkStatus goa.Endpoint
+	Monitor             goa.Endpoint
+	List                goa.Endpoint
+	Show                goa.Endpoint
+	Delete              goa.Endpoint
+	Cancel              goa.Endpoint
+	Retry               goa.Endpoint
+	Workflow            goa.Endpoint
+	Download            goa.Endpoint
+	Bulk                goa.Endpoint
+	BulkStatus          goa.Endpoint
+	PreservationActions goa.Endpoint
 }
 
 // MonitorEndpointInput holds both the payload and the server stream of the
@@ -39,17 +39,17 @@ type MonitorEndpointInput struct {
 // NewEndpoints wraps the methods of the "collection" service with endpoints.
 func NewEndpoints(s Service) *Endpoints {
 	return &Endpoints{
-		Monitor:    NewMonitorEndpoint(s),
-		List:       NewListEndpoint(s),
-		Show:       NewShowEndpoint(s),
-		Delete:     NewDeleteEndpoint(s),
-		Cancel:     NewCancelEndpoint(s),
-		Retry:      NewRetryEndpoint(s),
-		Workflow:   NewWorkflowEndpoint(s),
-		Download:   NewDownloadEndpoint(s),
-		Decide:     NewDecideEndpoint(s),
-		Bulk:       NewBulkEndpoint(s),
-		BulkStatus: NewBulkStatusEndpoint(s),
+		Monitor:             NewMonitorEndpoint(s),
+		List:                NewListEndpoint(s),
+		Show:                NewShowEndpoint(s),
+		Delete:              NewDeleteEndpoint(s),
+		Cancel:              NewCancelEndpoint(s),
+		Retry:               NewRetryEndpoint(s),
+		Workflow:            NewWorkflowEndpoint(s),
+		Download:            NewDownloadEndpoint(s),
+		Bulk:                NewBulkEndpoint(s),
+		BulkStatus:          NewBulkStatusEndpoint(s),
+		PreservationActions: NewPreservationActionsEndpoint(s),
 	}
 }
 
@@ -63,9 +63,9 @@ func (e *Endpoints) Use(m func(goa.Endpoint) goa.Endpoint) {
 	e.Retry = m(e.Retry)
 	e.Workflow = m(e.Workflow)
 	e.Download = m(e.Download)
-	e.Decide = m(e.Decide)
 	e.Bulk = m(e.Bulk)
 	e.BulkStatus = m(e.BulkStatus)
+	e.PreservationActions = m(e.PreservationActions)
 }
 
 // NewMonitorEndpoint returns an endpoint function that calls the method
@@ -150,15 +150,6 @@ func NewDownloadEndpoint(s Service) goa.Endpoint {
 	}
 }
 
-// NewDecideEndpoint returns an endpoint function that calls the method
-// "decide" of service "collection".
-func NewDecideEndpoint(s Service) goa.Endpoint {
-	return func(ctx context.Context, req interface{}) (interface{}, error) {
-		p := req.(*DecidePayload)
-		return nil, s.Decide(ctx, p)
-	}
-}
-
 // NewBulkEndpoint returns an endpoint function that calls the method "bulk" of
 // service "collection".
 func NewBulkEndpoint(s Service) goa.Endpoint {
@@ -173,5 +164,19 @@ func NewBulkEndpoint(s Service) goa.Endpoint {
 func NewBulkStatusEndpoint(s Service) goa.Endpoint {
 	return func(ctx context.Context, req interface{}) (interface{}, error) {
 		return s.BulkStatus(ctx)
+	}
+}
+
+// NewPreservationActionsEndpoint returns an endpoint function that calls the
+// method "preservation-actions" of service "collection".
+func NewPreservationActionsEndpoint(s Service) goa.Endpoint {
+	return func(ctx context.Context, req interface{}) (interface{}, error) {
+		p := req.(*PreservationActionsPayload)
+		res, err := s.PreservationActions(ctx, p)
+		if err != nil {
+			return nil, err
+		}
+		vres := NewViewedEnduroCollectionPreservationActions(res, "default")
+		return vres, nil
 	}
 }

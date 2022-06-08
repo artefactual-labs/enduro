@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: enduro-a3m
+  labels:
+    app: enduro-a3m
+spec:
+  serviceName: enduro-a3m
+  selector:
+    matchLabels:
+      app: enduro-a3m
+  template:
+    metadata:
+      labels:
+        app: enduro-a3m
+    spec:
+      securityContext:
+        fsGroup: 1000
+      initContainers:
+        - name: check-temporal
+          image: busybox
+          imagePullPolicy: IfNotPresent
+          command:
+            [
+              "sh",
+              "-c",
+              "until echo STATUS | nc -w 2 temporal 7233; do echo waiting for temporal to start; sleep 1; done;",
+            ]
+      containers:
+        - name: enduro-a3m-worker
+          image: enduro-a3m-worker:dev
+          imagePullPolicy: Never
+          volumeMounts:
+            - name: enduro-a3m
+              mountPath: /home/a3m/.local/share/a3m/share
+        - name: a3m
+          image: ghcr.io/artefactual-labs/a3m:main
+          imagePullPolicy: Always
+          env:
+            - name: A3M_DEBUG
+              value: "true"
+          ports:
+            - containerPort: 7000
+          volumeMounts:
+            - name: enduro-a3m
+              mountPath: /home/a3m/.local/share/a3m/share
+  volumeClaimTemplates:
+    - metadata:
+        name: enduro-a3m
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 10Gi

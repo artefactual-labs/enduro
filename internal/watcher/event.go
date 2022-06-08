@@ -8,16 +8,13 @@ import (
 // BlobEvent is a serializable event that describes a blob.
 //
 // BlobEvent can be sent over the wire, i.e. they're serializable. Receivers,
-// typicially Cadence activities, can download the blob via the service
+// typicially Temporal activities, can download the blob via the service
 // implementation in this package.
 //
 // TODO: use signed URLs to simplify access to buckets?
 type BlobEvent struct {
 	// Name of the watcher that received this blob.
 	WatcherName string
-
-	// Name of the pipeline that the watcher targets.
-	PipelineName []string
 
 	// Retention period for this blob.
 	RetentionPeriod *time.Duration
@@ -42,7 +39,6 @@ type BlobEvent struct {
 func NewBlobEvent(w Watcher, key string, isDir bool) *BlobEvent {
 	return &BlobEvent{
 		WatcherName:      w.String(),
-		PipelineName:     w.Pipelines(),
 		RetentionPeriod:  w.RetentionPeriod(),
 		CompletedDir:     w.CompletedDir(),
 		StripTopLevelDir: w.StripTopLevelDir(),

@@ -53,14 +53,8 @@ type ShowResponseBody struct {
 	WorkflowID *string `form:"workflow_id,omitempty" json:"workflow_id,omitempty" xml:"workflow_id,omitempty"`
 	// Identifier of latest processing workflow run
 	RunID *string `form:"run_id,omitempty" json:"run_id,omitempty" xml:"run_id,omitempty"`
-	// Identifier of Archivematica transfer
-	TransferID *string `form:"transfer_id,omitempty" json:"transfer_id,omitempty" xml:"transfer_id,omitempty"`
 	// Identifier of Archivematica AIP
 	AipID *string `form:"aip_id,omitempty" json:"aip_id,omitempty" xml:"aip_id,omitempty"`
-	// Identifier provided by the client
-	OriginalID *string `form:"original_id,omitempty" json:"original_id,omitempty" xml:"original_id,omitempty"`
-	// Identifier of Archivematica pipeline
-	PipelineID *string `form:"pipeline_id,omitempty" json:"pipeline_id,omitempty" xml:"pipeline_id,omitempty"`
 	// Creation datetime
 	CreatedAt *string `form:"created_at,omitempty" json:"created_at,omitempty" xml:"created_at,omitempty"`
 	// Start datetime
@@ -92,6 +86,12 @@ type BulkStatusResponseBody struct {
 	Status     *string `form:"status,omitempty" json:"status,omitempty" xml:"status,omitempty"`
 	WorkflowID *string `form:"workflow_id,omitempty" json:"workflow_id,omitempty" xml:"workflow_id,omitempty"`
 	RunID      *string `form:"run_id,omitempty" json:"run_id,omitempty" xml:"run_id,omitempty"`
+}
+
+// PreservationActionsResponseBody is the type of the "collection" service
+// "preservation-actions" endpoint HTTP response body.
+type PreservationActionsResponseBody struct {
+	Actions EnduroCollectionPreservationActionsActionCollectionResponseBody `form:"actions,omitempty" json:"actions,omitempty" xml:"actions,omitempty"`
 }
 
 // ShowNotFoundResponseBody is the type of the "collection" service "show"
@@ -184,33 +184,6 @@ type DownloadNotFoundResponseBody struct {
 	ID *uint `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
 }
 
-// DecideNotFoundResponseBody is the type of the "collection" service "decide"
-// endpoint HTTP response body for the "not_found" error.
-type DecideNotFoundResponseBody struct {
-	// Message of error
-	Message *string `form:"message,omitempty" json:"message,omitempty" xml:"message,omitempty"`
-	// Identifier of missing collection
-	ID *uint `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
-}
-
-// DecideNotValidResponseBody is the type of the "collection" service "decide"
-// endpoint HTTP response body for the "not_valid" error.
-type DecideNotValidResponseBody struct {
-	// Name is the name of this class of errors.
-	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
-	// ID is a unique identifier for this particular occurrence of the problem.
-	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
-	// Message is a human-readable explanation specific to this occurrence of the
-	// problem.
-	Message *string `form:"message,omitempty" json:"message,omitempty" xml:"message,omitempty"`
-	// Is the error temporary?
-	Temporary *bool `form:"temporary,omitempty" json:"temporary,omitempty" xml:"temporary,omitempty"`
-	// Is the error a timeout?
-	Timeout *bool `form:"timeout,omitempty" json:"timeout,omitempty" xml:"timeout,omitempty"`
-	// Is the error a server-side fault?
-	Fault *bool `form:"fault,omitempty" json:"fault,omitempty" xml:"fault,omitempty"`
-}
-
 // BulkNotAvailableResponseBody is the type of the "collection" service "bulk"
 // endpoint HTTP response body for the "not_available" error.
 type BulkNotAvailableResponseBody struct {
@@ -247,6 +220,16 @@ type BulkNotValidResponseBody struct {
 	Fault *bool `form:"fault,omitempty" json:"fault,omitempty" xml:"fault,omitempty"`
 }
 
+// PreservationActionsNotFoundResponseBody is the type of the "collection"
+// service "preservation-actions" endpoint HTTP response body for the
+// "not_found" error.
+type PreservationActionsNotFoundResponseBody struct {
+	// Message of error
+	Message *string `form:"message,omitempty" json:"message,omitempty" xml:"message,omitempty"`
+	// Identifier of missing collection
+	ID *uint `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
+}
+
 // EnduroStoredCollectionResponseBody is used to define fields on response body
 // types.
 type EnduroStoredCollectionResponseBody struct {
@@ -260,14 +243,8 @@ type EnduroStoredCollectionResponseBody struct {
 	WorkflowID *string `form:"workflow_id,omitempty" json:"workflow_id,omitempty" xml:"workflow_id,omitempty"`
 	// Identifier of latest processing workflow run
 	RunID *string `form:"run_id,omitempty" json:"run_id,omitempty" xml:"run_id,omitempty"`
-	// Identifier of Archivematica transfer
-	TransferID *string `form:"transfer_id,omitempty" json:"transfer_id,omitempty" xml:"transfer_id,omitempty"`
 	// Identifier of Archivematica AIP
 	AipID *string `form:"aip_id,omitempty" json:"aip_id,omitempty" xml:"aip_id,omitempty"`
-	// Identifier provided by the client
-	OriginalID *string `form:"original_id,omitempty" json:"original_id,omitempty" xml:"original_id,omitempty"`
-	// Identifier of Archivematica pipeline
-	PipelineID *string `form:"pipeline_id,omitempty" json:"pipeline_id,omitempty" xml:"pipeline_id,omitempty"`
 	// Creation datetime
 	CreatedAt *string `form:"created_at,omitempty" json:"created_at,omitempty" xml:"created_at,omitempty"`
 	// Start datetime
@@ -293,6 +270,20 @@ type EnduroCollectionWorkflowHistoryResponseBody struct {
 	Type *string `form:"type,omitempty" json:"type,omitempty" xml:"type,omitempty"`
 	// Contents of the event
 	Details interface{} `form:"details,omitempty" json:"details,omitempty" xml:"details,omitempty"`
+}
+
+// EnduroCollectionPreservationActionsActionCollectionResponseBody is used to
+// define fields on response body types.
+type EnduroCollectionPreservationActionsActionCollectionResponseBody []*EnduroCollectionPreservationActionsActionResponseBody
+
+// EnduroCollectionPreservationActionsActionResponseBody is used to define
+// fields on response body types.
+type EnduroCollectionPreservationActionsActionResponseBody struct {
+	ID        *uint   `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
+	ActionID  *string `form:"action_id,omitempty" json:"action_id,omitempty" xml:"action_id,omitempty"`
+	Name      *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
+	Status    *string `form:"status,omitempty" json:"status,omitempty" xml:"status,omitempty"`
+	StartedAt *string `form:"started_at,omitempty" json:"started_at,omitempty" xml:"started_at,omitempty"`
 }
 
 // NewBulkRequestBody builds the HTTP request body from the payload of the
@@ -349,10 +340,7 @@ func NewShowEnduroStoredCollectionOK(body *ShowResponseBody) *collectionviews.En
 		Status:      body.Status,
 		WorkflowID:  body.WorkflowID,
 		RunID:       body.RunID,
-		TransferID:  body.TransferID,
 		AipID:       body.AipID,
-		OriginalID:  body.OriginalID,
-		PipelineID:  body.PipelineID,
 		CreatedAt:   body.CreatedAt,
 		StartedAt:   body.StartedAt,
 		CompletedAt: body.CompletedAt,
@@ -471,32 +459,6 @@ func NewDownloadNotFound(body *DownloadNotFoundResponseBody) *collection.Collect
 	return v
 }
 
-// NewDecideNotFound builds a collection service decide endpoint not_found
-// error.
-func NewDecideNotFound(body *DecideNotFoundResponseBody) *collection.CollectionNotfound {
-	v := &collection.CollectionNotfound{
-		Message: *body.Message,
-		ID:      *body.ID,
-	}
-
-	return v
-}
-
-// NewDecideNotValid builds a collection service decide endpoint not_valid
-// error.
-func NewDecideNotValid(body *DecideNotValidResponseBody) *goa.ServiceError {
-	v := &goa.ServiceError{
-		Name:      *body.Name,
-		ID:        *body.ID,
-		Message:   *body.Message,
-		Temporary: *body.Temporary,
-		Timeout:   *body.Timeout,
-		Fault:     *body.Fault,
-	}
-
-	return v
-}
-
 // NewBulkResultAccepted builds a "collection" service "bulk" endpoint result
 // from a HTTP "Accepted" response.
 func NewBulkResultAccepted(body *BulkResponseBody) *collection.BulkResult {
@@ -547,6 +509,32 @@ func NewBulkStatusResultOK(body *BulkStatusResponseBody) *collection.BulkStatusR
 		Status:     body.Status,
 		WorkflowID: body.WorkflowID,
 		RunID:      body.RunID,
+	}
+
+	return v
+}
+
+// NewPreservationActionsEnduroCollectionPreservationActionsOK builds a
+// "collection" service "preservation-actions" endpoint result from a HTTP "OK"
+// response.
+func NewPreservationActionsEnduroCollectionPreservationActionsOK(body *PreservationActionsResponseBody) *collectionviews.EnduroCollectionPreservationActionsView {
+	v := &collectionviews.EnduroCollectionPreservationActionsView{}
+	if body.Actions != nil {
+		v.Actions = make([]*collectionviews.EnduroCollectionPreservationActionsActionView, len(body.Actions))
+		for i, val := range body.Actions {
+			v.Actions[i] = unmarshalEnduroCollectionPreservationActionsActionResponseBodyToCollectionviewsEnduroCollectionPreservationActionsActionView(val)
+		}
+	}
+
+	return v
+}
+
+// NewPreservationActionsNotFound builds a collection service
+// preservation-actions endpoint not_found error.
+func NewPreservationActionsNotFound(body *PreservationActionsNotFoundResponseBody) *collection.CollectionNotfound {
+	v := &collection.CollectionNotfound{
+		Message: *body.Message,
+		ID:      *body.ID,
 	}
 
 	return v
@@ -709,42 +697,6 @@ func ValidateDownloadNotFoundResponseBody(body *DownloadNotFoundResponseBody) (e
 	return
 }
 
-// ValidateDecideNotFoundResponseBody runs the validations defined on
-// decide_not_found_response_body
-func ValidateDecideNotFoundResponseBody(body *DecideNotFoundResponseBody) (err error) {
-	if body.Message == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("message", "body"))
-	}
-	if body.ID == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("id", "body"))
-	}
-	return
-}
-
-// ValidateDecideNotValidResponseBody runs the validations defined on
-// decide_not_valid_response_body
-func ValidateDecideNotValidResponseBody(body *DecideNotValidResponseBody) (err error) {
-	if body.Name == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("name", "body"))
-	}
-	if body.ID == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("id", "body"))
-	}
-	if body.Message == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("message", "body"))
-	}
-	if body.Temporary == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("temporary", "body"))
-	}
-	if body.Timeout == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("timeout", "body"))
-	}
-	if body.Fault == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("fault", "body"))
-	}
-	return
-}
-
 // ValidateBulkNotAvailableResponseBody runs the validations defined on
 // bulk_not_available_response_body
 func ValidateBulkNotAvailableResponseBody(body *BulkNotAvailableResponseBody) (err error) {
@@ -793,6 +745,18 @@ func ValidateBulkNotValidResponseBody(body *BulkNotValidResponseBody) (err error
 	return
 }
 
+// ValidatePreservationActionsNotFoundResponseBody runs the validations defined
+// on preservation-actions_not_found_response_body
+func ValidatePreservationActionsNotFoundResponseBody(body *PreservationActionsNotFoundResponseBody) (err error) {
+	if body.Message == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("message", "body"))
+	}
+	if body.ID == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("id", "body"))
+	}
+	return
+}
+
 // ValidateEnduroStoredCollectionResponseBody runs the validations defined on
 // EnduroStored-CollectionResponseBody
 func ValidateEnduroStoredCollectionResponseBody(body *EnduroStoredCollectionResponseBody) (err error) {
@@ -816,14 +780,8 @@ func ValidateEnduroStoredCollectionResponseBody(body *EnduroStoredCollectionResp
 	if body.RunID != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("body.run_id", *body.RunID, goa.FormatUUID))
 	}
-	if body.TransferID != nil {
-		err = goa.MergeErrors(err, goa.ValidateFormat("body.transfer_id", *body.TransferID, goa.FormatUUID))
-	}
 	if body.AipID != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("body.aip_id", *body.AipID, goa.FormatUUID))
-	}
-	if body.PipelineID != nil {
-		err = goa.MergeErrors(err, goa.ValidateFormat("body.pipeline_id", *body.PipelineID, goa.FormatUUID))
 	}
 	if body.CreatedAt != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("body.created_at", *body.CreatedAt, goa.FormatDateTime))
@@ -846,6 +804,50 @@ func ValidateEnduroStoredCollectionCollectionResponseBody(body EnduroStoredColle
 				err = goa.MergeErrors(err, err2)
 			}
 		}
+	}
+	return
+}
+
+// ValidateEnduroCollectionPreservationActionsActionCollectionResponseBody runs
+// the validations defined on
+// EnduroCollection-Preservation-Actions-ActionCollectionResponseBody
+func ValidateEnduroCollectionPreservationActionsActionCollectionResponseBody(body EnduroCollectionPreservationActionsActionCollectionResponseBody) (err error) {
+	for _, e := range body {
+		if e != nil {
+			if err2 := ValidateEnduroCollectionPreservationActionsActionResponseBody(e); err2 != nil {
+				err = goa.MergeErrors(err, err2)
+			}
+		}
+	}
+	return
+}
+
+// ValidateEnduroCollectionPreservationActionsActionResponseBody runs the
+// validations defined on
+// EnduroCollection-Preservation-Actions-ActionResponseBody
+func ValidateEnduroCollectionPreservationActionsActionResponseBody(body *EnduroCollectionPreservationActionsActionResponseBody) (err error) {
+	if body.ID == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("id", "body"))
+	}
+	if body.ActionID == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("action_id", "body"))
+	}
+	if body.Name == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("name", "body"))
+	}
+	if body.Status == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("status", "body"))
+	}
+	if body.StartedAt == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("started_at", "body"))
+	}
+	if body.Status != nil {
+		if !(*body.Status == "unspecified" || *body.Status == "complete" || *body.Status == "processing" || *body.Status == "failed") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.status", *body.Status, []interface{}{"unspecified", "complete", "processing", "failed"}))
+		}
+	}
+	if body.StartedAt != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.started_at", *body.StartedAt, goa.FormatDateTime))
 	}
 	return
 }

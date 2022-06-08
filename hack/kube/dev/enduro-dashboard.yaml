@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: enduro-dashboard
+  labels:
+    app: enduro-dashboard
+spec:
+  selector:
+    matchLabels:
+      app: enduro-dashboard
+  template:
+    metadata:
+      labels:
+        app: enduro-dashboard
+    spec:
+      containers:
+        - name: enduro-dashboard
+          image: enduro-dashboard:dev
+          imagePullPolicy: Never
+          env:
+            - name: ENDURO_API_ADDRESS
+              value: http://enduro:9000
+          ports:
+            - containerPort: 3000
+          resources: {}

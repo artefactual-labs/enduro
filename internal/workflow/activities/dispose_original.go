@@ -5,22 +5,22 @@ import (
 	"path/filepath"
 
 	"github.com/artefactual-labs/enduro/internal/fsutil"
-	"github.com/artefactual-labs/enduro/internal/workflow/manager"
+	"github.com/artefactual-labs/enduro/internal/watcher"
 )
 
 type DisposeOriginalActivity struct {
-	manager *manager.Manager
+	wsvc watcher.Service
 }
 
-func NewDisposeOriginalActivity(m *manager.Manager) *DisposeOriginalActivity {
-	return &DisposeOriginalActivity{manager: m}
+func NewDisposeOriginalActivity(wsvc watcher.Service) *DisposeOriginalActivity {
+	return &DisposeOriginalActivity{wsvc: wsvc}
 }
 
 func (a *DisposeOriginalActivity) Execute(ctx context.Context, watcherName, completedDir, batchDir, key string) error {
 	if batchDir != "" {
 		return disposeOriginalFromBatch(completedDir, batchDir, key)
 	}
-	return a.manager.Watcher.Dispose(ctx, watcherName, key)
+	return a.wsvc.Dispose(ctx, watcherName, key)
 }
 
 func disposeOriginalFromBatch(completedDir, batchDir, key string) error {

@@ -9,16 +9,12 @@ import (
 
 // Collection represents a collection in the collection table.
 type Collection struct {
-	ID            uint   `db:"id"`
-	Name          string `db:"name"`
-	WorkflowID    string `db:"workflow_id"`
-	RunID         string `db:"run_id"`
-	TransferID    string `db:"transfer_id"`
-	AIPID         string `db:"aip_id"`
-	OriginalID    string `db:"original_id"`
-	PipelineID    string `db:"pipeline_id"`
-	DecisionToken string `db:"decision_token"`
-	Status        Status `db:"status"`
+	ID         uint   `db:"id"`
+	Name       string `db:"name"`
+	WorkflowID string `db:"workflow_id"`
+	RunID      string `db:"run_id"`
+	AIPID      string `db:"aip_id"`
+	Status     Status `db:"status"`
 
 	// It defaults to CURRENT_TIMESTAMP(6) so populated as soon as possible.
 	CreatedAt time.Time `db:"created_at"`
@@ -37,10 +33,7 @@ func (c Collection) Goa() *goacollection.EnduroStoredCollection {
 		Name:        formatOptionalString(c.Name),
 		WorkflowID:  formatOptionalString(c.WorkflowID),
 		RunID:       formatOptionalString(c.RunID),
-		TransferID:  formatOptionalString(c.TransferID),
 		AipID:       formatOptionalString(c.AIPID),
-		OriginalID:  formatOptionalString(c.OriginalID),
-		PipelineID:  formatOptionalString(c.PipelineID),
 		Status:      c.Status.String(),
 		CreatedAt:   formatTime(c.CreatedAt),
 		StartedAt:   formatOptionalTime(c.StartedAt),

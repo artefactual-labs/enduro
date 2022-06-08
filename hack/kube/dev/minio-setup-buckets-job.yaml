@@ -1,0 +1,29 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: minio-setup-buckets
+spec:
+  backoffLimit: 100
+  template:
+    spec:
+      restartPolicy: "OnFailure"
+      initContainers:
+        - name: check-minio
+          image: busybox
+          imagePullPolicy: IfNotPresent
+          command:
+            [
+              "sh",
+              "-c",
+              "until nslookup minio; do echo waiting for minio service; sleep 1; done;",
+            ]
+      containers:
+        - name: setup-buckets
+          image: "minio/mc"
+          imagePullPolicy: IfNotPresent
+          command:
+            [
+              "sh",
+              "-c",
+              "mc alias set enduro http://minio:9000 minio minio123; mc mb enduro/sips --ignore-existing; mc mb enduro/aips --ignore-existing; mc event add enduro/sips arn:minio:sqs::PRIMARY:redis --event put --ignore-existing",
+            ]

@@ -16,7 +16,6 @@ import (
 
 	batchc "github.com/artefactual-labs/enduro/internal/api/gen/http/batch/client"
 	collectionc "github.com/artefactual-labs/enduro/internal/api/gen/http/collection/client"
-	pipelinec "github.com/artefactual-labs/enduro/internal/api/gen/http/pipeline/client"
 	goahttp "goa.design/goa/v3/http"
 	goa "goa.design/goa/v3/pkg"
 )
@@ -26,21 +25,17 @@ import (
 //    command (subcommand1|subcommand2|...)
 //
 func UsageCommands() string {
-	return `pipeline (list|show|processing)
-batch (submit|status|hints)
-collection (monitor|list|show|delete|cancel|retry|workflow|download|decide|bulk|bulk-status)
+	return `batch (submit|status|hints)
+collection (monitor|list|show|delete|cancel|retry|workflow|download|bulk|bulk-status|preservation-actions)
 `
 }
 
 // UsageExamples produces an example of a valid invocation of the CLI tool.
 func UsageExamples() string {
-	return os.Args[0] + ` pipeline list --name "Porro numquam dolores doloribus."` + "\n" +
-		os.Args[0] + ` batch submit --body '{
-      "completed_dir": "Sit sed laboriosam.",
-      "path": "Provident voluptates iure et.",
-      "pipeline": "Ut dolor est.",
-      "processing_config": "Eum quis nihil soluta ut molestiae et.",
-      "retention_period": "Sit nihil."
+	return os.Args[0] + ` batch submit --body '{
+      "completed_dir": "Et enim esse aut accusantium deleniti beatae.",
+      "path": "Iste ut alias et.",
+      "retention_period": "Molestiae in."
    }'` + "\n" +
 		os.Args[0] + ` collection monitor` + "\n" +
 		""
@@ -58,17 +53,6 @@ func ParseEndpoint(
 	collectionConfigurer *collectionc.ConnConfigurer,
 ) (goa.Endpoint, interface{}, error) {
 	var (
-		pipelineFlags = flag.NewFlagSet("pipeline", flag.ContinueOnError)
-
-		pipelineListFlags    = flag.NewFlagSet("list", flag.ExitOnError)
-		pipelineListNameFlag = pipelineListFlags.String("name", "", "")
-
-		pipelineShowFlags  = flag.NewFlagSet("show", flag.ExitOnError)
-		pipelineShowIDFlag = pipelineShowFlags.String("id", "REQUIRED", "Identifier of pipeline to show")
-
-		pipelineProcessingFlags  = flag.NewFlagSet("processing", flag.ExitOnError)
-		pipelineProcessingIDFlag = pipelineProcessingFlags.String("id", "REQUIRED", "Identifier of pipeline")
-
 		batchFlags = flag.NewFlagSet("batch", flag.ContinueOnError)
 
 		batchSubmitFlags    = flag.NewFlagSet("submit", flag.ExitOnError)
@@ -84,10 +68,7 @@ func ParseEndpoint(
 
 		collectionListFlags                   = flag.NewFlagSet("list", flag.ExitOnError)
 		collectionListNameFlag                = collectionListFlags.String("name", "", "")
-		collectionListOriginalIDFlag          = collectionListFlags.String("original-id", "", "")
-		collectionListTransferIDFlag          = collectionListFlags.String("transfer-id", "", "")
 		collectionListAipIDFlag               = collectionListFlags.String("aip-id", "", "")
-		collectionListPipelineIDFlag          = collectionListFlags.String("pipeline-id", "", "")
 		collectionListEarliestCreatedTimeFlag = collectionListFlags.String("earliest-created-time", "", "")
 		collectionListLatestCreatedTimeFlag   = collectionListFlags.String("latest-created-time", "", "")
 		collectionListStatusFlag              = collectionListFlags.String("status", "", "")
@@ -111,20 +92,14 @@ func ParseEndpoint(
 		collectionDownloadFlags  = flag.NewFlagSet("download", flag.ExitOnError)
 		collectionDownloadIDFlag = collectionDownloadFlags.String("id", "REQUIRED", "Identifier of collection to look up")
 
-		collectionDecideFlags    = flag.NewFlagSet("decide", flag.ExitOnError)
-		collectionDecideBodyFlag = collectionDecideFlags.String("body", "REQUIRED", "")
-		collectionDecideIDFlag   = collectionDecideFlags.String("id", "REQUIRED", "Identifier of collection to look up")
-
 		collectionBulkFlags    = flag.NewFlagSet("bulk", flag.ExitOnError)
 		collectionBulkBodyFlag = collectionBulkFlags.String("body", "REQUIRED", "")
 
 		collectionBulkStatusFlags = flag.NewFlagSet("bulk-status", flag.ExitOnError)
-	)
-	pipelineFlags.Usage = pipelineUsage
-	pipelineListFlags.Usage = pipelineListUsage
-	pipelineShowFlags.Usage = pipelineShowUsage
-	pipelineProcessingFlags.Usage = pipelineProcessingUsage
 
+		collectionPreservationActionsFlags  = flag.NewFlagSet("preservation-actions", flag.ExitOnError)
+		collectionPreservationActionsIDFlag = collectionPreservationActionsFlags.String("id", "REQUIRED", "Identifier of collection to look up")
+	)
 	batchFlags.Usage = batchUsage
 	batchSubmitFlags.Usage = batchSubmitUsage
 	batchStatusFlags.Usage = batchStatusUsage
@@ -139,9 +114,9 @@ func ParseEndpoint(
 	collectionRetryFlags.Usage = collectionRetryUsage
 	collectionWorkflowFlags.Usage = collectionWorkflowUsage
 	collectionDownloadFlags.Usage = collectionDownloadUsage
-	collectionDecideFlags.Usage = collectionDecideUsage
 	collectionBulkFlags.Usage = collectionBulkUsage
 	collectionBulkStatusFlags.Usage = collectionBulkStatusUsage
+	collectionPreservationActionsFlags.Usage = collectionPreservationActionsUsage
 
 	if err := flag.CommandLine.Parse(os.Args[1:]); err != nil {
 		return nil, nil, err
@@ -158,8 +133,6 @@ func ParseEndpoint(
 	{
 		svcn = flag.Arg(0)
 		switch svcn {
-		case "pipeline":
-			svcf = pipelineFlags
 		case "batch":
 			svcf = batchFlags
 		case "collection":
@@ -179,19 +152,6 @@ func ParseEndpoint(
 	{
 		epn = svcf.Arg(0)
 		switch svcn {
-		case "pipeline":
-			switch epn {
-			case "list":
-				epf = pipelineListFlags
-
-			case "show":
-				epf = pipelineShowFlags
-
-			case "processing":
-				epf = pipelineProcessingFlags
-
-			}
-
 		case "batch":
 			switch epn {
 			case "submit":
@@ -231,14 +191,14 @@ func ParseEndpoint(
 			case "download":
 				epf = collectionDownloadFlags
 
-			case "decide":
-				epf = collectionDecideFlags
-
 			case "bulk":
 				epf = collectionBulkFlags
 
 			case "bulk-status":
 				epf = collectionBulkStatusFlags
+
+			case "preservation-actions":
+				epf = collectionPreservationActionsFlags
 
 			}
 
@@ -262,19 +222,6 @@ func ParseEndpoint(
 	)
 	{
 		switch svcn {
-		case "pipeline":
-			c := pipelinec.NewClient(scheme, host, doer, enc, dec, restore)
-			switch epn {
-			case "list":
-				endpoint = c.List()
-				data, err = pipelinec.BuildListPayload(*pipelineListNameFlag)
-			case "show":
-				endpoint = c.Show()
-				data, err = pipelinec.BuildShowPayload(*pipelineShowIDFlag)
-			case "processing":
-				endpoint = c.Processing()
-				data, err = pipelinec.BuildProcessingPayload(*pipelineProcessingIDFlag)
-			}
 		case "batch":
 			c := batchc.NewClient(scheme, host, doer, enc, dec, restore)
 			switch epn {
@@ -296,7 +243,7 @@ func ParseEndpoint(
 				data = nil
 			case "list":
 				endpoint = c.List()
-				data, err = collectionc.BuildListPayload(*collectionListNameFlag, *collectionListOriginalIDFlag, *collectionListTransferIDFlag, *collectionListAipIDFlag, *collectionListPipelineIDFlag, *collectionListEarliestCreatedTimeFlag, *collectionListLatestCreatedTimeFlag, *collectionListStatusFlag, *collectionListCursorFlag)
+				data, err = collectionc.BuildListPayload(*collectionListNameFlag, *collectionListAipIDFlag, *collectionListEarliestCreatedTimeFlag, *collectionListLatestCreatedTimeFlag, *collectionListStatusFlag, *collectionListCursorFlag)
 			case "show":
 				endpoint = c.Show()
 				data, err = collectionc.BuildShowPayload(*collectionShowIDFlag)
@@ -315,15 +262,15 @@ func ParseEndpoint(
 			case "download":
 				endpoint = c.Download()
 				data, err = collectionc.BuildDownloadPayload(*collectionDownloadIDFlag)
-			case "decide":
-				endpoint = c.Decide()
-				data, err = collectionc.BuildDecidePayload(*collectionDecideBodyFlag, *collectionDecideIDFlag)
 			case "bulk":
 				endpoint = c.Bulk()
 				data, err = collectionc.BuildBulkPayload(*collectionBulkBodyFlag)
 			case "bulk-status":
 				endpoint = c.BulkStatus()
 				data = nil
+			case "preservation-actions":
+				endpoint = c.PreservationActions()
+				data, err = collectionc.BuildPreservationActionsPayload(*collectionPreservationActionsIDFlag)
 			}
 		}
 	}
@@ -332,54 +279,6 @@ func ParseEndpoint(
 	}
 
 	return endpoint, data, nil
-}
-
-// pipelineUsage displays the usage of the pipeline command and its subcommands.
-func pipelineUsage() {
-	fmt.Fprintf(os.Stderr, `The pipeline service manages Archivematica pipelines.
-Usage:
-    %[1]s [globalflags] pipeline COMMAND [flags]
-
-COMMAND:
-    list: List all known pipelines
-    show: Show pipeline by ID
-    processing: List all processing configurations of a pipeline given its ID
-
-Additional help:
-    %[1]s pipeline COMMAND --help
-`, os.Args[0])
-}
-func pipelineListUsage() {
-	fmt.Fprintf(os.Stderr, `%[1]s [flags] pipeline list -name STRING
-
-List all known pipelines
-    -name STRING: 
-
-Example:
-    %[1]s pipeline list --name "Porro numquam dolores doloribus."
-`, os.Args[0])
-}
-
-func pipelineShowUsage() {
-	fmt.Fprintf(os.Stderr, `%[1]s [flags] pipeline show -id STRING
-
-Show pipeline by ID
-    -id STRING: Identifier of pipeline to show
-
-Example:
-    %[1]s pipeline show --id "6BD40BD6-7AF6-FB4E-C1C1-23700A0E68DE"
-`, os.Args[0])
-}
-
-func pipelineProcessingUsage() {
-	fmt.Fprintf(os.Stderr, `%[1]s [flags] pipeline processing -id STRING
-
-List all processing configurations of a pipeline given its ID
-    -id STRING: Identifier of pipeline
-
-Example:
-    %[1]s pipeline processing --id "799C598D-49D1-F53A-0ED6-818482028C45"
-`, os.Args[0])
 }
 
 // batchUsage displays the usage of the batch command and its subcommands.
@@ -405,11 +304,9 @@ Submit a new batch
 
 Example:
     %[1]s batch submit --body '{
-      "completed_dir": "Sit sed laboriosam.",
-      "path": "Provident voluptates iure et.",
-      "pipeline": "Ut dolor est.",
-      "processing_config": "Eum quis nihil soluta ut molestiae et.",
-      "retention_period": "Sit nihil."
+      "completed_dir": "Et enim esse aut accusantium deleniti beatae.",
+      "path": "Iste ut alias et.",
+      "retention_period": "Molestiae in."
    }'
 `, os.Args[0])
 }
@@ -450,9 +347,9 @@ COMMAND:
     retry: Retry collection processing by ID
     workflow: Retrieve workflow status by ID
     download: Download collection by ID
-    decide: Make decision for a pending collection by ID
     bulk: Bulk operations (retry, cancel...).
     bulk-status: Retrieve status of current bulk operation.
+    preservation-actions: List all preservation actions by ID
 
 Additional help:
     %[1]s collection COMMAND --help
@@ -469,21 +366,18 @@ Example:
 }
 
 func collectionListUsage() {
-	fmt.Fprintf(os.Stderr, `%[1]s [flags] collection list -name STRING -original-id STRING -transfer-id STRING -aip-id STRING -pipeline-id STRING -earliest-created-time STRING -latest-created-time STRING -status STRING -cursor STRING
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] collection list -name STRING -aip-id STRING -earliest-created-time STRING -latest-created-time STRING -status STRING -cursor STRING
 
 List all stored collections
     -name STRING: 
-    -original-id STRING: 
-    -transfer-id STRING: 
     -aip-id STRING: 
-    -pipeline-id STRING: 
     -earliest-created-time STRING: 
     -latest-created-time STRING: 
     -status STRING: 
     -cursor STRING: 
 
 Example:
-    %[1]s collection list --name "Ut veniam molestiae amet." --original-id "Quod quibusdam ea fugit odio quia autem." --transfer-id "1576BB1F-D21C-05AD-6677-73725A387FA6" --aip-id "7F641448-35F7-7B05-AFB4-8DFCC48CED66" --pipeline-id "D358BA94-28F1-C0F1-EA4E-E3BFBD8A6AE2" --earliest-created-time "1990-10-06T02:21:42Z" --latest-created-time "2015-02-25T11:02:44Z" --status "done" --cursor "Debitis eveniet atque ipsum esse."
+    %[1]s collection list --name "Sed perferendis illum illum omnis et officiis." --aip-id "4CCDE767-7648-444F-D09F-4B4FFE4EB36B" --earliest-created-time "1975-12-06T05:38:21Z" --latest-created-time "2006-11-19T10:37:19Z" --status "queued" --cursor "Rerum non qui et officia sint rerum."
 `, os.Args[0])
 }
 
@@ -494,7 +388,7 @@ Show collection by ID
     -id UINT: Identifier of collection to show
 
 Example:
-    %[1]s collection show --id 9792579105820977192
+    %[1]s collection show --id 14355586344563939112
 `, os.Args[0])
 }
 
@@ -505,7 +399,7 @@ Delete collection by ID
     -id UINT: Identifier of collection to delete
 
 Example:
-    %[1]s collection delete --id 11400018648607317492
+    %[1]s collection delete --id 1834784557229413063
 `, os.Args[0])
 }
 
@@ -516,7 +410,7 @@ Cancel collection processing by ID
     -id UINT: Identifier of collection to remove
 
 Example:
-    %[1]s collection cancel --id 14499263187360059104
+    %[1]s collection cancel --id 13929232778824558181
 `, os.Args[0])
 }
 
@@ -527,7 +421,7 @@ Retry collection processing by ID
     -id UINT: Identifier of collection to retry
 
 Example:
-    %[1]s collection retry --id 14607175962139653509
+    %[1]s collection retry --id 5123728706916400341
 `, os.Args[0])
 }
 
@@ -538,7 +432,7 @@ Retrieve workflow status by ID
     -id UINT: Identifier of collection to look up
 
 Example:
-    %[1]s collection workflow --id 11925746244690710531
+    %[1]s collection workflow --id 14957336110119165110
 `, os.Args[0])
 }
 
@@ -549,21 +443,7 @@ Download collection by ID
     -id UINT: Identifier of collection to look up
 
 Example:
-    %[1]s collection download --id 1369363346339569407
-`, os.Args[0])
-}
-
-func collectionDecideUsage() {
-	fmt.Fprintf(os.Stderr, `%[1]s [flags] collection decide -body JSON -id UINT
-
-Make decision for a pending collection by ID
-    -body JSON: 
-    -id UINT: Identifier of collection to look up
-
-Example:
-    %[1]s collection decide --body '{
-      "option": "Optio non a officia sint."
-   }' --id 4433925421161774604
+    %[1]s collection download --id 16265995649010858738
 `, os.Args[0])
 }
 
@@ -576,8 +456,8 @@ Bulk operations (retry, cancel...).
 Example:
     %[1]s collection bulk --body '{
       "operation": "cancel",
-      "size": 11998998615337084245,
-      "status": "done"
+      "size": 3764210318943693810,
+      "status": "in progress"
    }'
 `, os.Args[0])
 }
@@ -589,5 +469,16 @@ Retrieve status of current bulk operation.
 
 Example:
     %[1]s collection bulk-status
+`, os.Args[0])
+}
+
+func collectionPreservationActionsUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] collection preservation-actions -id UINT
+
+List all preservation actions by ID
+    -id UINT: Identifier of collection to look up
+
+Example:
+    %[1]s collection preservation-actions --id 9792579105820977192
 `, os.Args[0])
 }
