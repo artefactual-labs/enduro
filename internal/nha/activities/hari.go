@@ -277,7 +277,7 @@ func (t avlRequestTime) MarshalJSON() ([]byte, error) {
 }
 
 // avlxml is the trimmed version of AVLXML, not including `pasientjournal`.
-// Schemas here: https://github.com/arkivverket/schemas/tree/master/AVLXML/.
+// Schemas here: https://github.com/norsk-helsearkiv/avlxml/tree/master.
 type avlxml struct {
 	XMLName                  xml.Name
 	XSI                      XmlnsAttr `xml:"xsi,attr"`
@@ -285,6 +285,7 @@ type avlxml struct {
 	Avlxmlversjon            string    `xml:"avlxmlversjon"`
 	Avleveringsidentifikator string    `xml:"avleveringsidentifikator"`
 	Avleveringsbeskrivelse   string    `xml:"avleveringsbeskrivelse"`
+	Generertdato             string    `xml:"generertdato"`
 	Arkivskaper              string    `xml:"arkivskaper"`
 	Avtale                   struct {
 		InnerXML string `xml:",innerxml"`

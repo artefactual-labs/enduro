@@ -36,7 +36,7 @@ func TestHARIActivity(t *testing.T) {
 
 	// When slimDown is used.
 	emptyavlxml := []byte(`<?xml version="1.0" encoding="UTF-8"?>
-<avlxml xmlns:xsi="" xsi:schemaLocation=""><avlxmlversjon></avlxmlversjon><avleveringsidentifikator></avleveringsidentifikator><avleveringsbeskrivelse></avleveringsbeskrivelse><arkivskaper></arkivskaper><avtale></avtale></avlxml>`)
+<avlxml xmlns:xsi="" xsi:schemaLocation=""><avlxmlversjon></avlxmlversjon><avleveringsidentifikator></avleveringsidentifikator><avleveringsbeskrivelse></avleveringsbeskrivelse><generertdato></generertdato><arkivskaper></arkivskaper><avtale></avtale></avlxml>`)
 
 	tests := map[string]struct {
 		// Activity parameters.
