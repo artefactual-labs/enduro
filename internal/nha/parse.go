@@ -14,7 +14,7 @@ var regexTransfer = regexp.MustCompile(
 		`(?P<type>(?i:DPJ|EPJ|OTHER|AVL-DPJ|AVL-EPJ|AVL-OTHER))-(?i:SIP)` +
 		`[-_]` +
 		`(?:` +
-		`(?P<journalidentifikator>[a-zA-Z0-9]{8}-[a-zA-Z0-9]{4}-[1-5][a-zA-Z0-9]{3}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{12})` +
+		`(?P<journalidentifikator>[a-zA-Z0-9]{8}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{12})` +
 		`|` +
 		`(?P<avleveringsidentifikator>[0-9.]+)[-_](?P<date>\d{6,8})` +
 		`)` +
