@@ -122,6 +122,17 @@ func TestParse(t *testing.T) {
 			},
 		},
 		{
+			desc:  "Identifiers not based on RFC 4122",
+			input: "dpj-sip-4ba94e92-d200-81eb-b8bc-0242ac130003",
+			wantResult: NameInfo{
+				Identifier: "4ba94e92-d200-81eb-b8bc-0242ac130003",
+				Type:       TransferTypeDPJ,
+				Date:       time.Time{},
+				Extension:  "",
+				Value:      "dpj-sip-4ba94e92-d200-81eb-b8bc-0242ac130003",
+			},
+		},
+		{
 			desc:    "Unexpected UUID format",
 			input:   "dpj-sip-814ecc88-b459-4304-8868-9ed72875f5fZ",
 			wantErr: "error parsing uuid: invalid UUID format",
