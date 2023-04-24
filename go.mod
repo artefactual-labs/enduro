@@ -25,7 +25,7 @@ require (
 	github.com/nyudlts/go-bagit v0.1.1-alpha.0.20220214141947-20f7d3004abe
 	github.com/oklog/run v1.1.0
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
-	github.com/otiai10/copy v1.7.0
+	github.com/otiai10/copy v1.11.0
 	github.com/pborman/uuid v1.2.1 // indirect
 	github.com/prometheus/client_golang v1.12.1
 	github.com/radovskyb/watcher v1.0.7
