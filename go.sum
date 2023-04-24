@@ -1064,8 +1064,8 @@ github.com/nwaples/rardecode v1.1.2/go.mod h1:5DzqNKiOdpKKBH87u8VlvAnPZMXcGRhxWk
 github.com/nxadm/tail v1.4.4/go.mod h1:kenIhsEOeOJmVchQTgglprH7qJGnHDVpk1VPCcaMI8A=
 github.com/nxadm/tail v1.4.8 h1:nPr65rt6Y5JFSKQO7qToXr7pePgD6Gwiw05lkbyAQTE=
 github.com/nxadm/tail v1.4.8/go.mod h1:+ncqLTQzXmGhMZNUePPaPqPvBxHAIsmXswZKocGu+AU=
-github.com/nyudlts/go-bagit v0.1.1-alpha.0.20220214141947-20f7d3004abe h1:4k+SlbwVd1/SXeAug2bqqY0wRgjBmcBZP3nqq62yEnY=
-github.com/nyudlts/go-bagit v0.1.1-alpha.0.20220214141947-20f7d3004abe/go.mod h1:W9m2WmCtv7IRASziKJ/8tqVCkIU8ffe7QecZCRtqGy0=
+github.com/nyudlts/go-bagit v0.2.0-alpha h1:S3BHNx3qL2AcqD3JP3NAusnmWFHMiMVu9NxXeXlHpig=
+github.com/nyudlts/go-bagit v0.2.0-alpha/go.mod h1:W9m2WmCtv7IRASziKJ/8tqVCkIU8ffe7QecZCRtqGy0=
 github.com/oklog/run v1.1.0 h1:GEenZ1cK0+q0+wsJew9qUg/DyD8k3JzYsZAi5gYi2mA=
 github.com/oklog/run v1.1.0/go.mod h1:sVPdnTZT1zYwAJeCMu2Th4T21pA3FPOQRfWjQlk7DVU=
 github.com/oklog/ulid v1.3.1/go.mod h1:CirwcVhetQ6Lv90oh/F+FBtV6XMibvdAFo93nm5qn4U=
