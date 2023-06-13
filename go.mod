@@ -33,8 +33,8 @@ require (
 	go.uber.org/cadence v0.19.0
 	go.uber.org/yarpc v1.60.0
 	go.uber.org/zap v1.24.0
-	goa.design/goa/v3 v3.5.5
-	goa.design/plugins/v3 v3.5.5
+	goa.design/goa/v3 v3.11.3
+	goa.design/plugins/v3 v3.11.3
 	gocloud.dev v0.29.0
 	golang.org/x/sync v0.2.0
 	gotest.tools/v3 v3.4.0
@@ -71,7 +71,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/dimfeld/httppath v0.0.0-20170720192232-ee938bf73598 // indirect
-	github.com/dimfeld/httptreemux/v5 v5.4.0 // indirect
+	github.com/dimfeld/httptreemux/v5 v5.5.0 // indirect
 	github.com/dsnet/compress v0.0.2-0.20210315054119-f66993602bf5 // indirect
 	github.com/facebookgo/clock v0.0.0-20150410010913-600d898af40a // indirect
 	github.com/fatih/structtag v1.2.0 // indirect
@@ -102,7 +102,7 @@ require (
 	github.com/prometheus/common v0.42.0 // indirect
 	github.com/prometheus/procfs v0.9.0 // indirect
 	github.com/robfig/cron v1.2.0 // indirect
-	github.com/sergi/go-diff v1.2.0 // indirect
+	github.com/sergi/go-diff v1.3.1 // indirect
 	github.com/spf13/cast v1.5.1 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
