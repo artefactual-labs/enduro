@@ -91,7 +91,7 @@ CACHE := $(CACHE_BASE)/$(UNAME_OS)/$(UNAME_ARCH)
 CACHE_BIN := $(CACHE)/bin
 export PATH := $(abspath $(CACHE_BIN)):$(PATH)
 CACHE_VERSIONS := $(CACHE)/versions
-HUGO_VERSION := 0.90.0
+HUGO_VERSION := 0.113.0
 HUGO := $(CACHE_VERSIONS)/hugo/$(HUGO_VERSION)
 $(HUGO):
 	@rm -f $(CACHE_BIN)/hugo
