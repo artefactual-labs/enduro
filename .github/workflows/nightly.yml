@@ -1,0 +1,26 @@
+name: Nightly
+
+on:
+  workflow_dispatch: {}
+  schedule:
+    # Daily, at 1pm UTC / 6am PST.
+    - cron: "0 13 * * *"
+
+jobs:
+  govulncheck:
+    name: Go vulnerability check
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Read Go version
+        id: go_version
+        run: echo "go_version=$(cat .go-version)" >> $GITHUB_OUTPUT
+      - name: Install Go (${{ steps.go_version.outputs.go_version }})
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ steps.go_version.outputs.go_version }}
+      - name: Install govulncheck
+        run: go install golang.org/x/vuln/cmd/govulncheck@latest
+      - name: Execute govulncheck
+        run: govulncheck ./...
