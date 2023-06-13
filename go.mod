@@ -9,7 +9,6 @@ require (
 	github.com/fsnotify/fsnotify v1.6.0
 	github.com/go-logr/logr v1.2.4
 	github.com/go-logr/zapr v1.2.4
-	github.com/go-redis/redis/v8 v8.11.4
 	github.com/go-sql-driver/mysql v1.7.1
 	github.com/golang-migrate/migrate/v4 v4.16.2
 	github.com/golang/mock v1.6.0
@@ -25,6 +24,7 @@ require (
 	github.com/otiai10/copy v1.11.0
 	github.com/prometheus/client_golang v1.15.1
 	github.com/radovskyb/watcher v1.0.7
+	github.com/redis/go-redis/v9 v9.0.5
 	github.com/spf13/afero v1.9.5
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.16.0
