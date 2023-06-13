@@ -30,8 +30,8 @@ require (
 	github.com/spf13/viper v1.16.0
 	github.com/stretchr/testify v1.8.4
 	github.com/uber-go/tally v3.4.3+incompatible
-	go.uber.org/cadence v0.19.0
-	go.uber.org/yarpc v1.60.0
+	go.uber.org/cadence v0.19.1
+	go.uber.org/yarpc v1.70.2
 	go.uber.org/zap v1.24.0
 	goa.design/goa/v3 v3.11.3
 	goa.design/plugins/v3 v3.11.3
@@ -119,6 +119,7 @@ require (
 	go.uber.org/multierr v1.9.0 // indirect
 	go.uber.org/net/metrics v1.3.1 // indirect
 	go.uber.org/thriftrw v1.29.2 // indirect
+	golang.org/x/exp/typeparams v0.0.0-20220218215828-6cf2b201936e // indirect
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
 	golang.org/x/mod v0.10.0 // indirect
 	golang.org/x/net v0.10.0 // indirect
@@ -134,7 +135,7 @@ require (
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	honnef.co/go/tools v0.2.2 // indirect
+	honnef.co/go/tools v0.3.2 // indirect
 )
 
 // ringpop-go and tchannel-go depends on older version of thrift, yarpc brings up newer version
