@@ -2,28 +2,26 @@ on:
   pull_request:
   push:
     branches:
-    - main
+      - main
 name: Test
 jobs:
   test:
     strategy:
       fail-fast: false
-      matrix:
-        go-version:
-        - 1.20.x
-        platform:
-        - ubuntu-latest
-    runs-on: ${{ matrix.platform }}
+    runs-on: ubuntu-latest
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
-    - name: Install Go
-      uses: actions/setup-go@v1
-      with:
-        go-version: ${{ matrix.go-version }}
-    - name: Test
-      run: go test -race -coverprofile=covreport -covermode=atomic -coverpkg=$(./hack/coverpkgs.sh) -v ./...
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v1
-      with:
-        file: covreport
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Read Go version
+        id: go_version
+        run: echo "go_version=$(cat .go-version)" >> $GITHUB_OUTPUT
+      - name: Install Go (${{ steps.go_version.outputs.go_version }})
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ steps.go_version.outputs.go_version }}
+      - name: Test
+        run: go test -race -coverprofile=covreport -covermode=atomic -coverpkg=$(./hack/coverpkgs.sh) -v ./...
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v1
+        with:
+          file: covreport
