@@ -49,7 +49,7 @@ anchor = "smart"
 # id = "UA-00000000-0"
 
 [languages]
-[languages.en]
+[languages.en.params]
 title = "Enduro"
 description = "Enduro is a POC automation tool to build fault-tolerant workflows using Archivematica."
 languageName ="English"
