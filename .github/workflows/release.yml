@@ -1,44 +1,47 @@
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
 name: GoReleaser
 jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
     steps:
-    - name: Check out code
-      uses: actions/checkout@v2
-      with:
-        fetch-depth: 0
-    - name: Fetch all tags
-      run: git fetch origin +refs/tags/*:refs/tags/*
-    - name: Install Go
-      uses: actions/setup-go@v1
-      with:
-        go-version: 1.20.x
-    - name: Install Node
-      uses: actions/setup-node@v3
-      with:
-        node-version: 16
-    - name: Run GoReleaser
-      uses: goreleaser/goreleaser-action@v2
-      with:
-        version: latest
-        args: release
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      if: success()
-    - name: Send notification to Jenkins
-      run: |
-        RELEASE_VERSION="${GITHUB_REF:11}"
-        curl -Ls -X GET -G \
-          https://jenkins-ci.archivematica.org/job/am-packbuild/job/rpm-jenkinsci/buildWithParameters \
-            -d "token=${{ secrets.JENKINS_TOKEN }}" \
-            -d "PACKAGE=enduro" \
-            -d "VERSION=${RELEASE_VERSION}" \
-            -d "RELEASE=1" \
-            -d "PACKBUILD_BRANCH=dev/enduro-package" \
-            -d "REPOSITORY=enduro"
-      if: success()
+      - name: Check out code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Fetch all tags
+        run: git fetch origin +refs/tags/*:refs/tags/*
+      - name: Read Go version
+        id: go_version
+        run: echo "go_version=$(cat .go-version)" >> $GITHUB_OUTPUT
+      - name: Install Go (${{ steps.go_version.outputs.go_version }})
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ steps.go_version.outputs.go_version }}
+      - name: Install Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v2
+        with:
+          version: latest
+          args: release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        if: success()
+      - name: Send notification to Jenkins
+        run: |
+          RELEASE_VERSION="${GITHUB_REF:11}"
+          curl -Ls -X GET -G \
+            https://jenkins-ci.archivematica.org/job/am-packbuild/job/rpm-jenkinsci/buildWithParameters \
+              -d "token=${{ secrets.JENKINS_TOKEN }}" \
+              -d "PACKAGE=enduro" \
+              -d "VERSION=${RELEASE_VERSION}" \
+              -d "RELEASE=1" \
+              -d "PACKBUILD_BRANCH=dev/enduro-package" \
+              -d "REPOSITORY=enduro"
+        if: success()
