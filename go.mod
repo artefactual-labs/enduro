@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/alicebob/miniredis/v2 v2.30.3
-	github.com/aws/aws-sdk-go v1.44.281
+	github.com/aws/aws-sdk-go v1.44.283
 	github.com/cenkalti/backoff/v4 v4.2.1
 	github.com/fsnotify/fsnotify v1.6.0
 	github.com/go-logr/logr v1.2.4
@@ -22,7 +22,7 @@ require (
 	github.com/nyudlts/go-bagit v0.1.1-alpha.0.20220214141947-20f7d3004abe
 	github.com/oklog/run v1.1.0
 	github.com/otiai10/copy v1.11.0
-	github.com/prometheus/client_golang v1.15.1
+	github.com/prometheus/client_golang v1.16.0
 	github.com/radovskyb/watcher v1.0.7
 	github.com/redis/go-redis/v9 v9.0.5
 	github.com/spf13/afero v1.9.5
@@ -36,7 +36,7 @@ require (
 	goa.design/goa/v3 v3.11.3
 	goa.design/plugins/v3 v3.11.3
 	gocloud.dev v0.29.0
-	golang.org/x/sync v0.2.0
+	golang.org/x/sync v0.3.0
 	gotest.tools/v3 v3.4.0
 )
 
@@ -100,7 +100,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_model v0.3.0 // indirect
 	github.com/prometheus/common v0.42.0 // indirect
-	github.com/prometheus/procfs v0.9.0 // indirect
+	github.com/prometheus/procfs v0.10.1 // indirect
 	github.com/robfig/cron v1.2.0 // indirect
 	github.com/sergi/go-diff v1.3.1 // indirect
 	github.com/spf13/cast v1.5.1 // indirect
