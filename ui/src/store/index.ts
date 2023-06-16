@@ -38,7 +38,7 @@ const mutations: MutationTree<RootState> = {
 };
 
 const store: StoreOptions<RootState> = {
-  strict: process.env.NODE_ENV !== 'production',
+  strict: import.meta.env.DEV,
   modules: {
     pipeline,
     collection,

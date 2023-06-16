@@ -20,7 +20,7 @@ There are some dependencies that need to be installed:
 
 * [Go][go],
 * [Docker Compose][docker-compose],
-* [Yarn][yarn], and
+* [Node.js][nodejs], and
 * [GNU Make][make]
 
 This guide may not work for you if you manage Docker with `sudo`, see
@@ -139,7 +139,7 @@ You can enable it in Visual Studio Code as follows:
 [mc]: https://docs.min.io/docs/minio-client-quickstart-guide.html
 [go]: https://golang.org/doc/install
 [gopls]: https://github.com/golang/tools/blob/master/gopls/README.md
-[yarn]: https://classic.yarnpkg.com/en/docs/install/
+[node]: https://nodejs.org
 [make]: https://www.gnu.org/software/make/
 [issue-118]: https://github.com/artefactual-labs/enduro/issues/118
 [docker-non-root]: https://docs.docker.com/engine/install/linux-postinstall/#manage-docker-as-a-non-root-user
