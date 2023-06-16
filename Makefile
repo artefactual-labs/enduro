@@ -106,11 +106,11 @@ website: $(HUGO)
 	hugo serve --source=website/
 
 ui:
-	yarn --cwd ui install
-	yarn --cwd ui build
+	npm --prefix=ui install
+	npm --prefix=ui run build
 
 ui-dev:
-	yarn --cwd ui serve
+	npm --prefix=ui run dev
 
 ui-client:
 	@rm -rf $(CURDIR)/ui/src/client
