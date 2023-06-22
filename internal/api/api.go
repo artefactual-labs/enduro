@@ -68,7 +68,7 @@ func HTTPServer(
 	collectionErrorHandler := errorHandler(logger, "Collection error.")
 	var collectionServer *collectionsvr.Server = collectionsvr.New(collectionEndpoints, mux, dec, enc, collectionErrorHandler, nil, websocketUpgrader, nil)
 	// Intercept request in Download endpoint so we can serve the file directly.
-	collectionServer.Download = colsvc.HTTPDownload(mux, dec)
+	collectionServer.Download = writeTimeout(colsvc.HTTPDownload(mux, dec), 0)
 	collectionsvr.Mount(mux, collectionServer)
 
 	// Swagger service.
@@ -90,12 +90,10 @@ func HTTPServer(
 	}
 
 	return &http.Server{
-		Addr:        config.Listen,
-		Handler:     handler,
-		ReadTimeout: time.Second * 5,
-		// WriteTimeout is set to 0 because we have streaming endpoints.
-		// https://github.com/golang/go/issues/16100#issuecomment-285573480
-		WriteTimeout: 0,
+		Addr:         config.Listen,
+		Handler:      handler,
+		ReadTimeout:  time.Second * 5,
+		WriteTimeout: time.Second * 5,
 		IdleTimeout:  time.Second * 120,
 	}
 }
@@ -124,15 +122,6 @@ func errorHandler(logger logr.Logger, msg string) func(context.Context, http.Res
 		}
 
 		logger.Error(err, "Service error.", "reqID", reqID, "ws", ws)
-	}
-}
-
-func versionHeaderMiddleware(version string) func(http.Handler) http.Handler {
-	return func(h http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("X-Enduro-Version", version)
-			h.ServeHTTP(w, r)
-		})
 	}
 }
 
