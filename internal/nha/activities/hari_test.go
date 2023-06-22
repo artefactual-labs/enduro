@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -443,7 +443,7 @@ func TestHARIActivity(t *testing.T) {
 				assert.Equal(t, r.Header.Get("User-Agent"), "Enduro")
 
 				if tc.wantReceipt != nil {
-					blob, err := ioutil.ReadAll(r.Body)
+					blob, err := io.ReadAll(r.Body)
 					assert.NilError(t, err)
 					defer r.Body.Close()
 

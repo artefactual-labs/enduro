@@ -202,9 +202,10 @@ func TestTransferInfoProcessingConfiguration(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
+		tc := tc
 		t.Run("", func(t *testing.T) {
 			t.Parallel()
-			tc := tc
+
 			result := tc.tinfo.ProcessingConfiguration()
 			if have, want := result, tc.processingConfig; have != want {
 				t.Errorf("tinfo.ProcessingConfiguration() returned %s; expected %s", have, want)

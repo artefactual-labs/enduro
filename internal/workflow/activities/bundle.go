@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -158,7 +157,7 @@ func (a *BundleActivity) SingleFile(ctx context.Context, transferDir, key, tempF
 func (a *BundleActivity) Bundle(ctx context.Context, unar archiver.Unarchiver, transferDir, key, tempFile string, stripTopLevelDir bool) (string, string, error) {
 	// Create a new directory for our transfer with the name randomized.
 	const prefix = "enduro"
-	tempDir, err := ioutil.TempDir(transferDir, prefix)
+	tempDir, err := os.MkdirTemp(transferDir, prefix)
 	if err != nil {
 		return "", "", fmt.Errorf("error creating temporary directory: %s", err)
 	}
@@ -185,7 +184,7 @@ func (a *BundleActivity) Bundle(ctx context.Context, unar archiver.Unarchiver, t
 // Copy a transfer in the given destination using an intermediate temp. directory.
 func (a *BundleActivity) Copy(ctx context.Context, src, dst string, stripTopLevelDir bool) (string, string, error) {
 	const prefix = "enduro"
-	tempDir, err := ioutil.TempDir(dst, prefix)
+	tempDir, err := os.MkdirTemp(dst, prefix)
 	if err != nil {
 		return "", "", fmt.Errorf("error creating temporary directory: %s", err)
 	}

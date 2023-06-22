@@ -2,7 +2,7 @@ package batch
 
 import (
 	"context"
-	"io/ioutil"
+	"os"
 	"time"
 
 	cadencesdk_workflow "go.uber.org/cadence/workflow"
@@ -49,7 +49,7 @@ func NewBatchActivity(batchsvc Service) *BatchActivity {
 }
 
 func (a *BatchActivity) Execute(ctx context.Context, params BatchWorkflowInput) error {
-	files, err := ioutil.ReadDir(params.Path)
+	files, err := os.ReadDir(params.Path)
 	if err != nil {
 		return wferrors.NonRetryableError(err)
 	}

@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -140,7 +140,7 @@ func TestNewRequestJSON(t *testing.T) {
 		t.Fatalf("NewRequest() Content-Type header: %v, want %v", got, want)
 	}
 
-	got, _ := ioutil.ReadAll(req.Body)
+	got, _ := io.ReadAll(req.Body)
 	want := []byte(`{"string":"foobar"}
 `)
 	defer req.Body.Close()

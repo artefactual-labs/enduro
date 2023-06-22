@@ -85,6 +85,7 @@ func withActivityOptsForLocalAction(ctx cadencesdk_workflow.Context) cadencesdk_
 
 // withActivityOptionsForNoOp returns a workflow context with activity options
 // suited for no-op activities.
+//
 //nolint:deadcode,unused
 func withActivityOptsForNoOp(ctx cadencesdk_workflow.Context) cadencesdk_workflow.Context {
 	return cadencesdk_workflow.WithActivityOptions(ctx, cadencesdk_workflow.ActivityOptions{

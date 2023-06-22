@@ -3,7 +3,6 @@ package activities
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -25,7 +24,7 @@ import (
 func TestProdActivity(t *testing.T) {
 	t.Parallel()
 
-	tmpdir, err := ioutil.TempDir("", "")
+	tmpdir, err := os.MkdirTemp("", "")
 	assert.NilError(t, err)
 	defer os.RemoveAll(tmpdir)
 
