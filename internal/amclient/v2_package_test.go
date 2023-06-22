@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"testing"
 
@@ -23,7 +23,7 @@ func TestPackage_Create(t *testing.T) {
 	mux.HandleFunc("/api/v2beta/package/", func(w http.ResponseWriter, r *http.Request) {
 		testMethod(t, r, "POST")
 
-		blob, err := ioutil.ReadAll(r.Body)
+		blob, err := io.ReadAll(r.Body)
 		if err != nil {
 			t.Fatal(err)
 		}

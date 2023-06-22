@@ -7,7 +7,6 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -83,7 +82,7 @@ func (a UpdateHARIActivity) Execute(ctx context.Context, params *UpdateHARIActiv
 		if params.NameInfo.Type == nha.TransferTypeAVLXML {
 			blob, err = a.slimDown(f)
 		} else {
-			blob, err = ioutil.ReadAll(f)
+			blob, err = io.ReadAll(f)
 		}
 		if err != nil {
 			return wferrors.NonRetryableError(fmt.Errorf("error reading AVLXML file: %v", err))
@@ -224,7 +223,7 @@ func (a UpdateHARIActivity) sendRequest(ctx context.Context, blob []byte, apiURL
 		err = fmt.Errorf("unexpected response status: %s", resp.Status)
 
 		// Enrich error message with the payload returned when available.
-		payload, rerr := ioutil.ReadAll(resp.Body)
+		payload, rerr := io.ReadAll(resp.Body)
 		if rerr == nil && len(payload) > 0 {
 			err = fmt.Errorf("(%v) - %s", err, payload)
 		}
@@ -237,7 +236,7 @@ func (a UpdateHARIActivity) sendRequest(ctx context.Context, blob []byte, apiURL
 // buildMock returns a test server used when HARI's API is not available.
 func (a UpdateHARIActivity) buildMock() *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		blob, _ := ioutil.ReadAll(r.Body)
+		blob, _ := io.ReadAll(r.Body)
 		defer r.Body.Close()
 
 		a.manager.Logger.V(1).Info(

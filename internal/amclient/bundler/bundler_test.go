@@ -12,14 +12,14 @@ package bundler
 
 import (
 	"bytes"
-	"io/ioutil"
+	"os"
 	"testing"
 
 	"github.com/spf13/afero"
 )
 
 func TestNewBundlerWithTempDir(t *testing.T) {
-	transferDir, err := ioutil.TempDir("", "")
+	transferDir, err := os.MkdirTemp("", "")
 	if err != nil {
 		t.Fatal(err)
 	}

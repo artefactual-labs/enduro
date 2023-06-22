@@ -2,7 +2,6 @@ package filenotify
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -18,7 +17,7 @@ func TestPollerEvent(t *testing.T) {
 	}
 	defer w.Close()
 
-	tmpdir, err := ioutil.TempDir("", "test-poller")
+	tmpdir, err := os.MkdirTemp("", "test-poller")
 	if err != nil {
 		t.Fatal("error creating temp file")
 	}
@@ -37,7 +36,7 @@ func TestPollerEvent(t *testing.T) {
 	}
 
 	path := filepath.Join(tmpdir, "hello.txt")
-	if err := ioutil.WriteFile(path, []byte("hello"), 0o600); err != nil {
+	if err := os.WriteFile(path, []byte("hello"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	if err := assertEvent(w, fsnotify.Create); err != nil {

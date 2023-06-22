@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
 )
@@ -28,7 +28,7 @@ type TransferIdentifierPair struct {
 func readIdentifiers(path string) (TransferIdentifiers, error) {
 	identifiers := TransferIdentifiers([]TransferIdentifier{})
 
-	blob, err := ioutil.ReadFile(filepath.Join(path, "metadata", "identifiers.json"))
+	blob, err := os.ReadFile(filepath.Join(path, "metadata", "identifiers.json"))
 	if err != nil {
 		return nil, err
 	}

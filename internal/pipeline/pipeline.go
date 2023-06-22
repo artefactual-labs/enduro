@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
@@ -138,7 +137,7 @@ func (p Pipeline) TempFile(pattern string) (*os.File, error) {
 	if pattern == "" {
 		pattern = "blob-*"
 	}
-	return ioutil.TempFile(p.config.ProcessingDir, pattern)
+	return os.CreateTemp(p.config.ProcessingDir, pattern)
 }
 
 func (p Pipeline) Config() *Config {
