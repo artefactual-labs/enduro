@@ -36,7 +36,6 @@ func NewProcessingWorkflow(m *manager.Manager) *ProcessingWorkflow {
 // useful for hooks that may require quick access to processing state.
 // TODO: clean this up, e.g.: it can embed a collection.Collection.
 type TransferInfo struct {
-
 	// TempFile is the temporary location where the blob is downloaded.
 	//
 	// It is populated by the workflow with the result of DownloadActivity.
@@ -447,6 +446,16 @@ func (w *ProcessingWorkflow) SessionHandler(sessCtx cadencesdk_workflow.Context,
 		}
 	}
 
+	// Delete local temporary files.
+	defer func() {
+		if tinfo.Bundle.FullPathBeforeStrip != "" {
+			activityOpts := withActivityOptsForRequest(sessCtx)
+			_ = cadencesdk_workflow.ExecuteActivity(activityOpts, activities.CleanUpActivityName, &activities.CleanUpActivityParams{
+				FullPath: tinfo.Bundle.FullPathBeforeStrip,
+			}).Get(activityOpts, nil)
+		}
+	}()
+
 	// Validate transfer.
 	{
 		if validationConfig.IsEnabled() && tinfo.Bundle != (activities.BundleActivityResult{}) {
@@ -496,16 +505,6 @@ func (w *ProcessingWorkflow) SessionHandler(sessCtx cadencesdk_workflow.Context,
 		})
 		if err != nil {
 			return fmt.Errorf("error delivering receipt(s): %w", err)
-		}
-	}
-
-	// Delete local temporary files.
-	{
-		if tinfo.Bundle.FullPathBeforeStrip != "" {
-			activityOpts := withActivityOptsForRequest(sessCtx)
-			_ = cadencesdk_workflow.ExecuteActivity(activityOpts, activities.CleanUpActivityName, &activities.CleanUpActivityParams{
-				FullPath: tinfo.Bundle.FullPathBeforeStrip,
-			}).Get(activityOpts, nil)
 		}
 	}
 
