@@ -6,19 +6,23 @@ import { EnduroCollectionClient, api, EnduroPipelineClient } from '@/client';
 // Getter types.
 export const GET_PIPELINE_ERROR = 'GET_PIPELINE_ERROR';
 export const GET_PIPELINE_RESULT = 'GET_PIPELINE_RESULT';
+export const GET_SEARCH_RESULTS = 'GET_SEARCH_RESULTS';
 
 // Mutation types.
 export const SET_PIPELINE_RESULT = 'SET_PIPELINE_RESULT';
 export const SET_PIPELINE_ERROR = 'SET_PIPELINE_ERROR';
+export const SET_SEARCH_RESULTS = 'SET_SEARCH_RESULTS';
 
 // Action types.
 export const SEARCH_PIPELINE = 'SEARCH_PIPELINE';
+export const SEARCH_PIPELINES = 'SEARCH_PIPELINES';
 
 const namespaced: boolean = true;
 
 interface State {
   error: boolean;
   result: any;
+  results: any;
 }
 
 const getters: GetterTree<State, RootState> = {
@@ -29,6 +33,10 @@ const getters: GetterTree<State, RootState> = {
 
   [GET_PIPELINE_RESULT](state): string {
     return state.result;
+  },
+
+  [GET_SEARCH_RESULTS](state): string {
+    return state.results;
   },
 
 };
@@ -45,6 +53,15 @@ const actions: ActionTree<State, RootState> = {
     });
   },
 
+  [SEARCH_PIPELINES]({ commit }): Promise<any> {
+    return EnduroPipelineClient.pipelineList({}).then((response) => {
+      commit(SET_SEARCH_RESULTS, response);
+      commit(SET_PIPELINE_ERROR, false);
+    }).catch((err) => {
+      commit(SET_PIPELINE_ERROR, true);
+    });
+  },
+
 };
 
 const mutations: MutationTree<State> = {
@@ -57,12 +74,17 @@ const mutations: MutationTree<State> = {
     state.result = result;
   },
 
+  [SET_SEARCH_RESULTS](state, results: any) {
+    state.results = results;
+  },
+
 };
 
 const getDefaultState = (): State => {
   return {
     error: false,
     result: {},
+    results: [],
   };
 };
 

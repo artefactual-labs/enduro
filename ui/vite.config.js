@@ -34,6 +34,10 @@ export default {
         changeOrigin: false,
         ws: true,
       },
+      "/pipeline": {
+        target: process.env.ENDURO_API_ADDRESS || "http://127.0.0.1:9000",
+        changeOrigin: true,
+      },
     },
   },
 }
