@@ -12,6 +12,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"strconv"
 
 	pipeline "github.com/artefactual-labs/enduro/internal/api/gen/pipeline"
 	pipelineviews "github.com/artefactual-labs/enduro/internal/api/gen/pipeline/views"
@@ -36,13 +37,28 @@ func EncodeListResponse(encoder func(context.Context, http.ResponseWriter) goaht
 func DecodeListRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (any, error) {
 	return func(r *http.Request) (any, error) {
 		var (
-			name *string
+			name   *string
+			status bool
+			err    error
 		)
 		nameRaw := r.URL.Query().Get("name")
 		if nameRaw != "" {
 			name = &nameRaw
 		}
-		payload := NewListPayload(name)
+		{
+			statusRaw := r.URL.Query().Get("status")
+			if statusRaw != "" {
+				v, err2 := strconv.ParseBool(statusRaw)
+				if err2 != nil {
+					err = goa.MergeErrors(err, goa.InvalidFieldTypeError("status", statusRaw, "boolean"))
+				}
+				status = v
+			}
+		}
+		if err != nil {
+			return nil, err
+		}
+		payload := NewListPayload(name, status)
 
 		return payload, nil
 	}
@@ -181,6 +197,7 @@ func marshalPipelineEnduroStoredPipelineToEnduroStoredPipelineResponse(v *pipeli
 		Name:     v.Name,
 		Capacity: v.Capacity,
 		Current:  v.Current,
+		Status:   v.Status,
 	}
 
 	return res

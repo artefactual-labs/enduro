@@ -44,8 +44,7 @@ const getters: GetterTree<State, RootState> = {
 const actions: ActionTree<State, RootState> = {
 
   [SEARCH_PIPELINE]({ commit }, id): Promise<any> {
-    const request: api.PipelineShowRequest = { id };
-    return EnduroPipelineClient.pipelineShow(request).then((response: api.PipelineShowResponseBody) => {
+    return EnduroPipelineClient.pipelineShow({ id }).then((response: api.PipelineShowResponseBody) => {
       commit(SET_PIPELINE_RESULT, response);
       commit(SET_PIPELINE_ERROR, false);
     }).catch(() => {
@@ -54,7 +53,8 @@ const actions: ActionTree<State, RootState> = {
   },
 
   [SEARCH_PIPELINES]({ commit }): Promise<any> {
-    return EnduroPipelineClient.pipelineList({}).then((response) => {
+    return EnduroPipelineClient.pipelineList({ status: true }).then((response) => {
+      console.log(response);
       commit(SET_SEARCH_RESULTS, response);
       commit(SET_PIPELINE_ERROR, false);
     }).catch((err) => {

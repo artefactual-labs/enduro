@@ -31,6 +31,7 @@ import {
 
 export interface PipelineListRequest {
     name?: string;
+    status?: boolean;
 }
 
 export interface PipelineProcessingRequest {
@@ -55,6 +56,10 @@ export class PipelineApi extends runtime.BaseAPI {
 
         if (requestParameters.name !== undefined) {
             queryParameters['name'] = requestParameters.name;
+        }
+
+        if (requestParameters.status !== undefined) {
+            queryParameters['status'] = requestParameters.status;
         }
 
         const headerParameters: runtime.HTTPHeaders = {};

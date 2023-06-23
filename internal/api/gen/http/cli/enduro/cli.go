@@ -33,13 +33,13 @@ collection (monitor|list|show|delete|cancel|retry|workflow|download|decide|bulk|
 
 // UsageExamples produces an example of a valid invocation of the CLI tool.
 func UsageExamples() string {
-	return os.Args[0] + ` pipeline list --name "Porro numquam dolores doloribus."` + "\n" +
+	return os.Args[0] + ` pipeline list --name "Eaque nemo quia." --status false` + "\n" +
 		os.Args[0] + ` batch submit --body '{
-      "completed_dir": "Sit sed laboriosam.",
-      "path": "Provident voluptates iure et.",
-      "pipeline": "Ut dolor est.",
-      "processing_config": "Eum quis nihil soluta ut molestiae et.",
-      "retention_period": "Sit nihil."
+      "completed_dir": "Laboriosam odit.",
+      "path": "Laboriosam nam sit nihil.",
+      "pipeline": "Necessitatibus vel aut deleniti quia qui.",
+      "processing_config": "Vel voluptatem.",
+      "retention_period": "Sed perferendis illum illum omnis et officiis."
    }'` + "\n" +
 		os.Args[0] + ` collection monitor` + "\n" +
 		""
@@ -59,8 +59,9 @@ func ParseEndpoint(
 	var (
 		pipelineFlags = flag.NewFlagSet("pipeline", flag.ContinueOnError)
 
-		pipelineListFlags    = flag.NewFlagSet("list", flag.ExitOnError)
-		pipelineListNameFlag = pipelineListFlags.String("name", "", "")
+		pipelineListFlags      = flag.NewFlagSet("list", flag.ExitOnError)
+		pipelineListNameFlag   = pipelineListFlags.String("name", "", "")
+		pipelineListStatusFlag = pipelineListFlags.String("status", "", "")
 
 		pipelineShowFlags  = flag.NewFlagSet("show", flag.ExitOnError)
 		pipelineShowIDFlag = pipelineShowFlags.String("id", "REQUIRED", "Identifier of pipeline to show")
@@ -266,7 +267,7 @@ func ParseEndpoint(
 			switch epn {
 			case "list":
 				endpoint = c.List()
-				data, err = pipelinec.BuildListPayload(*pipelineListNameFlag)
+				data, err = pipelinec.BuildListPayload(*pipelineListNameFlag, *pipelineListStatusFlag)
 			case "show":
 				endpoint = c.Show()
 				data, err = pipelinec.BuildShowPayload(*pipelineShowIDFlag)
@@ -349,13 +350,14 @@ Additional help:
 `, os.Args[0])
 }
 func pipelineListUsage() {
-	fmt.Fprintf(os.Stderr, `%[1]s [flags] pipeline list -name STRING
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] pipeline list -name STRING -status BOOL
 
 List all known pipelines
     -name STRING: 
+    -status BOOL: 
 
 Example:
-    %[1]s pipeline list --name "Porro numquam dolores doloribus."
+    %[1]s pipeline list --name "Eaque nemo quia." --status false
 `, os.Args[0])
 }
 
@@ -366,7 +368,7 @@ Show pipeline by ID
     -id STRING: Identifier of pipeline to show
 
 Example:
-    %[1]s pipeline show --id "426487a9-09c7-11ee-8a61-7085c27bdeb0"
+    %[1]s pipeline show --id "d07f4165-11a8-11ee-ade5-7085c27bdeb0"
 `, os.Args[0])
 }
 
@@ -377,7 +379,7 @@ List all processing configurations of a pipeline given its ID
     -id STRING: Identifier of pipeline
 
 Example:
-    %[1]s pipeline processing --id "42649d62-09c7-11ee-8a61-7085c27bdeb0"
+    %[1]s pipeline processing --id "d07f5dac-11a8-11ee-ade5-7085c27bdeb0"
 `, os.Args[0])
 }
 
@@ -404,11 +406,11 @@ Submit a new batch
 
 Example:
     %[1]s batch submit --body '{
-      "completed_dir": "Sit sed laboriosam.",
-      "path": "Provident voluptates iure et.",
-      "pipeline": "Ut dolor est.",
-      "processing_config": "Eum quis nihil soluta ut molestiae et.",
-      "retention_period": "Sit nihil."
+      "completed_dir": "Laboriosam odit.",
+      "path": "Laboriosam nam sit nihil.",
+      "pipeline": "Necessitatibus vel aut deleniti quia qui.",
+      "processing_config": "Vel voluptatem.",
+      "retention_period": "Sed perferendis illum illum omnis et officiis."
    }'
 `, os.Args[0])
 }
@@ -482,7 +484,7 @@ List all stored collections
     -cursor STRING: 
 
 Example:
-    %[1]s collection list --name "Ut veniam molestiae amet." --original-id "Quod quibusdam ea fugit odio quia autem." --transfer-id "42637e8e-09c7-11ee-8a61-7085c27bdeb0" --aip-id "42638046-09c7-11ee-8a61-7085c27bdeb0" --pipeline-id "42638213-09c7-11ee-8a61-7085c27bdeb0" --earliest-created-time "1990-10-06T02:21:42Z" --latest-created-time "2015-02-25T11:02:44Z" --status "done" --cursor "Debitis eveniet atque ipsum esse."
+    %[1]s collection list --name "Laudantium eos fugiat iure sit ea." --original-id "Et dolor ullam consequatur dignissimos." --transfer-id "d07c5264-11a8-11ee-ade5-7085c27bdeb0" --aip-id "d07c5451-11a8-11ee-ade5-7085c27bdeb0" --pipeline-id "d07c5618-11a8-11ee-ade5-7085c27bdeb0" --earliest-created-time "1996-05-01T14:23:24Z" --latest-created-time "1987-02-15T23:56:43Z" --status "error" --cursor "Sit et inventore et."
 `, os.Args[0])
 }
 
@@ -493,7 +495,7 @@ Show collection by ID
     -id UINT: Identifier of collection to show
 
 Example:
-    %[1]s collection show --id 9792579105820977192
+    %[1]s collection show --id 6649367811978689086
 `, os.Args[0])
 }
 
@@ -504,7 +506,7 @@ Delete collection by ID
     -id UINT: Identifier of collection to delete
 
 Example:
-    %[1]s collection delete --id 11400018648607317492
+    %[1]s collection delete --id 14411764229641892412
 `, os.Args[0])
 }
 
@@ -515,7 +517,7 @@ Cancel collection processing by ID
     -id UINT: Identifier of collection to remove
 
 Example:
-    %[1]s collection cancel --id 14499263187360059104
+    %[1]s collection cancel --id 12015603943555843617
 `, os.Args[0])
 }
 
@@ -526,7 +528,7 @@ Retry collection processing by ID
     -id UINT: Identifier of collection to retry
 
 Example:
-    %[1]s collection retry --id 14607175962139653509
+    %[1]s collection retry --id 3222974273559150037
 `, os.Args[0])
 }
 
@@ -537,7 +539,7 @@ Retrieve workflow status by ID
     -id UINT: Identifier of collection to look up
 
 Example:
-    %[1]s collection workflow --id 11925746244690710531
+    %[1]s collection workflow --id 8684027374223699867
 `, os.Args[0])
 }
 
@@ -548,7 +550,7 @@ Download collection by ID
     -id UINT: Identifier of collection to look up
 
 Example:
-    %[1]s collection download --id 1369363346339569407
+    %[1]s collection download --id 9570527133616476063
 `, os.Args[0])
 }
 
@@ -561,8 +563,8 @@ Make decision for a pending collection by ID
 
 Example:
     %[1]s collection decide --body '{
-      "option": "Optio non a officia sint."
-   }' --id 4433925421161774604
+      "option": "Nihil officiis et enim."
+   }' --id 3923434489665488889
 `, os.Args[0])
 }
 
@@ -575,8 +577,8 @@ Bulk operations (retry, cancel...).
 Example:
     %[1]s collection bulk --body '{
       "operation": "cancel",
-      "size": 11998998615337084245,
-      "status": "done"
+      "size": 15492129042979125718,
+      "status": "in progress"
    }'
 `, os.Args[0])
 }

@@ -11,6 +11,7 @@ package client
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -48,6 +49,7 @@ func EncodeListRequest(encoder func(*http.Request) goahttp.Encoder) func(*http.R
 		if p.Name != nil {
 			values.Add("name", *p.Name)
 		}
+		values.Add("status", fmt.Sprintf("%v", p.Status))
 		req.URL.RawQuery = values.Encode()
 		return nil
 	}
@@ -269,6 +271,7 @@ func unmarshalEnduroStoredPipelineResponseToPipelineEnduroStoredPipeline(v *Endu
 		Name:     *v.Name,
 		Capacity: v.Capacity,
 		Current:  v.Current,
+		Status:   v.Status,
 	}
 
 	return res

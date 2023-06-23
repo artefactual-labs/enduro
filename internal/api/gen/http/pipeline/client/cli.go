@@ -9,21 +9,35 @@
 package client
 
 import (
+	"fmt"
+	"strconv"
+
 	pipeline "github.com/artefactual-labs/enduro/internal/api/gen/pipeline"
 	goa "goa.design/goa/v3/pkg"
 )
 
 // BuildListPayload builds the payload for the pipeline list endpoint from CLI
 // flags.
-func BuildListPayload(pipelineListName string) (*pipeline.ListPayload, error) {
+func BuildListPayload(pipelineListName string, pipelineListStatus string) (*pipeline.ListPayload, error) {
+	var err error
 	var name *string
 	{
 		if pipelineListName != "" {
 			name = &pipelineListName
 		}
 	}
+	var status bool
+	{
+		if pipelineListStatus != "" {
+			status, err = strconv.ParseBool(pipelineListStatus)
+			if err != nil {
+				return nil, fmt.Errorf("invalid value for status, must be BOOL")
+			}
+		}
+	}
 	v := &pipeline.ListPayload{}
 	v.Name = name
+	v.Status = status
 
 	return v, nil
 }

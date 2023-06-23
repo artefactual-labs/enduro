@@ -43,6 +43,12 @@ export interface PipelineShowResponseBody {
      * @memberof PipelineShowResponseBody
      */
     name: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof PipelineShowResponseBody
+     */
+    status?: string;
 }
 
 export function PipelineShowResponseBodyFromJSON(json: any): PipelineShowResponseBody {
@@ -59,6 +65,7 @@ export function PipelineShowResponseBodyFromJSONTyped(json: any, ignoreDiscrimin
         'current': !exists(json, 'current') ? undefined : json['current'],
         'id': !exists(json, 'id') ? undefined : json['id'],
         'name': json['name'],
+        'status': !exists(json, 'status') ? undefined : json['status'],
     };
 }
 
@@ -75,6 +82,7 @@ export function PipelineShowResponseBodyToJSON(value?: PipelineShowResponseBody 
         'current': value.current,
         'id': value.id,
         'name': value.name,
+        'status': value.status,
     };
 }
 

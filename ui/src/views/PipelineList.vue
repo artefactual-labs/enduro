@@ -28,7 +28,10 @@
             <tr v-for="item in results" v-bind:key="item.id">
               <th scope="row">{{ item.name }}</th>
               <td>{{ item.current }} / {{ item.capacity }}</td>
-              <td>N / A</td>
+              <td>
+                <b-badge v-if="item.status == 'active'" variant="success">{{ item.status.toUpperCase() }}</b-badge>
+                <b-badge v-else variant="warning">{{ item.status.toUpperCase() }}</b-badge>
+              </td>
             </tr>
           </tbody>
         </table>
@@ -67,22 +70,21 @@ export default class PipelineList extends Vue {
   @pipelineStoreNs.Action(PipelineStore.SEARCH_PIPELINES)
   private search: any;
 
+  private timer? : number;
+
   private created() {
     this.search();
+    this.timer = setInterval(() => {
+      this.search();
+    }, 5000)
   }
 
-  /**
-   * Perform same search re-using all existing state.
-   */
+  private beforeDestroy() {
+    clearInterval(this.timer);
+  }
+
   private retryButtonClicked() {
     this.search();
-  }
-
-  /**
-   * Forward user to the pipeline route.
-   */
-  private rowClicked(id: string) {
-    this.$router.push({ name: 'pipeline', params: {id} });
   }
 }
 </script>
