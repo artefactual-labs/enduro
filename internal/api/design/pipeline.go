@@ -13,6 +13,7 @@ var _ = Service("pipeline", func() {
 		Description("List all known pipelines")
 		Payload(func() {
 			Attribute("name", String)
+			Attribute("status", Boolean, func() { Default(false) })
 		})
 		Result(ArrayOf(StoredPipeline))
 		HTTP(func() {
@@ -20,6 +21,7 @@ var _ = Service("pipeline", func() {
 			Response(StatusOK)
 			Params(func() {
 				Param("name")
+				Param("status")
 			})
 		})
 	})
@@ -70,12 +72,14 @@ var StoredPipeline = ResultType("application/vnd.enduro.stored-pipeline", func()
 		Attribute("name")
 		Attribute("capacity")
 		Attribute("current")
+		Attribute("status")
 	})
 	View("default", func() {
 		Attribute("id")
 		Attribute("name")
 		Attribute("capacity")
 		Attribute("current")
+		Attribute("status")
 	})
 	Required("name")
 })

@@ -43,6 +43,12 @@ export interface EnduroStoredPipelineResponse {
      * @memberof EnduroStoredPipelineResponse
      */
     name: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof EnduroStoredPipelineResponse
+     */
+    status?: string;
 }
 
 export function EnduroStoredPipelineResponseFromJSON(json: any): EnduroStoredPipelineResponse {
@@ -59,6 +65,7 @@ export function EnduroStoredPipelineResponseFromJSONTyped(json: any, ignoreDiscr
         'current': !exists(json, 'current') ? undefined : json['current'],
         'id': !exists(json, 'id') ? undefined : json['id'],
         'name': json['name'],
+        'status': !exists(json, 'status') ? undefined : json['status'],
     };
 }
 
@@ -75,6 +82,7 @@ export function EnduroStoredPipelineResponseToJSON(value?: EnduroStoredPipelineR
         'current': value.current,
         'id': value.id,
         'name': value.name,
+        'status': value.status,
     };
 }
 

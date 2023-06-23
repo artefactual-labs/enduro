@@ -27,7 +27,8 @@ type ShowResponseBody struct {
 	// Maximum concurrent transfers
 	Capacity *int64 `form:"capacity,omitempty" json:"capacity,omitempty" xml:"capacity,omitempty"`
 	// Current transfers
-	Current *int64 `form:"current,omitempty" json:"current,omitempty" xml:"current,omitempty"`
+	Current *int64  `form:"current,omitempty" json:"current,omitempty" xml:"current,omitempty"`
+	Status  *string `form:"status,omitempty" json:"status,omitempty" xml:"status,omitempty"`
 }
 
 // ShowNotFoundResponseBody is the type of the "pipeline" service "show"
@@ -57,7 +58,8 @@ type EnduroStoredPipelineResponse struct {
 	// Maximum concurrent transfers
 	Capacity *int64 `form:"capacity,omitempty" json:"capacity,omitempty" xml:"capacity,omitempty"`
 	// Current transfers
-	Current *int64 `form:"current,omitempty" json:"current,omitempty" xml:"current,omitempty"`
+	Current *int64  `form:"current,omitempty" json:"current,omitempty" xml:"current,omitempty"`
+	Status  *string `form:"status,omitempty" json:"status,omitempty" xml:"status,omitempty"`
 }
 
 // NewListResponseBody builds the HTTP response body from the result of the
@@ -78,6 +80,7 @@ func NewShowResponseBody(res *pipelineviews.EnduroStoredPipelineView) *ShowRespo
 		Name:     *res.Name,
 		Capacity: res.Capacity,
 		Current:  res.Current,
+		Status:   res.Status,
 	}
 	return body
 }
@@ -103,9 +106,10 @@ func NewProcessingNotFoundResponseBody(res *pipeline.PipelineNotFound) *Processi
 }
 
 // NewListPayload builds a pipeline service list endpoint payload.
-func NewListPayload(name *string) *pipeline.ListPayload {
+func NewListPayload(name *string, status bool) *pipeline.ListPayload {
 	v := &pipeline.ListPayload{}
 	v.Name = name
+	v.Status = status
 
 	return v
 }

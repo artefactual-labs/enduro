@@ -31,6 +31,7 @@ type EnduroStoredPipelineView struct {
 	Capacity *int64
 	// Current transfers
 	Current *int64
+	Status  *string
 }
 
 var (
@@ -42,6 +43,7 @@ var (
 			"name",
 			"capacity",
 			"current",
+			"status",
 		},
 	}
 )

@@ -11,6 +11,7 @@ import (
 	"os/user"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -50,6 +51,11 @@ type Pipeline struct {
 
 	// The underlying HTTP client used by amclient.
 	client *http.Client
+
+	// Pipeline status.
+	status          string
+	statusUpdatedAt time.Time
+	statusLock      sync.RWMutex
 }
 
 func NewPipeline(logger logr.Logger, config Config) (*Pipeline, error) {
@@ -108,12 +114,12 @@ func (p *Pipeline) init() error {
 }
 
 // Client returns the Archivematica API client ready for use.
-func (p Pipeline) Client() *amclient.Client {
+func (p *Pipeline) Client() *amclient.Client {
 	return amclient.NewClient(p.client, p.config.BaseURL, p.config.User, p.config.Key)
 }
 
 // SSAccess returns the URL and user:key pair needed to access Storage Service.
-func (p Pipeline) SSAccess() (*url.URL, string, error) {
+func (p *Pipeline) SSAccess() (*url.URL, string, error) {
 	if p.config.StorageServiceURL == "" {
 		return nil, "", errors.New("error parsing storageServiceURL: it is empty")
 	}
@@ -133,14 +139,14 @@ func (p Pipeline) SSAccess() (*url.URL, string, error) {
 }
 
 // TempFile creates a temporary file in the processing directory.
-func (p Pipeline) TempFile(pattern string) (*os.File, error) {
+func (p *Pipeline) TempFile(pattern string) (*os.File, error) {
 	if pattern == "" {
 		pattern = "blob-*"
 	}
 	return os.CreateTemp(p.config.ProcessingDir, pattern)
 }
 
-func (p Pipeline) Config() *Config {
+func (p *Pipeline) Config() *Config {
 	return p.config
 }
 
@@ -163,6 +169,34 @@ func (p *Pipeline) Release() {
 
 func (p *Pipeline) Capacity() (size, cur int64) {
 	return p.sem.Capacity()
+}
+
+// loadStatus looks up the status of the pipeline using the HTTP client.
+// TODO: find a better way to ping the API.
+func (p *Pipeline) loadStatus(ctx context.Context) string {
+	_, _, err := p.Client().ProcessingConfig.List(ctx)
+	if err != nil {
+		return "unavailable"
+	}
+	return "active"
+}
+
+func (p *Pipeline) Status(ctx context.Context) string {
+	const ttl = time.Second * 10
+	p.statusLock.RLock()
+	if time.Since(p.statusUpdatedAt) < ttl {
+		status := p.status
+		p.statusLock.RUnlock()
+		return status
+	}
+	p.statusLock.RUnlock()
+	p.statusLock.Lock()
+	defer p.statusLock.Unlock()
+	if time.Since(p.statusUpdatedAt) >= ttl {
+		p.status = p.loadStatus(ctx)
+		p.statusUpdatedAt = time.Now()
+	}
+	return p.status
 }
 
 func httpClient() *http.Client {

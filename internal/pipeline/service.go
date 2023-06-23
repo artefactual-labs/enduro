@@ -2,6 +2,8 @@ package pipeline
 
 import (
 	"context"
+	"sync"
+	"time"
 
 	"github.com/go-logr/logr"
 
@@ -32,6 +34,8 @@ func (w *pipelineImpl) List(ctx context.Context, payload *goapipeline.ListPayloa
 	pipelines := w.registry.List()
 	results := make([]*goapipeline.EnduroStoredPipeline, 0, len(pipelines))
 
+	var wg sync.WaitGroup
+
 	for _, p := range pipelines {
 		c := p.Config()
 		size, cur := p.Capacity()
@@ -43,8 +47,20 @@ func (w *pipelineImpl) List(ctx context.Context, payload *goapipeline.ListPayloa
 		if p.ID != "" {
 			r.ID = &p.ID
 		}
+		if payload.Status {
+			wg.Add(1)
+			go func(p *Pipeline, r *goapipeline.EnduroStoredPipeline) {
+				defer wg.Done()
+				ctx, cancel := context.WithTimeout(ctx, time.Second)
+				defer cancel()
+				status := p.Status(ctx)
+				r.Status = &status
+			}(p, r)
+		}
 		results = append(results, r)
 	}
+
+	wg.Wait()
 
 	return results, nil
 }

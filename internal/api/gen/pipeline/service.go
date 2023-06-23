@@ -44,11 +44,13 @@ type EnduroStoredPipeline struct {
 	Capacity *int64
 	// Current transfers
 	Current *int64
+	Status  *string
 }
 
 // ListPayload is the payload type of the pipeline service list method.
 type ListPayload struct {
-	Name *string
+	Name   *string
+	Status bool
 }
 
 // Pipeline not found.
@@ -110,6 +112,7 @@ func newEnduroStoredPipeline(vres *pipelineviews.EnduroStoredPipelineView) *Endu
 		ID:       vres.ID,
 		Capacity: vres.Capacity,
 		Current:  vres.Current,
+		Status:   vres.Status,
 	}
 	if vres.Name != nil {
 		res.Name = *vres.Name
@@ -125,6 +128,7 @@ func newEnduroStoredPipelineView(res *EnduroStoredPipeline) *pipelineviews.Endur
 		Name:     &res.Name,
 		Capacity: res.Capacity,
 		Current:  res.Current,
+		Status:   res.Status,
 	}
 	return vres
 }
