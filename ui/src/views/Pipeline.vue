@@ -1,5 +1,5 @@
 <template>
-  <b-container>
-    Pipeline
-  </b-container>
-</template
+    <b-container>
+      Pipeline
+    </b-container>
+  </template>
