@@ -7,6 +7,7 @@ import (
 
 	"github.com/cenkalti/backoff/v4"
 	cadencesdk_activity "go.uber.org/cadence/activity"
+	"go.uber.org/zap"
 
 	"github.com/artefactual-labs/enduro/internal/pipeline"
 	wferrors "github.com/artefactual-labs/enduro/internal/workflow/errors"
@@ -27,6 +28,8 @@ type PollIngestActivityParams struct {
 }
 
 func (a *PollIngestActivity) Execute(ctx context.Context, params *PollIngestActivityParams) (time.Time, error) {
+	logger := cadencesdk_activity.GetLogger(ctx)
+
 	p, err := a.manager.Pipelines.ByName(params.PipelineName)
 	if err != nil {
 		return time.Time{}, wferrors.NonRetryableError(err)
@@ -57,6 +60,10 @@ func (a *PollIngestActivity) Execute(ctx context.Context, params *PollIngestActi
 			if errors.Is(err, pipeline.ErrStatusInProgress) {
 				lastRetryableError = time.Time{} // Reset.
 				return err
+			}
+
+			if err != nil {
+				logger.Error("Failed to look up Ingest status.", zap.Error(err))
 			}
 
 			// Retry unless the deadline was exceeded.
