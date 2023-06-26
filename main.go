@@ -14,16 +14,15 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	"github.com/go-logr/zapr"
 	"github.com/oklog/run"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
+	"go.artefactual.dev/tools/log"
 	cadencesdk_activity "go.uber.org/cadence/activity"
 	cadencesdk_client "go.uber.org/cadence/client"
 	cadencesdk_workflow "go.uber.org/cadence/workflow"
 	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 
 	"github.com/artefactual-labs/enduro/internal/api"
 	"github.com/artefactual-labs/enduro/internal/batch"
@@ -79,27 +78,19 @@ func main() {
 	var logger logr.Logger
 	var zlogger *zap.Logger
 	{
-		var zconfig zap.Config
-		if config.Debug {
-			encoderConfig := zap.NewDevelopmentEncoderConfig()
-			encoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
-			zconfig = zap.NewDevelopmentConfig()
-			zconfig.EncoderConfig = encoderConfig
-		} else {
-			zconfig = zap.NewProductionConfig()
-		}
+		logger = log.New(os.Stderr, log.WithName(appName), log.WithDebug(config.Debug))
 
-		zlogger, err = zconfig.Build(zap.AddCallerSkip(1))
-		zlogger = zlogger.Named(appName)
-		defer func() { _ = zlogger.Sync() }()
-		if err != nil {
-			fmt.Printf("Failed to set up logger %v", err)
+		var ok bool
+		zlogger, ok = log.Underlying(logger)
+		if !ok {
+			fmt.Println("Failed to configure logger.")
 			os.Exit(1)
 		}
 
-		logger = zapr.NewLogger(zlogger)
-		logger.Info("Starting...", "version", version, "pid", os.Getpid())
+		defer log.Sync(logger)
 	}
+
+	logger.Info("Starting...", "version", version, "pid", os.Getpid())
 
 	if configFileFound {
 		logger.Info("Configuration file loaded.", "path", v.ConfigFileUsed())
