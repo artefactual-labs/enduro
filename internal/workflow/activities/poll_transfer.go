@@ -7,6 +7,7 @@ import (
 
 	"github.com/cenkalti/backoff/v4"
 	cadencesdk_activity "go.uber.org/cadence/activity"
+	"go.uber.org/zap"
 
 	"github.com/artefactual-labs/enduro/internal/pipeline"
 	wferrors "github.com/artefactual-labs/enduro/internal/workflow/errors"
@@ -31,6 +32,8 @@ type PollTransferActivityParams struct {
 }
 
 func (a *PollTransferActivity) Execute(ctx context.Context, params *PollTransferActivityParams) (string, error) {
+	logger := cadencesdk_activity.GetLogger(ctx)
+
 	p, err := a.manager.Pipelines.ByName(params.PipelineName)
 	if err != nil {
 		return "", wferrors.NonRetryableError(err)
@@ -62,6 +65,10 @@ func (a *PollTransferActivity) Execute(ctx context.Context, params *PollTransfer
 			if errors.Is(err, pipeline.ErrStatusInProgress) {
 				lastRetryableError = time.Time{} // Reset.
 				return err
+			}
+
+			if err != nil {
+				logger.Error("Failed to look up Transfer status.", zap.Error(err))
 			}
 
 			// Retry unless the deadline was exceeded.
