@@ -29,7 +29,7 @@ require (
 	github.com/spf13/viper v1.16.0
 	github.com/stretchr/testify v1.8.4
 	github.com/uber-go/tally v3.4.3+incompatible
-	go.artefactual.dev/tools v0.0.0-20230626164816-003cda7e2583
+	go.artefactual.dev/tools v0.1.0
 	go.uber.org/cadence v0.19.1
 	go.uber.org/yarpc v1.70.2
 	go.uber.org/zap v1.24.0
