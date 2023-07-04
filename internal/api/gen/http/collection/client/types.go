@@ -460,6 +460,17 @@ func NewWorkflowNotFound(body *WorkflowNotFoundResponseBody) *collection.Collect
 	return v
 }
 
+// NewDownloadResultOK builds a "collection" service "download" endpoint result
+// from a HTTP "OK" response.
+func NewDownloadResultOK(contentType string, contentLength int64, contentDisposition string) *collection.DownloadResult {
+	v := &collection.DownloadResult{}
+	v.ContentType = contentType
+	v.ContentLength = contentLength
+	v.ContentDisposition = contentDisposition
+
+	return v
+}
+
 // NewDownloadNotFound builds a collection service download endpoint not_found
 // error.
 func NewDownloadNotFound(body *DownloadNotFoundResponseBody) *collection.CollectionNotfound {

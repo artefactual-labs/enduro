@@ -10,6 +10,7 @@ package collection
 
 import (
 	"context"
+	"io"
 
 	goa "goa.design/goa/v3/pkg"
 )
@@ -34,6 +35,15 @@ type Endpoints struct {
 type MonitorEndpointInput struct {
 	// Stream is the server stream used by the "monitor" method to send data.
 	Stream MonitorServerStream
+}
+
+// DownloadResponseData holds both the result and the HTTP response body reader
+// of the "download" method.
+type DownloadResponseData struct {
+	// Result is the method result.
+	Result *DownloadResult
+	// Body streams the HTTP response body.
+	Body io.ReadCloser
 }
 
 // NewEndpoints wraps the methods of the "collection" service with endpoints.
@@ -146,7 +156,11 @@ func NewWorkflowEndpoint(s Service) goa.Endpoint {
 func NewDownloadEndpoint(s Service) goa.Endpoint {
 	return func(ctx context.Context, req any) (any, error) {
 		p := req.(*DownloadPayload)
-		return s.Download(ctx, p)
+		res, body, err := s.Download(ctx, p)
+		if err != nil {
+			return nil, err
+		}
+		return &DownloadResponseData{Result: res, Body: body}, nil
 	}
 }
 

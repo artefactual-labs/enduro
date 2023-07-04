@@ -4,13 +4,11 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"net/http"
 	"time"
 
 	"github.com/go-logr/logr"
 	"github.com/jmoiron/sqlx"
 	temporalsdk_client "go.temporal.io/sdk/client"
-	goahttp "goa.design/goa/v3/http"
 
 	goacollection "github.com/artefactual-labs/enduro/internal/api/gen/collection"
 	"github.com/artefactual-labs/enduro/internal/pipeline"
@@ -25,14 +23,6 @@ type Service interface {
 	SetStatusInProgress(ctx context.Context, ID uint, startedAt time.Time) error
 	SetStatusPending(ctx context.Context, ID uint, taskToken []byte) error
 	SetOriginalID(ctx context.Context, ID uint, originalID string) error
-
-	// HTTPDownload returns a HTTP handler that serves the package over HTTP.
-	//
-	// TODO: this service is meant to be agnostic to protocols. But I haven't
-	// found a way in goagen to have my service write directly to the HTTP
-	// response writer. Ideally, our goacollection.Service would have a new
-	// method that takes a io.Writer (e.g. http.ResponseWriter).
-	HTTPDownload(mux goahttp.Muxer, dec func(r *http.Request) goahttp.Decoder) http.HandlerFunc
 }
 
 type collectionImpl struct {
@@ -43,9 +33,6 @@ type collectionImpl struct {
 
 	registry *pipeline.Registry
 
-	// downloadProxy generates a reverse proxy on each download.
-	downloadProxy *downloadReverseProxy
-
 	// Destination for events to be published.
 	events EventService
 }
@@ -54,13 +41,12 @@ var _ Service = (*collectionImpl)(nil)
 
 func NewService(logger logr.Logger, db *sql.DB, cc temporalsdk_client.Client, taskQueue string, registry *pipeline.Registry) *collectionImpl {
 	return &collectionImpl{
-		logger:        logger,
-		db:            sqlx.NewDb(db, "mysql"),
-		cc:            cc,
-		taskQueue:     taskQueue,
-		registry:      registry,
-		downloadProxy: newDownloadReverseProxy(logger),
-		events:        NewEventService(),
+		logger:    logger,
+		db:        sqlx.NewDb(db, "mysql"),
+		cc:        cc,
+		taskQueue: taskQueue,
+		registry:  registry,
+		events:    NewEventService(),
 	}
 }
 
