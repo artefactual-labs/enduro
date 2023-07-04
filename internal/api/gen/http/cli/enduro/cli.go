@@ -33,7 +33,7 @@ collection (monitor|list|show|delete|cancel|retry|workflow|download|decide|bulk|
 
 // UsageExamples produces an example of a valid invocation of the CLI tool.
 func UsageExamples() string {
-	return os.Args[0] + ` pipeline list --name "Eaque nemo quia." --status false` + "\n" +
+	return os.Args[0] + ` pipeline list --name "Repellendus quam vitae adipisci officiis." --status false` + "\n" +
 		os.Args[0] + ` batch submit --body '{
       "completed_dir": "Laboriosam odit.",
       "path": "Laboriosam nam sit nihil.",
@@ -357,7 +357,7 @@ List all known pipelines
     -status BOOL: 
 
 Example:
-    %[1]s pipeline list --name "Eaque nemo quia." --status false
+    %[1]s pipeline list --name "Repellendus quam vitae adipisci officiis." --status false
 `, os.Args[0])
 }
 
@@ -368,7 +368,7 @@ Show pipeline by ID
     -id STRING: Identifier of pipeline to show
 
 Example:
-    %[1]s pipeline show --id "3aa29fec-1c21-11ee-bb08-7085c27bdeb0"
+    %[1]s pipeline show --id "8042d327-1caf-11ee-b3da-7085c27bdeb0"
 `, os.Args[0])
 }
 
@@ -379,7 +379,7 @@ List all processing configurations of a pipeline given its ID
     -id STRING: Identifier of pipeline
 
 Example:
-    %[1]s pipeline processing --id "3aa2b5c8-1c21-11ee-bb08-7085c27bdeb0"
+    %[1]s pipeline processing --id "8042e9d7-1caf-11ee-b3da-7085c27bdeb0"
 `, os.Args[0])
 }
 
@@ -484,7 +484,7 @@ List all stored collections
     -cursor STRING: 
 
 Example:
-    %[1]s collection list --name "Laudantium eos fugiat iure sit ea." --original-id "Et dolor ullam consequatur dignissimos." --transfer-id "3aa19814-1c21-11ee-bb08-7085c27bdeb0" --aip-id "3aa199c9-1c21-11ee-bb08-7085c27bdeb0" --pipeline-id "3aa19b92-1c21-11ee-bb08-7085c27bdeb0" --earliest-created-time "1996-05-01T14:23:24Z" --latest-created-time "1987-02-15T23:56:43Z" --status "error" --cursor "Sit et inventore et."
+    %[1]s collection list --name "Laudantium eos fugiat iure sit ea." --original-id "Et dolor ullam consequatur dignissimos." --transfer-id "8041914a-1caf-11ee-b3da-7085c27bdeb0" --aip-id "804192fd-1caf-11ee-b3da-7085c27bdeb0" --pipeline-id "804194b2-1caf-11ee-b3da-7085c27bdeb0" --earliest-created-time "1996-05-01T14:23:24Z" --latest-created-time "1987-02-15T23:56:43Z" --status "error" --cursor "Sit et inventore et."
 `, os.Args[0])
 }
 
@@ -563,8 +563,8 @@ Make decision for a pending collection by ID
 
 Example:
     %[1]s collection decide --body '{
-      "option": "Nihil officiis et enim."
-   }' --id 3923434489665488889
+      "option": "Ullam eos eius officiis rerum assumenda."
+   }' --id 17269801802435663434
 `, os.Args[0])
 }
 
@@ -576,9 +576,9 @@ Bulk operations (retry, cancel...).
 
 Example:
     %[1]s collection bulk --body '{
-      "operation": "cancel",
-      "size": 15492129042979125718,
-      "status": "in progress"
+      "operation": "retry",
+      "size": 15570024955802771098,
+      "status": "done"
    }'
 `, os.Args[0])
 }

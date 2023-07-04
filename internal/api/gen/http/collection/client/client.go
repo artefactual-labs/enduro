@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"time"
 
+	collection "github.com/artefactual-labs/enduro/internal/api/gen/collection"
 	"github.com/gorilla/websocket"
 	goahttp "goa.design/goa/v3/http"
 	goa "goa.design/goa/v3/pkg"
@@ -280,7 +281,12 @@ func (c *Client) Download() goa.Endpoint {
 		if err != nil {
 			return nil, goahttp.ErrRequestError("collection", "download", err)
 		}
-		return decodeResponse(resp)
+		res, err := decodeResponse(resp)
+		if err != nil {
+			resp.Body.Close()
+			return nil, err
+		}
+		return &collection.DownloadResponseData{Result: res.(*collection.DownloadResult), Body: resp.Body}, nil
 	}
 }
 

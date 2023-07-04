@@ -277,9 +277,13 @@ paths:
             responses:
                 "200":
                     description: OK response.
-                    schema:
-                        type: string
-                        format: byte
+                    headers:
+                        Content-Disposition:
+                            type: string
+                        Content-Length:
+                            type: int64
+                        Content-Type:
+                            type: string
                 "404":
                     description: Not Found response.
                     schema:
@@ -1026,54 +1030,54 @@ definitions:
                 example: Cum in aliquam aliquid non tempore vel.
         example:
             items:
-                - aip_id: 3aa0d6b1-1c21-11ee-bb08-7085c27bdeb0
+                - aip_id: 8040c16f-1caf-11ee-b3da-7085c27bdeb0
                   completed_at: "2014-01-26T22:52:33Z"
                   created_at: "2006-09-07T19:48:15Z"
                   id: 5273261262554249024
                   name: Iusto laudantium assumenda.
                   original_id: Voluptatem eum et rerum.
-                  pipeline_id: 3aa0d854-1c21-11ee-bb08-7085c27bdeb0
-                  run_id: 3aa0d415-1c21-11ee-bb08-7085c27bdeb0
+                  pipeline_id: 8040c2e5-1caf-11ee-b3da-7085c27bdeb0
+                  run_id: 8040be91-1caf-11ee-b3da-7085c27bdeb0
                   started_at: "1986-05-13T23:32:21Z"
                   status: unknown
-                  transfer_id: 3aa0d569-1c21-11ee-bb08-7085c27bdeb0
-                  workflow_id: 3aa0be66-1c21-11ee-bb08-7085c27bdeb0
-                - aip_id: 3aa0d6b1-1c21-11ee-bb08-7085c27bdeb0
+                  transfer_id: 8040c023-1caf-11ee-b3da-7085c27bdeb0
+                  workflow_id: 8040a720-1caf-11ee-b3da-7085c27bdeb0
+                - aip_id: 8040c16f-1caf-11ee-b3da-7085c27bdeb0
                   completed_at: "2014-01-26T22:52:33Z"
                   created_at: "2006-09-07T19:48:15Z"
                   id: 5273261262554249024
                   name: Iusto laudantium assumenda.
                   original_id: Voluptatem eum et rerum.
-                  pipeline_id: 3aa0d854-1c21-11ee-bb08-7085c27bdeb0
-                  run_id: 3aa0d415-1c21-11ee-bb08-7085c27bdeb0
+                  pipeline_id: 8040c2e5-1caf-11ee-b3da-7085c27bdeb0
+                  run_id: 8040be91-1caf-11ee-b3da-7085c27bdeb0
                   started_at: "1986-05-13T23:32:21Z"
                   status: unknown
-                  transfer_id: 3aa0d569-1c21-11ee-bb08-7085c27bdeb0
-                  workflow_id: 3aa0be66-1c21-11ee-bb08-7085c27bdeb0
-                - aip_id: 3aa0d6b1-1c21-11ee-bb08-7085c27bdeb0
+                  transfer_id: 8040c023-1caf-11ee-b3da-7085c27bdeb0
+                  workflow_id: 8040a720-1caf-11ee-b3da-7085c27bdeb0
+                - aip_id: 8040c16f-1caf-11ee-b3da-7085c27bdeb0
                   completed_at: "2014-01-26T22:52:33Z"
                   created_at: "2006-09-07T19:48:15Z"
                   id: 5273261262554249024
                   name: Iusto laudantium assumenda.
                   original_id: Voluptatem eum et rerum.
-                  pipeline_id: 3aa0d854-1c21-11ee-bb08-7085c27bdeb0
-                  run_id: 3aa0d415-1c21-11ee-bb08-7085c27bdeb0
+                  pipeline_id: 8040c2e5-1caf-11ee-b3da-7085c27bdeb0
+                  run_id: 8040be91-1caf-11ee-b3da-7085c27bdeb0
                   started_at: "1986-05-13T23:32:21Z"
                   status: unknown
-                  transfer_id: 3aa0d569-1c21-11ee-bb08-7085c27bdeb0
-                  workflow_id: 3aa0be66-1c21-11ee-bb08-7085c27bdeb0
-                - aip_id: 3aa0d6b1-1c21-11ee-bb08-7085c27bdeb0
+                  transfer_id: 8040c023-1caf-11ee-b3da-7085c27bdeb0
+                  workflow_id: 8040a720-1caf-11ee-b3da-7085c27bdeb0
+                - aip_id: 8040c16f-1caf-11ee-b3da-7085c27bdeb0
                   completed_at: "2014-01-26T22:52:33Z"
                   created_at: "2006-09-07T19:48:15Z"
                   id: 5273261262554249024
                   name: Iusto laudantium assumenda.
                   original_id: Voluptatem eum et rerum.
-                  pipeline_id: 3aa0d854-1c21-11ee-bb08-7085c27bdeb0
-                  run_id: 3aa0d415-1c21-11ee-bb08-7085c27bdeb0
+                  pipeline_id: 8040c2e5-1caf-11ee-b3da-7085c27bdeb0
+                  run_id: 8040be91-1caf-11ee-b3da-7085c27bdeb0
                   started_at: "1986-05-13T23:32:21Z"
                   status: unknown
-                  transfer_id: 3aa0d569-1c21-11ee-bb08-7085c27bdeb0
-                  workflow_id: 3aa0be66-1c21-11ee-bb08-7085c27bdeb0
+                  transfer_id: 8040c023-1caf-11ee-b3da-7085c27bdeb0
+                  workflow_id: 8040a720-1caf-11ee-b3da-7085c27bdeb0
             next_cursor: Non cupiditate.
         required:
             - items
@@ -1096,18 +1100,18 @@ definitions:
         example:
             id: 2274206577310456200
             item:
-                aip_id: 3aa1790a-1c21-11ee-bb08-7085c27bdeb0
+                aip_id: 8041740a-1caf-11ee-b3da-7085c27bdeb0
                 completed_at: "1997-08-27T00:00:04Z"
                 created_at: "1989-09-24T08:53:28Z"
                 id: 4957819645449742263
                 name: Labore totam harum repellat.
                 original_id: Nostrum delectus dolor nisi.
-                pipeline_id: 3aa17a49-1c21-11ee-bb08-7085c27bdeb0
-                run_id: 3aa17689-1c21-11ee-bb08-7085c27bdeb0
+                pipeline_id: 8041753e-1caf-11ee-b3da-7085c27bdeb0
+                run_id: 80417126-1caf-11ee-b3da-7085c27bdeb0
                 started_at: "1998-02-12T04:24:46Z"
                 status: unknown
-                transfer_id: 3aa177ba-1c21-11ee-bb08-7085c27bdeb0
-                workflow_id: 3aa1753b-1c21-11ee-bb08-7085c27bdeb0
+                transfer_id: 804172a0-1caf-11ee-b3da-7085c27bdeb0
+                workflow_id: 80416fcd-1caf-11ee-b3da-7085c27bdeb0
             type: Quam vitae odio non laborum.
         required:
             - id
@@ -1202,7 +1206,7 @@ definitions:
             aip_id:
                 type: string
                 description: Identifier of Archivematica AIP
-                example: 3aa324e2-1c21-11ee-bb08-7085c27bdeb0
+                example: 804344b4-1caf-11ee-b3da-7085c27bdeb0
                 format: uuid
             completed_at:
                 type: string
@@ -1230,12 +1234,12 @@ definitions:
             pipeline_id:
                 type: string
                 description: Identifier of Archivematica pipeline
-                example: 3aa32634-1c21-11ee-bb08-7085c27bdeb0
+                example: 80434978-1caf-11ee-b3da-7085c27bdeb0
                 format: uuid
             run_id:
                 type: string
                 description: Identifier of latest processing workflow run
-                example: 3aa3229a-1c21-11ee-bb08-7085c27bdeb0
+                example: 80434265-1caf-11ee-b3da-7085c27bdeb0
                 format: uuid
             started_at:
                 type: string
@@ -1259,27 +1263,27 @@ definitions:
             transfer_id:
                 type: string
                 description: Identifier of Archivematica transfer
-                example: 3aa323c5-1c21-11ee-bb08-7085c27bdeb0
+                example: 80434394-1caf-11ee-b3da-7085c27bdeb0
                 format: uuid
             workflow_id:
                 type: string
                 description: Identifier of processing workflow
-                example: 3aa32167-1c21-11ee-bb08-7085c27bdeb0
+                example: 80434124-1caf-11ee-b3da-7085c27bdeb0
                 format: uuid
         description: ShowResponseBody result type (default view)
         example:
-            aip_id: 3aa32e79-1c21-11ee-bb08-7085c27bdeb0
+            aip_id: 80436869-1caf-11ee-b3da-7085c27bdeb0
             completed_at: "2005-09-09T14:24:39Z"
             created_at: "2007-10-14T22:27:23Z"
             id: 9029712482372070690
             name: Ipsam adipisci voluptas fugit aut.
             original_id: Consequatur magnam.
-            pipeline_id: 3aa32fc2-1c21-11ee-bb08-7085c27bdeb0
-            run_id: 3aa32c4a-1c21-11ee-bb08-7085c27bdeb0
+            pipeline_id: 80436cbe-1caf-11ee-b3da-7085c27bdeb0
+            run_id: 80436056-1caf-11ee-b3da-7085c27bdeb0
             started_at: "1972-09-08T06:52:05Z"
             status: pending
-            transfer_id: 3aa32d61-1c21-11ee-bb08-7085c27bdeb0
-            workflow_id: 3aa32b2a-1c21-11ee-bb08-7085c27bdeb0
+            transfer_id: 8043645a-1caf-11ee-b3da-7085c27bdeb0
+            workflow_id: 80435bb4-1caf-11ee-b3da-7085c27bdeb0
         required:
             - id
             - status
@@ -1375,7 +1379,7 @@ definitions:
             aip_id:
                 type: string
                 description: Identifier of Archivematica AIP
-                example: 3aa30d16-1c21-11ee-bb08-7085c27bdeb0
+                example: 80432d2b-1caf-11ee-b3da-7085c27bdeb0
                 format: uuid
             completed_at:
                 type: string
@@ -1403,12 +1407,12 @@ definitions:
             pipeline_id:
                 type: string
                 description: Identifier of Archivematica pipeline
-                example: 3aa30eaf-1c21-11ee-bb08-7085c27bdeb0
+                example: 80432e77-1caf-11ee-b3da-7085c27bdeb0
                 format: uuid
             run_id:
                 type: string
                 description: Identifier of latest processing workflow run
-                example: 3aa30a79-1c21-11ee-bb08-7085c27bdeb0
+                example: 80432aac-1caf-11ee-b3da-7085c27bdeb0
                 format: uuid
             started_at:
                 type: string
@@ -1432,27 +1436,27 @@ definitions:
             transfer_id:
                 type: string
                 description: Identifier of Archivematica transfer
-                example: 3aa30bda-1c21-11ee-bb08-7085c27bdeb0
+                example: 80432bee-1caf-11ee-b3da-7085c27bdeb0
                 format: uuid
             workflow_id:
                 type: string
                 description: Identifier of processing workflow
-                example: 3aa30919-1c21-11ee-bb08-7085c27bdeb0
+                example: 80432955-1caf-11ee-b3da-7085c27bdeb0
                 format: uuid
         description: StoredCollection describes a collection retrieved by the service. (default view)
         example:
-            aip_id: 3aa317af-1c21-11ee-bb08-7085c27bdeb0
+            aip_id: 804336d7-1caf-11ee-b3da-7085c27bdeb0
             completed_at: "1992-09-23T06:18:58Z"
             created_at: "1983-06-28T18:36:02Z"
             id: 828828406215854043
             name: Nostrum aut deserunt.
             original_id: Animi praesentium omnis dignissimos cumque omnis.
-            pipeline_id: 3aa318dd-1c21-11ee-bb08-7085c27bdeb0
-            run_id: 3aa3154d-1c21-11ee-bb08-7085c27bdeb0
+            pipeline_id: 804337fe-1caf-11ee-b3da-7085c27bdeb0
+            run_id: 8043347d-1caf-11ee-b3da-7085c27bdeb0
             started_at: "2007-09-04T21:44:52Z"
             status: unknown
-            transfer_id: 3aa31673-1c21-11ee-bb08-7085c27bdeb0
-            workflow_id: 3aa31428-1c21-11ee-bb08-7085c27bdeb0
+            transfer_id: 804335b2-1caf-11ee-b3da-7085c27bdeb0
+            workflow_id: 80433365-1caf-11ee-b3da-7085c27bdeb0
         required:
             - id
             - status
@@ -1464,42 +1468,42 @@ definitions:
             $ref: '#/definitions/EnduroStoredCollectionResponseBody'
         description: EnduroStored-CollectionCollectionResponseBody is the result type for an array of EnduroStored-CollectionResponseBody (default view)
         example:
-            - aip_id: 3aa1790a-1c21-11ee-bb08-7085c27bdeb0
+            - aip_id: 8041740a-1caf-11ee-b3da-7085c27bdeb0
               completed_at: "1997-08-27T00:00:04Z"
               created_at: "1989-09-24T08:53:28Z"
               id: 4957819645449742263
               name: Labore totam harum repellat.
               original_id: Nostrum delectus dolor nisi.
-              pipeline_id: 3aa17a49-1c21-11ee-bb08-7085c27bdeb0
-              run_id: 3aa17689-1c21-11ee-bb08-7085c27bdeb0
+              pipeline_id: 8041753e-1caf-11ee-b3da-7085c27bdeb0
+              run_id: 80417126-1caf-11ee-b3da-7085c27bdeb0
               started_at: "1998-02-12T04:24:46Z"
               status: unknown
-              transfer_id: 3aa177ba-1c21-11ee-bb08-7085c27bdeb0
-              workflow_id: 3aa1753b-1c21-11ee-bb08-7085c27bdeb0
-            - aip_id: 3aa1790a-1c21-11ee-bb08-7085c27bdeb0
+              transfer_id: 804172a0-1caf-11ee-b3da-7085c27bdeb0
+              workflow_id: 80416fcd-1caf-11ee-b3da-7085c27bdeb0
+            - aip_id: 8041740a-1caf-11ee-b3da-7085c27bdeb0
               completed_at: "1997-08-27T00:00:04Z"
               created_at: "1989-09-24T08:53:28Z"
               id: 4957819645449742263
               name: Labore totam harum repellat.
               original_id: Nostrum delectus dolor nisi.
-              pipeline_id: 3aa17a49-1c21-11ee-bb08-7085c27bdeb0
-              run_id: 3aa17689-1c21-11ee-bb08-7085c27bdeb0
+              pipeline_id: 8041753e-1caf-11ee-b3da-7085c27bdeb0
+              run_id: 80417126-1caf-11ee-b3da-7085c27bdeb0
               started_at: "1998-02-12T04:24:46Z"
               status: unknown
-              transfer_id: 3aa177ba-1c21-11ee-bb08-7085c27bdeb0
-              workflow_id: 3aa1753b-1c21-11ee-bb08-7085c27bdeb0
-            - aip_id: 3aa1790a-1c21-11ee-bb08-7085c27bdeb0
+              transfer_id: 804172a0-1caf-11ee-b3da-7085c27bdeb0
+              workflow_id: 80416fcd-1caf-11ee-b3da-7085c27bdeb0
+            - aip_id: 8041740a-1caf-11ee-b3da-7085c27bdeb0
               completed_at: "1997-08-27T00:00:04Z"
               created_at: "1989-09-24T08:53:28Z"
               id: 4957819645449742263
               name: Labore totam harum repellat.
               original_id: Nostrum delectus dolor nisi.
-              pipeline_id: 3aa17a49-1c21-11ee-bb08-7085c27bdeb0
-              run_id: 3aa17689-1c21-11ee-bb08-7085c27bdeb0
+              pipeline_id: 8041753e-1caf-11ee-b3da-7085c27bdeb0
+              run_id: 80417126-1caf-11ee-b3da-7085c27bdeb0
               started_at: "1998-02-12T04:24:46Z"
               status: unknown
-              transfer_id: 3aa177ba-1c21-11ee-bb08-7085c27bdeb0
-              workflow_id: 3aa1753b-1c21-11ee-bb08-7085c27bdeb0
+              transfer_id: 804172a0-1caf-11ee-b3da-7085c27bdeb0
+              workflow_id: 80416fcd-1caf-11ee-b3da-7085c27bdeb0
     EnduroStoredPipelineResponse:
         title: 'Mediatype identifier: application/vnd.enduro.stored-pipeline; view=default'
         type: object
@@ -1517,7 +1521,7 @@ definitions:
             id:
                 type: string
                 description: Identifier of the pipeline
-                example: 3aa34822-1c21-11ee-bb08-7085c27bdeb0
+                example: 8044489b-1caf-11ee-b3da-7085c27bdeb0
                 format: uuid
             name:
                 type: string
@@ -1530,7 +1534,7 @@ definitions:
         example:
             capacity: 7322691743128068194
             current: 72660884889227336
-            id: 3aa34991-1c21-11ee-bb08-7085c27bdeb0
+            id: 80445c22-1caf-11ee-b3da-7085c27bdeb0
             name: Tempore et eligendi laudantium ea illo hic.
             status: Id minima velit provident explicabo consequatur.
         required:
@@ -1590,7 +1594,7 @@ definitions:
             id:
                 type: string
                 description: Identifier of the pipeline
-                example: 3aa34bb3-1c21-11ee-bb08-7085c27bdeb0
+                example: 804463a7-1caf-11ee-b3da-7085c27bdeb0
                 format: uuid
             name:
                 type: string
@@ -1603,7 +1607,7 @@ definitions:
         example:
             capacity: 1349942446066623917
             current: 3978574075782434602
-            id: 3aa34d72-1c21-11ee-bb08-7085c27bdeb0
+            id: 8044792b-1caf-11ee-b3da-7085c27bdeb0
             name: Eveniet quam consequatur eveniet.
             status: Similique unde molestiae esse consequatur reprehenderit.
         required:

@@ -6,6 +6,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -316,12 +319,69 @@ func (w *goaWrapper) Workflow(ctx context.Context, payload *goacollection.Workfl
 	return resp, nil
 }
 
-// Download is a dummy implementation of goacollection.Service. The actual work
-// (serving the file) is done from the API interceptor. Once goa supports this
-// use case (it may never happen) we should be able to have a service method
-// easy to adopt, e.g. with a io.Writer argument?
-func (w *goaWrapper) Download(ctx context.Context, payload *goacollection.DownloadPayload) (res []byte, err error) {
-	return []byte{}, nil
+func (w *goaWrapper) Download(ctx context.Context, p *goacollection.DownloadPayload) (*goacollection.DownloadResult, io.ReadCloser, error) {
+	c, err := w.read(ctx, p.ID)
+	if err == sql.ErrNoRows {
+		return nil, nil, &goacollection.CollectionNotfound{ID: p.ID, Message: "not_found"}
+	} else if err != nil {
+		w.logger.Error(err, "Cannot read collection.", "id", p.ID)
+		return nil, nil, errors.New("cannot read collection")
+	}
+
+	if c.PipelineID == "" || c.AIPID == "" {
+		return nil, nil, &goacollection.CollectionNotfound{ID: p.ID, Message: "not_found"}
+	}
+
+	pipeline, err := w.registry.ByID(c.PipelineID)
+	if err != nil {
+		return nil, nil, &goacollection.CollectionNotfound{ID: p.ID, Message: "not_found"}
+	}
+
+	bu, auth, err := pipeline.SSAccess()
+	if err != nil {
+		return nil, nil, &goacollection.CollectionNotfound{ID: p.ID, Message: "not_found"}
+	}
+
+	path := fmt.Sprintf("api/v2/file/%s/download/", c.AIPID)
+	rel, err := url.Parse(path)
+	if err != nil {
+		return nil, nil, &goacollection.CollectionNotfound{ID: p.ID, Message: "not_found"}
+	}
+
+	loc := bu.ResolveReference(rel).String()
+	w.logger.Info("Sending request to Archivematica Storage Service.", "loc", loc)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, loc, nil)
+	if err != nil {
+		return nil, nil, &goacollection.CollectionNotfound{ID: p.ID, Message: "not_found"}
+	}
+	req.Header.Set("User-Agent", "Enduro (ssclient)")
+	req.Header.Set("Authorization", fmt.Sprintf("ApiKey %s", auth))
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, nil, &goacollection.CollectionNotfound{ID: p.ID, Message: "not_found"}
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, nil, &goacollection.CollectionNotfound{ID: p.ID, Message: "not_found"}
+	}
+
+	var contentLength int64
+	if cl := resp.Header.Get("Content-Length"); cl != "" {
+		if clv, err := strconv.ParseInt(cl, 10, 64); err == nil {
+			contentLength = clv
+		}
+	}
+	if contentLength == 0 {
+		return nil, nil, errors.New("content length is unavailable")
+	}
+
+	res := &goacollection.DownloadResult{
+		ContentType:        resp.Header.Get("Content-Type"),
+		ContentDisposition: resp.Header.Get("Content-Disposition"),
+		ContentLength:      contentLength,
+	}
+
+	return res, resp.Body, nil
 }
 
 // Make decision for a pending collection by ID.

@@ -67,8 +67,7 @@ func HTTPServer(
 	var collectionEndpoints *collection.Endpoints = collection.NewEndpoints(colsvc.Goa())
 	collectionErrorHandler := errorHandler(logger, "Collection error.")
 	var collectionServer *collectionsvr.Server = collectionsvr.New(collectionEndpoints, mux, dec, enc, collectionErrorHandler, nil, websocketUpgrader, nil)
-	// Intercept request in Download endpoint so we can serve the file directly.
-	collectionServer.Download = writeTimeout(colsvc.HTTPDownload(mux, dec), 0)
+	collectionServer.Download = writeTimeout(collectionServer.Download, 0)
 	collectionsvr.Mount(mux, collectionServer)
 
 	// Swagger service.

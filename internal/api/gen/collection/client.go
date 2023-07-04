@@ -10,6 +10,7 @@ package collection
 
 import (
 	"context"
+	"io"
 
 	goa "goa.design/goa/v3/pkg"
 )
@@ -125,13 +126,14 @@ func (c *Client) Workflow(ctx context.Context, p *WorkflowPayload) (res *EnduroC
 // Download may return the following errors:
 //   - "not_found" (type *CollectionNotfound): Collection not found
 //   - error: internal error
-func (c *Client) Download(ctx context.Context, p *DownloadPayload) (res []byte, err error) {
+func (c *Client) Download(ctx context.Context, p *DownloadPayload) (res *DownloadResult, resp io.ReadCloser, err error) {
 	var ires any
 	ires, err = c.DownloadEndpoint(ctx, p)
 	if err != nil {
 		return
 	}
-	return ires.([]byte), nil
+	o := ires.(*DownloadResponseData)
+	return o.Result, o.Body, nil
 }
 
 // Decide calls the "decide" endpoint of the "collection" service.

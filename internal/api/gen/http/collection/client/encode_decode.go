@@ -14,10 +14,12 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strconv"
 
 	collection "github.com/artefactual-labs/enduro/internal/api/gen/collection"
 	collectionviews "github.com/artefactual-labs/enduro/internal/api/gen/collection/views"
 	goahttp "goa.design/goa/v3/http"
+	goa "goa.design/goa/v3/pkg"
 )
 
 // BuildMonitorRequest instantiates a HTTP request object with method and path
@@ -627,20 +629,41 @@ func DecodeDownloadResponse(decoder func(*http.Response) goahttp.Decoder, restor
 			defer func() {
 				resp.Body = io.NopCloser(bytes.NewBuffer(b))
 			}()
-		} else {
-			defer resp.Body.Close()
 		}
 		switch resp.StatusCode {
 		case http.StatusOK:
 			var (
-				body []byte
-				err  error
+				contentType        string
+				contentLength      int64
+				contentDisposition string
+				err                error
 			)
-			err = decoder(resp).Decode(&body)
-			if err != nil {
-				return nil, goahttp.ErrDecodingError("collection", "download", err)
+			contentTypeRaw := resp.Header.Get("Content-Type")
+			if contentTypeRaw == "" {
+				err = goa.MergeErrors(err, goa.MissingFieldError("Content-Type", "header"))
 			}
-			return body, nil
+			contentType = contentTypeRaw
+			{
+				contentLengthRaw := resp.Header.Get("Content-Length")
+				if contentLengthRaw == "" {
+					return nil, goahttp.ErrValidationError("collection", "download", goa.MissingFieldError("Content-Length", "header"))
+				}
+				v, err2 := strconv.ParseInt(contentLengthRaw, 10, 64)
+				if err2 != nil {
+					err = goa.MergeErrors(err, goa.InvalidFieldTypeError("contentLength", contentLengthRaw, "integer"))
+				}
+				contentLength = v
+			}
+			contentDispositionRaw := resp.Header.Get("Content-Disposition")
+			if contentDispositionRaw == "" {
+				err = goa.MergeErrors(err, goa.MissingFieldError("Content-Disposition", "header"))
+			}
+			contentDisposition = contentDispositionRaw
+			if err != nil {
+				return nil, goahttp.ErrValidationError("collection", "download", err)
+			}
+			res := NewDownloadResultOK(contentType, contentLength, contentDisposition)
+			return res, nil
 		case http.StatusNotFound:
 			var (
 				body DownloadNotFoundResponseBody

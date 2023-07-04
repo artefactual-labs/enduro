@@ -475,11 +475,16 @@ func EncodeWorkflowError(encoder func(context.Context, http.ResponseWriter) goah
 // collection download endpoint.
 func EncodeDownloadResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {
 	return func(ctx context.Context, w http.ResponseWriter, v any) error {
-		res, _ := v.([]byte)
-		enc := encoder(ctx, w)
-		body := res
+		res, _ := v.(*collection.DownloadResult)
+		w.Header().Set("Content-Type", res.ContentType)
+		{
+			val := res.ContentLength
+			contentLengths := strconv.FormatInt(val, 10)
+			w.Header().Set("Content-Length", contentLengths)
+		}
+		w.Header().Set("Content-Disposition", res.ContentDisposition)
 		w.WriteHeader(http.StatusOK)
-		return enc.Encode(body)
+		return nil
 	}
 }
 

@@ -10,6 +10,7 @@ package collection
 
 import (
 	"context"
+	"io"
 
 	collectionviews "github.com/artefactual-labs/enduro/internal/api/gen/collection/views"
 	goa "goa.design/goa/v3/pkg"
@@ -32,7 +33,7 @@ type Service interface {
 	// Retrieve workflow status by ID
 	Workflow(context.Context, *WorkflowPayload) (res *EnduroCollectionWorkflowStatus, err error)
 	// Download collection by ID
-	Download(context.Context, *DownloadPayload) (res []byte, err error)
+	Download(context.Context, *DownloadPayload) (res *DownloadResult, body io.ReadCloser, err error)
 	// Make decision for a pending collection by ID
 	Decide(context.Context, *DecidePayload) (err error)
 	// Bulk operations (retry, cancel...).
@@ -124,6 +125,13 @@ type DeletePayload struct {
 type DownloadPayload struct {
 	// Identifier of collection to look up
 	ID uint
+}
+
+// DownloadResult is the result type of the collection service download method.
+type DownloadResult struct {
+	ContentType        string
+	ContentLength      int64
+	ContentDisposition string
 }
 
 // WorkflowHistoryEvent describes a history event in Temporal.

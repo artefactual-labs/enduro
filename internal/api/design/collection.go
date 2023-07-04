@@ -135,11 +135,21 @@ var _ = Service("collection", func() {
 			Attribute("id", UInt, "Identifier of collection to look up")
 			Required("id")
 		})
-		Result(Bytes)
+		Result(func() {
+			Attribute("content_type", String)
+			Attribute("content_length", Int64)
+			Attribute("content_disposition", String)
+			Required("content_type", "content_length", "content_disposition")
+		})
 		Error("not_found", CollectionNotFound, "Collection not found")
 		HTTP(func() {
 			GET("/{id}/download")
-			Response(StatusOK)
+			SkipResponseBodyEncodeDecode()
+			Response(func() {
+				Header("content_type:Content-Type")
+				Header("content_length:Content-Length")
+				Header("content_disposition:Content-Disposition")
+			})
 			Response("not_found", StatusNotFound)
 		})
 	})
