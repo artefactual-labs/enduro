@@ -323,7 +323,12 @@ func main() {
 		)
 	}
 
-	logger.Error(g.Run(), "Bye!")
+	err = g.Run()
+	if err != nil {
+		logger.Error(err, "Application failure.")
+		os.Exit(1)
+	}
+	logger.Info("Bye!")
 }
 
 type configuration struct {
