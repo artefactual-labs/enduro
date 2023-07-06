@@ -1,7 +1,6 @@
 package collection
 
 import (
-	"bytes"
 	"context"
 	"database/sql"
 	"encoding/json"
@@ -11,11 +10,13 @@ import (
 	"strings"
 	"time"
 
-	cadencesdk_gen_shared "go.uber.org/cadence/.gen/go/shared"
-	cadencesdk_client "go.uber.org/cadence/client"
+	temporalapi_common "go.temporal.io/api/common/v1"
+	temporalapi_enums "go.temporal.io/api/enums/v1"
+	temporalapi_serviceerror "go.temporal.io/api/serviceerror"
+	temporalsdk_client "go.temporal.io/sdk/client"
 
 	goacollection "github.com/artefactual-labs/enduro/internal/api/gen/collection"
-	"github.com/artefactual-labs/enduro/internal/cadence"
+	"github.com/artefactual-labs/enduro/internal/temporal"
 )
 
 var ErrBulkStatusUnavailable = errors.New("bulk status unavailable")
@@ -214,13 +215,7 @@ func (w *goaWrapper) Cancel(ctx context.Context, payload *goacollection.CancelPa
 	}
 
 	if err := w.cc.CancelWorkflow(ctx, *goacol.WorkflowID, *goacol.RunID); err != nil {
-		switch err.(type) {
-		case *cadencesdk_gen_shared.InternalServiceError:
-		case *cadencesdk_gen_shared.BadRequestError:
-		case *cadencesdk_gen_shared.EntityNotExistsError:
-		case *cadencesdk_gen_shared.WorkflowExecutionAlreadyCompletedError:
-			// TODO: return custom errors
-		}
+		// TODO: return custom errors
 		return err
 	}
 
@@ -231,7 +226,7 @@ func (w *goaWrapper) Cancel(ctx context.Context, payload *goacollection.CancelPa
 
 // Retry collection processing by ID. It implements goacollection.Service.
 //
-// TODO: conceptually Cadence workflows should handle retries, i.e. retry could be part of workflow code too (e.g. signals, children, etc).
+// TODO: conceptually Temporal workflows should handle retries, i.e. retry could be part of workflow code too (e.g. signals, children, etc).
 func (w *goaWrapper) Retry(ctx context.Context, payload *goacollection.RetryPayload) error {
 	var err error
 	var goacol *goacollection.EnduroStoredCollection
@@ -239,31 +234,35 @@ func (w *goaWrapper) Retry(ctx context.Context, payload *goacollection.RetryPayl
 		return err
 	}
 
-	execution := &cadencesdk_gen_shared.WorkflowExecution{
-		WorkflowId: goacol.WorkflowID,
-		RunId:      goacol.RunID,
+	execution := &temporalapi_common.WorkflowExecution{
+		WorkflowId: *goacol.WorkflowID,
+		RunId:      *goacol.RunID,
 	}
 
-	historyEvent, err := cadence.FirstHistoryEvent(ctx, w.cc, execution)
+	historyEvent, err := temporal.FirstHistoryEvent(ctx, w.cc, execution)
 	if err != nil {
 		return fmt.Errorf("error loading history of the previous workflow run: %w", err)
 	}
 
-	if historyEvent.GetEventType() != cadencesdk_gen_shared.EventTypeWorkflowExecutionStarted {
+	if historyEvent.GetEventType() != temporalapi_enums.EVENT_TYPE_WORKFLOW_EXECUTION_STARTED {
 		return fmt.Errorf("error loading history of the previous workflow run: initiator state not found")
 	}
 
-	input := historyEvent.WorkflowExecutionStartedEventAttributes.Input
-	attrs := bytes.Split(input, []byte("\n"))
-	req := &ProcessingWorkflowRequest{}
+	input := historyEvent.GetWorkflowExecutionStartedEventAttributes().Input
+	if len(input.Payloads) == 0 {
+		return errors.New("error loading state of the previous workflow run")
+	}
+	eventPayload := input.Payloads[0]
+	eventAttrs := eventPayload.GetData()
 
-	if err := json.Unmarshal(attrs[0], req); err != nil {
+	req := &ProcessingWorkflowRequest{}
+	if err := json.Unmarshal(eventAttrs, req); err != nil {
 		return fmt.Errorf("error loading state of the previous workflow run: %w", err)
 	}
 
 	req.WorkflowID = *goacol.WorkflowID
 	req.CollectionID = goacol.ID
-	if err := InitProcessingWorkflow(ctx, w.cc, req); err != nil {
+	if err := InitProcessingWorkflow(ctx, w.cc, w.taskQueue, req); err != nil {
 		return fmt.Errorf("error starting the new workflow instance: %w", err)
 	}
 
@@ -285,7 +284,7 @@ func (w *goaWrapper) Workflow(ctx context.Context, payload *goacollection.Workfl
 	we, err := w.cc.DescribeWorkflowExecution(ctx, *goacol.WorkflowID, *goacol.RunID)
 	if err != nil {
 		switch err.(type) {
-		case *cadencesdk_gen_shared.EntityNotExistsError:
+		case *temporalapi_serviceerror.NotFound:
 			return nil, &goacollection.CollectionNotfound{Message: "not_found"}
 		default:
 			return nil, fmt.Errorf("error looking up history: %v", err)
@@ -293,19 +292,19 @@ func (w *goaWrapper) Workflow(ctx context.Context, payload *goacollection.Workfl
 	}
 
 	status := "ACTIVE"
-	if we.WorkflowExecutionInfo.CloseStatus != nil {
-		status = we.WorkflowExecutionInfo.CloseStatus.String()
+	if we.WorkflowExecutionInfo.Status != temporalapi_enums.WORKFLOW_EXECUTION_STATUS_RUNNING {
+		status = we.WorkflowExecutionInfo.Status.String()
 	}
 	resp.Status = &status
 
-	iter := w.cc.GetWorkflowHistory(ctx, *goacol.WorkflowID, *goacol.RunID, false, cadencesdk_gen_shared.HistoryEventFilterTypeAllEvent)
+	iter := w.cc.GetWorkflowHistory(ctx, *goacol.WorkflowID, *goacol.RunID, false, temporalapi_enums.HISTORY_EVENT_FILTER_TYPE_ALL_EVENT)
 	for iter.HasNext() {
 		event, err := iter.Next()
 		if err != nil {
 			return nil, fmt.Errorf("error looking up history events: %v", err)
 		}
 
-		eventID := uint(*event.EventId)
+		eventID := uint(event.EventId)
 		eventType := event.EventType.String()
 		resp.History = append(resp.History, &goacollection.EnduroCollectionWorkflowHistory{
 			ID:      &eventID,
@@ -362,20 +361,19 @@ func (w *goaWrapper) Bulk(ctx context.Context, payload *goacollection.BulkPayloa
 		Size:      payload.Size,
 	}
 
-	opts := cadencesdk_client.StartWorkflowOptions{
-		ID:                              BulkWorkflowID,
-		WorkflowIDReusePolicy:           cadencesdk_client.WorkflowIDReusePolicyAllowDuplicate,
-		TaskList:                        cadence.GlobalTaskListName,
-		DecisionTaskStartToCloseTimeout: time.Second * 10,
-		ExecutionStartToCloseTimeout:    time.Hour,
+	opts := temporalsdk_client.StartWorkflowOptions{
+		ID:                       BulkWorkflowID,
+		WorkflowIDReusePolicy:    temporalapi_enums.WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE,
+		TaskQueue:                w.collectionImpl.taskQueue,
+		WorkflowExecutionTimeout: time.Hour,
 	}
-	exec, err := w.cc.StartWorkflow(ctx, opts, BulkWorkflowName, input)
+	exec, err := w.cc.ExecuteWorkflow(ctx, opts, BulkWorkflowName, input)
 	if err != nil {
 		switch err := err.(type) {
-		case *cadencesdk_gen_shared.WorkflowExecutionAlreadyStartedError:
+		case *temporalapi_serviceerror.NotFound:
 			return nil, goacollection.MakeNotAvailable(
-				fmt.Errorf("error starting bulk - operation is already in progress (workflowID=%s runID=%s)",
-					BulkWorkflowID, *err.RunId))
+				fmt.Errorf("error starting bulk - operation is already in progress (workflowID=%s)", BulkWorkflowID),
+			)
 		default:
 			w.logger.Info("error starting bulk", "err", err)
 			return nil, fmt.Errorf("error starting bulk")
@@ -383,8 +381,8 @@ func (w *goaWrapper) Bulk(ctx context.Context, payload *goacollection.BulkPayloa
 	}
 
 	return &goacollection.BulkResult{
-		WorkflowID: exec.ID,
-		RunID:      exec.RunID,
+		WorkflowID: exec.GetID(),
+		RunID:      exec.GetRunID(),
 	}, nil
 }
 
@@ -394,7 +392,7 @@ func (w *goaWrapper) BulkStatus(ctx context.Context) (*goacollection.BulkStatusR
 	resp, err := w.cc.DescribeWorkflowExecution(ctx, BulkWorkflowID, "")
 	if err != nil {
 		switch err := err.(type) {
-		case *cadencesdk_gen_shared.EntityNotExistsError:
+		case *temporalapi_serviceerror.NotFound:
 			// We've never seen a workflow run before.
 			return result, nil
 		default:
@@ -408,22 +406,22 @@ func (w *goaWrapper) BulkStatus(ctx context.Context) (*goacollection.BulkStatusR
 		return nil, ErrBulkStatusUnavailable
 	}
 
-	result.WorkflowID = resp.WorkflowExecutionInfo.Execution.WorkflowId
-	result.RunID = resp.WorkflowExecutionInfo.Execution.RunId
+	result.WorkflowID = &resp.WorkflowExecutionInfo.Execution.WorkflowId
+	result.RunID = &resp.WorkflowExecutionInfo.Execution.RunId
 
 	if resp.WorkflowExecutionInfo.StartTime != nil {
-		t := time.Unix(0, *resp.WorkflowExecutionInfo.StartTime).Format(time.RFC3339)
+		t := resp.WorkflowExecutionInfo.StartTime.Format(time.RFC3339)
 		result.StartedAt = &t
 	}
 
 	if resp.WorkflowExecutionInfo.CloseTime != nil {
-		t := time.Unix(0, *resp.WorkflowExecutionInfo.CloseTime).Format(time.RFC3339)
+		t := resp.WorkflowExecutionInfo.CloseTime.Format(time.RFC3339)
 		result.ClosedAt = &t
 	}
 
 	// Workflow is not running!
-	if resp.WorkflowExecutionInfo.CloseStatus != nil {
-		st := strings.ToLower(resp.WorkflowExecutionInfo.CloseStatus.String())
+	if resp.WorkflowExecutionInfo.Status != temporalapi_enums.WORKFLOW_EXECUTION_STATUS_RUNNING {
+		st := strings.ToLower(resp.WorkflowExecutionInfo.Status.String())
 		result.Status = &st
 
 		return result, nil
@@ -436,7 +434,8 @@ func (w *goaWrapper) BulkStatus(ctx context.Context) (*goacollection.BulkStatusR
 	if length > 0 {
 		latest := resp.PendingActivities[length-1]
 		progress := &BulkProgress{}
-		if err := json.Unmarshal(latest.HeartbeatDetails, progress); err == nil {
+		details := latest.HeartbeatDetails.String()
+		if err := json.Unmarshal([]byte(details), progress); err == nil {
 			status := fmt.Sprintf("Processing collection %d (done: %d)", progress.CurrentID, progress.Count)
 			result.Status = &status
 		}

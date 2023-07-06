@@ -3,6 +3,7 @@ package activities
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -12,13 +13,13 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/golang/mock/gomock"
+	temporalsdk_temporal "go.temporal.io/sdk/temporal"
 	"gotest.tools/v3/assert"
 	"gotest.tools/v3/fs"
 
 	collectionfake "github.com/artefactual-labs/enduro/internal/collection/fake"
 	"github.com/artefactual-labs/enduro/internal/nha"
 	"github.com/artefactual-labs/enduro/internal/pipeline"
-	"github.com/artefactual-labs/enduro/internal/testutil"
 	watcherfake "github.com/artefactual-labs/enduro/internal/watcher/fake"
 	"github.com/artefactual-labs/enduro/internal/workflow/manager"
 )
@@ -56,8 +57,8 @@ func TestHARIActivity(t *testing.T) {
 		// handler of the fake HTTP server.
 		wantResponse *serverResponse
 
-		// Expected error: see activityError for more.
-		wantErr testutil.ActivityError
+		wantNonRetryableError bool
+		wantErr               string
 	}{
 		"Receipt is delivered successfully (DPJ)": {
 			params: UpdateHARIActivityParams{
@@ -322,9 +323,8 @@ func TestHARIActivity(t *testing.T) {
 				fs.WithDir("DPJ/journal"),
 				fs.WithFile("DPJ/journal/avlxml.xml", "<avlxml/>"),
 			},
-			wantErr: testutil.ActivityError{
-				NRE: true,
-			},
+			wantNonRetryableError: true,
+			wantErr:               "error looking up avleveringsidentifikator: error reading identifier",
 		},
 		"Failure when identifier cannot be found (DPJ/EPJ/OTHER)": {
 			params: UpdateHARIActivityParams{
@@ -349,10 +349,8 @@ func TestHARIActivity(t *testing.T) {
 					}]
 				}]`),
 			},
-			wantErr: testutil.ActivityError{
-				Message: "error looking up avleveringsidentifikator: error reading identifier: not found",
-				NRE:     true,
-			},
+			wantNonRetryableError: true,
+			wantErr:               "error looking up avleveringsidentifikator: error reading identifier: not found",
 		},
 		"Failure when HARI returns a server error": {
 			params: UpdateHARIActivityParams{
@@ -386,10 +384,7 @@ func TestHARIActivity(t *testing.T) {
 				Parent:    "12345",
 				XML:       []byte("<avlxml/>"),
 			},
-			wantErr: testutil.ActivityError{
-				Message: "error sending request: (unexpected response status: 500 Internal Server Error) - Backend server not available, try again later.\n",
-				NRE:     false,
-			},
+			wantErr: "error sending request: (unexpected response status: 500 Internal Server Error) - Backend server not available, try again later.\n",
 		},
 		"Unexisten AVLXML file causes error": {
 			params: UpdateHARIActivityParams{
@@ -405,10 +400,8 @@ func TestHARIActivity(t *testing.T) {
 				fs.WithDir("DPJ/journal"),
 				fs.WithFile("DPJ/journal/_____other_name_____.xml", "<avlxml/>"),
 			},
-			wantErr: testutil.ActivityError{
-				Message: "error reading AVLXML file: not found",
-				NRE:     true,
-			},
+			wantErr:               "error reading AVLXML file: not found",
+			wantNonRetryableError: true,
 		},
 		"Unparseable baseURL is rejected": {
 			params: UpdateHARIActivityParams{
@@ -424,9 +417,8 @@ func TestHARIActivity(t *testing.T) {
 				fs.WithDir("DPJ/journal"),
 				fs.WithFile("DPJ/journal/avlxml.xml", "<avlxml/>"),
 			},
-			wantErr: testutil.ActivityError{
-				NRE: true,
-			},
+			wantErr:               "error in URL construction: error looking up baseURL configuration attribute",
+			wantNonRetryableError: true,
 		},
 	}
 
@@ -481,8 +473,27 @@ func TestHARIActivity(t *testing.T) {
 
 			err := act.Execute(context.Background(), &tc.params)
 
-			tc.wantErr.Assert(t, err)
+			testError(t, err, tc.wantErr, tc.wantNonRetryableError)
 		})
+	}
+}
+
+func testError(t *testing.T, err error, wantErr string, wantNonRetryable bool) {
+	t.Helper()
+
+	if wantErr == "" {
+		assert.NilError(t, err)
+		return
+	}
+
+	assert.ErrorContains(t, err, wantErr)
+
+	if !wantNonRetryable {
+		return
+	}
+	var appError *temporalsdk_temporal.ApplicationError
+	if errors.As(err, &appError) && !appError.NonRetryable() {
+		t.Fatal("error is not non-retryable")
 	}
 }
 

@@ -69,5 +69,5 @@ func TestBatchActivityFailsWithBogusBatchPath(t *testing.T) {
 		Path:         "/non/existent/path",
 		PipelineName: "am",
 	})
-	assert.Error(t, err, "non retryable error")
+	assert.Error(t, err, "open /non/existent/path: no such file or directory")
 }

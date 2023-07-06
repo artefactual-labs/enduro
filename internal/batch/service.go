@@ -8,11 +8,12 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	cadencesdk_gen_shared "go.uber.org/cadence/.gen/go/shared"
-	cadencesdk_client "go.uber.org/cadence/client"
+	"go.artefactual.dev/tools/ref"
+	temporalapi_enums "go.temporal.io/api/enums/v1"
+	temporalapi_serviceerror "go.temporal.io/api/serviceerror"
+	temporalsdk_client "go.temporal.io/sdk/client"
 
 	goabatch "github.com/artefactual-labs/enduro/internal/api/gen/batch"
-	"github.com/artefactual-labs/enduro/internal/cadence"
 	"github.com/artefactual-labs/enduro/internal/collection"
 	"github.com/artefactual-labs/enduro/internal/validation"
 )
@@ -27,8 +28,9 @@ type Service interface {
 }
 
 type batchImpl struct {
-	logger logr.Logger
-	cc     cadencesdk_client.Client
+	logger    logr.Logger
+	cc        temporalsdk_client.Client
+	taskQueue string
 
 	// A list of completedDirs reported by the watcher configuration. This is
 	// used to provide the user with possible known values.
@@ -37,10 +39,11 @@ type batchImpl struct {
 
 var _ Service = (*batchImpl)(nil)
 
-func NewService(logger logr.Logger, cc cadencesdk_client.Client, completedDirs []string) *batchImpl {
+func NewService(logger logr.Logger, cc temporalsdk_client.Client, taskQueue string, completedDirs []string) *batchImpl {
 	return &batchImpl{
 		logger:        logger,
 		cc:            cc,
+		taskQueue:     taskQueue,
 		completedDirs: completedDirs,
 	}
 }
@@ -68,28 +71,29 @@ func (s *batchImpl) Submit(ctx context.Context, payload *goabatch.SubmitPayload)
 		}
 		input.RetentionPeriod = &dur
 	}
-	opts := cadencesdk_client.StartWorkflowOptions{
-		ID:                              BatchWorkflowID,
-		WorkflowIDReusePolicy:           cadencesdk_client.WorkflowIDReusePolicyAllowDuplicate,
-		TaskList:                        cadence.GlobalTaskListName,
-		DecisionTaskStartToCloseTimeout: time.Second * 10,
-		ExecutionStartToCloseTimeout:    time.Hour,
+	opts := temporalsdk_client.StartWorkflowOptions{
+		ID:                       BatchWorkflowID,
+		WorkflowIDReusePolicy:    temporalapi_enums.WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE,
+		TaskQueue:                s.taskQueue,
+		WorkflowExecutionTimeout: time.Hour,
+		WorkflowTaskTimeout:      time.Second * 10,
 	}
-	exec, err := s.cc.StartWorkflow(ctx, opts, BatchWorkflowName, input)
+	exec, err := s.cc.ExecuteWorkflow(ctx, opts, BatchWorkflowName, input)
 	if err != nil {
 		switch err := err.(type) {
-		case *cadencesdk_gen_shared.WorkflowExecutionAlreadyStartedError:
+		case *temporalapi_serviceerror.WorkflowExecutionAlreadyStarted:
 			return nil, goabatch.MakeNotAvailable(
 				fmt.Errorf("error starting batch - operation is already in progress (workflowID=%s runID=%s)",
-					BatchWorkflowID, *err.RunId))
+					BatchWorkflowID, err.RunId))
 		default:
 			s.logger.Info("error starting batch", "err", err)
 			return nil, fmt.Errorf("error starting batch")
 		}
 	}
+
 	result := &goabatch.BatchResult{
-		WorkflowID: exec.ID,
-		RunID:      exec.RunID,
+		WorkflowID: exec.GetID(),
+		RunID:      exec.GetRunID(),
 	}
 	return result, nil
 }
@@ -99,7 +103,7 @@ func (s *batchImpl) Status(ctx context.Context) (*goabatch.BatchStatusResult, er
 	resp, err := s.cc.DescribeWorkflowExecution(ctx, BatchWorkflowID, "")
 	if err != nil {
 		switch err := err.(type) {
-		case *cadencesdk_gen_shared.EntityNotExistsError:
+		case *temporalapi_serviceerror.NotFound:
 			return result, nil
 		default:
 			s.logger.Info("error retrieving workflow", "err", err)
@@ -110,14 +114,13 @@ func (s *batchImpl) Status(ctx context.Context) (*goabatch.BatchStatusResult, er
 		s.logger.Info("error retrieving workflow execution details")
 		return nil, ErrBatchStatusUnavailable
 	}
-	result.WorkflowID = resp.WorkflowExecutionInfo.Execution.WorkflowId
-	result.RunID = resp.WorkflowExecutionInfo.Execution.RunId
-	if resp.WorkflowExecutionInfo.CloseStatus != nil {
-		st := strings.ToLower(resp.WorkflowExecutionInfo.CloseStatus.String())
-		result.Status = &st
+	result.WorkflowID = &resp.WorkflowExecutionInfo.Execution.WorkflowId
+	result.RunID = &resp.WorkflowExecutionInfo.Execution.RunId
+	if resp.WorkflowExecutionInfo.Status == temporalapi_enums.WORKFLOW_EXECUTION_STATUS_RUNNING {
+		result.Running = true
 		return result, nil
 	}
-	result.Running = true
+	result.Status = ref.New(strings.ToLower(resp.WorkflowExecutionInfo.Status.String()))
 	return result, nil
 }
 
@@ -130,7 +133,7 @@ func (s *batchImpl) Hints(ctx context.Context) (*goabatch.BatchHintsResult, erro
 
 func (s *batchImpl) InitProcessingWorkflow(ctx context.Context, req *collection.ProcessingWorkflowRequest) error {
 	req.ValidationConfig = validation.Config{}
-	err := collection.InitProcessingWorkflow(ctx, s.cc, req)
+	err := collection.InitProcessingWorkflow(ctx, s.cc, s.taskQueue, req)
 	if err != nil {
 		s.logger.Error(err, "Error initializing processing workflow.")
 	}

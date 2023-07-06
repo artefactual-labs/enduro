@@ -14,8 +14,8 @@ import (
 
 	"github.com/artefactual-labs/enduro/internal/amclient/bundler"
 	"github.com/artefactual-labs/enduro/internal/bagit"
+	"github.com/artefactual-labs/enduro/internal/temporal"
 	"github.com/artefactual-labs/enduro/internal/watcher"
-	wferrors "github.com/artefactual-labs/enduro/internal/workflow/errors"
 	"github.com/artefactual-labs/enduro/internal/workflow/manager"
 )
 
@@ -51,7 +51,7 @@ func (a *BundleActivity) Execute(ctx context.Context, params *BundleActivityPara
 
 	defer func() {
 		if err != nil {
-			err = wferrors.NonRetryableError(err)
+			err = temporal.NewNonRetryableError(err)
 		}
 	}()
 
@@ -59,7 +59,7 @@ func (a *BundleActivity) Execute(ctx context.Context, params *BundleActivityPara
 		var batchDirIsInTransferDir bool
 		batchDirIsInTransferDir, err = isSubPath(params.TransferDir, params.BatchDir)
 		if err != nil {
-			return nil, wferrors.NonRetryableError(err)
+			return nil, temporal.NewNonRetryableError(err)
 		}
 		if batchDirIsInTransferDir {
 			res.FullPath = filepath.Join(params.BatchDir, params.Key)
@@ -88,12 +88,12 @@ func (a *BundleActivity) Execute(ctx context.Context, params *BundleActivityPara
 		}
 	}
 	if err != nil {
-		return nil, wferrors.NonRetryableError(err)
+		return nil, temporal.NewNonRetryableError(err)
 	}
 
 	err = unbag(res.FullPath)
 	if err != nil {
-		return nil, wferrors.NonRetryableError(err)
+		return nil, temporal.NewNonRetryableError(err)
 	}
 
 	res.RelPath, err = filepath.Rel(params.TransferDir, res.FullPath)

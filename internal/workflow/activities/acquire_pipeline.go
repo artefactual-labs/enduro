@@ -6,26 +6,26 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
-	cadencesdk_activity "go.uber.org/cadence/activity"
+	temporalsdk_activity "go.temporal.io/sdk/activity"
 
-	wferrors "github.com/artefactual-labs/enduro/internal/workflow/errors"
-	"github.com/artefactual-labs/enduro/internal/workflow/manager"
+	"github.com/artefactual-labs/enduro/internal/pipeline"
+	"github.com/artefactual-labs/enduro/internal/temporal"
 )
 
 // AcquirePipelineActivity acquires a lock in the weighted semaphore associated
 // to a particular pipeline.
 type AcquirePipelineActivity struct {
-	manager *manager.Manager
+	pipelineRegistry *pipeline.Registry
 }
 
-func NewAcquirePipelineActivity(m *manager.Manager) *AcquirePipelineActivity {
-	return &AcquirePipelineActivity{manager: m}
+func NewAcquirePipelineActivity(pipelineRegistry *pipeline.Registry) *AcquirePipelineActivity {
+	return &AcquirePipelineActivity{pipelineRegistry: pipelineRegistry}
 }
 
 func (a *AcquirePipelineActivity) Execute(ctx context.Context, pipelineName string) error {
-	p, err := a.manager.Pipelines.ByName(pipelineName)
+	p, err := a.pipelineRegistry.ByName(pipelineName)
 	if err != nil {
-		return wferrors.NonRetryableError(err)
+		return temporal.NewNonRetryableError(err)
 	}
 
 	errAcquirePipeline := fmt.Errorf("error acquring semaphore: busy")
@@ -41,7 +41,7 @@ func (a *AcquirePipelineActivity) Execute(ctx context.Context, pipelineName stri
 		},
 		backoff.WithContext(backoff.NewConstantBackOff(time.Second*5), ctx),
 		func(err error, duration time.Duration) {
-			cadencesdk_activity.RecordHeartbeat(ctx)
+			temporalsdk_activity.RecordHeartbeat(ctx)
 		},
 	)
 

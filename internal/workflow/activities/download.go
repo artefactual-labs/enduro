@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	wferrors "github.com/artefactual-labs/enduro/internal/workflow/errors"
+	"github.com/artefactual-labs/enduro/internal/temporal"
 	"github.com/artefactual-labs/enduro/internal/workflow/manager"
 )
 
@@ -20,17 +20,17 @@ func NewDownloadActivity(m *manager.Manager) *DownloadActivity {
 func (a *DownloadActivity) Execute(ctx context.Context, pipelineName, watcherName, key string) (string, error) {
 	p, err := a.manager.Pipelines.ByName(pipelineName)
 	if err != nil {
-		return "", wferrors.NonRetryableError(err)
+		return "", temporal.NewNonRetryableError(err)
 	}
 
 	file, err := p.TempFile("blob-*")
 	if err != nil {
-		return "", wferrors.NonRetryableError(fmt.Errorf("error creating temporary file in processing directory: %v", err))
+		return "", temporal.NewNonRetryableError(fmt.Errorf("error creating temporary file in processing directory: %v", err))
 	}
 	defer file.Close()
 
 	if err := a.manager.Watcher.Download(ctx, file, watcherName, key); err != nil {
-		return "", wferrors.NonRetryableError(fmt.Errorf("error downloading blob: %v", err))
+		return "", temporal.NewNonRetryableError(fmt.Errorf("error downloading blob: %v", err))
 	}
 
 	return file.Name(), nil

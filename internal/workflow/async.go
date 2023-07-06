@@ -6,12 +6,11 @@ import (
 	"fmt"
 	"time"
 
-	cadencesdk "go.uber.org/cadence"
-	cadencesdk_activity "go.uber.org/cadence/activity"
-	cadencesdk_workflow "go.uber.org/cadence/workflow"
+	temporalsdk_activity "go.temporal.io/sdk/activity"
+	temporalsdk_temporal "go.temporal.io/sdk/temporal"
+	temporalsdk_workflow "go.temporal.io/sdk/workflow"
 
 	"github.com/artefactual-labs/enduro/internal/collection"
-	"github.com/artefactual-labs/enduro/internal/workflow/manager"
 )
 
 type asyncDecision string
@@ -32,10 +31,10 @@ var ErrAsyncCompletionAbandoned = errors.New("user abandoned")
 //
 // TODO: state changes in collection could be performed via hook functions,
 // generalize and convert into a struct.
-func executeActivityWithAsyncErrorHandling(ctx cadencesdk_workflow.Context, colsvc collection.Service, colID uint, opts cadencesdk_workflow.ActivityOptions, act interface{}, args ...interface{}) cadencesdk_workflow.Future {
-	future, settable := cadencesdk_workflow.NewFuture(ctx)
+func executeActivityWithAsyncErrorHandling(ctx temporalsdk_workflow.Context, colsvc collection.Service, colID uint, opts temporalsdk_workflow.ActivityOptions, act interface{}, args ...interface{}) temporalsdk_workflow.Future {
+	future, settable := temporalsdk_workflow.NewFuture(ctx)
 
-	cadencesdk_workflow.Go(ctx, func(ctx cadencesdk_workflow.Context) {
+	temporalsdk_workflow.Go(ctx, func(ctx temporalsdk_workflow.Context) {
 		retryWithPolicy := true
 		retryPolicy := opts.RetryPolicy
 		var attempts uint
@@ -51,12 +50,12 @@ func executeActivityWithAsyncErrorHandling(ctx cadencesdk_workflow.Context, cols
 
 			// Set in-progress status on new attempts - presumably coming from "pending".
 			if attempts > 0 {
-				_ = cadencesdk_workflow.ExecuteLocalActivity(ctx, setStatusInProgressLocalActivity, colsvc, colID, time.Time{}).Get(ctx, nil)
+				_ = temporalsdk_workflow.ExecuteLocalActivity(ctx, setStatusInProgressLocalActivity, colsvc, colID, time.Time{}).Get(ctx, nil)
 			}
 
 			// Execute the activity that we're wrapping.
-			activityOpts := cadencesdk_workflow.WithActivityOptions(ctx, opts)
-			err := cadencesdk_workflow.ExecuteActivity(activityOpts, act, args...).Get(activityOpts, nil)
+			activityOpts := temporalsdk_workflow.WithActivityOptions(ctx, opts)
+			err := temporalsdk_workflow.ExecuteActivity(activityOpts, act, args...).Get(activityOpts, nil)
 
 			// We're done here if the activity did not fail.
 			if err == nil {
@@ -67,11 +66,11 @@ func executeActivityWithAsyncErrorHandling(ctx cadencesdk_workflow.Context, cols
 			// Execute the activity that performs asynchronous completion.
 			var decision asyncDecision
 			activityOpts = withActivityOptsForAsyncCompletion(ctx)
-			err = cadencesdk_workflow.ExecuteActivity(activityOpts, AsyncCompletionActivityName, colID).Get(activityOpts, &decision)
+			err = temporalsdk_workflow.ExecuteActivity(activityOpts, AsyncCompletionActivityName, colID).Get(activityOpts, &decision)
 
 			// Asynchronous completion failed.
 			if err != nil {
-				if cadencesdk.IsTimeoutError(err) {
+				if temporalsdk_temporal.IsTimeoutError(err) {
 					decision = abandon
 				} else {
 					settable.Set(nil, err)
@@ -90,7 +89,7 @@ func executeActivityWithAsyncErrorHandling(ctx cadencesdk_workflow.Context, cols
 				settable.Set(nil, ErrAsyncCompletionAbandoned)
 				return
 			default:
-				settable.Set(nil, cadencesdk.NewCustomError("received decision is unknown"))
+				settable.Set(nil, temporalsdk_temporal.NewApplicationError("received decision is unknown", ""))
 				return
 			}
 		}
@@ -102,19 +101,19 @@ func executeActivityWithAsyncErrorHandling(ctx cadencesdk_workflow.Context, cols
 var AsyncCompletionActivityName = "async-completion-activity"
 
 type AsyncCompletionActivity struct {
-	manager *manager.Manager
+	colsvc collection.Service
 }
 
-func NewAsyncCompletionActivity(m *manager.Manager) *AsyncCompletionActivity {
-	return &AsyncCompletionActivity{manager: m}
+func NewAsyncCompletionActivity(colsvc collection.Service) *AsyncCompletionActivity {
+	return &AsyncCompletionActivity{colsvc: colsvc}
 }
 
 func (a *AsyncCompletionActivity) Execute(ctx context.Context, colID uint) (string, error) {
-	info := cadencesdk_activity.GetInfo(ctx)
+	info := temporalsdk_activity.GetInfo(ctx)
 
-	if err := a.manager.Collection.SetStatusPending(ctx, colID, info.TaskToken); err != nil {
+	if err := a.colsvc.SetStatusPending(ctx, colID, info.TaskToken); err != nil {
 		return "", fmt.Errorf("error saving task token: %v", err)
 	}
 
-	return "", cadencesdk_activity.ErrResultPending
+	return "", temporalsdk_activity.ErrResultPending
 }

@@ -13,24 +13,23 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/go-logr/logr"
 	"github.com/oklog/run"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"go.artefactual.dev/tools/log"
-	cadencesdk_activity "go.uber.org/cadence/activity"
-	cadencesdk_client "go.uber.org/cadence/client"
-	cadencesdk_workflow "go.uber.org/cadence/workflow"
-	"go.uber.org/zap"
+	temporalsdk_activity "go.temporal.io/sdk/activity"
+	temporalsdk_client "go.temporal.io/sdk/client"
+	temporalsdk_worker "go.temporal.io/sdk/worker"
+	temporalsdk_workflow "go.temporal.io/sdk/workflow"
 
 	"github.com/artefactual-labs/enduro/internal/api"
 	"github.com/artefactual-labs/enduro/internal/batch"
-	"github.com/artefactual-labs/enduro/internal/cadence"
 	"github.com/artefactual-labs/enduro/internal/collection"
 	"github.com/artefactual-labs/enduro/internal/db"
 	nha_activities "github.com/artefactual-labs/enduro/internal/nha/activities"
 	"github.com/artefactual-labs/enduro/internal/pipeline"
+	"github.com/artefactual-labs/enduro/internal/temporal"
 	"github.com/artefactual-labs/enduro/internal/validation"
 	"github.com/artefactual-labs/enduro/internal/watcher"
 	"github.com/artefactual-labs/enduro/internal/workflow"
@@ -75,20 +74,8 @@ func main() {
 	}
 
 	// Logging configuration.
-	var logger logr.Logger
-	var zlogger *zap.Logger
-	{
-		logger = log.New(os.Stderr, log.WithName(appName), log.WithDebug(config.Debug))
-
-		var ok bool
-		zlogger, ok = log.Underlying(logger)
-		if !ok {
-			fmt.Println("Failed to configure logger.")
-			os.Exit(1)
-		}
-
-		defer log.Sync(logger)
-	}
+	logger := log.New(os.Stderr, log.WithName(appName), log.WithDebug(config.Debug))
+	defer log.Sync(logger)
 
 	logger.Info("Starting...", "version", version, "pid", os.Getpid())
 
@@ -108,13 +95,14 @@ func main() {
 	}
 	_ = database.Ping()
 
-	var workflowClient cadencesdk_client.Client
-	{
-		workflowClient, err = cadence.NewWorkflowClient(zlogger.Named("cadence-client"), appName, config.Cadence)
-		if err != nil {
-			logger.Error(err, "Cadence workflow client creation failed.")
-			os.Exit(1)
-		}
+	temporalClient, err := temporalsdk_client.Dial(temporalsdk_client.Options{
+		Namespace: config.Temporal.Namespace,
+		HostPort:  config.Temporal.Address,
+		Logger:    temporal.Logger(logger.WithName("temporal-client")),
+	})
+	if err != nil {
+		logger.Error(err, "Error creating Temporal client.")
+		os.Exit(1)
 	}
 
 	// Set up the pipeline registry.
@@ -133,13 +121,13 @@ func main() {
 	// Set up the batch service.
 	var batchsvc batch.Service
 	{
-		batchsvc = batch.NewService(logger.WithName("batch"), workflowClient, config.Watcher.CompletedDirs())
+		batchsvc = batch.NewService(logger.WithName("batch"), temporalClient, config.Temporal.TaskQueue, config.Watcher.CompletedDirs())
 	}
 
 	// Set up the collection service.
 	var colsvc collection.Service
 	{
-		colsvc = collection.NewService(logger.WithName("collection"), database, workflowClient, pipelineRegistry)
+		colsvc = collection.NewService(logger.WithName("collection"), database, temporalClient, config.Temporal.TaskQueue, pipelineRegistry)
 	}
 
 	// Set up the watcher service.
@@ -202,7 +190,7 @@ func main() {
 									IsDir:            event.IsDir,
 									ValidationConfig: config.Validation,
 								}
-								if err := collection.InitProcessingWorkflow(ctx, workflowClient, &req); err != nil {
+								if err := collection.InitProcessingWorkflow(ctx, temporalClient, config.Temporal.TaskQueue, &req); err != nil {
 									logger.Error(err, "Error initializing processing workflow.")
 								}
 							}()
@@ -216,8 +204,7 @@ func main() {
 		}
 	}
 
-	// Create workflow workers which manage workflow and activity executions.
-	// This section could be executed as a different process and have replicas.
+	// Workflow and activity worker.
 	{
 		// TODO: this is a temporary workaround for dependency injection until we
 		// figure out what's the depdencency tree is going to look like after POC.
@@ -225,34 +212,37 @@ func main() {
 		m := manager.NewManager(logger, colsvc, wsvc, pipelineRegistry, config.Hooks)
 
 		done := make(chan struct{})
-		w, err := cadence.NewWorker(zlogger.Named("cadence-worker"), appName, config.Cadence)
+		w := temporalsdk_worker.New(temporalClient, config.Temporal.TaskQueue, temporalsdk_worker.Options{
+			EnableSessionWorker:               true,
+			MaxConcurrentSessionExecutionSize: 5000,
+		})
 		if err != nil {
-			logger.Error(err, "Error creating Cadence worker.")
+			logger.Error(err, "Error creating Temporal worker.")
 			os.Exit(1)
 		}
 
-		w.RegisterWorkflowWithOptions(workflow.NewProcessingWorkflow(m).Execute, cadencesdk_workflow.RegisterOptions{Name: collection.ProcessingWorkflowName})
-		w.RegisterActivityWithOptions(activities.NewAcquirePipelineActivity(m).Execute, cadencesdk_activity.RegisterOptions{Name: activities.AcquirePipelineActivityName})
-		w.RegisterActivityWithOptions(activities.NewDownloadActivity(m).Execute, cadencesdk_activity.RegisterOptions{Name: activities.DownloadActivityName})
-		w.RegisterActivityWithOptions(activities.NewBundleActivity(m).Execute, cadencesdk_activity.RegisterOptions{Name: activities.BundleActivityName})
-		w.RegisterActivityWithOptions(activities.NewValidateTransferActivity().Execute, cadencesdk_activity.RegisterOptions{Name: activities.ValidateTransferActivityName})
-		w.RegisterActivityWithOptions(activities.NewTransferActivity(m).Execute, cadencesdk_activity.RegisterOptions{Name: activities.TransferActivityName})
-		w.RegisterActivityWithOptions(activities.NewPollTransferActivity(m).Execute, cadencesdk_activity.RegisterOptions{Name: activities.PollTransferActivityName})
-		w.RegisterActivityWithOptions(activities.NewPollIngestActivity(m).Execute, cadencesdk_activity.RegisterOptions{Name: activities.PollIngestActivityName})
-		w.RegisterActivityWithOptions(activities.NewCleanUpActivity(m).Execute, cadencesdk_activity.RegisterOptions{Name: activities.CleanUpActivityName})
-		w.RegisterActivityWithOptions(activities.NewHidePackageActivity(m).Execute, cadencesdk_activity.RegisterOptions{Name: activities.HidePackageActivityName})
-		w.RegisterActivityWithOptions(activities.NewDeleteOriginalActivity(m).Execute, cadencesdk_activity.RegisterOptions{Name: activities.DeleteOriginalActivityName})
-		w.RegisterActivityWithOptions(activities.NewDisposeOriginalActivity(m).Execute, cadencesdk_activity.RegisterOptions{Name: activities.DisposeOriginalActivityName})
+		w.RegisterWorkflowWithOptions(workflow.NewProcessingWorkflow(m).Execute, temporalsdk_workflow.RegisterOptions{Name: collection.ProcessingWorkflowName})
+		w.RegisterActivityWithOptions(activities.NewAcquirePipelineActivity(pipelineRegistry).Execute, temporalsdk_activity.RegisterOptions{Name: activities.AcquirePipelineActivityName})
+		w.RegisterActivityWithOptions(activities.NewDownloadActivity(m).Execute, temporalsdk_activity.RegisterOptions{Name: activities.DownloadActivityName})
+		w.RegisterActivityWithOptions(activities.NewBundleActivity(m).Execute, temporalsdk_activity.RegisterOptions{Name: activities.BundleActivityName})
+		w.RegisterActivityWithOptions(activities.NewValidateTransferActivity().Execute, temporalsdk_activity.RegisterOptions{Name: activities.ValidateTransferActivityName})
+		w.RegisterActivityWithOptions(activities.NewTransferActivity(m).Execute, temporalsdk_activity.RegisterOptions{Name: activities.TransferActivityName})
+		w.RegisterActivityWithOptions(activities.NewPollTransferActivity(pipelineRegistry).Execute, temporalsdk_activity.RegisterOptions{Name: activities.PollTransferActivityName})
+		w.RegisterActivityWithOptions(activities.NewPollIngestActivity(pipelineRegistry).Execute, temporalsdk_activity.RegisterOptions{Name: activities.PollIngestActivityName})
+		w.RegisterActivityWithOptions(activities.NewCleanUpActivity(m).Execute, temporalsdk_activity.RegisterOptions{Name: activities.CleanUpActivityName})
+		w.RegisterActivityWithOptions(activities.NewHidePackageActivity(m).Execute, temporalsdk_activity.RegisterOptions{Name: activities.HidePackageActivityName})
+		w.RegisterActivityWithOptions(activities.NewDeleteOriginalActivity(m).Execute, temporalsdk_activity.RegisterOptions{Name: activities.DeleteOriginalActivityName})
+		w.RegisterActivityWithOptions(activities.NewDisposeOriginalActivity(m).Execute, temporalsdk_activity.RegisterOptions{Name: activities.DisposeOriginalActivityName})
 
-		w.RegisterActivityWithOptions(workflow.NewAsyncCompletionActivity(m).Execute, cadencesdk_activity.RegisterOptions{Name: workflow.AsyncCompletionActivityName})
-		w.RegisterActivityWithOptions(nha_activities.NewUpdateHARIActivity(m).Execute, cadencesdk_activity.RegisterOptions{Name: nha_activities.UpdateHARIActivityName})
-		w.RegisterActivityWithOptions(nha_activities.NewUpdateProductionSystemActivity(m).Execute, cadencesdk_activity.RegisterOptions{Name: nha_activities.UpdateProductionSystemActivityName})
+		w.RegisterActivityWithOptions(workflow.NewAsyncCompletionActivity(colsvc).Execute, temporalsdk_activity.RegisterOptions{Name: workflow.AsyncCompletionActivityName})
+		w.RegisterActivityWithOptions(nha_activities.NewUpdateHARIActivity(m).Execute, temporalsdk_activity.RegisterOptions{Name: nha_activities.UpdateHARIActivityName})
+		w.RegisterActivityWithOptions(nha_activities.NewUpdateProductionSystemActivity(m).Execute, temporalsdk_activity.RegisterOptions{Name: nha_activities.UpdateProductionSystemActivityName})
 
-		w.RegisterWorkflowWithOptions(collection.BulkWorkflow, cadencesdk_workflow.RegisterOptions{Name: collection.BulkWorkflowName})
-		w.RegisterActivityWithOptions(collection.NewBulkActivity(colsvc).Execute, cadencesdk_activity.RegisterOptions{Name: collection.BulkActivityName})
+		w.RegisterWorkflowWithOptions(collection.BulkWorkflow, temporalsdk_workflow.RegisterOptions{Name: collection.BulkWorkflowName})
+		w.RegisterActivityWithOptions(collection.NewBulkActivity(colsvc).Execute, temporalsdk_activity.RegisterOptions{Name: collection.BulkActivityName})
 
-		w.RegisterWorkflowWithOptions(batch.BatchWorkflow, cadencesdk_workflow.RegisterOptions{Name: batch.BatchWorkflowName})
-		w.RegisterActivityWithOptions(batch.NewBatchActivity(batchsvc).Execute, cadencesdk_activity.RegisterOptions{Name: batch.BatchActivityName})
+		w.RegisterWorkflowWithOptions(batch.BatchWorkflow, temporalsdk_workflow.RegisterOptions{Name: batch.BatchWorkflowName})
+		w.RegisterActivityWithOptions(batch.NewBatchActivity(batchsvc).Execute, temporalsdk_activity.RegisterOptions{Name: batch.BatchActivityName})
 
 		g.Add(
 			func() error {
@@ -269,6 +259,7 @@ func main() {
 		)
 	}
 
+	// Observability server.
 	{
 		ln, err := net.Listen("tcp", config.DebugListen)
 		if err != nil {
@@ -340,7 +331,7 @@ type configuration struct {
 	DebugListen string
 	API         api.Config
 	Database    db.Config
-	Cadence     cadence.Config
+	Temporal    temporal.Config
 	Watcher     watcher.Config
 	Pipeline    []pipeline.Config
 	Validation  validation.Config
@@ -361,8 +352,9 @@ func configureViper(v *viper.Viper) {
 	v.SetConfigName(appName)
 	v.SetDefault("debugListen", "127.0.0.1:9001")
 	v.SetDefault("api.listen", "127.0.0.1:9000")
-	v.SetDefault("cadence.address", ":7933")
 	v.Set("api.appVersion", version)
+
+	temporal.SetDefaults(v)
 }
 
 func readConfig(v *viper.Viper, config *configuration, configFile string) (found bool, err error) {

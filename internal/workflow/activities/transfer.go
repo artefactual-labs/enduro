@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/artefactual-labs/enduro/internal/amclient"
-	wferrors "github.com/artefactual-labs/enduro/internal/workflow/errors"
+	"github.com/artefactual-labs/enduro/internal/temporal"
 	"github.com/artefactual-labs/enduro/internal/workflow/manager"
 )
 
@@ -39,7 +39,7 @@ type TransferActivityResponse struct {
 func (a *TransferActivity) Execute(ctx context.Context, params *TransferActivityParams) (*TransferActivityResponse, error) {
 	p, err := a.manager.Pipelines.ByName(params.PipelineName)
 	if err != nil {
-		return nil, wferrors.NonRetryableError(err)
+		return nil, temporal.NewNonRetryableError(err)
 	}
 	amc := p.Client()
 
@@ -59,7 +59,7 @@ func (a *TransferActivity) Execute(ctx context.Context, params *TransferActivity
 		if httpResp != nil {
 			switch {
 			case httpResp.StatusCode == http.StatusForbidden:
-				return nil, wferrors.NonRetryableError(fmt.Errorf("authentication error: %v", err))
+				return nil, temporal.NewNonRetryableError(fmt.Errorf("authentication error: %v", err))
 			}
 		}
 		return nil, err

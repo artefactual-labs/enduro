@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"path/filepath"
 	"testing"
 	"time"
 
@@ -16,7 +15,6 @@ import (
 	collectionfake "github.com/artefactual-labs/enduro/internal/collection/fake"
 	"github.com/artefactual-labs/enduro/internal/nha"
 	"github.com/artefactual-labs/enduro/internal/pipeline"
-	"github.com/artefactual-labs/enduro/internal/testutil"
 	watcherfake "github.com/artefactual-labs/enduro/internal/watcher/fake"
 	"github.com/artefactual-labs/enduro/internal/workflow/manager"
 )
@@ -29,11 +27,12 @@ func TestProdActivity(t *testing.T) {
 	defer os.RemoveAll(tmpdir)
 
 	tests := map[string]struct {
-		params      UpdateProductionSystemActivityParams
-		hookConfig  *map[string]interface{}
-		dirOpts     []fs.PathOp
-		wantContent string
-		wantErr     testutil.ActivityError
+		params                UpdateProductionSystemActivityParams
+		hookConfig            *map[string]interface{}
+		dirOpts               []fs.PathOp
+		wantContent           string
+		wantNonRetryableError bool
+		wantErr               string
 	}{
 		"Receipt is generated successfully with status 'done'": {
 			params: UpdateProductionSystemActivityParams{
@@ -97,11 +96,9 @@ func TestProdActivity(t *testing.T) {
 					Type:       nha.TransferTypeDPJ,
 				},
 			},
-			hookConfig: &map[string]interface{}{},
-			wantErr: testutil.ActivityError{
-				Message: "error looking up receiptPath configuration attribute: error accessing \"prod:receiptPath\"",
-				NRE:     true,
-			},
+			hookConfig:            &map[string]interface{}{},
+			wantErr:               "error looking up receiptPath configuration attribute: error accessing \"prod:receiptPath\"",
+			wantNonRetryableError: true,
 		},
 		"Unexistent receiptPath is rejected": {
 			params: UpdateProductionSystemActivityParams{
@@ -115,11 +112,8 @@ func TestProdActivity(t *testing.T) {
 			hookConfig: &map[string]interface{}{
 				"receiptPath": tmpdir,
 			},
-			wantErr: testutil.ActivityError{
-				Message:        fmt.Sprintf("error creating receipt file: open %s: no such file or directory", filepath.Join(tmpdir, "Receipt_aa1df25d-1477-4085-8be3-a17fed20f843_20091110.230000.json")),
-				MessageWindows: fmt.Sprintf("error creating receipt file: open %s: The system cannot find the path specified.", filepath.Join(tmpdir, "Receipt_aa1df25d-1477-4085-8be3-a17fed20f843_20091110.230000.json")),
-				NRE:            true,
-			},
+			wantErr:               "error creating receipt file",
+			wantNonRetryableError: true,
 		},
 	}
 
@@ -143,10 +137,10 @@ func TestProdActivity(t *testing.T) {
 
 			err := act.Execute(context.Background(), &tc.params)
 
-			tc.wantErr.Assert(t, err)
+			testError(t, err, tc.wantErr, tc.wantNonRetryableError)
 
 			// Stop here if we were expecting the activity to fail.
-			if !tc.wantErr.IsZero() {
+			if tc.wantErr != "" {
 				return
 			}
 

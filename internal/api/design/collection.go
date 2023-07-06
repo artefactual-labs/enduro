@@ -283,7 +283,7 @@ var WorkflowStatus = ResultType("application/vnd.enduro.collection-workflow-stat
 })
 
 var WorkflowHistoryEvent = ResultType("application/vnd.enduro.collection-workflow-history", func() {
-	Description("WorkflowHistoryEvent describes a history event in Cadence.")
+	Description("WorkflowHistoryEvent describes a history event in Temporal.")
 	Attributes(func() {
 		Attribute("id", UInt, "Identifier of collection")
 		Attribute("type", String, "Type of the event")

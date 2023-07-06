@@ -34,13 +34,13 @@
 
         <template v-if="startedAt">
           <dt>Started</dt>
-          <dd>{{ startedAt | formatEpoch }}</dd>
+          <dd>{{ startedAt | formatDateTimeString }}</dd>
         </template>
 
         <template v-if="completedAt">
           <dt>Completed</dt>
           <dd>
-            {{ completedAt | formatEpoch }}
+            {{ completedAt | formatDateTimeString }}
             (took {{ startedAt | formatEpochDuration(completedAt) }})
           </dd>
         </template>
@@ -52,7 +52,7 @@
               <en-collection-status-badge class="float-right" :status="item.status"/>
               <span class="name" v-if="!item.local">{{ item.name }}</span>
               <span class="name" v-else>{{ item.name }} (local activity)</span>
-              <span class="date" v-if="item.started">{{ item.started | formatEpoch }}</span>
+              <span class="date" v-if="item.started">{{ item.started | formatDateTimeString }}</span>
               <span class="date" v-if="item.replayed">{{ item.replayed | formatDateTimeString }}</span>
               <span class="duration float-right" v-if="item.duration">{{ item.duration }}s</span>
               <span class="attempts ml-1" v-if="item.attempts > 1">({{ item.attempts }} attempts)</span>
@@ -67,8 +67,8 @@
             <b-list-group-item v-for="item in history.history.slice().reverse()" v-bind:key="item.id">
               <span class="float-right identifier">#{{ item.id }}</span>
               <strong>{{ item.type }}</strong><br />
-              <span class="date">{{ item.details.timestamp | formatEpoch }}</span>
-              <div v-html="renderDetails(item)"></div>
+              <span class="date">{{ item.details.event_time | formatDateTimeString }}</span>
+              <div v-html="historyEventDescription(item)"></div>
             </b-list-group-item>
           </b-list-group>
         </dd>
@@ -125,12 +125,15 @@ export default class CollectionShowWorkflow extends Vue {
     return EnduroCollectionClient.collectionWorkflow({id: +this.$route.params.id}).then((response: api.CollectionWorkflowResponseBody) => {
       this.history = response;
       this.processHistory();
-    }).catch((response) => {
+    }).catch((err) => {
       this.error = true;
+
+      // tslint:disable-next-line:no-console
+      console.log(err);
     });
   }
 
-  private parseEncodedField(input: string): string {
+  private parseEncodedField(input: string): any {
     const value = window.atob(input);
     try {
       return JSON.parse(value);
@@ -147,22 +150,24 @@ export default class CollectionShowWorkflow extends Vue {
     for (const event of this.history.history) {
       const details = event.details;
       if (event.type === 'MarkerRecorded') {
-        const attrs = details.markerRecordedEventAttributes;
-        if (attrs.markerName === 'LocalActivity') {
-          const innerDetails = JSON.parse(window.atob(attrs.details));
-          this.activities[event.id] = {
-            local: true,
-            name: innerDetails.activityType,
-            attempts: 0,
-            replayed: innerDetails.replayTime,
-          };
-          if (innerDetails.hasOwnProperty('resultJson')) {
-            // JSON.parse(innerDetails.resultJson);
-          }
+        const attrs = details.Attributes.marker_recorded_event_attributes;
+        if (attrs.marker_name !== 'LocalActivity') {
+          continue;
         }
+        const dataPayloads = attrs.details.data.payloads;
+        if (!dataPayloads.length) {
+          continue;
+        }
+        const innerDetails = this.parseEncodedField(dataPayloads[0].data);
+        this.activities[event.id] = {
+          local: true,
+          name: innerDetails.ActivityType,
+          attempts: innerDetails.Attempt,
+          replayed: innerDetails.ReplayTime,
+        };
       } else if (event.type === 'ActivityTaskScheduled') {
-        const attrs = details.activityTaskScheduledEventAttributes;
-        const name = attrs.activityType.name;
+        const attrs = details.Attributes.activity_task_scheduled_event_attributes;
+        const name = attrs.activity_type.name;
         if (ignoredActivities.includes(name)) {
           continue;
         }
@@ -171,59 +176,74 @@ export default class CollectionShowWorkflow extends Vue {
           name,
           status: 'in progress',
           attempts: 0,
-          started: details.timestamp,
+          started: details.event_time,
         };
       } else if (event.type === 'ActivityTaskStarted') {
-        const attrs = details.activityTaskStartedEventAttributes;
-        if (attrs.scheduledEventId in this.activities) {
-          const item = this.activities[attrs.scheduledEventId];
-          item.attempts = attrs.attempt + 1;
+        const attrs = details.Attributes.activity_task_started_event_attributes;
+        if (attrs.scheduled_event_id in this.activities) {
+          const item = this.activities[attrs.scheduled_event_id];
+          item.attempts = attrs.attempt;
         }
       } else if (event.type === 'ActivityTaskFailed') {
-        const attrs = details.activityTaskFailedEventAttributes;
+        const attrs = details.Attributes.activity_task_failed_event_attributes;
         this.activityError = true;
-        if (attrs.scheduledEventId in this.activities) {
-          const item = this.activities[attrs.scheduledEventId];
+        if (attrs.scheduled_event_id in this.activities) {
+          const item = this.activities[attrs.scheduled_event_id];
           item.status = 'error';
-          item.details = window.atob(attrs.details);
-          item.completed = details.timestamp;
-          item.duration = (item.completed - item.started) / 1000000000;
-          item.duration = item.duration.toFixed(2);
+          item.details = 'Message: ' + attrs.failure.message;
+          item.completed = details.event_time;
+          item.duration = this.duration(item.started, item.completed);
         }
       } else if (event.type === 'ActivityTaskCompleted') {
-        const attrs = details.activityTaskCompletedEventAttributes;
-        if (attrs.scheduledEventId in this.activities) {
-          const item = this.activities[attrs.scheduledEventId];
+        const attrs = details.Attributes.activity_task_completed_event_attributes;
+        if (attrs.scheduled_event_id in this.activities) {
+          const item = this.activities[attrs.scheduled_event_id];
           item.status = 'done';
-          item.completed = details.timestamp;
-          item.duration = (item.completed - item.started) / 1000000000;
-          item.duration = item.duration.toFixed(2);
+          item.completed = details.event_time;
+          item.duration = this.duration(item.started, item.completed);
           if (item.name === 'async-completion-activity' && attrs.result) {
             item.details = 'User selection: ' + window.atob(attrs.result) + '.';
           }
         }
       } else if (event.type === 'ActivityTaskTimedOut') {
-        const attrs = details.activityTaskTimedOutEventAttributes;
-        if (attrs.scheduledEventId in this.activities) {
-          const item = this.activities[attrs.scheduledEventId];
+        const attrs = details.Attributes.activity_task_timed_out_event_attributes;
+        if (attrs.scheduled_event_id in this.activities) {
+          const item = this.activities[attrs.scheduled_event_id];
           item.status = 'timed out';
-          item.details = 'Timeout ' + attrs.timeoutType + '.';
+          item.details = 'Timeout ' + attrs.timeout_type + '.';
         }
       } else if (event.type === 'WorkflowExecutionStarted') {
-        this.startedAt = details.timestamp;
+        this.startedAt = details.event_time;
       } else if (event.type === 'WorkflowExecutionCompleted') {
-        this.completedAt = details.timestamp;
+        this.completedAt = details.event_time;
       } else if (event.type === 'WorkflowExecutionFailed') {
-        const attrs = details.workflowExecutionFailedEventAttributes;
-        const reason = attrs.reason;
-        const info = this.parseEncodedField(attrs.details);
-        this.workflowError = reason + ' - ' + info;
-        this.completedAt = details.timestamp;
+        const attrs = details.Attributes.workflow_execution_failed_event_attributes;
+        this.workflowError = this.workflowErrorDescription(attrs.failure);
+        this.completedAt = details.event_time;
       }
     }
   }
 
-  private renderDetails(event: api.EnduroCollectionWorkflowHistoryResponseBody): string {
+  private workflowErrorDescription(failure: any): string {
+    let desc = '';
+    if (failure.hasOwnProperty('message')) {
+      desc = failure.message;
+    }
+    if (failure.hasOwnProperty('cause') && failure.cause.hasOwnProperty('message')) {
+      if (desc.length) desc += ': ';
+      desc += failure.cause.message;
+    }
+    return desc
+  }
+
+  private duration(startedAt: string, completedAt: string): string {
+    const started = new Date(startedAt);
+    const completed = new Date(completedAt);
+    const took = (completed.getTime() - started.getTime()) / 1000;
+    return took.toLocaleString();
+  }
+
+  private historyEventDescription(event: api.EnduroCollectionWorkflowHistoryResponseBody): string {
     let ret = '';
 
     if (!event || !event.type) {
@@ -231,17 +251,21 @@ export default class CollectionShowWorkflow extends Vue {
     }
 
     const attrs: any = event.details;
+
     if (event.type === 'ActivityTaskScheduled') {
-      ret = 'Activity: ' + attrs.activityTaskScheduledEventAttributes.activityType.name;
+      ret = 'Activity: ' + attrs.Attributes.activity_task_scheduled_event_attributes.activity_type.name;
     } else if (event.type === 'ActivityTaskFailed') {
-      ret = 'Error: ' + window.atob(attrs.activityTaskFailedEventAttributes.details);
+      const body = attrs.Attributes.activity_task_failed_event_attributes;
+      ret = JSON.stringify(body, null, 2);
     } else if (event.type === 'DecisionTaskScheduled') {
       const attempt: number = parseInt(attrs.decisionTaskScheduledEventAttributes.attempt, 10) + 1;
       ret = 'Attempts: ' + attempt;
     } else if (event.type === 'WorkflowExecutionFailed') {
-      const reason = attrs.workflowExecutionFailedEventAttributes.reason;
-      const info = this.parseEncodedField(attrs.workflowExecutionFailedEventAttributes.details);
-      ret = reason + ' - ' + info;
+      const body = attrs.Attributes.workflow_execution_failed_event_attributes;
+      ret = JSON.stringify(body, null, 2);
+    } else if (event.type == 'WorkflowExecutionStarted') {
+      const body = attrs.Attributes.workflow_execution_started_event_attributes;
+      ret = JSON.stringify(body, null, 2);
     }
 
     if (ret.length) {

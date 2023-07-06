@@ -9,8 +9,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
-	cadencesdk "go.uber.org/cadence"
-	cadencesdk_testsuite "go.uber.org/cadence/testsuite"
+	temporalsdk_testsuite "go.temporal.io/sdk/testsuite"
 
 	"github.com/artefactual-labs/enduro/internal/collection"
 	collectionfake "github.com/artefactual-labs/enduro/internal/collection/fake"
@@ -22,9 +21,9 @@ import (
 
 type ProcessingWorkflowTestSuite struct {
 	suite.Suite
-	cadencesdk_testsuite.WorkflowTestSuite
+	temporalsdk_testsuite.WorkflowTestSuite
 
-	env *cadencesdk_testsuite.TestWorkflowEnvironment
+	env *temporalsdk_testsuite.TestWorkflowEnvironment
 
 	manager *manager.Manager
 
@@ -78,7 +77,7 @@ func (s *ProcessingWorkflowTestSuite) TestParseErrorIsIgnored() {
 	})
 
 	s.True(s.env.IsWorkflowCompleted())
-	s.EqualError(s.env.GetWorkflowError(), "error loading configuration: pipeline is unavailable")
+	s.ErrorContains(s.env.GetWorkflowError(), "pipeline is unavailable")
 }
 
 // Workflow does not ignore an error in parseName when NHA hooks are enabled.
@@ -114,7 +113,7 @@ func (s *ProcessingWorkflowTestSuite) TestParseError() {
 	})
 
 	s.True(s.env.IsWorkflowCompleted())
-	s.EqualError(s.env.GetWorkflowError(), "error parsing transfer name: parse error")
+	s.ErrorContains(s.env.GetWorkflowError(), "parse error")
 }
 
 func TestProcessingWorkflow(t *testing.T) {
@@ -134,22 +133,6 @@ func buildManager(t *testing.T, ctrl *gomock.Controller) *manager.Manager {
 			"hari": {"disabled": "false"},
 		},
 	)
-}
-
-func assertNilWorkflowError(t *testing.T, err error) {
-	t.Helper()
-
-	if err == nil {
-		return
-	}
-
-	if perr, ok := err.(*cadencesdk.CustomError); ok {
-		var details string
-		perr.Details(&details)
-		t.Fatal(details)
-	} else {
-		t.Fatal(err.Error())
-	}
 }
 
 func TestTransferInfoProcessingConfiguration(t *testing.T) {
