@@ -368,7 +368,7 @@ Show pipeline by ID
     -id STRING: Identifier of pipeline to show
 
 Example:
-    %[1]s pipeline show --id "d07f4165-11a8-11ee-ade5-7085c27bdeb0"
+    %[1]s pipeline show --id "3aa29fec-1c21-11ee-bb08-7085c27bdeb0"
 `, os.Args[0])
 }
 
@@ -379,7 +379,7 @@ List all processing configurations of a pipeline given its ID
     -id STRING: Identifier of pipeline
 
 Example:
-    %[1]s pipeline processing --id "d07f5dac-11a8-11ee-ade5-7085c27bdeb0"
+    %[1]s pipeline processing --id "3aa2b5c8-1c21-11ee-bb08-7085c27bdeb0"
 `, os.Args[0])
 }
 
@@ -484,7 +484,7 @@ List all stored collections
     -cursor STRING: 
 
 Example:
-    %[1]s collection list --name "Laudantium eos fugiat iure sit ea." --original-id "Et dolor ullam consequatur dignissimos." --transfer-id "d07c5264-11a8-11ee-ade5-7085c27bdeb0" --aip-id "d07c5451-11a8-11ee-ade5-7085c27bdeb0" --pipeline-id "d07c5618-11a8-11ee-ade5-7085c27bdeb0" --earliest-created-time "1996-05-01T14:23:24Z" --latest-created-time "1987-02-15T23:56:43Z" --status "error" --cursor "Sit et inventore et."
+    %[1]s collection list --name "Laudantium eos fugiat iure sit ea." --original-id "Et dolor ullam consequatur dignissimos." --transfer-id "3aa19814-1c21-11ee-bb08-7085c27bdeb0" --aip-id "3aa199c9-1c21-11ee-bb08-7085c27bdeb0" --pipeline-id "3aa19b92-1c21-11ee-bb08-7085c27bdeb0" --earliest-created-time "1996-05-01T14:23:24Z" --latest-created-time "1987-02-15T23:56:43Z" --status "error" --cursor "Sit et inventore et."
 `, os.Args[0])
 }
 

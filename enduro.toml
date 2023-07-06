@@ -3,9 +3,10 @@
 debug = true
 debugListen = "127.0.0.1:9001"
 
-[cadence]
-domain = "enduro"
-address = "127.0.0.1:7400"
+[temporal]
+namespace = "default"
+address = "127.0.0.1:7233"
+taskQueue = "global"
 
 [api]
 listen = "127.0.0.1:9000"

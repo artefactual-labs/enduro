@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	cadencesdk_workflow "go.uber.org/cadence/workflow"
+	temporalsdk_temporal "go.temporal.io/sdk/temporal"
+	temporalsdk_workflow "go.temporal.io/sdk/workflow"
 
 	"github.com/artefactual-labs/enduro/internal/nha"
 	nha_activities "github.com/artefactual-labs/enduro/internal/nha/activities"
@@ -20,11 +21,13 @@ type sendReceiptsParams struct {
 	CollectionID uint
 }
 
-func (w *ProcessingWorkflow) sendReceipts(ctx cadencesdk_workflow.Context, params *sendReceiptsParams) error {
+func (w *ProcessingWorkflow) sendReceipts(ctx temporalsdk_workflow.Context, params *sendReceiptsParams) error {
 	if disabled, _ := manager.HookAttrBool(w.manager.Hooks, "hari", "disabled"); !disabled {
-		opts := cadencesdk_workflow.ActivityOptions{
-			ScheduleToStartTimeout: forever,
-			StartToCloseTimeout:    time.Minute * 20,
+		opts := temporalsdk_workflow.ActivityOptions{
+			StartToCloseTimeout: time.Minute * 20,
+			RetryPolicy: &temporalsdk_temporal.RetryPolicy{
+				MaximumAttempts: 1,
+			},
 		}
 		err := executeActivityWithAsyncErrorHandling(ctx, w.manager.Collection, params.CollectionID, opts, nha_activities.UpdateHARIActivityName, &nha_activities.UpdateHARIActivityParams{
 			SIPID:        params.SIPID,
@@ -39,9 +42,11 @@ func (w *ProcessingWorkflow) sendReceipts(ctx cadencesdk_workflow.Context, param
 	}
 
 	if disabled, _ := manager.HookAttrBool(w.manager.Hooks, "prod", "disabled"); !disabled {
-		opts := cadencesdk_workflow.ActivityOptions{
-			ScheduleToStartTimeout: forever,
-			StartToCloseTimeout:    time.Second * 10,
+		opts := temporalsdk_workflow.ActivityOptions{
+			StartToCloseTimeout: time.Second * 10,
+			RetryPolicy: &temporalsdk_temporal.RetryPolicy{
+				MaximumAttempts: 1,
+			},
 		}
 		err := executeActivityWithAsyncErrorHandling(ctx, w.manager.Collection, params.CollectionID, opts, nha_activities.UpdateProductionSystemActivityName, &nha_activities.UpdateProductionSystemActivityParams{
 			StoredAt:     params.StoredAt,

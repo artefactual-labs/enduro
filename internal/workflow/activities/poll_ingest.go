@@ -6,20 +6,18 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
-	cadencesdk_activity "go.uber.org/cadence/activity"
-	"go.uber.org/zap"
+	temporalsdk_activity "go.temporal.io/sdk/activity"
 
 	"github.com/artefactual-labs/enduro/internal/pipeline"
-	wferrors "github.com/artefactual-labs/enduro/internal/workflow/errors"
-	"github.com/artefactual-labs/enduro/internal/workflow/manager"
+	"github.com/artefactual-labs/enduro/internal/temporal"
 )
 
 type PollIngestActivity struct {
-	manager *manager.Manager
+	pipelineRegistry *pipeline.Registry
 }
 
-func NewPollIngestActivity(m *manager.Manager) *PollIngestActivity {
-	return &PollIngestActivity{manager: m}
+func NewPollIngestActivity(pipelineRegistry *pipeline.Registry) *PollIngestActivity {
+	return &PollIngestActivity{pipelineRegistry: pipelineRegistry}
 }
 
 type PollIngestActivityParams struct {
@@ -28,11 +26,11 @@ type PollIngestActivityParams struct {
 }
 
 func (a *PollIngestActivity) Execute(ctx context.Context, params *PollIngestActivityParams) (time.Time, error) {
-	logger := cadencesdk_activity.GetLogger(ctx)
+	logger := temporalsdk_activity.GetLogger(ctx)
 
-	p, err := a.manager.Pipelines.ByName(params.PipelineName)
+	p, err := a.pipelineRegistry.ByName(params.PipelineName)
 	if err != nil {
-		return time.Time{}, wferrors.NonRetryableError(err)
+		return time.Time{}, temporal.NewNonRetryableError(err)
 	}
 	amc := p.Client()
 
@@ -53,7 +51,7 @@ func (a *PollIngestActivity) Execute(ctx context.Context, params *PollIngestActi
 
 			// Abandon when we see a non-retryable error.
 			if errors.Is(err, pipeline.ErrStatusNonRetryable) {
-				return backoff.Permanent(wferrors.NonRetryableError(err))
+				return backoff.Permanent(temporal.NewNonRetryableError(err))
 			}
 
 			// Looking good, keep polling.
@@ -63,21 +61,21 @@ func (a *PollIngestActivity) Execute(ctx context.Context, params *PollIngestActi
 			}
 
 			if err != nil {
-				logger.Error("Failed to look up Ingest status.", zap.Error(err))
+				logger.Error("Failed to look up Ingest status.", "error", err)
 			}
 
 			// Retry unless the deadline was exceeded.
 			if lastRetryableError.IsZero() {
 				lastRetryableError = clock.Now()
 			} else if clock.Since(lastRetryableError) > deadline {
-				return backoff.Permanent(wferrors.NonRetryableError(err))
+				return backoff.Permanent(temporal.NewNonRetryableError(err))
 			}
 
 			return err
 		},
 		backoffStrategy,
 		func(err error, duration time.Duration) {
-			cadencesdk_activity.RecordHeartbeat(ctx, err.Error())
+			temporalsdk_activity.RecordHeartbeat(ctx, err.Error())
 		},
 	)
 

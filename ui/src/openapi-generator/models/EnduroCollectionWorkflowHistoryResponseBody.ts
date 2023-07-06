@@ -14,7 +14,7 @@
 
 import { exists, mapValues } from '../runtime';
 /**
- * WorkflowHistoryEvent describes a history event in Cadence. (default view)
+ * WorkflowHistoryEvent describes a history event in Temporal. (default view)
  * @export
  * @interface EnduroCollectionWorkflowHistoryResponseBody
  */

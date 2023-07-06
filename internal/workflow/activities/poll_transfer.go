@@ -6,12 +6,10 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
-	cadencesdk_activity "go.uber.org/cadence/activity"
-	"go.uber.org/zap"
+	temporalsdk_activity "go.temporal.io/sdk/activity"
 
 	"github.com/artefactual-labs/enduro/internal/pipeline"
-	wferrors "github.com/artefactual-labs/enduro/internal/workflow/errors"
-	"github.com/artefactual-labs/enduro/internal/workflow/manager"
+	"github.com/artefactual-labs/enduro/internal/temporal"
 )
 
 // PollTransferActivity polls the Transfer Status API repeatedly until
@@ -19,11 +17,11 @@ import (
 //
 // It is expected to deliver at least on heartbeat per minute.
 type PollTransferActivity struct {
-	manager *manager.Manager
+	pipelineRegistry *pipeline.Registry
 }
 
-func NewPollTransferActivity(m *manager.Manager) *PollTransferActivity {
-	return &PollTransferActivity{manager: m}
+func NewPollTransferActivity(pipelineRegistry *pipeline.Registry) *PollTransferActivity {
+	return &PollTransferActivity{pipelineRegistry: pipelineRegistry}
 }
 
 type PollTransferActivityParams struct {
@@ -32,11 +30,11 @@ type PollTransferActivityParams struct {
 }
 
 func (a *PollTransferActivity) Execute(ctx context.Context, params *PollTransferActivityParams) (string, error) {
-	logger := cadencesdk_activity.GetLogger(ctx)
+	logger := temporalsdk_activity.GetLogger(ctx)
 
-	p, err := a.manager.Pipelines.ByName(params.PipelineName)
+	p, err := a.pipelineRegistry.ByName(params.PipelineName)
 	if err != nil {
-		return "", wferrors.NonRetryableError(err)
+		return "", temporal.NewNonRetryableError(err)
 	}
 	amc := p.Client()
 
@@ -58,7 +56,7 @@ func (a *PollTransferActivity) Execute(ctx context.Context, params *PollTransfer
 
 			// Abandon when we see a non-retryable error.
 			if errors.Is(err, pipeline.ErrStatusNonRetryable) {
-				return backoff.Permanent(wferrors.NonRetryableError(err))
+				return backoff.Permanent(temporal.NewNonRetryableError(err))
 			}
 
 			// Looking good, keep polling.
@@ -68,21 +66,21 @@ func (a *PollTransferActivity) Execute(ctx context.Context, params *PollTransfer
 			}
 
 			if err != nil {
-				logger.Error("Failed to look up Transfer status.", zap.Error(err))
+				logger.Error("Failed to look up Transfer status.", "error", err)
 			}
 
 			// Retry unless the deadline was exceeded.
 			if lastRetryableError.IsZero() {
 				lastRetryableError = clock.Now()
 			} else if clock.Since(lastRetryableError) > deadline {
-				return backoff.Permanent(wferrors.NonRetryableError(err))
+				return backoff.Permanent(temporal.NewNonRetryableError(err))
 			}
 
 			return err
 		},
 		backoffStrategy,
 		func(err error, duration time.Duration) {
-			cadencesdk_activity.RecordHeartbeat(ctx, err.Error())
+			temporalsdk_activity.RecordHeartbeat(ctx, err.Error())
 		},
 	)
 

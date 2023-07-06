@@ -8,7 +8,7 @@ description: >
 
 ## Configuration
 
-Enduro is configured via the ``enduro.toml`` configuration file which uses TOML,
+Enduro is configured via the `enduro.toml` configuration file which uses TOML,
 a well-known file format for configuration files.
 
 The default search paths are `/etc/enduro.toml`, `$HOME/.config/enduro.toml`,
@@ -37,19 +37,19 @@ data.
 
 E.g.: `"127.0.0.1:9001"`
 
-### `[cadence]`
+### `[temporal]`
 
-Connection details with the Cadence server.
+Connection details with the Temporal server.
 
-#### `domain` (String)
+#### `namespace` (String)
 
-Name of the Cadence domain used by this application.
+Name of the Temporal namespace used by this application.
 
 E.g.: `"enduro"`
 
 #### `address` (String)
 
-Address of the Cadence front-end server.
+Address of the Temporal front-end server.
 
 E.g.: `"127.0.0.1:7400"`
 
@@ -343,6 +343,4 @@ Source: https://github.com/artefactual-labs/enduro/blob/main/enduro.toml.
 {{< config >}}
 
 [Data Source Name format]: https://github.com/go-sql-driver/mysql#dsn-data-source-name
-
-
 [RE2 syntax]: https://github.com/google/re2/wiki/Syntax

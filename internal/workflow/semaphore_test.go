@@ -6,21 +6,20 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
-	cadencesdk_activity "go.uber.org/cadence/activity"
-	cadencesdk_testsuite "go.uber.org/cadence/testsuite"
-	cadencesdk_workflow "go.uber.org/cadence/workflow"
+	temporalsdk_activity "go.temporal.io/sdk/activity"
+	temporalsdk_testsuite "go.temporal.io/sdk/testsuite"
+	temporalsdk_workflow "go.temporal.io/sdk/workflow"
 
 	collectionfake "github.com/artefactual-labs/enduro/internal/collection/fake"
 	"github.com/artefactual-labs/enduro/internal/pipeline"
 	"github.com/artefactual-labs/enduro/internal/workflow/activities"
-	"github.com/artefactual-labs/enduro/internal/workflow/manager"
 )
 
 func TestSemaphoreAcquireRelease(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	wts := cadencesdk_testsuite.WorkflowTestSuite{}
+	wts := temporalsdk_testsuite.WorkflowTestSuite{}
 	env := wts.NewTestWorkflowEnvironment()
 
 	colsvc := collectionfake.NewMockService(ctrl)
@@ -33,38 +32,33 @@ func TestSemaphoreAcquireRelease(t *testing.T) {
 		{Name: "am1", Capacity: 1},
 	}
 	registry, _ := pipeline.NewPipelineRegistry(logr.Discard(), config)
-	m := &manager.Manager{
-		Pipelines:  registry,
-		Collection: colsvc,
-	}
-
-	a := activities.NewAcquirePipelineActivity(m)
+	a := activities.NewAcquirePipelineActivity(registry)
 	env.RegisterActivityWithOptions(
 		a.Execute,
-		cadencesdk_activity.RegisterOptions{
+		temporalsdk_activity.RegisterOptions{
 			Name: activities.AcquirePipelineActivityName,
 		},
 	)
 
 	env.RegisterWorkflowWithOptions(
-		func(ctx cadencesdk_workflow.Context) error {
-			acquired, release, err := acquirePipeline(ctx, m, "am1", 12345)
+		func(ctx temporalsdk_workflow.Context) error {
+			acquired, release, err := acquirePipeline(ctx, colsvc, registry, "am1", 12345)
 			assert.Nil(t, err)
 			assert.Equal(t, acquired, true)
 
-			p, _ := m.Pipelines.ByName("am1")
+			p, _ := registry.ByName("am1")
 			size, cur := p.Capacity()
 			assert.Equal(t, size, int64(1))
 			assert.Equal(t, cur, int64(1))
 
-			release(ctx, m, "am1")
+			release(ctx)
 			size, cur = p.Capacity()
 			assert.Equal(t, size, int64(1))
 			assert.Equal(t, cur, int64(0))
 
 			return nil
 		},
-		cadencesdk_workflow.RegisterOptions{
+		temporalsdk_workflow.RegisterOptions{
 			Name: "workflow",
 		},
 	)

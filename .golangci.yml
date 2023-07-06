@@ -1,22 +1,22 @@
 run:
   deadline: 60s
   skip-dirs:
-  - hack
-  - website
-  - ui
+    - hack
+    - website
+    - ui
 
 linters:
   enable:
-  - misspell
-  - gofumpt
-  - importas
-  - gci
+    - misspell
+    - gofumpt
+    - importas
+    - gci
 
 issues:
   exclude-rules:
-  - path: _test\.go
-    linters:
-    - errcheck
+    - path: _test\.go
+      linters:
+        - errcheck
 
 linters-settings:
   gci:
@@ -32,11 +32,7 @@ linters-settings:
     no-unaliased: true
     no-extra-aliases: false
     alias:
-      - pkg: go.uber.org/cadence
-        alias: cadencesdk
-      - pkg: go.uber.org/cadence/(\w+)
-        alias: cadencesdk_$1
-      - pkg: go.uber.org/cadence/.gen/go/shared
-        alias: cadencesdk_gen_shared
-      - pkg: go.uber.org/cadence/.gen/go/cadence/workflowserviceclient
-        alias: cadencesdk_gen_workflowserviceclient
+      - pkg: go.temporal.io/sdk/(\w+)
+        alias: temporalsdk_$1
+      - pkg: go.temporal.io/api/(\w+)
+        alias: temporalapi_$1

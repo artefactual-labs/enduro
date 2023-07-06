@@ -11,7 +11,6 @@ import (
 	"gotest.tools/v3/assert"
 
 	"github.com/artefactual-labs/enduro/internal/pipeline"
-	"github.com/artefactual-labs/enduro/internal/workflow/manager"
 )
 
 type ZeroBackOff struct {
@@ -25,8 +24,9 @@ func (b *ZeroBackOff) NextBackOff() time.Duration {
 	return 0
 }
 
-func newManager(t *testing.T, h http.HandlerFunc) *manager.Manager {
+func newPipelineRegistry(t *testing.T, h http.HandlerFunc) *pipeline.Registry {
 	t.Helper()
+
 	logger := logr.Discard()
 
 	mux := http.NewServeMux()
@@ -39,7 +39,7 @@ func newManager(t *testing.T, h http.HandlerFunc) *manager.Manager {
 
 	retryDeadline := time.Duration(time.Minute * 5)
 	pipelineURL, _ := url.Parse(server.URL)
-	pipelines, err := pipeline.NewPipelineRegistry(logger, []pipeline.Config{
+	pipelineRegistry, err := pipeline.NewPipelineRegistry(logger, []pipeline.Config{
 		{
 			ID:            "75ed5f0a-792e-4ce9-aeb7-e2e832d2a4fa",
 			Name:          "am",
@@ -49,8 +49,5 @@ func newManager(t *testing.T, h http.HandlerFunc) *manager.Manager {
 	})
 	assert.NilError(t, err)
 
-	return &manager.Manager{
-		Logger:    logger,
-		Pipelines: pipelines,
-	}
+	return pipelineRegistry
 }

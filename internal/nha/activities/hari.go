@@ -17,7 +17,7 @@ import (
 	"time"
 
 	"github.com/artefactual-labs/enduro/internal/nha"
-	wferrors "github.com/artefactual-labs/enduro/internal/workflow/errors"
+	"github.com/artefactual-labs/enduro/internal/temporal"
 	"github.com/artefactual-labs/enduro/internal/workflow/manager"
 )
 
@@ -56,7 +56,7 @@ func (a UpdateHARIActivity) Execute(ctx context.Context, params *UpdateHARIActiv
 
 	apiURL, err := a.url()
 	if err != nil {
-		return wferrors.NonRetryableError(fmt.Errorf("error in URL construction: %v", err))
+		return temporal.NewNonRetryableError(fmt.Errorf("error in URL construction: %v", err))
 	}
 
 	mock, _ := manager.HookAttrBool(a.manager.Hooks, "hari", "mock")
@@ -68,7 +68,7 @@ func (a UpdateHARIActivity) Execute(ctx context.Context, params *UpdateHARIActiv
 
 	path := a.avlxml(params.FullPath, params.NameInfo.Type)
 	if path == "" {
-		return wferrors.NonRetryableError(fmt.Errorf("error reading AVLXML file: not found"))
+		return temporal.NewNonRetryableError(fmt.Errorf("error reading AVLXML file: not found"))
 	}
 
 	f, err := os.Open(path)
@@ -85,7 +85,7 @@ func (a UpdateHARIActivity) Execute(ctx context.Context, params *UpdateHARIActiv
 			blob, err = io.ReadAll(f)
 		}
 		if err != nil {
-			return wferrors.NonRetryableError(fmt.Errorf("error reading AVLXML file: %v", err))
+			return temporal.NewNonRetryableError(fmt.Errorf("error reading AVLXML file: %v", err))
 		}
 	}
 
@@ -95,7 +95,7 @@ func (a UpdateHARIActivity) Execute(ctx context.Context, params *UpdateHARIActiv
 			const idtype = "avleveringsidentifikator"
 			parentID, err = readIdentifier(params.FullPath, params.NameInfo.Type.String()+"/journal/avlxml.xml", idtype)
 			if err != nil {
-				return wferrors.NonRetryableError(fmt.Errorf("error looking up avleveringsidentifikator: %v", err))
+				return temporal.NewNonRetryableError(fmt.Errorf("error looking up avleveringsidentifikator: %v", err))
 			}
 		}
 	}

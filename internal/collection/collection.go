@@ -9,7 +9,7 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/jmoiron/sqlx"
-	cadencesdk_client "go.uber.org/cadence/client"
+	temporalsdk_client "go.temporal.io/sdk/client"
 	goahttp "goa.design/goa/v3/http"
 
 	goacollection "github.com/artefactual-labs/enduro/internal/api/gen/collection"
@@ -36,9 +36,10 @@ type Service interface {
 }
 
 type collectionImpl struct {
-	logger logr.Logger
-	db     *sqlx.DB
-	cc     cadencesdk_client.Client
+	logger    logr.Logger
+	db        *sqlx.DB
+	cc        temporalsdk_client.Client
+	taskQueue string
 
 	registry *pipeline.Registry
 
@@ -51,11 +52,12 @@ type collectionImpl struct {
 
 var _ Service = (*collectionImpl)(nil)
 
-func NewService(logger logr.Logger, db *sql.DB, cc cadencesdk_client.Client, registry *pipeline.Registry) *collectionImpl {
+func NewService(logger logr.Logger, db *sql.DB, cc temporalsdk_client.Client, taskQueue string, registry *pipeline.Registry) *collectionImpl {
 	return &collectionImpl{
 		logger:        logger,
 		db:            sqlx.NewDb(db, "mysql"),
 		cc:            cc,
+		taskQueue:     taskQueue,
 		registry:      registry,
 		downloadProxy: newDownloadReverseProxy(logger),
 		events:        NewEventService(),

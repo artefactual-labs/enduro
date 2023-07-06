@@ -126,7 +126,7 @@ type DownloadPayload struct {
 	ID uint
 }
 
-// WorkflowHistoryEvent describes a history event in Cadence.
+// WorkflowHistoryEvent describes a history event in Temporal.
 type EnduroCollectionWorkflowHistory struct {
 	// Identifier of collection
 	ID *uint

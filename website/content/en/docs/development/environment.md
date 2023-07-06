@@ -18,10 +18,10 @@ makes thing much simpler during development.
 
 There are some dependencies that need to be installed:
 
-* [Go][go],
-* [Docker Compose][docker-compose],
-* [Node.js][nodejs], and
-* [GNU Make][make]
+- [Go][go],
+- [Docker Engine][docker-engine] (includes Docker Compose),
+- [Node.js][nodejs], and
+- [GNU Make][make]
 
 This guide may not work for you if you manage Docker with `sudo`, see
 [issue #118][issue-118] for more. It is possible to manage Docker as a non-root
@@ -31,17 +31,7 @@ user with some [extra configuration steps][docker-non-root].
 
 Spin up the environment with the following command:
 
-    docker-compose up --detach
-
-Cadence will crash right away because the database has not been set up properly.
-Run the following command to introduce the MySQL tables needed by Cadence:
-
-    make cadence-seed
-
-In a minute or less, Cadence should be up again. Since Cadence is a multitenant
-service, we need to create a Cadence domain for Enduro:
-
-    make cadence-domain
+    docker compose up --detach
 
 Now we need to build some Go tools we're going to use during development:
 
@@ -66,8 +56,8 @@ MinIO is one of the services installed automatically with Docker Compose. You
 should be able to access the web file browser via http://127.0.0.1:7460 using
 the following credentials:
 
-* Access key: `minio`
-* Secret key: `minio123`
+- Access key: `minio`
+- Secret key: `minio123`
 
 Alternatively, you can [install][mc] the MinIO command-line client (mc) and
 register the local instance with:
@@ -102,8 +92,8 @@ since the event is buffered by Redis.
 
     make run
 
-Additionally, you can visualize workflows and activities from Cadence Web. Try
-opening the following link: http://127.0.0.1:7440/domain/enduro/workflows/.
+Additionally, you can visualize workflows and activities from Temporal UI. Try
+opening the following link: http://127.0.0.1:7440/namespaces/default/workflows.
 
 ## Development workflow
 
@@ -129,13 +119,12 @@ You can enable it in Visual Studio Code as follows:
 
 ```json
 {
-    "go.lintTool": "golangci-lint",
-    "go.lintFlags": ["--fast"]
+  "go.lintTool": "golangci-lint",
+  "go.lintFlags": ["--fast"]
 }
 ```
 
-
-[docker-compose]: https://docs.docker.com/compose/install/
+[docker-engine]: https://docs.docker.com/engine/install/
 [mc]: https://docs.min.io/docs/minio-client-quickstart-guide.html
 [go]: https://golang.org/doc/install
 [gopls]: https://github.com/golang/tools/blob/master/gopls/README.md

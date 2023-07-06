@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/artefactual-labs/enduro/internal/nha"
-	wferrors "github.com/artefactual-labs/enduro/internal/workflow/errors"
+	"github.com/artefactual-labs/enduro/internal/temporal"
 	"github.com/artefactual-labs/enduro/internal/workflow/manager"
 )
 
@@ -43,7 +43,7 @@ func (a *UpdateProductionSystemActivity) Execute(ctx context.Context, params *Up
 
 	receiptPath, err := manager.HookAttrString(a.manager.Hooks, "prod", "receiptPath")
 	if err != nil {
-		return wferrors.NonRetryableError(fmt.Errorf("error looking up receiptPath configuration attribute: %v", err))
+		return temporal.NewNonRetryableError(fmt.Errorf("error looking up receiptPath configuration attribute: %v", err))
 	}
 
 	basename := filepath.Join(receiptPath, fmt.Sprintf("Receipt_%s_%s", params.NameInfo.Identifier, params.StoredAt.Format(rfc3339forFilename)))
@@ -53,7 +53,7 @@ func (a *UpdateProductionSystemActivity) Execute(ctx context.Context, params *Up
 	// Create and open receipt file.
 	file, err := os.OpenFile(jsonPath, os.O_RDWR|os.O_CREATE, os.FileMode(0o644))
 	if err != nil {
-		return wferrors.NonRetryableError(fmt.Errorf("error creating receipt file: %v", err))
+		return temporal.NewNonRetryableError(fmt.Errorf("error creating receipt file: %v", err))
 	}
 
 	var parentID string
@@ -62,26 +62,26 @@ func (a *UpdateProductionSystemActivity) Execute(ctx context.Context, params *Up
 			const idtype = "avleveringsidentifikator"
 			parentID, err = readIdentifier(params.FullPath, params.NameInfo.Type.String()+"/journal/avlxml.xml", idtype)
 			if err != nil {
-				return wferrors.NonRetryableError(fmt.Errorf("error looking up avleveringsidentifikator: %v", err))
+				return temporal.NewNonRetryableError(fmt.Errorf("error looking up avleveringsidentifikator: %v", err))
 			}
 		}
 	}
 
 	// Write receipt contents.
 	if err := a.generateReceipt(params, file, parentID); err != nil {
-		return wferrors.NonRetryableError(fmt.Errorf("error writing receipt file: %v", err))
+		return temporal.NewNonRetryableError(fmt.Errorf("error writing receipt file: %v", err))
 	}
 
 	// Seek to the beginning of the file.
 	if _, err = file.Seek(0, io.SeekStart); err != nil {
-		return wferrors.NonRetryableError(fmt.Errorf("error resetting receipt file cursor: %v", err))
+		return temporal.NewNonRetryableError(fmt.Errorf("error resetting receipt file cursor: %v", err))
 	}
 
 	_ = file.Close()
 
 	// Final rename.
 	if err := os.Rename(jsonPath, mftPath); err != nil {
-		return wferrors.NonRetryableError(fmt.Errorf("error renaming receipt (json » mft): %v", err))
+		return temporal.NewNonRetryableError(fmt.Errorf("error renaming receipt (json » mft): %v", err))
 	}
 
 	return nil

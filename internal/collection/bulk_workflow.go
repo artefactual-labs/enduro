@@ -2,17 +2,14 @@ package collection
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"strings"
 	"sync"
 	"time"
 
 	"github.com/oklog/run"
-	cadencesdk_gen_shared "go.uber.org/cadence/.gen/go/shared"
-	cadencesdk_activity "go.uber.org/cadence/activity"
-	cadencesdk_workflow "go.uber.org/cadence/workflow"
-	"go.uber.org/yarpc/yarpcerrors"
+	temporalsdk_activity "go.temporal.io/sdk/activity"
+	temporalsdk_temporal "go.temporal.io/sdk/temporal"
+	temporalsdk_workflow "go.temporal.io/sdk/workflow"
 
 	"github.com/artefactual-labs/enduro/internal/api/gen/collection"
 )
@@ -50,16 +47,18 @@ type BulkWorkflowInput struct {
 	Size uint
 }
 
-// BulkWorkflow is a Cadence workflow that performs bulk operations.
-func BulkWorkflow(ctx cadencesdk_workflow.Context, params BulkWorkflowInput) error {
-	opts := cadencesdk_workflow.WithActivityOptions(ctx, cadencesdk_workflow.ActivityOptions{
-		ScheduleToStartTimeout: time.Hour * 24 * 365,
-		StartToCloseTimeout:    time.Hour * 24 * 365,
-		WaitForCancellation:    true,
-		HeartbeatTimeout:       time.Second * 5,
+// BulkWorkflow is a Temporal workflow that performs bulk operations.
+func BulkWorkflow(ctx temporalsdk_workflow.Context, params BulkWorkflowInput) error {
+	opts := temporalsdk_workflow.WithActivityOptions(ctx, temporalsdk_workflow.ActivityOptions{
+		StartToCloseTimeout: time.Hour * 24 * 365,
+		WaitForCancellation: true,
+		HeartbeatTimeout:    time.Second * 5,
+		RetryPolicy: &temporalsdk_temporal.RetryPolicy{
+			MaximumAttempts: 1,
+		},
 	})
 
-	return cadencesdk_workflow.ExecuteActivity(opts, BulkActivityName, params).Get(opts, nil)
+	return temporalsdk_workflow.ExecuteActivity(opts, BulkActivityName, params).Get(opts, nil)
 }
 
 type BulkActivity struct {
@@ -98,7 +97,7 @@ func (a *BulkActivity) Execute(ctx context.Context, params BulkWorkflowInput) er
 						cp := progress
 						mu.RUnlock()
 
-						cadencesdk_activity.RecordHeartbeat(ctx, cp)
+						temporalsdk_activity.RecordHeartbeat(ctx, cp)
 					}
 				}
 			},
@@ -181,27 +180,12 @@ func (a *BulkActivity) Retry(ctx context.Context, ID uint) error {
 	err := a.colsvc.Goa().Retry(ctx, &collection.RetryPayload{ID: ID})
 
 	// User may have already started it manually.
-	var werr *cadencesdk_gen_shared.WorkflowExecutionAlreadyStartedError
-	if errors.As(err, &werr) {
+	if temporalsdk_temporal.IsWorkflowExecutionAlreadyStartedError(err) {
 		return nil
 	}
 
-	// Cadence seems to retry on cases where we'd rather give up right away,
-	// e.g. when the history is unavailable.
-	var yarpcerr *yarpcerrors.Status
-	if errors.As(err, &yarpcerr) {
-		switch yarpcerr.Code() {
-		case yarpcerrors.CodeInternal:
-			if strings.Contains(yarpcerr.Message(), "requested workflow history does not exist") {
-				return nil
-			}
-		case yarpcerrors.CodeDeadlineExceeded:
-			// At some point I'm seeing the timeout to be exceeded while the
-			// underlying error (presumably history does not exist) is not
-			// visible.
-			return nil
-		}
-	}
+	// TODO: ignore the error returned when the workflow history does not exist,
+	// which is something that we used to do in Temporal.
 
 	return err
 }
