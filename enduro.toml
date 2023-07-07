@@ -1,5 +1,6 @@
 # This is the configuration file valid for the development environment.
 
+verbosity = 2
 debug = true
 debugListen = "127.0.0.1:9001"
 
