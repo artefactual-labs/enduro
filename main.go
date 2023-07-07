@@ -74,7 +74,11 @@ func main() {
 	}
 
 	// Logging configuration.
-	logger := log.New(os.Stderr, log.WithName(appName), log.WithDebug(config.Debug))
+	logger := log.New(os.Stderr,
+		log.WithName(appName),
+		log.WithDebug(config.Debug),
+		log.WithLevel(config.Verbosity),
+	)
 	defer log.Sync(logger)
 
 	logger.Info("Starting...", "version", version, "pid", os.Getpid())
@@ -332,6 +336,7 @@ func main() {
 }
 
 type configuration struct {
+	Verbosity   int
 	Debug       bool
 	DebugListen string
 	API         api.Config
@@ -373,16 +378,16 @@ func readConfig(v *viper.Viper, config *configuration, configFile string) (found
 		found = true
 	}
 	if found && err != nil {
-		return found, fmt.Errorf("Failed to read configuration file: %w", err)
+		return found, fmt.Errorf("failed to read configuration file: %w", err)
 	}
 
 	err = v.Unmarshal(config)
 	if err != nil {
-		return found, fmt.Errorf("Failed to unmarshal configuration: %w", err)
+		return found, fmt.Errorf("failed to unmarshal configuration: %w", err)
 	}
 
 	if err := config.Validate(); err != nil {
-		return found, fmt.Errorf("Failed to validate the provided config: %w", err)
+		return found, fmt.Errorf("failed to validate the provided config: %w", err)
 	}
 
 	return found, nil

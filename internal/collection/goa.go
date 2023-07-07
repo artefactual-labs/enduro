@@ -349,7 +349,7 @@ func (w *goaWrapper) Download(ctx context.Context, p *goacollection.DownloadPayl
 	}
 
 	loc := bu.ResolveReference(rel).String()
-	w.logger.Info("Sending request to Archivematica Storage Service.", "loc", loc)
+	w.logger.V(1).Info("Sending request to Archivematica Storage Service.", "loc", loc)
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, loc, nil)
 	if err != nil {
 		return nil, nil, &goacollection.CollectionNotfound{ID: p.ID, Message: "not_found"}
