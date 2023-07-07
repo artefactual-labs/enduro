@@ -76,6 +76,7 @@ func NewFilesystemWatcher(ctx context.Context, config *FilesystemConfig) (*files
 			retentionPeriod:  config.RetentionPeriod,
 			completedDir:     config.CompletedDir,
 			stripTopLevelDir: config.StripTopLevelDir,
+			rejectDuplicates: config.RejectDuplicates,
 		},
 	}
 

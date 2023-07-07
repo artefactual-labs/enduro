@@ -226,6 +226,21 @@ func (w *ProcessingWorkflow) Execute(ctx temporalsdk_workflow.Context, req *coll
 		}).Get(activityOpts, nil)
 	}()
 
+	// Reject duplicate collection if applicable.
+	{
+		if req.RejectDuplicates {
+			var exists bool
+			activityOpts := withLocalActivityOpts(ctx)
+			err := temporalsdk_workflow.ExecuteLocalActivity(activityOpts, checkDuplicatePackageLocalActivity, w.manager.Logger, w.manager.Collection, tinfo.CollectionID).Get(activityOpts, &exists)
+			if err != nil {
+				return fmt.Errorf("error checking duplicate: %v", err)
+			}
+			if exists {
+				return fmt.Errorf("duplicate detected: key: %s", tinfo.Key)
+			}
+		}
+	}
+
 	// Extract details from transfer name.
 	{
 		activityOpts := withLocalActivityWithoutRetriesOpts(ctx)

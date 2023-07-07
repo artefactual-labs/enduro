@@ -37,6 +37,7 @@ type FilesystemConfig struct {
 	RetentionPeriod  *time.Duration
 	CompletedDir     string
 	StripTopLevelDir bool
+	RejectDuplicates bool
 }
 
 // See minio.go for more.
@@ -56,4 +57,5 @@ type MinioConfig struct {
 	Pipeline         []string
 	RetentionPeriod  *time.Duration
 	StripTopLevelDir bool
+	RejectDuplicates bool
 }

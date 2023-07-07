@@ -29,6 +29,7 @@ bucket = "sips"
 pipeline = "am"
 retentionPeriod = "10s"
 stripTopLevelDir = true
+rejectDuplicates = false
 
 [[watcher.filesystem]]
 name = "dev-fs"
@@ -38,6 +39,7 @@ pipeline = "am"
 completedDir = "./hack/landfill"
 ignore = '(^\.gitkeep)|(^*\.mft)$'
 stripTopLevelDir = true
+rejectDuplicates = false
 
 [[pipeline]]
 name = "am"

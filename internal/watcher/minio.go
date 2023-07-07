@@ -70,6 +70,7 @@ func NewMinioWatcher(ctx context.Context, config *MinioConfig) (*minioWatcher, e
 			pipeline:         config.Pipeline,
 			retentionPeriod:  config.RetentionPeriod,
 			stripTopLevelDir: config.StripTopLevelDir,
+			rejectDuplicates: config.RejectDuplicates,
 		},
 	}, nil
 }

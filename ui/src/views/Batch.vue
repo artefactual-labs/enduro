@@ -31,6 +31,12 @@
 
             <pipeline-processing-configuration-dropdown v-show="pipelineId" :pipeline-id="pipelineId" v-on:pipeline-processing-configuration-selected="form.processingConfig = $event"/>
 
+            <b-form-group label-for="reject-duplicates-checkbox">
+              <b-form-checkbox id="reject-duplicates-checkbox" v-model="form.rejectDuplicates">
+                Reject transfers with duplicate names.
+              </b-form-checkbox>
+            </b-form-group>
+
             <b-tabs content-class="mt-3" tite-item-class="mt-3" v-model="tabIndex">
               <b-tab title="Completed directory" active>
                 <div class="form-group">
@@ -93,6 +99,7 @@ export default class Batch extends Vue {
     processingConfig: null,
     completedDir: null,
     retentionPeriod: null,
+    rejectDuplicates: null,
   };
 
   private tabIndex: number = 0;
@@ -160,6 +167,9 @@ export default class Batch extends Vue {
     }
     if (this.form.retentionPeriod && this.tabIndex === 1) {
       request.submitRequestBody.retentionPeriod = this.form.retentionPeriod;
+    }
+    if (this.form.rejectDuplicates) {
+      request.submitRequestBody.rejectDuplicates = this.form.rejectDuplicates;
     }
     return EnduroBatchClient.batchSubmit(request).then((response: api.BatchSubmitResponseBody) => {
       this.loadStatus();

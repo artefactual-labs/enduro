@@ -45,6 +45,12 @@ export interface SubmitRequestBody {
     processingConfig?: string;
     /**
      * 
+     * @type {boolean}
+     * @memberof SubmitRequestBody
+     */
+    rejectDuplicates?: boolean;
+    /**
+     * 
      * @type {string}
      * @memberof SubmitRequestBody
      */
@@ -75,6 +81,7 @@ export function SubmitRequestBodyFromJSONTyped(json: any, ignoreDiscriminator: b
         'path': json['path'],
         'pipeline': !exists(json, 'pipeline') ? undefined : json['pipeline'],
         'processingConfig': !exists(json, 'processing_config') ? undefined : json['processing_config'],
+        'rejectDuplicates': !exists(json, 'reject_duplicates') ? undefined : json['reject_duplicates'],
         'retentionPeriod': !exists(json, 'retention_period') ? undefined : json['retention_period'],
     };
 }
@@ -92,6 +99,7 @@ export function SubmitRequestBodyToJSON(value?: SubmitRequestBody | null): any {
         'path': value.path,
         'pipeline': value.pipeline,
         'processing_config': value.processingConfig,
+        'reject_duplicates': value.rejectDuplicates,
         'retention_period': value.retentionPeriod,
     };
 }

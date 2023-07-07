@@ -29,6 +29,9 @@ type BlobEvent struct {
 	// Whether the top-level directory is meant to be stripped.
 	StripTopLevelDir bool
 
+	// Whether duplicates are rejected or not.
+	RejectDuplicates bool
+
 	// Key of the blob.
 	Key string
 
@@ -46,6 +49,7 @@ func NewBlobEvent(w Watcher, key string, isDir bool) *BlobEvent {
 		RetentionPeriod:  w.RetentionPeriod(),
 		CompletedDir:     w.CompletedDir(),
 		StripTopLevelDir: w.StripTopLevelDir(),
+		RejectDuplicates: w.RejectDuplicates(),
 		Key:              key,
 		IsDir:            isDir,
 	}

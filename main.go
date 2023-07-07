@@ -190,6 +190,7 @@ func main() {
 									RetentionPeriod:  event.RetentionPeriod,
 									CompletedDir:     event.CompletedDir,
 									StripTopLevelDir: event.StripTopLevelDir,
+									RejectDuplicates: event.RejectDuplicates,
 									Key:              event.Key,
 									IsDir:            event.IsDir,
 									ValidationConfig: config.Validation,

@@ -28,6 +28,7 @@ type BatchWorkflowInput struct {
 	ProcessingConfig string
 	CompletedDir     string
 	RetentionPeriod  *time.Duration
+	RejectDuplicates bool
 }
 
 func BatchWorkflow(ctx temporalsdk_workflow.Context, params BatchWorkflowInput) error {
@@ -69,6 +70,7 @@ func (a *BatchActivity) Execute(ctx context.Context, params BatchWorkflowInput) 
 			ProcessingConfig: params.ProcessingConfig,
 			CompletedDir:     params.CompletedDir,
 			RetentionPeriod:  params.RetentionPeriod,
+			RejectDuplicates: params.RejectDuplicates,
 		}
 		_ = a.batchsvc.InitProcessingWorkflow(ctx, &req)
 	}

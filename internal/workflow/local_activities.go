@@ -60,6 +60,10 @@ func updatePackageLocalActivity(ctx context.Context, logger logr.Logger, colsvc 
 	return nil
 }
 
+func checkDuplicatePackageLocalActivity(ctx context.Context, logger logr.Logger, colsvc collection.Service, id uint) (bool, error) {
+	return colsvc.CheckDuplicate(ctx, id)
+}
+
 func loadConfigLocalActivity(ctx context.Context, m *manager.Manager, pipeline string, tinfo *TransferInfo) (*TransferInfo, error) {
 	p, err := m.Pipelines.ByName(pipeline)
 	if err != nil {

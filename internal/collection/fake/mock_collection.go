@@ -37,6 +37,21 @@ func (m *MockService) EXPECT() *MockServiceMockRecorder {
 	return m.recorder
 }
 
+// CheckDuplicate mocks base method.
+func (m *MockService) CheckDuplicate(arg0 context.Context, arg1 uint) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CheckDuplicate", arg0, arg1)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CheckDuplicate indicates an expected call of CheckDuplicate.
+func (mr *MockServiceMockRecorder) CheckDuplicate(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckDuplicate", reflect.TypeOf((*MockService)(nil).CheckDuplicate), arg0, arg1)
+}
+
 // Create mocks base method.
 func (m *MockService) Create(arg0 context.Context, arg1 *collection0.Collection) error {
 	m.ctrl.T.Helper()

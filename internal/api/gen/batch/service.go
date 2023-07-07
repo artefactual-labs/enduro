@@ -61,6 +61,7 @@ type SubmitPayload struct {
 	ProcessingConfig *string
 	CompletedDir     *string
 	RetentionPeriod  *string
+	RejectDuplicates bool
 }
 
 // MakeNotAvailable builds a goa.ServiceError from an error.
