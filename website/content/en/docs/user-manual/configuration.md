@@ -112,6 +112,9 @@ ignore = '(^\.gitkeep)|(^*\.mft)$'
 
 # Omit the top-level directory of the transfer after extraction.
 stripTopLevelDir = true
+
+# Reject transfers with duplicate transfer names.
+rejectDuplicates = false
 ```
 
 Namely, it monitors the `watched-dir` directory. It uses the inotify API for
@@ -130,6 +133,14 @@ optional fraction and a unit suffix, such as "30m", "24h" or "2h30m".
 Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
 
 E.g.: `"10m"`
+
+#### `rejectDuplicates` (Boolean)
+
+When enabled, the workflow will execute a check on the internal database for
+successfully completed transfers with the same transfer name as the currently
+processing package. If it finds a duplicate the transfer will fail.
+
+E.g.: `false`
 
 #### `completedDir` (String)
 
@@ -194,6 +205,9 @@ retentionPeriod = "10s"
 
 # Omit the top-level directory of the transfer after extraction.
 stripTopLevelDir = true
+
+# Reject transfers with duplicate transfer names.
+rejectDuplicates = false
 ```
 
 MinIO will deliver new events to us via a Redis instance at
@@ -214,6 +228,14 @@ optional fraction and a unit suffix, such as "30m", "24h" or "2h30m".
 Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
 
 E.g.: `"10m"`
+
+#### `rejectDuplicates` (Boolean)
+
+When enabled, the workflow will execute a check on the internal database for
+succesfully completed transfers with the same transfer name as the currently
+processing package. If it finds a duplicate the transfer will fail.
+
+E.g.: `false`
 
 #### `pipeline` (String | Array(String))
 

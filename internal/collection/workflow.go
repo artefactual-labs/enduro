@@ -55,6 +55,9 @@ type ProcessingWorkflowRequest struct {
 
 	// Processing configuration name.
 	ProcessingConfig string
+
+	// Whether we reject duplicates based on name (key).
+	RejectDuplicates bool
 }
 
 func InitProcessingWorkflow(ctx context.Context, c temporalsdk_client.Client, taskQueue string, req *ProcessingWorkflowRequest) error {

@@ -29,6 +29,7 @@ type Watcher interface {
 	RetentionPeriod() *time.Duration
 	CompletedDir() string
 	StripTopLevelDir() bool
+	RejectDuplicates() bool
 
 	// Full path of the watched bucket when available, empty string otherwise.
 	Path() string
@@ -42,6 +43,7 @@ type commonWatcherImpl struct {
 	retentionPeriod  *time.Duration
 	completedDir     string
 	stripTopLevelDir bool
+	rejectDuplicates bool
 }
 
 func (w *commonWatcherImpl) String() string {
@@ -62,6 +64,10 @@ func (w *commonWatcherImpl) CompletedDir() string {
 
 func (w *commonWatcherImpl) StripTopLevelDir() bool {
 	return w.stripTopLevelDir
+}
+
+func (w *commonWatcherImpl) RejectDuplicates() bool {
+	return w.rejectDuplicates
 }
 
 type Service interface {

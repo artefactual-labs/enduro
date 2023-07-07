@@ -41,6 +41,7 @@ paths:
                             path: abc123
                             pipeline: abc123
                             processing_config: abc123
+                            reject_duplicates: false
                             retention_period: abc123
             responses:
                 "202":
@@ -1154,6 +1155,10 @@ components:
                 processing_config:
                     type: string
                     example: abc123
+                reject_duplicates:
+                    type: boolean
+                    default: false
+                    example: false
                 retention_period:
                     type: string
                     example: abc123
@@ -1162,6 +1167,7 @@ components:
                 path: abc123
                 pipeline: abc123
                 processing_config: abc123
+                reject_duplicates: false
                 retention_period: abc123
             required:
                 - path

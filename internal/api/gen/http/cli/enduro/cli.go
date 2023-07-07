@@ -39,6 +39,7 @@ func UsageExamples() string {
       "path": "abc123",
       "pipeline": "abc123",
       "processing_config": "abc123",
+      "reject_duplicates": false,
       "retention_period": "abc123"
    }'` + "\n" +
 		os.Args[0] + ` collection monitor` + "\n" +
@@ -410,6 +411,7 @@ Example:
       "path": "abc123",
       "pipeline": "abc123",
       "processing_config": "abc123",
+      "reject_duplicates": false,
       "retention_period": "abc123"
    }'
 `, os.Args[0])

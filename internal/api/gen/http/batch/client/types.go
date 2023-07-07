@@ -21,6 +21,7 @@ type SubmitRequestBody struct {
 	ProcessingConfig *string `form:"processing_config,omitempty" json:"processing_config,omitempty" xml:"processing_config,omitempty"`
 	CompletedDir     *string `form:"completed_dir,omitempty" json:"completed_dir,omitempty" xml:"completed_dir,omitempty"`
 	RetentionPeriod  *string `form:"retention_period,omitempty" json:"retention_period,omitempty" xml:"retention_period,omitempty"`
+	RejectDuplicates bool    `form:"reject_duplicates" json:"reject_duplicates" xml:"reject_duplicates"`
 }
 
 // SubmitResponseBody is the type of the "batch" service "submit" endpoint HTTP
@@ -91,6 +92,13 @@ func NewSubmitRequestBody(p *batch.SubmitPayload) *SubmitRequestBody {
 		ProcessingConfig: p.ProcessingConfig,
 		CompletedDir:     p.CompletedDir,
 		RetentionPeriod:  p.RetentionPeriod,
+		RejectDuplicates: p.RejectDuplicates,
+	}
+	{
+		var zero bool
+		if body.RejectDuplicates == zero {
+			body.RejectDuplicates = false
+		}
 	}
 	return body
 }

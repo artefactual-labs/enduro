@@ -18,6 +18,7 @@ type Service interface {
 	// Goa returns an implementation of the goacollection Service.
 	Goa() goacollection.Service
 	Create(context.Context, *Collection) error
+	CheckDuplicate(ctx context.Context, id uint) (bool, error)
 	UpdateWorkflowStatus(ctx context.Context, ID uint, name string, workflowID, runID, transferID, aipID, pipelineID string, status Status, storedAt time.Time) error
 	SetStatus(ctx context.Context, ID uint, status Status) error
 	SetStatusInProgress(ctx context.Context, ID uint, startedAt time.Time) error
@@ -86,6 +87,16 @@ func (svc *collectionImpl) Create(ctx context.Context, col *Collection) error {
 	publishEvent(ctx, svc.events, EventTypeCollectionCreated, col.ID)
 
 	return nil
+}
+
+func (svc *collectionImpl) CheckDuplicate(ctx context.Context, id uint) (bool, error) {
+	query := `SELECT EXISTS(SELECT 1 FROM collection c1 WHERE c1.name = (SELECT name FROM collection WHERE id = ?) AND c1.id <> ? AND c1.status NOT IN (3, 6))`
+	var exists bool
+	err := svc.db.GetContext(ctx, &exists, query, id, id)
+	if err != nil {
+		return false, fmt.Errorf("sql error: %w", err)
+	}
+	return exists, nil
 }
 
 func publishEvent(ctx context.Context, events EventService, eventType string, id uint) {
