@@ -20,10 +20,10 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/BatchStatusResult'
                             example:
-                                run_id: Vel sint ducimus officia labore eius qui.
+                                run_id: Illo impedit vero.
                                 running: true
-                                status: Nam sed nostrum enim laborum ea facilis.
-                                workflow_id: Dolor illum excepturi magni quidem.
+                                status: Illum excepturi magni quidem.
+                                workflow_id: Vel sint ducimus officia labore eius qui.
         post:
             tags:
                 - batch
@@ -80,10 +80,8 @@ paths:
                                 $ref: '#/components/schemas/BatchHintsResult'
                             example:
                                 completed_dirs:
-                                    - Impedit vero ducimus.
                                     - Quo illo natus et.
                                     - Eaque suscipit in cum et quia facere.
-                                    - Doloribus sed tempore voluptatum quo.
     /collection:
         get:
             tags:
@@ -97,61 +95,61 @@ paths:
                   allowEmptyValue: true
                   schema:
                     type: string
-                    example: Autem magnam.
-                  example: In enim amet architecto non repudiandae.
+                    example: Ullam provident hic.
+                  example: Quod magni blanditiis sequi.
                 - name: original_id
                   in: query
                   allowEmptyValue: true
                   schema:
                     type: string
-                    example: Dolorem rerum ullam provident hic aut.
-                  example: Magni blanditiis sequi sunt neque velit.
+                    example: Neque velit debitis ducimus minima totam.
+                  example: Vero aliquam.
                 - name: transfer_id
                   in: query
                   allowEmptyValue: true
                   schema:
                     type: string
-                    example: 04aa7436-1fcb-11ee-8a9d-7085c27bdeb0
+                    example: 74c8f444-1fd2-11ee-b6e1-7085c27bdeb0
                     format: uuid
-                  example: 04aa755d-1fcb-11ee-8a9d-7085c27bdeb0
+                  example: 74c8f57d-1fd2-11ee-b6e1-7085c27bdeb0
                 - name: aip_id
                   in: query
                   allowEmptyValue: true
                   schema:
                     type: string
-                    example: 04aa7689-1fcb-11ee-8a9d-7085c27bdeb0
+                    example: 74c8f6b7-1fd2-11ee-b6e1-7085c27bdeb0
                     format: uuid
-                  example: 04aa77ad-1fcb-11ee-8a9d-7085c27bdeb0
+                  example: 74c8f7e0-1fd2-11ee-b6e1-7085c27bdeb0
                 - name: pipeline_id
                   in: query
                   allowEmptyValue: true
                   schema:
                     type: string
-                    example: 04aa78f2-1fcb-11ee-8a9d-7085c27bdeb0
+                    example: 74c8f94e-1fd2-11ee-b6e1-7085c27bdeb0
                     format: uuid
-                  example: 04aa7a2d-1fcb-11ee-8a9d-7085c27bdeb0
+                  example: 74c8fa84-1fd2-11ee-b6e1-7085c27bdeb0
                 - name: earliest_created_time
                   in: query
                   allowEmptyValue: true
                   schema:
                     type: string
-                    example: "1997-08-02T15:59:16Z"
+                    example: "2014-09-01T05:29:40Z"
                     format: date-time
-                  example: "2008-01-03T21:15:24Z"
+                  example: "1993-06-19T11:51:33Z"
                 - name: latest_created_time
                   in: query
                   allowEmptyValue: true
                   schema:
                     type: string
-                    example: "1986-07-18T14:01:59Z"
+                    example: "1976-02-19T04:59:41Z"
                     format: date-time
-                  example: "2009-03-08T19:06:41Z"
+                  example: "2006-08-01T15:51:22Z"
                 - name: status
                   in: query
                   allowEmptyValue: true
                   schema:
                     type: string
-                    example: abandoned
+                    example: pending
                     enum:
                         - new
                         - in progress
@@ -161,7 +159,7 @@ paths:
                         - queued
                         - pending
                         - abandoned
-                  example: in progress
+                  example: pending
                 - name: cursor
                   in: query
                   description: Pagination cursor
@@ -169,8 +167,8 @@ paths:
                   schema:
                     type: string
                     description: Pagination cursor
-                    example: In distinctio.
-                  example: Aliquid consectetur.
+                    example: Officia optio et quibusdam hic quae.
+                  example: Fuga aut voluptate est nihil in ut.
             responses:
                 "200":
                     description: OK response.
@@ -180,55 +178,55 @@ paths:
                                 $ref: '#/components/schemas/ListResponseBody'
                             example:
                                 items:
-                                    - aip_id: 04a7d1ab-1fcb-11ee-8a9d-7085c27bdeb0
+                                    - aip_id: 74c5baf8-1fd2-11ee-b6e1-7085c27bdeb0
                                       completed_at: "2014-01-26T22:52:33Z"
                                       created_at: "2006-09-07T19:48:15Z"
                                       id: 5273261262554249024
                                       name: Iusto laudantium assumenda.
                                       original_id: Voluptatem eum et rerum.
-                                      pipeline_id: 04a7d337-1fcb-11ee-8a9d-7085c27bdeb0
-                                      run_id: 04a7cec7-1fcb-11ee-8a9d-7085c27bdeb0
+                                      pipeline_id: 74c5bc49-1fd2-11ee-b6e1-7085c27bdeb0
+                                      run_id: 74c5b818-1fd2-11ee-b6e1-7085c27bdeb0
                                       started_at: "1986-05-13T23:32:21Z"
                                       status: unknown
-                                      transfer_id: 04a7d060-1fcb-11ee-8a9d-7085c27bdeb0
-                                      workflow_id: 04a7b7bf-1fcb-11ee-8a9d-7085c27bdeb0
-                                    - aip_id: 04a7d1ab-1fcb-11ee-8a9d-7085c27bdeb0
+                                      transfer_id: 74c5b9a1-1fd2-11ee-b6e1-7085c27bdeb0
+                                      workflow_id: 74c5a1c6-1fd2-11ee-b6e1-7085c27bdeb0
+                                    - aip_id: 74c5baf8-1fd2-11ee-b6e1-7085c27bdeb0
                                       completed_at: "2014-01-26T22:52:33Z"
                                       created_at: "2006-09-07T19:48:15Z"
                                       id: 5273261262554249024
                                       name: Iusto laudantium assumenda.
                                       original_id: Voluptatem eum et rerum.
-                                      pipeline_id: 04a7d337-1fcb-11ee-8a9d-7085c27bdeb0
-                                      run_id: 04a7cec7-1fcb-11ee-8a9d-7085c27bdeb0
+                                      pipeline_id: 74c5bc49-1fd2-11ee-b6e1-7085c27bdeb0
+                                      run_id: 74c5b818-1fd2-11ee-b6e1-7085c27bdeb0
                                       started_at: "1986-05-13T23:32:21Z"
                                       status: unknown
-                                      transfer_id: 04a7d060-1fcb-11ee-8a9d-7085c27bdeb0
-                                      workflow_id: 04a7b7bf-1fcb-11ee-8a9d-7085c27bdeb0
-                                    - aip_id: 04a7d1ab-1fcb-11ee-8a9d-7085c27bdeb0
+                                      transfer_id: 74c5b9a1-1fd2-11ee-b6e1-7085c27bdeb0
+                                      workflow_id: 74c5a1c6-1fd2-11ee-b6e1-7085c27bdeb0
+                                    - aip_id: 74c5baf8-1fd2-11ee-b6e1-7085c27bdeb0
                                       completed_at: "2014-01-26T22:52:33Z"
                                       created_at: "2006-09-07T19:48:15Z"
                                       id: 5273261262554249024
                                       name: Iusto laudantium assumenda.
                                       original_id: Voluptatem eum et rerum.
-                                      pipeline_id: 04a7d337-1fcb-11ee-8a9d-7085c27bdeb0
-                                      run_id: 04a7cec7-1fcb-11ee-8a9d-7085c27bdeb0
+                                      pipeline_id: 74c5bc49-1fd2-11ee-b6e1-7085c27bdeb0
+                                      run_id: 74c5b818-1fd2-11ee-b6e1-7085c27bdeb0
                                       started_at: "1986-05-13T23:32:21Z"
                                       status: unknown
-                                      transfer_id: 04a7d060-1fcb-11ee-8a9d-7085c27bdeb0
-                                      workflow_id: 04a7b7bf-1fcb-11ee-8a9d-7085c27bdeb0
-                                    - aip_id: 04a7d1ab-1fcb-11ee-8a9d-7085c27bdeb0
+                                      transfer_id: 74c5b9a1-1fd2-11ee-b6e1-7085c27bdeb0
+                                      workflow_id: 74c5a1c6-1fd2-11ee-b6e1-7085c27bdeb0
+                                    - aip_id: 74c5baf8-1fd2-11ee-b6e1-7085c27bdeb0
                                       completed_at: "2014-01-26T22:52:33Z"
                                       created_at: "2006-09-07T19:48:15Z"
                                       id: 5273261262554249024
                                       name: Iusto laudantium assumenda.
                                       original_id: Voluptatem eum et rerum.
-                                      pipeline_id: 04a7d337-1fcb-11ee-8a9d-7085c27bdeb0
-                                      run_id: 04a7cec7-1fcb-11ee-8a9d-7085c27bdeb0
+                                      pipeline_id: 74c5bc49-1fd2-11ee-b6e1-7085c27bdeb0
+                                      run_id: 74c5b818-1fd2-11ee-b6e1-7085c27bdeb0
                                       started_at: "1986-05-13T23:32:21Z"
                                       status: unknown
-                                      transfer_id: 04a7d060-1fcb-11ee-8a9d-7085c27bdeb0
-                                      workflow_id: 04a7b7bf-1fcb-11ee-8a9d-7085c27bdeb0
-                                next_cursor: Ad aut rerum.
+                                      transfer_id: 74c5b9a1-1fd2-11ee-b6e1-7085c27bdeb0
+                                      workflow_id: 74c5a1c6-1fd2-11ee-b6e1-7085c27bdeb0
+                                next_cursor: Inventore et officiis ad.
     /collection/{id}:
         delete:
             tags:
@@ -244,8 +242,8 @@ paths:
                   schema:
                     type: integer
                     description: Identifier of collection to delete
-                    example: 13723768498999707294
-                  example: 4281983801442889633
+                    example: 6902768091720524842
+                  example: 18349184252340015779
             responses:
                 "204":
                     description: No Content response.
@@ -255,6 +253,9 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/CollectionNotfound'
+                            example:
+                                id: 6101152394700680766
+                                message: Fugit et porro suscipit.
         get:
             tags:
                 - collection
@@ -269,8 +270,8 @@ paths:
                   schema:
                     type: integer
                     description: Identifier of collection to show
-                    example: 11152959749157106813
-                  example: 2714760919191889086
+                    example: 3443956377255456278
+                  example: 8876636575521251599
             responses:
                 "200":
                     description: OK response.
@@ -279,24 +280,27 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/EnduroStoredCollection'
                             example:
-                                aip_id: 04a8c622-1fcb-11ee-8a9d-7085c27bdeb0
+                                aip_id: 74c6ba20-1fd2-11ee-b6e1-7085c27bdeb0
                                 completed_at: "2000-10-04T09:57:15Z"
                                 created_at: "2010-07-22T22:55:51Z"
-                                id: 12024565834601469556
-                                name: Quam quas.
+                                id: 15148517886629496057
+                                name: Amet vero quam.
                                 original_id: Et consequatur aut enim consequuntur debitis temporibus.
-                                pipeline_id: 04a8c74f-1fcb-11ee-8a9d-7085c27bdeb0
-                                run_id: 04a8c3bc-1fcb-11ee-8a9d-7085c27bdeb0
+                                pipeline_id: 74c6bb71-1fd2-11ee-b6e1-7085c27bdeb0
+                                run_id: 74c6b7b4-1fd2-11ee-b6e1-7085c27bdeb0
                                 started_at: "2014-07-31T20:44:18Z"
-                                status: queued
-                                transfer_id: 04a8c4fd-1fcb-11ee-8a9d-7085c27bdeb0
-                                workflow_id: 04a8c280-1fcb-11ee-8a9d-7085c27bdeb0
+                                status: abandoned
+                                transfer_id: 74c6b8f6-1fd2-11ee-b6e1-7085c27bdeb0
+                                workflow_id: 74c6b657-1fd2-11ee-b6e1-7085c27bdeb0
                 "404":
                     description: 'not_found: Collection not found'
                     content:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/CollectionNotfound'
+                            example:
+                                id: 1094484444001815440
+                                message: Praesentium et nam.
     /collection/{id}/cancel:
         post:
             tags:
@@ -312,16 +316,11 @@ paths:
                   schema:
                     type: integer
                     description: Identifier of collection to remove
-                    example: 16600406390601565003
-                  example: 7109129474441531445
+                    example: 5300588831543103027
+                  example: 130236761498329200
             responses:
                 "200":
                     description: OK response.
-                    content:
-                        application/json:
-                            schema:
-                                type: string
-                                format: binary
                 "400":
                     description: 'not_running: Bad Request response.'
                     content:
@@ -334,6 +333,9 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/CollectionNotfound'
+                            example:
+                                id: 5550828451059843862
+                                message: At velit quod et maxime quia.
     /collection/{id}/decision:
         post:
             tags:
@@ -349,8 +351,8 @@ paths:
                   schema:
                     type: integer
                     description: Identifier of collection to look up
-                    example: 9198655460133316854
-                  example: 7412982194674710965
+                    example: 4457285347556290353
+                  example: 16836367451314582765
             requestBody:
                 required: true
                 content:
@@ -361,19 +363,14 @@ paths:
                                 option:
                                     type: string
                                     description: Decision option to proceed with
-                                    example: Ipsam necessitatibus similique adipisci magnam animi adipisci.
+                                    example: Ut earum.
                             example:
-                                option: Aut dolorem praesentium asperiores commodi earum neque.
+                                option: In non earum voluptas quidem ut sit.
                         example:
-                            option: Excepturi architecto illum et consequatur optio corporis.
+                            option: Qui id optio officiis est facere.
             responses:
                 "200":
                     description: OK response.
-                    content:
-                        application/json:
-                            schema:
-                                type: string
-                                format: binary
                 "400":
                     description: 'not_valid: Bad Request response.'
                     content:
@@ -386,6 +383,9 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/CollectionNotfound'
+                            example:
+                                id: 17390755426644366260
+                                message: Numquam aut dolores et voluptas repellat.
     /collection/{id}/download:
         get:
             tags:
@@ -401,8 +401,8 @@ paths:
                   schema:
                     type: integer
                     description: Identifier of collection to look up
-                    example: 10619197190842817831
-                  example: 14672833274825296722
+                    example: 13985264076619419699
+                  example: 10131890621733502138
             responses:
                 "200":
                     description: OK response.
@@ -411,21 +411,21 @@ paths:
                             required: true
                             schema:
                                 type: string
-                                example: Cupiditate ex.
-                            example: Assumenda porro velit ut reiciendis voluptas dolorum.
+                                example: Vitae et saepe reiciendis quia perspiciatis.
+                            example: Nemo natus et praesentium voluptatem.
                         Content-Length:
                             required: true
                             schema:
                                 type: integer
-                                example: 351966788610772943
+                                example: 9198655460133316854
                                 format: int64
-                            example: 4761892039764643891
+                            example: 890283335835053110
                         Content-Type:
                             required: true
                             schema:
                                 type: string
-                                example: Voluptate est nihil in.
-                            example: Iste facilis rerum.
+                                example: Ex officia qui ratione doloribus ut.
+                            example: Excepturi architecto illum et consequatur optio corporis.
                     content:
                         application/json:
                             schema:
@@ -437,6 +437,9 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/CollectionNotfound'
+                            example:
+                                id: 3923434489665488889
+                                message: Impedit atque qui praesentium.
     /collection/{id}/retry:
         post:
             tags:
@@ -452,16 +455,11 @@ paths:
                   schema:
                     type: integer
                     description: Identifier of collection to retry
-                    example: 12725953428629027252
-                  example: 12842452705283749677
+                    example: 3834985783644764482
+                  example: 4540644571238284304
             responses:
                 "200":
                     description: OK response.
-                    content:
-                        application/json:
-                            schema:
-                                type: string
-                                format: binary
                 "400":
                     description: 'not_running: Bad Request response.'
                     content:
@@ -474,6 +472,9 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/CollectionNotfound'
+                            example:
+                                id: 9720827093168823906
+                                message: Repudiandae optio accusamus dolor minus.
     /collection/{id}/workflow:
         get:
             tags:
@@ -489,8 +490,8 @@ paths:
                   schema:
                     type: integer
                     description: Identifier of collection to look up
-                    example: 18388433154584481399
-                  example: 3387093312747365124
+                    example: 9575338825465548751
+                  example: 17105214700194171972
             responses:
                 "200":
                     description: OK response.
@@ -512,13 +513,16 @@ paths:
                                     - details: In quis sed.
                                       id: 2015423930972900414
                                       type: Enim esse aut accusantium deleniti beatae voluptas.
-                                status: Qui dolor.
+                                status: Fugiat officia repellat.
                 "404":
                     description: 'not_found: Collection not found'
                     content:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/CollectionNotfound'
+                            example:
+                                id: 15910226027846952295
+                                message: Distinctio dolorem cum optio non a.
     /collection/bulk:
         get:
             tags:
@@ -534,12 +538,12 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/BulkStatusResult'
                             example:
-                                closed_at: "1973-08-11T22:51:48Z"
-                                run_id: Pariatur fugit eaque nemo quia consectetur et.
-                                running: true
-                                started_at: "1983-04-26T16:46:49Z"
-                                status: Harum tempore excepturi.
-                                workflow_id: Aut rerum harum officiis.
+                                closed_at: "1972-05-14T21:43:37Z"
+                                run_id: Vitae ad.
+                                running: false
+                                started_at: "1974-03-03T20:33:17Z"
+                                status: Adipisci officiis eaque architecto.
+                                workflow_id: Pariatur rerum voluptas iusto.
         post:
             tags:
                 - collection
@@ -554,8 +558,8 @@ paths:
                             $ref: '#/components/schemas/BulkRequestBody'
                         example:
                             operation: retry
-                            size: 15570024955802771098
-                            status: done
+                            size: 4225703995272354524
+                            status: new
             responses:
                 "202":
                     description: Accepted response.
@@ -564,8 +568,8 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/BatchResult'
                             example:
-                                run_id: Illum et tempora quae porro.
-                                workflow_id: Dolores et voluptas repellat.
+                                run_id: Optio reprehenderit cumque rerum sunt hic velit.
+                                workflow_id: Quibusdam dolore in aliquid.
                 "400":
                     description: 'not_valid: Bad Request response.'
                     content:
@@ -592,21 +596,21 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/EnduroMonitorUpdate'
                             example:
-                                id: 2293355532387428117
+                                id: 7891370028970844776
                                 item:
-                                    aip_id: 04a7d1ab-1fcb-11ee-8a9d-7085c27bdeb0
+                                    aip_id: 74c5baf8-1fd2-11ee-b6e1-7085c27bdeb0
                                     completed_at: "2014-01-26T22:52:33Z"
                                     created_at: "2006-09-07T19:48:15Z"
                                     id: 5273261262554249024
                                     name: Iusto laudantium assumenda.
                                     original_id: Voluptatem eum et rerum.
-                                    pipeline_id: 04a7d337-1fcb-11ee-8a9d-7085c27bdeb0
-                                    run_id: 04a7cec7-1fcb-11ee-8a9d-7085c27bdeb0
+                                    pipeline_id: 74c5bc49-1fd2-11ee-b6e1-7085c27bdeb0
+                                    run_id: 74c5b818-1fd2-11ee-b6e1-7085c27bdeb0
                                     started_at: "1986-05-13T23:32:21Z"
                                     status: unknown
-                                    transfer_id: 04a7d060-1fcb-11ee-8a9d-7085c27bdeb0
-                                    workflow_id: 04a7b7bf-1fcb-11ee-8a9d-7085c27bdeb0
-                                type: Deleniti ea tenetur deleniti.
+                                    transfer_id: 74c5b9a1-1fd2-11ee-b6e1-7085c27bdeb0
+                                    workflow_id: 74c5a1c6-1fd2-11ee-b6e1-7085c27bdeb0
+                                type: Mollitia tenetur voluptatum.
     /pipeline:
         get:
             tags:
@@ -620,8 +624,8 @@ paths:
                   allowEmptyValue: true
                   schema:
                     type: string
-                    example: Excepturi vitae et saepe.
-                  example: Quia perspiciatis.
+                    example: Quo est iure sequi aliquam eligendi.
+                  example: Rerum ut qui et.
                 - name: status
                   in: query
                   allowEmptyValue: true
@@ -642,43 +646,38 @@ paths:
                                 example:
                                     - capacity: 8406108818872523115
                                       current: 1737602466879989319
-                                      id: 04a8059b-1fcb-11ee-8a9d-7085c27bdeb0
+                                      id: 74c5f141-1fd2-11ee-b6e1-7085c27bdeb0
                                       name: Eius perferendis et corrupti harum nisi voluptatibus.
                                       status: Qui explicabo qui error sint.
                                     - capacity: 8406108818872523115
                                       current: 1737602466879989319
-                                      id: 04a8059b-1fcb-11ee-8a9d-7085c27bdeb0
+                                      id: 74c5f141-1fd2-11ee-b6e1-7085c27bdeb0
                                       name: Eius perferendis et corrupti harum nisi voluptatibus.
                                       status: Qui explicabo qui error sint.
                                     - capacity: 8406108818872523115
                                       current: 1737602466879989319
-                                      id: 04a8059b-1fcb-11ee-8a9d-7085c27bdeb0
-                                      name: Eius perferendis et corrupti harum nisi voluptatibus.
-                                      status: Qui explicabo qui error sint.
-                                    - capacity: 8406108818872523115
-                                      current: 1737602466879989319
-                                      id: 04a8059b-1fcb-11ee-8a9d-7085c27bdeb0
+                                      id: 74c5f141-1fd2-11ee-b6e1-7085c27bdeb0
                                       name: Eius perferendis et corrupti harum nisi voluptatibus.
                                       status: Qui explicabo qui error sint.
                             example:
                                 - capacity: 8406108818872523115
                                   current: 1737602466879989319
-                                  id: 04a8059b-1fcb-11ee-8a9d-7085c27bdeb0
+                                  id: 74c5f141-1fd2-11ee-b6e1-7085c27bdeb0
                                   name: Eius perferendis et corrupti harum nisi voluptatibus.
                                   status: Qui explicabo qui error sint.
                                 - capacity: 8406108818872523115
                                   current: 1737602466879989319
-                                  id: 04a8059b-1fcb-11ee-8a9d-7085c27bdeb0
+                                  id: 74c5f141-1fd2-11ee-b6e1-7085c27bdeb0
                                   name: Eius perferendis et corrupti harum nisi voluptatibus.
                                   status: Qui explicabo qui error sint.
                                 - capacity: 8406108818872523115
                                   current: 1737602466879989319
-                                  id: 04a8059b-1fcb-11ee-8a9d-7085c27bdeb0
+                                  id: 74c5f141-1fd2-11ee-b6e1-7085c27bdeb0
                                   name: Eius perferendis et corrupti harum nisi voluptatibus.
                                   status: Qui explicabo qui error sint.
                                 - capacity: 8406108818872523115
                                   current: 1737602466879989319
-                                  id: 04a8059b-1fcb-11ee-8a9d-7085c27bdeb0
+                                  id: 74c5f141-1fd2-11ee-b6e1-7085c27bdeb0
                                   name: Eius perferendis et corrupti harum nisi voluptatibus.
                                   status: Qui explicabo qui error sint.
     /pipeline/{id}:
@@ -696,9 +695,9 @@ paths:
                   schema:
                     type: string
                     description: Identifier of pipeline to show
-                    example: 04aa8450-1fcb-11ee-8a9d-7085c27bdeb0
+                    example: 74c905a5-1fd2-11ee-b6e1-7085c27bdeb0
                     format: uuid
-                  example: 04aa8577-1fcb-11ee-8a9d-7085c27bdeb0
+                  example: 74c906f2-1fd2-11ee-b6e1-7085c27bdeb0
             responses:
                 "200":
                     description: OK response.
@@ -707,17 +706,20 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/EnduroStoredPipeline'
                             example:
-                                capacity: 2542023261889200589
-                                current: 604697410197609923
-                                id: 04a99ff7-1fcb-11ee-8a9d-7085c27bdeb0
-                                name: Animi asperiores.
-                                status: Amet quam assumenda saepe omnis et eius.
+                                capacity: 6519501965408371640
+                                current: 7650363469056154510
+                                id: 74c7d69d-1fd2-11ee-b6e1-7085c27bdeb0
+                                name: Aut vel quisquam aut.
+                                status: Et harum.
                 "404":
                     description: 'not_found: Pipeline not found'
                     content:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/PipelineNotFound'
+                            example:
+                                id: Minus nobis.
+                                message: Incidunt quia.
     /pipeline/{id}/processing:
         get:
             tags:
@@ -733,9 +735,9 @@ paths:
                   schema:
                     type: string
                     description: Identifier of pipeline
-                    example: 04aa86fb-1fcb-11ee-8a9d-7085c27bdeb0
+                    example: 74c908d2-1fd2-11ee-b6e1-7085c27bdeb0
                     format: uuid
-                  example: 04aa881a-1fcb-11ee-8a9d-7085c27bdeb0
+                  example: 74c90a0a-1fd2-11ee-b6e1-7085c27bdeb0
             responses:
                 "200":
                     description: OK response.
@@ -745,20 +747,25 @@ paths:
                                 type: array
                                 items:
                                     type: string
-                                    example: Ea ut repellendus similique minima et.
+                                    example: Ducimus aut at optio.
                                 example:
-                                    - Aut at optio esse tenetur.
-                                    - Numquam rem.
-                                    - Eligendi cum.
+                                    - Iste numquam rem quo eligendi.
+                                    - Est autem magnam porro in.
+                                    - Amet architecto non repudiandae neque dolorem.
                             example:
-                                - Maiores et dolores sed rerum est et.
-                                - Molestias natus aut.
+                                - Et minus reprehenderit nobis ratione perferendis debitis.
+                                - Autem molestias repellendus nihil.
+                                - Ut magni dolorem minus ut.
+                                - Aliquam nostrum laborum impedit quo magnam.
                 "404":
                     description: 'not_found: Pipeline not found'
                     content:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/PipelineNotFound'
+                            example:
+                                id: Ab consectetur.
+                                message: Fugit ipsam.
     /swagger/swagger.json:
         get:
             tags:
@@ -778,29 +785,29 @@ components:
                     type: array
                     items:
                         type: string
-                        example: Suscipit tempore est quisquam ratione.
+                        example: Eos consequuntur aliquam culpa.
                     description: A list of known values of completedDir used by existing watchers.
                     example:
-                        - Perferendis maiores.
-                        - Praesentium voluptatum delectus commodi.
-                        - Non eos consequuntur aliquam.
+                        - Perspiciatis aperiam est optio repellendus.
+                        - Consequatur mollitia.
+                        - Tempora quia aperiam saepe quos distinctio deserunt.
+                        - Voluptas ut cupiditate expedita distinctio qui aut.
             example:
                 completed_dirs:
-                    - Aliquid perspiciatis aperiam.
-                    - Optio repellendus molestias.
-                    - Mollitia aut tempora quia aperiam saepe.
+                    - Quis aut sint recusandae eum et et.
+                    - Eius odio eos hic et.
         BatchResult:
             type: object
             properties:
                 run_id:
                     type: string
-                    example: Deserunt a enim cum ad quasi qui.
+                    example: Vitae fugit quis tempore animi ad ab.
                 workflow_id:
                     type: string
-                    example: Qui rerum asperiores qui.
+                    example: Deserunt a enim cum ad quasi qui.
             example:
-                run_id: Beatae blanditiis qui et ut recusandae id.
-                workflow_id: Vitae fugit quis tempore animi ad ab.
+                run_id: Velit aperiam nemo dolorem.
+                workflow_id: Beatae blanditiis qui et ut recusandae id.
             required:
                 - workflow_id
                 - run_id
@@ -809,21 +816,21 @@ components:
             properties:
                 run_id:
                     type: string
-                    example: Et rem et.
+                    example: Cumque in qui voluptas et culpa beatae.
                 running:
                     type: boolean
-                    example: false
+                    example: true
                 status:
                     type: string
-                    example: Dolor saepe dolores.
+                    example: Et rem et.
                 workflow_id:
                     type: string
-                    example: Quis delectus quia.
+                    example: Minima sunt.
             example:
-                run_id: Et culpa beatae fuga.
+                run_id: Commodi ea.
                 running: false
-                status: Sunt laborum.
-                workflow_id: In qui.
+                status: Suscipit tempore est quisquam ratione.
+                workflow_id: In perferendis maiores aperiam praesentium voluptatum.
             required:
                 - running
         BulkRequestBody:
@@ -831,7 +838,7 @@ components:
             properties:
                 operation:
                     type: string
-                    example: cancel
+                    example: retry
                     enum:
                         - retry
                         - cancel
@@ -839,10 +846,10 @@ components:
                 size:
                     type: integer
                     default: 100
-                    example: 9344938536322302895
+                    example: 11486195732644611448
                 status:
                     type: string
-                    example: unknown
+                    example: error
                     enum:
                         - new
                         - in progress
@@ -853,9 +860,9 @@ components:
                         - pending
                         - abandoned
             example:
-                operation: abandon
-                size: 7049186774788407004
-                status: unknown
+                operation: retry
+                size: 8043946392141519475
+                status: queued
             required:
                 - operation
                 - status
@@ -864,31 +871,31 @@ components:
             properties:
                 closed_at:
                     type: string
-                    example: "1984-10-13T06:35:18Z"
+                    example: "2009-03-17T21:19:05Z"
                     format: date-time
                 run_id:
                     type: string
-                    example: Eligendi mollitia ut voluptate tempora iusto et.
+                    example: Reiciendis quae praesentium.
                 running:
                     type: boolean
-                    example: false
+                    example: true
                 started_at:
                     type: string
-                    example: "2001-07-14T23:44:52Z"
+                    example: "1990-10-26T11:38:26Z"
                     format: date-time
                 status:
                     type: string
-                    example: Iure eos mollitia est.
+                    example: Et magnam.
                 workflow_id:
                     type: string
-                    example: Nostrum dignissimos ut.
+                    example: Molestiae alias qui.
             example:
-                closed_at: "2009-02-09T23:14:48Z"
-                run_id: Consequuntur modi.
+                closed_at: "1984-10-02T03:20:21Z"
+                run_id: Ad animi quia ut.
                 running: true
-                started_at: "1987-01-20T03:54:11Z"
-                status: Mollitia vitae amet et excepturi deleniti.
-                workflow_id: Nemo similique assumenda doloremque cumque.
+                started_at: "1989-09-09T08:36:56Z"
+                status: Assumenda doloremque.
+                workflow_id: Quia consequuntur modi nobis hic.
             required:
                 - running
         CollectionNotfound:
@@ -897,15 +904,15 @@ components:
                 id:
                     type: integer
                     description: Identifier of missing collection
-                    example: 18225317793911514815
+                    example: 2027358448008122767
                 message:
                     type: string
                     description: Message of error
-                    example: Voluptas autem culpa quos tempore.
+                    example: Distinctio vero quis.
             description: Collection not found
             example:
-                id: 13607598706967279877
-                message: Neque recusandae et perferendis.
+                id: 5951986551772317924
+                message: Voluptatem asperiores nobis maiores.
             required:
                 - message
                 - id
@@ -915,26 +922,29 @@ components:
                 details:
                     type: string
                     description: Contents of the event
-                    example: Nobis maiores commodi odit iure unde.
+                    example: Dolorem nulla quod sed fuga ipsam necessitatibus.
                     format: binary
                 id:
                     type: integer
                     description: Identifier of collection
-                    example: 6353654755516871806
+                    example: 12390213551385939615
                 type:
                     type: string
                     description: Type of the event
-                    example: Possimus voluptatem.
+                    example: Dolore neque voluptas quasi deserunt excepturi tempora.
             description: WorkflowHistoryEvent describes a history event in Temporal.
             example:
-                details: Neque voluptas quasi deserunt excepturi tempora.
-                id: 12911299265168543401
-                type: Rem quia qui omnis aut.
+                details: Praesentium asperiores commodi earum neque est.
+                id: 10336837935106508770
+                type: Magnam animi adipisci debitis aut.
         EnduroCollectionWorkflowHistoryCollection:
             type: array
             items:
                 $ref: '#/components/schemas/EnduroCollectionWorkflowHistory'
             example:
+                - details: In quis sed.
+                  id: 2015423930972900414
+                  type: Enim esse aut accusantium deleniti beatae voluptas.
                 - details: In quis sed.
                   id: 2015423930972900414
                   type: Enim esse aut accusantium deleniti beatae voluptas.
@@ -951,7 +961,7 @@ components:
                     $ref: '#/components/schemas/EnduroCollectionWorkflowHistoryCollection'
                 status:
                     type: string
-                    example: Neque voluptatem porro omnis et distinctio vero.
+                    example: Iure unde expedita rem rem quia qui.
             example:
                 history:
                     - details: In quis sed.
@@ -966,36 +976,36 @@ components:
                     - details: In quis sed.
                       id: 2015423930972900414
                       type: Enim esse aut accusantium deleniti beatae voluptas.
-                status: Nulla quod sed.
+                status: Illum nisi.
         EnduroMonitorUpdate:
             type: object
             properties:
                 id:
                     type: integer
                     description: Identifier of collection
-                    example: 17019269049155146495
+                    example: 8328444150931638539
                 item:
                     $ref: '#/components/schemas/EnduroStoredCollection'
                 type:
                     type: string
                     description: Type of the event
-                    example: Deserunt enim voluptas ut cupiditate expedita distinctio.
+                    example: Quia ducimus est consequuntur.
             example:
-                id: 18173606350330826349
+                id: 11444306754916384419
                 item:
-                    aip_id: 04a7d1ab-1fcb-11ee-8a9d-7085c27bdeb0
+                    aip_id: 74c5baf8-1fd2-11ee-b6e1-7085c27bdeb0
                     completed_at: "2014-01-26T22:52:33Z"
                     created_at: "2006-09-07T19:48:15Z"
                     id: 5273261262554249024
                     name: Iusto laudantium assumenda.
                     original_id: Voluptatem eum et rerum.
-                    pipeline_id: 04a7d337-1fcb-11ee-8a9d-7085c27bdeb0
-                    run_id: 04a7cec7-1fcb-11ee-8a9d-7085c27bdeb0
+                    pipeline_id: 74c5bc49-1fd2-11ee-b6e1-7085c27bdeb0
+                    run_id: 74c5b818-1fd2-11ee-b6e1-7085c27bdeb0
                     started_at: "1986-05-13T23:32:21Z"
                     status: unknown
-                    transfer_id: 04a7d060-1fcb-11ee-8a9d-7085c27bdeb0
-                    workflow_id: 04a7b7bf-1fcb-11ee-8a9d-7085c27bdeb0
-                type: Perspiciatis porro veritatis et.
+                    transfer_id: 74c5b9a1-1fd2-11ee-b6e1-7085c27bdeb0
+                    workflow_id: 74c5a1c6-1fd2-11ee-b6e1-7085c27bdeb0
+                type: Quo omnis neque recusandae.
             required:
                 - id
                 - type
@@ -1005,50 +1015,50 @@ components:
                 aip_id:
                     type: string
                     description: Identifier of Archivematica AIP
-                    example: 04aa5527-1fcb-11ee-8a9d-7085c27bdeb0
+                    example: 74c8d480-1fd2-11ee-b6e1-7085c27bdeb0
                     format: uuid
                 completed_at:
                     type: string
                     description: Completion datetime
-                    example: "1985-09-21T14:48:23Z"
+                    example: "2014-09-05T06:13:17Z"
                     format: date-time
                 created_at:
                     type: string
                     description: Creation datetime
-                    example: "2011-02-18T18:59:59Z"
+                    example: "1974-07-28T19:08:58Z"
                     format: date-time
                 id:
                     type: integer
                     description: Identifier of collection
-                    example: 4919145112566344839
+                    example: 13274364832877317318
                 name:
                     type: string
                     description: Name of the collection
-                    example: Dolor labore quis aut sint recusandae eum.
+                    example: Aspernatur rerum.
                 original_id:
                     type: string
                     description: Identifier provided by the client
-                    example: Assumenda qui assumenda suscipit.
+                    example: Possimus dolores ea voluptatum unde laborum temporibus.
                 pipeline_id:
                     type: string
                     description: Identifier of Archivematica pipeline
-                    example: 04aa5673-1fcb-11ee-8a9d-7085c27bdeb0
+                    example: 74c8d5ba-1fd2-11ee-b6e1-7085c27bdeb0
                     format: uuid
                 run_id:
                     type: string
                     description: Identifier of latest processing workflow run
-                    example: 04aa5274-1fcb-11ee-8a9d-7085c27bdeb0
+                    example: 74c8d1fe-1fd2-11ee-b6e1-7085c27bdeb0
                     format: uuid
                 started_at:
                     type: string
                     description: Start datetime
-                    example: "2006-08-17T11:55:03Z"
+                    example: "2014-04-05T03:43:54Z"
                     format: date-time
                 status:
                     type: string
                     description: Status of the collection
                     default: new
-                    example: pending
+                    example: in progress
                     enum:
                         - new
                         - in progress
@@ -1061,27 +1071,27 @@ components:
                 transfer_id:
                     type: string
                     description: Identifier of Archivematica transfer
-                    example: 04aa53cd-1fcb-11ee-8a9d-7085c27bdeb0
+                    example: 74c8d335-1fd2-11ee-b6e1-7085c27bdeb0
                     format: uuid
                 workflow_id:
                     type: string
                     description: Identifier of processing workflow
-                    example: 04aa5122-1fcb-11ee-8a9d-7085c27bdeb0
+                    example: 74c8d0a5-1fd2-11ee-b6e1-7085c27bdeb0
                     format: uuid
             description: StoredCollection describes a collection retrieved by the service.
             example:
-                aip_id: 04aa5f84-1fcb-11ee-8a9d-7085c27bdeb0
-                completed_at: "1986-04-15T08:25:16Z"
-                created_at: "2002-08-25T21:29:42Z"
-                id: 3007180406968656670
-                name: Saepe officia veritatis.
-                original_id: Reiciendis corporis recusandae optio possimus id et.
-                pipeline_id: 04aa60a2-1fcb-11ee-8a9d-7085c27bdeb0
-                run_id: 04aa5d0b-1fcb-11ee-8a9d-7085c27bdeb0
-                started_at: "2002-10-30T11:51:06Z"
-                status: error
-                transfer_id: 04aa5e4b-1fcb-11ee-8a9d-7085c27bdeb0
-                workflow_id: 04aa5bba-1fcb-11ee-8a9d-7085c27bdeb0
+                aip_id: 74c8de4c-1fd2-11ee-b6e1-7085c27bdeb0
+                completed_at: "1980-12-20T11:42:22Z"
+                created_at: "2004-04-26T10:09:21Z"
+                id: 6450261145143832540
+                name: Aperiam eius maxime eum et et.
+                original_id: Magni numquam deserunt officia.
+                pipeline_id: 74c8df6b-1fd2-11ee-b6e1-7085c27bdeb0
+                run_id: 74c8dbe4-1fd2-11ee-b6e1-7085c27bdeb0
+                started_at: "1972-09-20T09:42:05Z"
+                status: abandoned
+                transfer_id: 74c8dd1c-1fd2-11ee-b6e1-7085c27bdeb0
+                workflow_id: 74c8daaa-1fd2-11ee-b6e1-7085c27bdeb0
             required:
                 - id
                 - status
@@ -1091,62 +1101,62 @@ components:
             items:
                 $ref: '#/components/schemas/EnduroStoredCollection'
             example:
-                - aip_id: 04a7d1ab-1fcb-11ee-8a9d-7085c27bdeb0
+                - aip_id: 74c5baf8-1fd2-11ee-b6e1-7085c27bdeb0
                   completed_at: "2014-01-26T22:52:33Z"
                   created_at: "2006-09-07T19:48:15Z"
                   id: 5273261262554249024
                   name: Iusto laudantium assumenda.
                   original_id: Voluptatem eum et rerum.
-                  pipeline_id: 04a7d337-1fcb-11ee-8a9d-7085c27bdeb0
-                  run_id: 04a7cec7-1fcb-11ee-8a9d-7085c27bdeb0
+                  pipeline_id: 74c5bc49-1fd2-11ee-b6e1-7085c27bdeb0
+                  run_id: 74c5b818-1fd2-11ee-b6e1-7085c27bdeb0
                   started_at: "1986-05-13T23:32:21Z"
                   status: unknown
-                  transfer_id: 04a7d060-1fcb-11ee-8a9d-7085c27bdeb0
-                  workflow_id: 04a7b7bf-1fcb-11ee-8a9d-7085c27bdeb0
-                - aip_id: 04a7d1ab-1fcb-11ee-8a9d-7085c27bdeb0
+                  transfer_id: 74c5b9a1-1fd2-11ee-b6e1-7085c27bdeb0
+                  workflow_id: 74c5a1c6-1fd2-11ee-b6e1-7085c27bdeb0
+                - aip_id: 74c5baf8-1fd2-11ee-b6e1-7085c27bdeb0
                   completed_at: "2014-01-26T22:52:33Z"
                   created_at: "2006-09-07T19:48:15Z"
                   id: 5273261262554249024
                   name: Iusto laudantium assumenda.
                   original_id: Voluptatem eum et rerum.
-                  pipeline_id: 04a7d337-1fcb-11ee-8a9d-7085c27bdeb0
-                  run_id: 04a7cec7-1fcb-11ee-8a9d-7085c27bdeb0
+                  pipeline_id: 74c5bc49-1fd2-11ee-b6e1-7085c27bdeb0
+                  run_id: 74c5b818-1fd2-11ee-b6e1-7085c27bdeb0
                   started_at: "1986-05-13T23:32:21Z"
                   status: unknown
-                  transfer_id: 04a7d060-1fcb-11ee-8a9d-7085c27bdeb0
-                  workflow_id: 04a7b7bf-1fcb-11ee-8a9d-7085c27bdeb0
+                  transfer_id: 74c5b9a1-1fd2-11ee-b6e1-7085c27bdeb0
+                  workflow_id: 74c5a1c6-1fd2-11ee-b6e1-7085c27bdeb0
         EnduroStoredPipeline:
             type: object
             properties:
                 capacity:
                     type: integer
                     description: Maximum concurrent transfers
-                    example: 1989177477828674102
+                    example: 1823829890965386700
                     format: int64
                 current:
                     type: integer
                     description: Current transfers
-                    example: 8963484872741715398
+                    example: 3880544084422320312
                     format: int64
                 id:
                     type: string
                     description: Identifier of the pipeline
-                    example: 04aa6ecb-1fcb-11ee-8a9d-7085c27bdeb0
+                    example: 74c8ee0d-1fd2-11ee-b6e1-7085c27bdeb0
                     format: uuid
                 name:
                     type: string
                     description: Name of the pipeline
-                    example: Sapiente explicabo assumenda sequi quas quia.
+                    example: Dolores qui unde est.
                 status:
                     type: string
-                    example: Unde est provident sint at modi est.
+                    example: Modi est nobis sit.
             description: StoredPipeline describes a pipeline retrieved by this service.
             example:
-                capacity: 6669239469679583324
-                current: 1662791287299616533
-                id: 04aa700a-1fcb-11ee-8a9d-7085c27bdeb0
-                name: Eveniet sit.
-                status: Autem voluptate rerum quod vitae ut corrupti.
+                capacity: 5308951979130794190
+                current: 5228065542663504565
+                id: 74c8ef7d-1fd2-11ee-b6e1-7085c27bdeb0
+                name: Nobis autem voluptate.
+                status: Ut corrupti velit enim.
             required:
                 - name
         Error:
@@ -1155,7 +1165,7 @@ components:
                 fault:
                     type: boolean
                     description: Is the error a server-side fault?
-                    example: false
+                    example: true
                 id:
                     type: string
                     description: ID is a unique identifier for this particular occurrence of the problem.
@@ -1171,15 +1181,18 @@ components:
                 temporary:
                     type: boolean
                     description: Is the error temporary?
-                    example: false
+                    example: true
                 timeout:
                     type: boolean
                     description: Is the error a timeout?
                     example: false
             example:
-                id: 3F1FKVRR
-                message: Value of ID must be an integer
+                fault: true
+                id: 123abc
+                message: parameter 'p' must be an integer
                 name: bad_request
+                temporary: false
+                timeout: false
             required:
                 - name
                 - id
@@ -1194,58 +1207,58 @@ components:
                     $ref: '#/components/schemas/EnduroStoredCollectionCollection'
                 next_cursor:
                     type: string
-                    example: Reiciendis iste quis asperiores voluptate temporibus.
+                    example: Vel quam.
             example:
                 items:
-                    - aip_id: 04a7d1ab-1fcb-11ee-8a9d-7085c27bdeb0
+                    - aip_id: 74c5baf8-1fd2-11ee-b6e1-7085c27bdeb0
                       completed_at: "2014-01-26T22:52:33Z"
                       created_at: "2006-09-07T19:48:15Z"
                       id: 5273261262554249024
                       name: Iusto laudantium assumenda.
                       original_id: Voluptatem eum et rerum.
-                      pipeline_id: 04a7d337-1fcb-11ee-8a9d-7085c27bdeb0
-                      run_id: 04a7cec7-1fcb-11ee-8a9d-7085c27bdeb0
+                      pipeline_id: 74c5bc49-1fd2-11ee-b6e1-7085c27bdeb0
+                      run_id: 74c5b818-1fd2-11ee-b6e1-7085c27bdeb0
                       started_at: "1986-05-13T23:32:21Z"
                       status: unknown
-                      transfer_id: 04a7d060-1fcb-11ee-8a9d-7085c27bdeb0
-                      workflow_id: 04a7b7bf-1fcb-11ee-8a9d-7085c27bdeb0
-                    - aip_id: 04a7d1ab-1fcb-11ee-8a9d-7085c27bdeb0
+                      transfer_id: 74c5b9a1-1fd2-11ee-b6e1-7085c27bdeb0
+                      workflow_id: 74c5a1c6-1fd2-11ee-b6e1-7085c27bdeb0
+                    - aip_id: 74c5baf8-1fd2-11ee-b6e1-7085c27bdeb0
                       completed_at: "2014-01-26T22:52:33Z"
                       created_at: "2006-09-07T19:48:15Z"
                       id: 5273261262554249024
                       name: Iusto laudantium assumenda.
                       original_id: Voluptatem eum et rerum.
-                      pipeline_id: 04a7d337-1fcb-11ee-8a9d-7085c27bdeb0
-                      run_id: 04a7cec7-1fcb-11ee-8a9d-7085c27bdeb0
+                      pipeline_id: 74c5bc49-1fd2-11ee-b6e1-7085c27bdeb0
+                      run_id: 74c5b818-1fd2-11ee-b6e1-7085c27bdeb0
                       started_at: "1986-05-13T23:32:21Z"
                       status: unknown
-                      transfer_id: 04a7d060-1fcb-11ee-8a9d-7085c27bdeb0
-                      workflow_id: 04a7b7bf-1fcb-11ee-8a9d-7085c27bdeb0
-                    - aip_id: 04a7d1ab-1fcb-11ee-8a9d-7085c27bdeb0
+                      transfer_id: 74c5b9a1-1fd2-11ee-b6e1-7085c27bdeb0
+                      workflow_id: 74c5a1c6-1fd2-11ee-b6e1-7085c27bdeb0
+                    - aip_id: 74c5baf8-1fd2-11ee-b6e1-7085c27bdeb0
                       completed_at: "2014-01-26T22:52:33Z"
                       created_at: "2006-09-07T19:48:15Z"
                       id: 5273261262554249024
                       name: Iusto laudantium assumenda.
                       original_id: Voluptatem eum et rerum.
-                      pipeline_id: 04a7d337-1fcb-11ee-8a9d-7085c27bdeb0
-                      run_id: 04a7cec7-1fcb-11ee-8a9d-7085c27bdeb0
+                      pipeline_id: 74c5bc49-1fd2-11ee-b6e1-7085c27bdeb0
+                      run_id: 74c5b818-1fd2-11ee-b6e1-7085c27bdeb0
                       started_at: "1986-05-13T23:32:21Z"
                       status: unknown
-                      transfer_id: 04a7d060-1fcb-11ee-8a9d-7085c27bdeb0
-                      workflow_id: 04a7b7bf-1fcb-11ee-8a9d-7085c27bdeb0
-                    - aip_id: 04a7d1ab-1fcb-11ee-8a9d-7085c27bdeb0
+                      transfer_id: 74c5b9a1-1fd2-11ee-b6e1-7085c27bdeb0
+                      workflow_id: 74c5a1c6-1fd2-11ee-b6e1-7085c27bdeb0
+                    - aip_id: 74c5baf8-1fd2-11ee-b6e1-7085c27bdeb0
                       completed_at: "2014-01-26T22:52:33Z"
                       created_at: "2006-09-07T19:48:15Z"
                       id: 5273261262554249024
                       name: Iusto laudantium assumenda.
                       original_id: Voluptatem eum et rerum.
-                      pipeline_id: 04a7d337-1fcb-11ee-8a9d-7085c27bdeb0
-                      run_id: 04a7cec7-1fcb-11ee-8a9d-7085c27bdeb0
+                      pipeline_id: 74c5bc49-1fd2-11ee-b6e1-7085c27bdeb0
+                      run_id: 74c5b818-1fd2-11ee-b6e1-7085c27bdeb0
                       started_at: "1986-05-13T23:32:21Z"
                       status: unknown
-                      transfer_id: 04a7d060-1fcb-11ee-8a9d-7085c27bdeb0
-                      workflow_id: 04a7b7bf-1fcb-11ee-8a9d-7085c27bdeb0
-                next_cursor: Facilis officiis dicta et vitae consequatur nihil.
+                      transfer_id: 74c5b9a1-1fd2-11ee-b6e1-7085c27bdeb0
+                      workflow_id: 74c5a1c6-1fd2-11ee-b6e1-7085c27bdeb0
+                next_cursor: Voluptatem porro omnis.
             required:
                 - items
         PipelineNotFound:
@@ -1254,15 +1267,15 @@ components:
                 id:
                     type: string
                     description: Identifier of missing pipeline
-                    example: Consequuntur quis.
+                    example: Vel nesciunt quo consequuntur quis nisi.
                 message:
                     type: string
                     description: Message of error
-                    example: Rerum et distinctio illum voluptas vel nesciunt.
+                    example: Distinctio illum.
             description: Pipeline not found
             example:
-                id: Illo ducimus et deleniti.
-                message: Ut at beatae.
+                id: Voluptatibus ea ut repellendus similique minima et.
+                message: At beatae quidem illo ducimus et.
             required:
                 - message
                 - id
@@ -1271,25 +1284,25 @@ components:
             properties:
                 completed_dir:
                     type: string
-                    example: Sunt ut.
+                    example: Illum illum tenetur.
                 path:
                     type: string
-                    example: Qui non unde ut.
+                    example: Ut aspernatur et voluptatem quibusdam facilis.
                 pipeline:
                     type: string
-                    example: Et voluptatem quibusdam facilis magnam.
+                    example: A veritatis vel eos.
                 processing_config:
                     type: string
-                    example: Veritatis vel eos.
+                    example: Sunt ut.
                 retention_period:
                     type: string
-                    example: Illum illum tenetur.
+                    example: Voluptates nulla autem et perspiciatis libero voluptas.
             example:
-                completed_dir: Fugiat a officiis ipsum.
-                path: Voluptates nulla autem et perspiciatis libero voluptas.
-                pipeline: Voluptates et molestiae eum et occaecati.
-                processing_config: Et et eligendi voluptatem.
-                retention_period: Necessitatibus voluptas mollitia dolore.
+                completed_dir: Necessitatibus voluptas mollitia dolore.
+                path: Voluptates et molestiae eum et occaecati.
+                pipeline: Et et eligendi voluptatem.
+                processing_config: Fugiat a officiis ipsum.
+                retention_period: Qui rerum asperiores qui.
             required:
                 - path
 tags:

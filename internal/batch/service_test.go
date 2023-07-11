@@ -2,6 +2,7 @@ package batch
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -216,11 +217,12 @@ func TestBatchServiceInitProcessingWorkflow(t *testing.T) {
 		mock.AnythingOfType("*collection.ProcessingWorkflowRequest"),
 	).Return(
 		nil,
-		&temporalapi_serviceerror.Internal{},
+		temporalapi_serviceerror.NewInternal("message"),
 	)
 
 	batchsvc := NewService(logger, client, taskQueue, completedDirs)
 	err := batchsvc.InitProcessingWorkflow(ctx, &collection.ProcessingWorkflowRequest{})
 
-	assert.ErrorType(t, err, &temporalapi_serviceerror.Internal{})
+	var internalError *temporalapi_serviceerror.Internal
+	assert.Assert(t, errors.As(err, &internalError) == true)
 }

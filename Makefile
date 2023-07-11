@@ -141,6 +141,12 @@ gen-mock: $(MOCKGEN)
 	mockgen -destination=./internal/amclient/fake/mock_v2_package.go -package=fake github.com/artefactual-labs/enduro/internal/amclient PackageService
 	mockgen -destination=./internal/amclient/fake/mock_v2_task.go -package=fake github.com/artefactual-labs/enduro/internal/amclient TaskService
 
+temporal: # @HELP Runs a development instance of Temporal.
+temporal: PORT := 55555
+temporal: LOG_LEVEL := warn
+temporal: $(TEMPORAL_CLI)
+	temporal server start-dev --namespace=default --port=$(PORT) --headless --log-format=pretty --log-level=$(LOG_LEVEL)
+
 help: # @HELP Prints this message.
 	echo "TARGETS:"
 	grep -E '^.*: *# *@HELP' Makefile             \
