@@ -3,7 +3,7 @@
 // batch endpoints
 //
 // Command:
-// $ goa-v3.11.3 gen github.com/artefactual-labs/enduro/internal/api/design -o
+// $ goa gen github.com/artefactual-labs/enduro/internal/api/design -o
 // internal/api
 
 package batch

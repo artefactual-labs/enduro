@@ -33,17 +33,13 @@ Spin up the environment with the following command:
 
     docker compose up --detach
 
-Now we need to build some Go tools we're going to use during development:
-
-    make tools
-
 Build the web-based user interface:
 
     make ui
 
 Finall, build and run Enduro with:
 
-    make
+    make run
 
 With Enduro running in the background, you should be able to access the web
 interface via http://127.0.0.1:9000/ or connect to the API, e.g.:
@@ -105,9 +101,6 @@ we provide a couple of shortcuts that use our custom build directory and flags:
 
     # Build and run
     make run
-
-    # Since `run` is the default, you can just type
-    make
 
 If you are looking for a source-code editor, Visual Studio Code has great Go
 support. It uses the official language server, [gopls][gopls], which is it not
