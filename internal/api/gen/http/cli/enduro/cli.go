@@ -3,7 +3,7 @@
 // enduro HTTP client CLI support package
 //
 // Command:
-// $ goa-v3.11.3 gen github.com/artefactual-labs/enduro/internal/api/design -o
+// $ goa gen github.com/artefactual-labs/enduro/internal/api/design -o
 // internal/api
 
 package cli
@@ -368,7 +368,7 @@ Show pipeline by ID
     -id STRING: Identifier of pipeline to show
 
 Example:
-    %[1]s pipeline show --id "8042d327-1caf-11ee-b3da-7085c27bdeb0"
+    %[1]s pipeline show --id "04a9970b-1fcb-11ee-8a9d-7085c27bdeb0"
 `, os.Args[0])
 }
 
@@ -379,7 +379,7 @@ List all processing configurations of a pipeline given its ID
     -id STRING: Identifier of pipeline
 
 Example:
-    %[1]s pipeline processing --id "8042e9d7-1caf-11ee-b3da-7085c27bdeb0"
+    %[1]s pipeline processing --id "04a9acbc-1fcb-11ee-8a9d-7085c27bdeb0"
 `, os.Args[0])
 }
 
@@ -484,7 +484,7 @@ List all stored collections
     -cursor STRING: 
 
 Example:
-    %[1]s collection list --name "Laudantium eos fugiat iure sit ea." --original-id "Et dolor ullam consequatur dignissimos." --transfer-id "8041914a-1caf-11ee-b3da-7085c27bdeb0" --aip-id "804192fd-1caf-11ee-b3da-7085c27bdeb0" --pipeline-id "804194b2-1caf-11ee-b3da-7085c27bdeb0" --earliest-created-time "1996-05-01T14:23:24Z" --latest-created-time "1987-02-15T23:56:43Z" --status "error" --cursor "Sit et inventore et."
+    %[1]s collection list --name "Laudantium eos fugiat iure sit ea." --original-id "Et dolor ullam consequatur dignissimos." --transfer-id "04a8911b-1fcb-11ee-8a9d-7085c27bdeb0" --aip-id "04a892ea-1fcb-11ee-8a9d-7085c27bdeb0" --pipeline-id "04a89494-1fcb-11ee-8a9d-7085c27bdeb0" --earliest-created-time "1996-05-01T14:23:24Z" --latest-created-time "1987-02-15T23:56:43Z" --status "error" --cursor "Sit et inventore et."
 `, os.Args[0])
 }
 

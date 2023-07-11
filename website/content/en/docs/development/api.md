@@ -48,7 +48,7 @@ authentication methods or streaming of contents.
 ## Backend development
 
 After making new changes to the API design, the developer should run:
-`make goagen` which generates all the code under `internal/api/gen`, including
+`make gen-goa` which generates all the code under `internal/api/gen`, including
 the OpenAPI description of the API for the HTTP transport:
 [`openapi.json`][openapi-json].
 

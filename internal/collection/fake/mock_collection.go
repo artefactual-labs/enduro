@@ -6,14 +6,12 @@ package fake
 
 import (
 	context "context"
-	http0 "net/http"
 	reflect "reflect"
 	time "time"
 
 	collection "github.com/artefactual-labs/enduro/internal/api/gen/collection"
 	collection0 "github.com/artefactual-labs/enduro/internal/collection"
 	gomock "github.com/golang/mock/gomock"
-	http "goa.design/goa/v3/http"
 )
 
 // MockService is a mock of Service interface.
@@ -65,20 +63,6 @@ func (m *MockService) Goa() collection.Service {
 func (mr *MockServiceMockRecorder) Goa() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Goa", reflect.TypeOf((*MockService)(nil).Goa))
-}
-
-// HTTPDownload mocks base method.
-func (m *MockService) HTTPDownload(arg0 http.Muxer, arg1 func(*http0.Request) http.Decoder) http0.HandlerFunc {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "HTTPDownload", arg0, arg1)
-	ret0, _ := ret[0].(http0.HandlerFunc)
-	return ret0
-}
-
-// HTTPDownload indicates an expected call of HTTPDownload.
-func (mr *MockServiceMockRecorder) HTTPDownload(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HTTPDownload", reflect.TypeOf((*MockService)(nil).HTTPDownload), arg0, arg1)
 }
 
 // SetOriginalID mocks base method.
