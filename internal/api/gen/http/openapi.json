@@ -1,1 +1,2053 @@
-{"swagger":"2.0","info":{"title":"Enduro API","version":""},"host":"localhost:9000","consumes":["application/json","application/xml","application/gob"],"produces":["application/json","application/xml","application/gob"],"paths":{"/batch":{"get":{"tags":["batch"],"summary":"status batch","description":"Retrieve status of current batch operation.","operationId":"batch#status","responses":{"200":{"description":"OK response.","schema":{"$ref":"#/definitions/BatchStatusResponseBody","required":["running"]}}},"schemes":["http"]},"post":{"tags":["batch"],"summary":"submit batch","description":"Submit a new batch","operationId":"batch#submit","parameters":[{"name":"SubmitRequestBody","in":"body","required":true,"schema":{"$ref":"#/definitions/BatchSubmitRequestBody","required":["path"]}}],"responses":{"202":{"description":"Accepted response.","schema":{"$ref":"#/definitions/BatchSubmitResponseBody","required":["workflow_id","run_id"]}},"400":{"description":"Bad Request response.","schema":{"$ref":"#/definitions/BatchSubmitNotValidResponseBody"}},"409":{"description":"Conflict response.","schema":{"$ref":"#/definitions/BatchSubmitNotAvailableResponseBody"}}},"schemes":["http"]}},"/batch/hints":{"get":{"tags":["batch"],"summary":"hints batch","description":"Retrieve form hints","operationId":"batch#hints","responses":{"200":{"description":"OK response.","schema":{"$ref":"#/definitions/BatchHintsResponseBody"}}},"schemes":["http"]}},"/collection":{"get":{"tags":["collection"],"summary":"list collection","description":"List all stored collections","operationId":"collection#list","parameters":[{"name":"name","in":"query","required":false,"type":"string"},{"name":"original_id","in":"query","required":false,"type":"string"},{"name":"transfer_id","in":"query","required":false,"type":"string","format":"uuid"},{"name":"aip_id","in":"query","required":false,"type":"string","format":"uuid"},{"name":"pipeline_id","in":"query","required":false,"type":"string","format":"uuid"},{"name":"earliest_created_time","in":"query","required":false,"type":"string","format":"date-time"},{"name":"latest_created_time","in":"query","required":false,"type":"string","format":"date-time"},{"name":"status","in":"query","required":false,"type":"string","enum":["new","in progress","done","error","unknown","queued","pending","abandoned"]},{"name":"cursor","in":"query","description":"Pagination cursor","required":false,"type":"string"}],"responses":{"200":{"description":"OK response.","schema":{"$ref":"#/definitions/CollectionListResponseBody","required":["items"]}}},"schemes":["http"]}},"/collection/bulk":{"get":{"tags":["collection"],"summary":"bulk_status collection","description":"Retrieve status of current bulk operation.","operationId":"collection#bulk_status","responses":{"200":{"description":"OK response.","schema":{"$ref":"#/definitions/CollectionBulkStatusResponseBody","required":["running"]}}},"schemes":["http"]},"post":{"tags":["collection"],"summary":"bulk collection","description":"Bulk operations (retry, cancel...).","operationId":"collection#bulk","parameters":[{"name":"BulkRequestBody","in":"body","required":true,"schema":{"$ref":"#/definitions/CollectionBulkRequestBody","required":["operation","status"]}}],"responses":{"202":{"description":"Accepted response.","schema":{"$ref":"#/definitions/CollectionBulkResponseBody","required":["workflow_id","run_id"]}},"400":{"description":"Bad Request response.","schema":{"$ref":"#/definitions/CollectionBulkNotValidResponseBody"}},"409":{"description":"Conflict response.","schema":{"$ref":"#/definitions/CollectionBulkNotAvailableResponseBody"}}},"schemes":["http"]}},"/collection/monitor":{"get":{"tags":["collection"],"summary":"monitor collection","operationId":"collection#monitor","responses":{"101":{"description":"Switching Protocols response.","schema":{"$ref":"#/definitions/CollectionMonitorResponseBody"}}},"schemes":["ws"]}},"/collection/{id}":{"get":{"tags":["collection"],"summary":"show collection","description":"Show collection by ID","operationId":"collection#show","parameters":[{"name":"id","in":"path","description":"Identifier of collection to show","required":true,"type":"integer"}],"responses":{"200":{"description":"OK response.","schema":{"$ref":"#/definitions/CollectionShowResponseBody"}},"404":{"description":"Not Found response.","schema":{"$ref":"#/definitions/CollectionShowNotFoundResponseBody","required":["message","id"]}}},"schemes":["http"]},"delete":{"tags":["collection"],"summary":"delete collection","description":"Delete collection by ID","operationId":"collection#delete","parameters":[{"name":"id","in":"path","description":"Identifier of collection to delete","required":true,"type":"integer"}],"responses":{"204":{"description":"No Content response."},"404":{"description":"Not Found response.","schema":{"$ref":"#/definitions/CollectionDeleteNotFoundResponseBody","required":["message","id"]}}},"schemes":["http"]}},"/collection/{id}/cancel":{"post":{"tags":["collection"],"summary":"cancel collection","description":"Cancel collection processing by ID","operationId":"collection#cancel","parameters":[{"name":"id","in":"path","description":"Identifier of collection to remove","required":true,"type":"integer"}],"responses":{"200":{"description":"OK response."},"400":{"description":"Bad Request response.","schema":{"$ref":"#/definitions/CollectionCancelNotRunningResponseBody"}},"404":{"description":"Not Found response.","schema":{"$ref":"#/definitions/CollectionCancelNotFoundResponseBody","required":["message","id"]}}},"schemes":["http"]}},"/collection/{id}/decision":{"post":{"tags":["collection"],"summary":"decide collection","description":"Make decision for a pending collection by ID","operationId":"collection#decide","parameters":[{"name":"id","in":"path","description":"Identifier of collection to look up","required":true,"type":"integer"},{"name":"object","in":"body","required":true,"schema":{"type":"object","properties":{"option":{"type":"string","description":"Decision option to proceed with","example":"Iure sunt fugiat voluptate."}}}}],"responses":{"200":{"description":"OK response."},"400":{"description":"Bad Request response.","schema":{"$ref":"#/definitions/CollectionDecideNotValidResponseBody"}},"404":{"description":"Not Found response.","schema":{"$ref":"#/definitions/CollectionDecideNotFoundResponseBody","required":["message","id"]}}},"schemes":["http"]}},"/collection/{id}/download":{"get":{"tags":["collection"],"summary":"download collection","description":"Download collection by ID","operationId":"collection#download","parameters":[{"name":"id","in":"path","description":"Identifier of collection to look up","required":true,"type":"integer"}],"responses":{"200":{"description":"OK response.","headers":{"Content-Disposition":{"type":"string"},"Content-Length":{"type":"int64"},"Content-Type":{"type":"string"}}},"404":{"description":"Not Found response.","schema":{"$ref":"#/definitions/CollectionDownloadNotFoundResponseBody","required":["message","id"]}}},"schemes":["http"]}},"/collection/{id}/retry":{"post":{"tags":["collection"],"summary":"retry collection","description":"Retry collection processing by ID","operationId":"collection#retry","parameters":[{"name":"id","in":"path","description":"Identifier of collection to retry","required":true,"type":"integer"}],"responses":{"200":{"description":"OK response."},"400":{"description":"Bad Request response.","schema":{"$ref":"#/definitions/CollectionRetryNotRunningResponseBody"}},"404":{"description":"Not Found response.","schema":{"$ref":"#/definitions/CollectionRetryNotFoundResponseBody","required":["message","id"]}}},"schemes":["http"]}},"/collection/{id}/workflow":{"get":{"tags":["collection"],"summary":"workflow collection","description":"Retrieve workflow status by ID","operationId":"collection#workflow","parameters":[{"name":"id","in":"path","description":"Identifier of collection to look up","required":true,"type":"integer"}],"responses":{"200":{"description":"OK response.","schema":{"$ref":"#/definitions/CollectionWorkflowResponseBody"}},"404":{"description":"Not Found response.","schema":{"$ref":"#/definitions/CollectionWorkflowNotFoundResponseBody","required":["message","id"]}}},"schemes":["http"]}},"/pipeline":{"get":{"tags":["pipeline"],"summary":"list pipeline","description":"List all known pipelines","operationId":"pipeline#list","parameters":[{"name":"name","in":"query","required":false,"type":"string"},{"name":"status","in":"query","required":false,"type":"boolean","default":false}],"responses":{"200":{"description":"OK response.","schema":{"type":"array","items":{"$ref":"#/definitions/EnduroStoredPipelineResponse"}}}},"schemes":["http"]}},"/pipeline/{id}":{"get":{"tags":["pipeline"],"summary":"show pipeline","description":"Show pipeline by ID","operationId":"pipeline#show","parameters":[{"name":"id","in":"path","description":"Identifier of pipeline to show","required":true,"type":"string","format":"uuid"}],"responses":{"200":{"description":"OK response.","schema":{"$ref":"#/definitions/PipelineShowResponseBody"}},"404":{"description":"Not Found response.","schema":{"$ref":"#/definitions/PipelineShowNotFoundResponseBody","required":["message","id"]}}},"schemes":["http"]}},"/pipeline/{id}/processing":{"get":{"tags":["pipeline"],"summary":"processing pipeline","description":"List all processing configurations of a pipeline given its ID","operationId":"pipeline#processing","parameters":[{"name":"id","in":"path","description":"Identifier of pipeline","required":true,"type":"string","format":"uuid"}],"responses":{"200":{"description":"OK response.","schema":{"type":"array","items":{"type":"string","example":"Suscipit distinctio."}}},"404":{"description":"Not Found response.","schema":{"$ref":"#/definitions/PipelineProcessingNotFoundResponseBody","required":["message","id"]}}},"schemes":["http"]}},"/swagger/swagger.json":{"get":{"tags":["swagger"],"summary":"Download internal/api/gen/http/openapi.json","description":"JSON document containing the API swagger definition.","operationId":"swagger#/swagger/swagger.json","responses":{"200":{"description":"File downloaded","schema":{"type":"file"}}},"schemes":["http"]}}},"definitions":{"BatchHintsResponseBody":{"title":"BatchHintsResponseBody","type":"object","properties":{"completed_dirs":{"type":"array","items":{"type":"string","example":"Ab est sed reiciendis ipsum."},"description":"A list of known values of completedDir used by existing watchers.","example":["Saepe quibusdam aut magnam itaque.","Dolor quo.","Vitae suscipit.","Ullam cumque recusandae quae porro corporis."]}},"example":{"completed_dirs":["Rerum voluptatem non quas.","Eos ut ipsum et.","Expedita asperiores et.","Ut quia ut commodi."]}},"BatchStatusResponseBody":{"title":"BatchStatusResponseBody","type":"object","properties":{"run_id":{"type":"string","example":"Tempore nostrum aliquid fugiat optio consequatur."},"running":{"type":"boolean","example":true},"status":{"type":"string","example":"Accusamus possimus fuga esse."},"workflow_id":{"type":"string","example":"Aut itaque et."}},"example":{"run_id":"Enim fuga quam aut sit.","running":true,"status":"Corrupti veniam maiores ducimus in.","workflow_id":"Et laboriosam qui."},"required":["running"]},"BatchSubmitNotAvailableResponseBody":{"title":"Mediatype identifier: application/vnd.goa.error; view=default","type":"object","properties":{"fault":{"type":"boolean","description":"Is the error a server-side fault?","example":true},"id":{"type":"string","description":"ID is a unique identifier for this particular occurrence of the problem.","example":"123abc"},"message":{"type":"string","description":"Message is a human-readable explanation specific to this occurrence of the problem.","example":"parameter 'p' must be an integer"},"name":{"type":"string","description":"Name is the name of this class of errors.","example":"bad_request"},"temporary":{"type":"boolean","description":"Is the error temporary?","example":true},"timeout":{"type":"boolean","description":"Is the error a timeout?","example":true}},"description":"submit_not_available_response_body result type (default view)","example":{"fault":true,"id":"123abc","message":"parameter 'p' must be an integer","name":"bad_request","temporary":false,"timeout":false},"required":["name","id","message","temporary","timeout","fault"]},"BatchSubmitNotValidResponseBody":{"title":"Mediatype identifier: application/vnd.goa.error; view=default","type":"object","properties":{"fault":{"type":"boolean","description":"Is the error a server-side fault?","example":true},"id":{"type":"string","description":"ID is a unique identifier for this particular occurrence of the problem.","example":"123abc"},"message":{"type":"string","description":"Message is a human-readable explanation specific to this occurrence of the problem.","example":"parameter 'p' must be an integer"},"name":{"type":"string","description":"Name is the name of this class of errors.","example":"bad_request"},"temporary":{"type":"boolean","description":"Is the error temporary?","example":false},"timeout":{"type":"boolean","description":"Is the error a timeout?","example":false}},"description":"submit_not_valid_response_body result type (default view)","example":{"fault":true,"id":"123abc","message":"parameter 'p' must be an integer","name":"bad_request","temporary":false,"timeout":false},"required":["name","id","message","temporary","timeout","fault"]},"BatchSubmitRequestBody":{"title":"BatchSubmitRequestBody","type":"object","properties":{"completed_dir":{"type":"string","example":"Sit sint est qui cum nihil quis."},"path":{"type":"string","example":"Dolor quas corrupti."},"pipeline":{"type":"string","example":"Cumque qui facilis omnis."},"processing_config":{"type":"string","example":"Officia voluptate."},"retention_period":{"type":"string","example":"Sit quibusdam quidem consectetur praesentium."}},"example":{"completed_dir":"Esse consectetur aut quis accusamus enim consequatur.","path":"Aperiam velit.","pipeline":"Nobis delectus.","processing_config":"Fuga omnis corporis et sunt.","retention_period":"Consequatur natus illum."},"required":["path"]},"BatchSubmitResponseBody":{"title":"BatchSubmitResponseBody","type":"object","properties":{"run_id":{"type":"string","example":"Iste dolorem."},"workflow_id":{"type":"string","example":"Est iure optio suscipit."}},"example":{"run_id":"Quidem aliquam fuga laborum maiores et.","workflow_id":"Maxime dicta."},"required":["workflow_id","run_id"]},"CollectionBulkNotAvailableResponseBody":{"title":"Mediatype identifier: application/vnd.goa.error; view=default","type":"object","properties":{"fault":{"type":"boolean","description":"Is the error a server-side fault?","example":true},"id":{"type":"string","description":"ID is a unique identifier for this particular occurrence of the problem.","example":"123abc"},"message":{"type":"string","description":"Message is a human-readable explanation specific to this occurrence of the problem.","example":"parameter 'p' must be an integer"},"name":{"type":"string","description":"Name is the name of this class of errors.","example":"bad_request"},"temporary":{"type":"boolean","description":"Is the error temporary?","example":true},"timeout":{"type":"boolean","description":"Is the error a timeout?","example":false}},"description":"bulk_not_available_response_body result type (default view)","example":{"fault":false,"id":"123abc","message":"parameter 'p' must be an integer","name":"bad_request","temporary":false,"timeout":false},"required":["name","id","message","temporary","timeout","fault"]},"CollectionBulkNotValidResponseBody":{"title":"Mediatype identifier: application/vnd.goa.error; view=default","type":"object","properties":{"fault":{"type":"boolean","description":"Is the error a server-side fault?","example":true},"id":{"type":"string","description":"ID is a unique identifier for this particular occurrence of the problem.","example":"123abc"},"message":{"type":"string","description":"Message is a human-readable explanation specific to this occurrence of the problem.","example":"parameter 'p' must be an integer"},"name":{"type":"string","description":"Name is the name of this class of errors.","example":"bad_request"},"temporary":{"type":"boolean","description":"Is the error temporary?","example":false},"timeout":{"type":"boolean","description":"Is the error a timeout?","example":true}},"description":"bulk_not_valid_response_body result type (default view)","example":{"fault":false,"id":"123abc","message":"parameter 'p' must be an integer","name":"bad_request","temporary":true,"timeout":false},"required":["name","id","message","temporary","timeout","fault"]},"CollectionBulkRequestBody":{"title":"CollectionBulkRequestBody","type":"object","properties":{"operation":{"type":"string","example":"abandon","enum":["retry","cancel","abandon"]},"size":{"type":"integer","default":100,"example":8206095306886416010,"format":"int64"},"status":{"type":"string","example":"abandoned","enum":["new","in progress","done","error","unknown","queued","pending","abandoned"]}},"example":{"operation":"cancel","size":18036125241233620415,"status":"unknown"},"required":["operation","status"]},"CollectionBulkResponseBody":{"title":"CollectionBulkResponseBody","type":"object","properties":{"run_id":{"type":"string","example":"Consequatur facere omnis ab nihil magni."},"workflow_id":{"type":"string","example":"Tenetur aut et occaecati harum."}},"example":{"run_id":"Quia fugiat quam iste velit explicabo.","workflow_id":"Consequatur aut adipisci doloribus quas sit vitae."},"required":["workflow_id","run_id"]},"CollectionBulkStatusResponseBody":{"title":"CollectionBulkStatusResponseBody","type":"object","properties":{"closed_at":{"type":"string","example":"2000-12-21T15:12:45Z","format":"date-time"},"run_id":{"type":"string","example":"Magni mollitia et quod aut veritatis numquam."},"running":{"type":"boolean","example":false},"started_at":{"type":"string","example":"2015-02-11T18:18:46Z","format":"date-time"},"status":{"type":"string","example":"Alias maxime architecto molestiae."},"workflow_id":{"type":"string","example":"Assumenda explicabo adipisci."}},"example":{"closed_at":"1990-07-24T22:49:26Z","run_id":"Voluptatem laborum.","running":true,"started_at":"2009-02-06T07:39:29Z","status":"Atque culpa et earum et omnis et.","workflow_id":"Voluptatibus quibusdam quibusdam voluptatem non."},"required":["running"]},"CollectionCancelNotFoundResponseBody":{"title":"CollectionCancelNotFoundResponseBody","type":"object","properties":{"id":{"type":"integer","description":"Identifier of missing collection","example":951410389815766576,"format":"int64"},"message":{"type":"string","description":"Message of error","example":"Architecto magnam asperiores tempora autem."}},"description":"Collection not found","example":{"id":7358593745880113932,"message":"Aliquid consequatur."},"required":["message","id"]},"CollectionCancelNotRunningResponseBody":{"title":"Mediatype identifier: application/vnd.goa.error; view=default","type":"object","properties":{"fault":{"type":"boolean","description":"Is the error a server-side fault?","example":false},"id":{"type":"string","description":"ID is a unique identifier for this particular occurrence of the problem.","example":"123abc"},"message":{"type":"string","description":"Message is a human-readable explanation specific to this occurrence of the problem.","example":"parameter 'p' must be an integer"},"name":{"type":"string","description":"Name is the name of this class of errors.","example":"bad_request"},"temporary":{"type":"boolean","description":"Is the error temporary?","example":false},"timeout":{"type":"boolean","description":"Is the error a timeout?","example":true}},"description":"cancel_not_running_response_body result type (default view)","example":{"fault":true,"id":"123abc","message":"parameter 'p' must be an integer","name":"bad_request","temporary":false,"timeout":true},"required":["name","id","message","temporary","timeout","fault"]},"CollectionDecideNotFoundResponseBody":{"title":"CollectionDecideNotFoundResponseBody","type":"object","properties":{"id":{"type":"integer","description":"Identifier of missing collection","example":15237653089904143505,"format":"int64"},"message":{"type":"string","description":"Message of error","example":"Accusamus distinctio omnis qui."}},"description":"Collection not found","example":{"id":2610080554516588188,"message":"Quia dolor ea."},"required":["message","id"]},"CollectionDecideNotValidResponseBody":{"title":"Mediatype identifier: application/vnd.goa.error; view=default","type":"object","properties":{"fault":{"type":"boolean","description":"Is the error a server-side fault?","example":true},"id":{"type":"string","description":"ID is a unique identifier for this particular occurrence of the problem.","example":"123abc"},"message":{"type":"string","description":"Message is a human-readable explanation specific to this occurrence of the problem.","example":"parameter 'p' must be an integer"},"name":{"type":"string","description":"Name is the name of this class of errors.","example":"bad_request"},"temporary":{"type":"boolean","description":"Is the error temporary?","example":true},"timeout":{"type":"boolean","description":"Is the error a timeout?","example":false}},"description":"decide_not_valid_response_body result type (default view)","example":{"fault":true,"id":"123abc","message":"parameter 'p' must be an integer","name":"bad_request","temporary":true,"timeout":false},"required":["name","id","message","temporary","timeout","fault"]},"CollectionDeleteNotFoundResponseBody":{"title":"CollectionDeleteNotFoundResponseBody","type":"object","properties":{"id":{"type":"integer","description":"Identifier of missing collection","example":2691854561358134026,"format":"int64"},"message":{"type":"string","description":"Message of error","example":"Consequuntur fuga nesciunt ullam quia et."}},"description":"Collection not found","example":{"id":8177308441370769,"message":"Fugit amet facilis."},"required":["message","id"]},"CollectionDownloadNotFoundResponseBody":{"title":"CollectionDownloadNotFoundResponseBody","type":"object","properties":{"id":{"type":"integer","description":"Identifier of missing collection","example":7811120016112005653,"format":"int64"},"message":{"type":"string","description":"Message of error","example":"Voluptatem et est tenetur vel assumenda natus."}},"description":"Collection not found","example":{"id":737223079499073311,"message":"Nam aliquid quos."},"required":["message","id"]},"CollectionListResponseBody":{"title":"CollectionListResponseBody","type":"object","properties":{"items":{"$ref":"#/definitions/EnduroStoredCollectionResponseBodyCollection"},"next_cursor":{"type":"string","example":"Cupiditate ipsam omnis voluptatem cum."}},"example":{"items":[{"aip_id":"74c5baf8-1fd2-11ee-b6e1-7085c27bdeb0","completed_at":"2014-01-26T22:52:33Z","created_at":"2006-09-07T19:48:15Z","id":5273261262554249024,"name":"Iusto laudantium assumenda.","original_id":"Voluptatem eum et rerum.","pipeline_id":"74c5bc49-1fd2-11ee-b6e1-7085c27bdeb0","run_id":"74c5b818-1fd2-11ee-b6e1-7085c27bdeb0","started_at":"1986-05-13T23:32:21Z","status":"unknown","transfer_id":"74c5b9a1-1fd2-11ee-b6e1-7085c27bdeb0","workflow_id":"74c5a1c6-1fd2-11ee-b6e1-7085c27bdeb0"},{"aip_id":"74c5baf8-1fd2-11ee-b6e1-7085c27bdeb0","completed_at":"2014-01-26T22:52:33Z","created_at":"2006-09-07T19:48:15Z","id":5273261262554249024,"name":"Iusto laudantium assumenda.","original_id":"Voluptatem eum et rerum.","pipeline_id":"74c5bc49-1fd2-11ee-b6e1-7085c27bdeb0","run_id":"74c5b818-1fd2-11ee-b6e1-7085c27bdeb0","started_at":"1986-05-13T23:32:21Z","status":"unknown","transfer_id":"74c5b9a1-1fd2-11ee-b6e1-7085c27bdeb0","workflow_id":"74c5a1c6-1fd2-11ee-b6e1-7085c27bdeb0"},{"aip_id":"74c5baf8-1fd2-11ee-b6e1-7085c27bdeb0","completed_at":"2014-01-26T22:52:33Z","created_at":"2006-09-07T19:48:15Z","id":5273261262554249024,"name":"Iusto laudantium assumenda.","original_id":"Voluptatem eum et rerum.","pipeline_id":"74c5bc49-1fd2-11ee-b6e1-7085c27bdeb0","run_id":"74c5b818-1fd2-11ee-b6e1-7085c27bdeb0","started_at":"1986-05-13T23:32:21Z","status":"unknown","transfer_id":"74c5b9a1-1fd2-11ee-b6e1-7085c27bdeb0","workflow_id":"74c5a1c6-1fd2-11ee-b6e1-7085c27bdeb0"},{"aip_id":"74c5baf8-1fd2-11ee-b6e1-7085c27bdeb0","completed_at":"2014-01-26T22:52:33Z","created_at":"2006-09-07T19:48:15Z","id":5273261262554249024,"name":"Iusto laudantium assumenda.","original_id":"Voluptatem eum et rerum.","pipeline_id":"74c5bc49-1fd2-11ee-b6e1-7085c27bdeb0","run_id":"74c5b818-1fd2-11ee-b6e1-7085c27bdeb0","started_at":"1986-05-13T23:32:21Z","status":"unknown","transfer_id":"74c5b9a1-1fd2-11ee-b6e1-7085c27bdeb0","workflow_id":"74c5a1c6-1fd2-11ee-b6e1-7085c27bdeb0"}],"next_cursor":"Voluptatem error adipisci vel rerum."},"required":["items"]},"CollectionMonitorResponseBody":{"title":"Mediatype identifier: application/vnd.enduro.monitor-update; view=default","type":"object","properties":{"id":{"type":"integer","description":"Identifier of collection","example":17512028379679435893,"format":"int64"},"item":{"$ref":"#/definitions/EnduroStoredCollectionResponseBody"},"type":{"type":"string","description":"Type of the event","example":"Voluptatem beatae modi omnis voluptatem et."}},"description":"MonitorResponseBody result type (default view)","example":{"id":9151525906289518085,"item":{"aip_id":"74c66505-1fd2-11ee-b6e1-7085c27bdeb0","completed_at":"1992-04-04T11:00:41Z","created_at":"2000-12-20T12:21:46Z","id":15454769769736078970,"name":"Sed tempore voluptatum quo pariatur.","original_id":"Nisi aliquid.","pipeline_id":"74c6668f-1fd2-11ee-b6e1-7085c27bdeb0","run_id":"74c66289-1fd2-11ee-b6e1-7085c27bdeb0","started_at":"2011-08-25T19:50:57Z","status":"unknown","transfer_id":"74c663d0-1fd2-11ee-b6e1-7085c27bdeb0","workflow_id":"74c660e1-1fd2-11ee-b6e1-7085c27bdeb0"},"type":"Aliquam aliquid non tempore vel."},"required":["id","type"]},"CollectionRetryNotFoundResponseBody":{"title":"CollectionRetryNotFoundResponseBody","type":"object","properties":{"id":{"type":"integer","description":"Identifier of missing collection","example":14831543066782228698,"format":"int64"},"message":{"type":"string","description":"Message of error","example":"Id ducimus."}},"description":"Collection not found","example":{"id":8000312645361077467,"message":"Distinctio aspernatur tempora maxime omnis."},"required":["message","id"]},"CollectionRetryNotRunningResponseBody":{"title":"Mediatype identifier: application/vnd.goa.error; view=default","type":"object","properties":{"fault":{"type":"boolean","description":"Is the error a server-side fault?","example":true},"id":{"type":"string","description":"ID is a unique identifier for this particular occurrence of the problem.","example":"123abc"},"message":{"type":"string","description":"Message is a human-readable explanation specific to this occurrence of the problem.","example":"parameter 'p' must be an integer"},"name":{"type":"string","description":"Name is the name of this class of errors.","example":"bad_request"},"temporary":{"type":"boolean","description":"Is the error temporary?","example":true},"timeout":{"type":"boolean","description":"Is the error a timeout?","example":false}},"description":"retry_not_running_response_body result type (default view)","example":{"fault":true,"id":"123abc","message":"parameter 'p' must be an integer","name":"bad_request","temporary":false,"timeout":true},"required":["name","id","message","temporary","timeout","fault"]},"CollectionShowNotFoundResponseBody":{"title":"CollectionShowNotFoundResponseBody","type":"object","properties":{"id":{"type":"integer","description":"Identifier of missing collection","example":9835271868051980153,"format":"int64"},"message":{"type":"string","description":"Message of error","example":"Ipsa dolor deserunt provident provident."}},"description":"Collection not found","example":{"id":6740760545696498930,"message":"Exercitationem atque quo impedit non dicta culpa."},"required":["message","id"]},"CollectionShowResponseBody":{"title":"Mediatype identifier: application/vnd.enduro.stored-collection; view=default","type":"object","properties":{"aip_id":{"type":"string","description":"Identifier of Archivematica AIP","example":"74c85a59-1fd2-11ee-b6e1-7085c27bdeb0","format":"uuid"},"completed_at":{"type":"string","description":"Completion datetime","example":"1995-07-06T21:57:28Z","format":"date-time"},"created_at":{"type":"string","description":"Creation datetime","example":"1982-12-23T00:51:34Z","format":"date-time"},"id":{"type":"integer","description":"Identifier of collection","example":17557787113732579557,"format":"int64"},"name":{"type":"string","description":"Name of the collection","example":"Qui numquam totam est."},"original_id":{"type":"string","description":"Identifier provided by the client","example":"Quisquam sed sed hic in."},"pipeline_id":{"type":"string","description":"Identifier of Archivematica pipeline","example":"74c85c70-1fd2-11ee-b6e1-7085c27bdeb0","format":"uuid"},"run_id":{"type":"string","description":"Identifier of latest processing workflow run","example":"74c85669-1fd2-11ee-b6e1-7085c27bdeb0","format":"uuid"},"started_at":{"type":"string","description":"Start datetime","example":"1977-11-02T07:18:21Z","format":"date-time"},"status":{"type":"string","description":"Status of the collection","default":"new","example":"error","enum":["new","in progress","done","error","unknown","queued","pending","abandoned"]},"transfer_id":{"type":"string","description":"Identifier of Archivematica transfer","example":"74c8584b-1fd2-11ee-b6e1-7085c27bdeb0","format":"uuid"},"workflow_id":{"type":"string","description":"Identifier of processing workflow","example":"74c8547d-1fd2-11ee-b6e1-7085c27bdeb0","format":"uuid"}},"description":"ShowResponseBody result type (default view)","example":{"aip_id":"74c86a59-1fd2-11ee-b6e1-7085c27bdeb0","completed_at":"1998-11-15T13:24:26Z","created_at":"1995-01-01T19:38:07Z","id":16726981500754704734,"name":"In laudantium vero sit debitis.","original_id":"Facere molestiae et sunt.","pipeline_id":"74c86c60-1fd2-11ee-b6e1-7085c27bdeb0","run_id":"74c866c5-1fd2-11ee-b6e1-7085c27bdeb0","started_at":"1987-02-13T19:42:16Z","status":"unknown","transfer_id":"74c868a6-1fd2-11ee-b6e1-7085c27bdeb0","workflow_id":"74c864ec-1fd2-11ee-b6e1-7085c27bdeb0"},"required":["id","status","created_at"]},"CollectionWorkflowNotFoundResponseBody":{"title":"CollectionWorkflowNotFoundResponseBody","type":"object","properties":{"id":{"type":"integer","description":"Identifier of missing collection","example":16822297729379021847,"format":"int64"},"message":{"type":"string","description":"Message of error","example":"Autem a a odit architecto quisquam nisi."}},"description":"Collection not found","example":{"id":10870541205377463360,"message":"Autem et."},"required":["message","id"]},"CollectionWorkflowResponseBody":{"title":"Mediatype identifier: application/vnd.enduro.collection-workflow-status; view=default","type":"object","properties":{"history":{"$ref":"#/definitions/EnduroCollectionWorkflowHistoryResponseBodyCollection"},"status":{"type":"string","example":"Voluptatum necessitatibus non cum earum quis."}},"description":"WorkflowResponseBody result type (default view)","example":{"history":[{"details":"Consequatur aliquam excepturi dolores dolor magnam tempore.","id":14430854591777067962,"type":"Quo ut eveniet et rerum nemo corporis."},{"details":"Consequatur aliquam excepturi dolores dolor magnam tempore.","id":14430854591777067962,"type":"Quo ut eveniet et rerum nemo corporis."},{"details":"Consequatur aliquam excepturi dolores dolor magnam tempore.","id":14430854591777067962,"type":"Quo ut eveniet et rerum nemo corporis."},{"details":"Consequatur aliquam excepturi dolores dolor magnam tempore.","id":14430854591777067962,"type":"Quo ut eveniet et rerum nemo corporis."}],"status":"Aut omnis iusto modi quis distinctio."}},"EnduroCollectionWorkflowHistoryResponseBody":{"title":"Mediatype identifier: application/vnd.enduro.collection-workflow-history; view=default","type":"object","properties":{"details":{"type":"string","description":"Contents of the event","example":"Voluptatum quibusdam.","format":"binary"},"id":{"type":"integer","description":"Identifier of collection","example":3054458866920097073,"format":"int64"},"type":{"type":"string","description":"Type of the event","example":"Id quasi dolor veritatis voluptatem."}},"description":"WorkflowHistoryEvent describes a history event in Temporal. (default view)","example":{"details":"Est aut explicabo perferendis sunt quas.","id":5532165772958537512,"type":"Animi praesentium."}},"EnduroCollectionWorkflowHistoryResponseBodyCollection":{"title":"Mediatype identifier: application/vnd.enduro.collection-workflow-history; type=collection; view=default","type":"array","items":{"$ref":"#/definitions/EnduroCollectionWorkflowHistoryResponseBody"},"description":"EnduroCollection-Workflow-HistoryCollectionResponseBody is the result type for an array of EnduroCollection-Workflow-HistoryResponseBody (default view)","example":[{"details":"Consequatur aliquam excepturi dolores dolor magnam tempore.","id":14430854591777067962,"type":"Quo ut eveniet et rerum nemo corporis."},{"details":"Consequatur aliquam excepturi dolores dolor magnam tempore.","id":14430854591777067962,"type":"Quo ut eveniet et rerum nemo corporis."}]},"EnduroStoredCollectionResponseBody":{"title":"Mediatype identifier: application/vnd.enduro.stored-collection; view=default","type":"object","properties":{"aip_id":{"type":"string","description":"Identifier of Archivematica AIP","example":"74c831a8-1fd2-11ee-b6e1-7085c27bdeb0","format":"uuid"},"completed_at":{"type":"string","description":"Completion datetime","example":"1970-10-15T00:03:22Z","format":"date-time"},"created_at":{"type":"string","description":"Creation datetime","example":"2007-04-29T00:55:57Z","format":"date-time"},"id":{"type":"integer","description":"Identifier of collection","example":12195178451962438920,"format":"int64"},"name":{"type":"string","description":"Name of the collection","example":"At est excepturi dignissimos."},"original_id":{"type":"string","description":"Identifier provided by the client","example":"Quis iure."},"pipeline_id":{"type":"string","description":"Identifier of Archivematica pipeline","example":"74c833c0-1fd2-11ee-b6e1-7085c27bdeb0","format":"uuid"},"run_id":{"type":"string","description":"Identifier of latest processing workflow run","example":"74c82d7b-1fd2-11ee-b6e1-7085c27bdeb0","format":"uuid"},"started_at":{"type":"string","description":"Start datetime","example":"1978-05-27T01:41:50Z","format":"date-time"},"status":{"type":"string","description":"Status of the collection","default":"new","example":"done","enum":["new","in progress","done","error","unknown","queued","pending","abandoned"]},"transfer_id":{"type":"string","description":"Identifier of Archivematica transfer","example":"74c82fa7-1fd2-11ee-b6e1-7085c27bdeb0","format":"uuid"},"workflow_id":{"type":"string","description":"Identifier of processing workflow","example":"74c82b2f-1fd2-11ee-b6e1-7085c27bdeb0","format":"uuid"}},"description":"StoredCollection describes a collection retrieved by the service. (default view)","example":{"aip_id":"74c8414e-1fd2-11ee-b6e1-7085c27bdeb0","completed_at":"1977-12-10T11:31:25Z","created_at":"1999-04-24T03:56:53Z","id":10895205645452708913,"name":"Est voluptate quis sunt.","original_id":"Velit nisi dolorum inventore.","pipeline_id":"74c84309-1fd2-11ee-b6e1-7085c27bdeb0","run_id":"74c83d99-1fd2-11ee-b6e1-7085c27bdeb0","started_at":"1989-12-22T07:05:18Z","status":"in progress","transfer_id":"74c83f81-1fd2-11ee-b6e1-7085c27bdeb0","workflow_id":"74c83bc0-1fd2-11ee-b6e1-7085c27bdeb0"},"required":["id","status","created_at"]},"EnduroStoredCollectionResponseBodyCollection":{"title":"Mediatype identifier: application/vnd.enduro.stored-collection; type=collection; view=default","type":"array","items":{"$ref":"#/definitions/EnduroStoredCollectionResponseBody"},"description":"EnduroStored-CollectionCollectionResponseBody is the result type for an array of EnduroStored-CollectionResponseBody (default view)","example":[{"aip_id":"74c66505-1fd2-11ee-b6e1-7085c27bdeb0","completed_at":"1992-04-04T11:00:41Z","created_at":"2000-12-20T12:21:46Z","id":15454769769736078970,"name":"Sed tempore voluptatum quo pariatur.","original_id":"Nisi aliquid.","pipeline_id":"74c6668f-1fd2-11ee-b6e1-7085c27bdeb0","run_id":"74c66289-1fd2-11ee-b6e1-7085c27bdeb0","started_at":"2011-08-25T19:50:57Z","status":"unknown","transfer_id":"74c663d0-1fd2-11ee-b6e1-7085c27bdeb0","workflow_id":"74c660e1-1fd2-11ee-b6e1-7085c27bdeb0"},{"aip_id":"74c66505-1fd2-11ee-b6e1-7085c27bdeb0","completed_at":"1992-04-04T11:00:41Z","created_at":"2000-12-20T12:21:46Z","id":15454769769736078970,"name":"Sed tempore voluptatum quo pariatur.","original_id":"Nisi aliquid.","pipeline_id":"74c6668f-1fd2-11ee-b6e1-7085c27bdeb0","run_id":"74c66289-1fd2-11ee-b6e1-7085c27bdeb0","started_at":"2011-08-25T19:50:57Z","status":"unknown","transfer_id":"74c663d0-1fd2-11ee-b6e1-7085c27bdeb0","workflow_id":"74c660e1-1fd2-11ee-b6e1-7085c27bdeb0"},{"aip_id":"74c66505-1fd2-11ee-b6e1-7085c27bdeb0","completed_at":"1992-04-04T11:00:41Z","created_at":"2000-12-20T12:21:46Z","id":15454769769736078970,"name":"Sed tempore voluptatum quo pariatur.","original_id":"Nisi aliquid.","pipeline_id":"74c6668f-1fd2-11ee-b6e1-7085c27bdeb0","run_id":"74c66289-1fd2-11ee-b6e1-7085c27bdeb0","started_at":"2011-08-25T19:50:57Z","status":"unknown","transfer_id":"74c663d0-1fd2-11ee-b6e1-7085c27bdeb0","workflow_id":"74c660e1-1fd2-11ee-b6e1-7085c27bdeb0"},{"aip_id":"74c66505-1fd2-11ee-b6e1-7085c27bdeb0","completed_at":"1992-04-04T11:00:41Z","created_at":"2000-12-20T12:21:46Z","id":15454769769736078970,"name":"Sed tempore voluptatum quo pariatur.","original_id":"Nisi aliquid.","pipeline_id":"74c6668f-1fd2-11ee-b6e1-7085c27bdeb0","run_id":"74c66289-1fd2-11ee-b6e1-7085c27bdeb0","started_at":"2011-08-25T19:50:57Z","status":"unknown","transfer_id":"74c663d0-1fd2-11ee-b6e1-7085c27bdeb0","workflow_id":"74c660e1-1fd2-11ee-b6e1-7085c27bdeb0"}]},"EnduroStoredPipelineResponse":{"title":"Mediatype identifier: application/vnd.enduro.stored-pipeline; view=default","type":"object","properties":{"capacity":{"type":"integer","description":"Maximum concurrent transfers","example":5490808095495946983,"format":"int64"},"current":{"type":"integer","description":"Current transfers","example":5311713486168500071,"format":"int64"},"id":{"type":"string","description":"Identifier of the pipeline","example":"74c8ba37-1fd2-11ee-b6e1-7085c27bdeb0","format":"uuid"},"name":{"type":"string","description":"Name of the pipeline","example":"Excepturi iste aperiam laborum suscipit aut."},"status":{"type":"string","example":"Id quae et."}},"description":"StoredPipeline describes a pipeline retrieved by this service. (default view)","example":{"capacity":2222693760767986291,"current":2153194333007283248,"id":"74c8bbe9-1fd2-11ee-b6e1-7085c27bdeb0","name":"Aut consequatur eos provident.","status":"Ad ipsa."},"required":["name"]},"PipelineProcessingNotFoundResponseBody":{"title":"PipelineProcessingNotFoundResponseBody","type":"object","properties":{"id":{"type":"string","description":"Identifier of missing pipeline","example":"Id corrupti quia praesentium."},"message":{"type":"string","description":"Message of error","example":"Harum totam sit inventore impedit voluptates vel."}},"description":"Pipeline not found","example":{"id":"Sed distinctio qui non.","message":"Qui inventore hic voluptates eos."},"required":["message","id"]},"PipelineShowNotFoundResponseBody":{"title":"PipelineShowNotFoundResponseBody","type":"object","properties":{"id":{"type":"string","description":"Identifier of missing pipeline","example":"Molestiae animi et."},"message":{"type":"string","description":"Message of error","example":"Aut quibusdam et ut hic fuga sed."}},"description":"Pipeline not found","example":{"id":"Magnam est veritatis ut autem.","message":"Voluptatem animi est praesentium officiis."},"required":["message","id"]},"PipelineShowResponseBody":{"title":"Mediatype identifier: application/vnd.enduro.stored-pipeline; view=default","type":"object","properties":{"capacity":{"type":"integer","description":"Maximum concurrent transfers","example":393947975496952716,"format":"int64"},"current":{"type":"integer","description":"Current transfers","example":4131578484904641155,"format":"int64"},"id":{"type":"string","description":"Identifier of the pipeline","example":"74c8be2e-1fd2-11ee-b6e1-7085c27bdeb0","format":"uuid"},"name":{"type":"string","description":"Name of the pipeline","example":"Beatae dolorem."},"status":{"type":"string","example":"Velit illo nemo fugiat."}},"description":"ShowResponseBody result type (default view)","example":{"capacity":6664446055604236601,"current":7662943385375122421,"id":"74c8bfb6-1fd2-11ee-b6e1-7085c27bdeb0","name":"Molestiae esse consequatur reprehenderit animi veniam.","status":"Omnis ut tenetur dolorum."},"required":["name"]}}}
+{
+  "consumes": [
+    "application/json",
+    "application/xml",
+    "application/gob"
+  ],
+  "definitions": {
+    "BatchHintsResponseBody": {
+      "example": {
+        "completed_dirs": [
+          "abc123"
+        ]
+      },
+      "properties": {
+        "completed_dirs": {
+          "description": "A list of known values of completedDir used by existing watchers.",
+          "example": [
+            "abc123"
+          ],
+          "items": {
+            "example": "abc123",
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "title": "BatchHintsResponseBody",
+      "type": "object"
+    },
+    "BatchStatusResponseBody": {
+      "example": {
+        "run_id": "abc123",
+        "running": false,
+        "status": "abc123",
+        "workflow_id": "abc123"
+      },
+      "properties": {
+        "run_id": {
+          "example": "abc123",
+          "type": "string"
+        },
+        "running": {
+          "example": false,
+          "type": "boolean"
+        },
+        "status": {
+          "example": "abc123",
+          "type": "string"
+        },
+        "workflow_id": {
+          "example": "abc123",
+          "type": "string"
+        }
+      },
+      "required": [
+        "running"
+      ],
+      "title": "BatchStatusResponseBody",
+      "type": "object"
+    },
+    "BatchSubmitNotAvailableResponseBody": {
+      "description": "submit_not_available_response_body result type (default view)",
+      "example": {
+        "fault": false,
+        "id": "123abc",
+        "message": "parameter 'p' must be an integer",
+        "name": "bad_request",
+        "temporary": false,
+        "timeout": false
+      },
+      "properties": {
+        "fault": {
+          "description": "Is the error a server-side fault?",
+          "example": false,
+          "type": "boolean"
+        },
+        "id": {
+          "description": "ID is a unique identifier for this particular occurrence of the problem.",
+          "example": "123abc",
+          "type": "string"
+        },
+        "message": {
+          "description": "Message is a human-readable explanation specific to this occurrence of the problem.",
+          "example": "parameter 'p' must be an integer",
+          "type": "string"
+        },
+        "name": {
+          "description": "Name is the name of this class of errors.",
+          "example": "bad_request",
+          "type": "string"
+        },
+        "temporary": {
+          "description": "Is the error temporary?",
+          "example": false,
+          "type": "boolean"
+        },
+        "timeout": {
+          "description": "Is the error a timeout?",
+          "example": false,
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name",
+        "id",
+        "message",
+        "temporary",
+        "timeout",
+        "fault"
+      ],
+      "title": "Mediatype identifier: application/vnd.goa.error; view=default",
+      "type": "object"
+    },
+    "BatchSubmitNotValidResponseBody": {
+      "description": "submit_not_valid_response_body result type (default view)",
+      "example": {
+        "fault": false,
+        "id": "123abc",
+        "message": "parameter 'p' must be an integer",
+        "name": "bad_request",
+        "temporary": false,
+        "timeout": false
+      },
+      "properties": {
+        "fault": {
+          "description": "Is the error a server-side fault?",
+          "example": false,
+          "type": "boolean"
+        },
+        "id": {
+          "description": "ID is a unique identifier for this particular occurrence of the problem.",
+          "example": "123abc",
+          "type": "string"
+        },
+        "message": {
+          "description": "Message is a human-readable explanation specific to this occurrence of the problem.",
+          "example": "parameter 'p' must be an integer",
+          "type": "string"
+        },
+        "name": {
+          "description": "Name is the name of this class of errors.",
+          "example": "bad_request",
+          "type": "string"
+        },
+        "temporary": {
+          "description": "Is the error temporary?",
+          "example": false,
+          "type": "boolean"
+        },
+        "timeout": {
+          "description": "Is the error a timeout?",
+          "example": false,
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name",
+        "id",
+        "message",
+        "temporary",
+        "timeout",
+        "fault"
+      ],
+      "title": "Mediatype identifier: application/vnd.goa.error; view=default",
+      "type": "object"
+    },
+    "BatchSubmitRequestBody": {
+      "example": {
+        "completed_dir": "abc123",
+        "path": "abc123",
+        "pipeline": "abc123",
+        "processing_config": "abc123",
+        "retention_period": "abc123"
+      },
+      "properties": {
+        "completed_dir": {
+          "example": "abc123",
+          "type": "string"
+        },
+        "path": {
+          "example": "abc123",
+          "type": "string"
+        },
+        "pipeline": {
+          "example": "abc123",
+          "type": "string"
+        },
+        "processing_config": {
+          "example": "abc123",
+          "type": "string"
+        },
+        "retention_period": {
+          "example": "abc123",
+          "type": "string"
+        }
+      },
+      "required": [
+        "path"
+      ],
+      "title": "BatchSubmitRequestBody",
+      "type": "object"
+    },
+    "BatchSubmitResponseBody": {
+      "example": {
+        "run_id": "abc123",
+        "workflow_id": "abc123"
+      },
+      "properties": {
+        "run_id": {
+          "example": "abc123",
+          "type": "string"
+        },
+        "workflow_id": {
+          "example": "abc123",
+          "type": "string"
+        }
+      },
+      "required": [
+        "workflow_id",
+        "run_id"
+      ],
+      "title": "BatchSubmitResponseBody",
+      "type": "object"
+    },
+    "CollectionBulkNotAvailableResponseBody": {
+      "description": "bulk_not_available_response_body result type (default view)",
+      "example": {
+        "fault": false,
+        "id": "123abc",
+        "message": "parameter 'p' must be an integer",
+        "name": "bad_request",
+        "temporary": false,
+        "timeout": false
+      },
+      "properties": {
+        "fault": {
+          "description": "Is the error a server-side fault?",
+          "example": false,
+          "type": "boolean"
+        },
+        "id": {
+          "description": "ID is a unique identifier for this particular occurrence of the problem.",
+          "example": "123abc",
+          "type": "string"
+        },
+        "message": {
+          "description": "Message is a human-readable explanation specific to this occurrence of the problem.",
+          "example": "parameter 'p' must be an integer",
+          "type": "string"
+        },
+        "name": {
+          "description": "Name is the name of this class of errors.",
+          "example": "bad_request",
+          "type": "string"
+        },
+        "temporary": {
+          "description": "Is the error temporary?",
+          "example": false,
+          "type": "boolean"
+        },
+        "timeout": {
+          "description": "Is the error a timeout?",
+          "example": false,
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name",
+        "id",
+        "message",
+        "temporary",
+        "timeout",
+        "fault"
+      ],
+      "title": "Mediatype identifier: application/vnd.goa.error; view=default",
+      "type": "object"
+    },
+    "CollectionBulkNotValidResponseBody": {
+      "description": "bulk_not_valid_response_body result type (default view)",
+      "example": {
+        "fault": false,
+        "id": "123abc",
+        "message": "parameter 'p' must be an integer",
+        "name": "bad_request",
+        "temporary": false,
+        "timeout": false
+      },
+      "properties": {
+        "fault": {
+          "description": "Is the error a server-side fault?",
+          "example": false,
+          "type": "boolean"
+        },
+        "id": {
+          "description": "ID is a unique identifier for this particular occurrence of the problem.",
+          "example": "123abc",
+          "type": "string"
+        },
+        "message": {
+          "description": "Message is a human-readable explanation specific to this occurrence of the problem.",
+          "example": "parameter 'p' must be an integer",
+          "type": "string"
+        },
+        "name": {
+          "description": "Name is the name of this class of errors.",
+          "example": "bad_request",
+          "type": "string"
+        },
+        "temporary": {
+          "description": "Is the error temporary?",
+          "example": false,
+          "type": "boolean"
+        },
+        "timeout": {
+          "description": "Is the error a timeout?",
+          "example": false,
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name",
+        "id",
+        "message",
+        "temporary",
+        "timeout",
+        "fault"
+      ],
+      "title": "Mediatype identifier: application/vnd.goa.error; view=default",
+      "type": "object"
+    },
+    "CollectionBulkRequestBody": {
+      "example": {
+        "operation": "cancel",
+        "size": 1,
+        "status": "in progress"
+      },
+      "properties": {
+        "operation": {
+          "enum": [
+            "retry",
+            "cancel",
+            "abandon"
+          ],
+          "example": "cancel",
+          "type": "string"
+        },
+        "size": {
+          "default": 100,
+          "example": 1,
+          "format": "int64",
+          "type": "integer"
+        },
+        "status": {
+          "enum": [
+            "new",
+            "in progress",
+            "done",
+            "error",
+            "unknown",
+            "queued",
+            "pending",
+            "abandoned"
+          ],
+          "example": "in progress",
+          "type": "string"
+        }
+      },
+      "required": [
+        "operation",
+        "status"
+      ],
+      "title": "CollectionBulkRequestBody",
+      "type": "object"
+    },
+    "CollectionBulkResponseBody": {
+      "example": {
+        "run_id": "abc123",
+        "workflow_id": "abc123"
+      },
+      "properties": {
+        "run_id": {
+          "example": "abc123",
+          "type": "string"
+        },
+        "workflow_id": {
+          "example": "abc123",
+          "type": "string"
+        }
+      },
+      "required": [
+        "workflow_id",
+        "run_id"
+      ],
+      "title": "CollectionBulkResponseBody",
+      "type": "object"
+    },
+    "CollectionBulkStatusResponseBody": {
+      "example": {
+        "closed_at": "1970-01-01T00:00:01Z",
+        "run_id": "abc123",
+        "running": false,
+        "started_at": "1970-01-01T00:00:01Z",
+        "status": "abc123",
+        "workflow_id": "abc123"
+      },
+      "properties": {
+        "closed_at": {
+          "example": "1970-01-01T00:00:01Z",
+          "format": "date-time",
+          "type": "string"
+        },
+        "run_id": {
+          "example": "abc123",
+          "type": "string"
+        },
+        "running": {
+          "example": false,
+          "type": "boolean"
+        },
+        "started_at": {
+          "example": "1970-01-01T00:00:01Z",
+          "format": "date-time",
+          "type": "string"
+        },
+        "status": {
+          "example": "abc123",
+          "type": "string"
+        },
+        "workflow_id": {
+          "example": "abc123",
+          "type": "string"
+        }
+      },
+      "required": [
+        "running"
+      ],
+      "title": "CollectionBulkStatusResponseBody",
+      "type": "object"
+    },
+    "CollectionCancelNotFoundResponseBody": {
+      "description": "Collection not found",
+      "example": {
+        "id": 1,
+        "message": "abc123"
+      },
+      "properties": {
+        "id": {
+          "description": "Identifier of missing collection",
+          "example": 1,
+          "format": "int64",
+          "type": "integer"
+        },
+        "message": {
+          "description": "Message of error",
+          "example": "abc123",
+          "type": "string"
+        }
+      },
+      "required": [
+        "message",
+        "id"
+      ],
+      "title": "CollectionCancelNotFoundResponseBody",
+      "type": "object"
+    },
+    "CollectionCancelNotRunningResponseBody": {
+      "description": "cancel_not_running_response_body result type (default view)",
+      "example": {
+        "fault": false,
+        "id": "123abc",
+        "message": "parameter 'p' must be an integer",
+        "name": "bad_request",
+        "temporary": false,
+        "timeout": false
+      },
+      "properties": {
+        "fault": {
+          "description": "Is the error a server-side fault?",
+          "example": false,
+          "type": "boolean"
+        },
+        "id": {
+          "description": "ID is a unique identifier for this particular occurrence of the problem.",
+          "example": "123abc",
+          "type": "string"
+        },
+        "message": {
+          "description": "Message is a human-readable explanation specific to this occurrence of the problem.",
+          "example": "parameter 'p' must be an integer",
+          "type": "string"
+        },
+        "name": {
+          "description": "Name is the name of this class of errors.",
+          "example": "bad_request",
+          "type": "string"
+        },
+        "temporary": {
+          "description": "Is the error temporary?",
+          "example": false,
+          "type": "boolean"
+        },
+        "timeout": {
+          "description": "Is the error a timeout?",
+          "example": false,
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name",
+        "id",
+        "message",
+        "temporary",
+        "timeout",
+        "fault"
+      ],
+      "title": "Mediatype identifier: application/vnd.goa.error; view=default",
+      "type": "object"
+    },
+    "CollectionDecideNotFoundResponseBody": {
+      "description": "Collection not found",
+      "example": {
+        "id": 1,
+        "message": "abc123"
+      },
+      "properties": {
+        "id": {
+          "description": "Identifier of missing collection",
+          "example": 1,
+          "format": "int64",
+          "type": "integer"
+        },
+        "message": {
+          "description": "Message of error",
+          "example": "abc123",
+          "type": "string"
+        }
+      },
+      "required": [
+        "message",
+        "id"
+      ],
+      "title": "CollectionDecideNotFoundResponseBody",
+      "type": "object"
+    },
+    "CollectionDecideNotValidResponseBody": {
+      "description": "decide_not_valid_response_body result type (default view)",
+      "example": {
+        "fault": false,
+        "id": "123abc",
+        "message": "parameter 'p' must be an integer",
+        "name": "bad_request",
+        "temporary": false,
+        "timeout": false
+      },
+      "properties": {
+        "fault": {
+          "description": "Is the error a server-side fault?",
+          "example": false,
+          "type": "boolean"
+        },
+        "id": {
+          "description": "ID is a unique identifier for this particular occurrence of the problem.",
+          "example": "123abc",
+          "type": "string"
+        },
+        "message": {
+          "description": "Message is a human-readable explanation specific to this occurrence of the problem.",
+          "example": "parameter 'p' must be an integer",
+          "type": "string"
+        },
+        "name": {
+          "description": "Name is the name of this class of errors.",
+          "example": "bad_request",
+          "type": "string"
+        },
+        "temporary": {
+          "description": "Is the error temporary?",
+          "example": false,
+          "type": "boolean"
+        },
+        "timeout": {
+          "description": "Is the error a timeout?",
+          "example": false,
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name",
+        "id",
+        "message",
+        "temporary",
+        "timeout",
+        "fault"
+      ],
+      "title": "Mediatype identifier: application/vnd.goa.error; view=default",
+      "type": "object"
+    },
+    "CollectionDeleteNotFoundResponseBody": {
+      "description": "Collection not found",
+      "example": {
+        "id": 1,
+        "message": "abc123"
+      },
+      "properties": {
+        "id": {
+          "description": "Identifier of missing collection",
+          "example": 1,
+          "format": "int64",
+          "type": "integer"
+        },
+        "message": {
+          "description": "Message of error",
+          "example": "abc123",
+          "type": "string"
+        }
+      },
+      "required": [
+        "message",
+        "id"
+      ],
+      "title": "CollectionDeleteNotFoundResponseBody",
+      "type": "object"
+    },
+    "CollectionDownloadNotFoundResponseBody": {
+      "description": "Collection not found",
+      "example": {
+        "id": 1,
+        "message": "abc123"
+      },
+      "properties": {
+        "id": {
+          "description": "Identifier of missing collection",
+          "example": 1,
+          "format": "int64",
+          "type": "integer"
+        },
+        "message": {
+          "description": "Message of error",
+          "example": "abc123",
+          "type": "string"
+        }
+      },
+      "required": [
+        "message",
+        "id"
+      ],
+      "title": "CollectionDownloadNotFoundResponseBody",
+      "type": "object"
+    },
+    "CollectionListResponseBody": {
+      "example": {
+        "items": [
+          {
+            "aip_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
+            "completed_at": "1970-01-01T00:00:01Z",
+            "created_at": "1970-01-01T00:00:01Z",
+            "id": 1,
+            "name": "abc123",
+            "original_id": "abc123",
+            "pipeline_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
+            "run_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
+            "started_at": "1970-01-01T00:00:01Z",
+            "status": "in progress",
+            "transfer_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
+            "workflow_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5"
+          }
+        ],
+        "next_cursor": "abc123"
+      },
+      "properties": {
+        "items": {
+          "$ref": "#/definitions/EnduroStoredCollectionResponseBodyCollection"
+        },
+        "next_cursor": {
+          "example": "abc123",
+          "type": "string"
+        }
+      },
+      "required": [
+        "items"
+      ],
+      "title": "CollectionListResponseBody",
+      "type": "object"
+    },
+    "CollectionMonitorResponseBody": {
+      "description": "MonitorResponseBody result type (default view)",
+      "example": {
+        "id": 1,
+        "item": {
+          "aip_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
+          "completed_at": "1970-01-01T00:00:01Z",
+          "created_at": "1970-01-01T00:00:01Z",
+          "id": 1,
+          "name": "abc123",
+          "original_id": "abc123",
+          "pipeline_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
+          "run_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
+          "started_at": "1970-01-01T00:00:01Z",
+          "status": "in progress",
+          "transfer_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
+          "workflow_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5"
+        },
+        "type": "abc123"
+      },
+      "properties": {
+        "id": {
+          "description": "Identifier of collection",
+          "example": 1,
+          "format": "int64",
+          "type": "integer"
+        },
+        "item": {
+          "$ref": "#/definitions/EnduroStoredCollectionResponseBody"
+        },
+        "type": {
+          "description": "Type of the event",
+          "example": "abc123",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "type"
+      ],
+      "title": "Mediatype identifier: application/vnd.enduro.monitor-update; view=default",
+      "type": "object"
+    },
+    "CollectionRetryNotFoundResponseBody": {
+      "description": "Collection not found",
+      "example": {
+        "id": 1,
+        "message": "abc123"
+      },
+      "properties": {
+        "id": {
+          "description": "Identifier of missing collection",
+          "example": 1,
+          "format": "int64",
+          "type": "integer"
+        },
+        "message": {
+          "description": "Message of error",
+          "example": "abc123",
+          "type": "string"
+        }
+      },
+      "required": [
+        "message",
+        "id"
+      ],
+      "title": "CollectionRetryNotFoundResponseBody",
+      "type": "object"
+    },
+    "CollectionRetryNotRunningResponseBody": {
+      "description": "retry_not_running_response_body result type (default view)",
+      "example": {
+        "fault": false,
+        "id": "123abc",
+        "message": "parameter 'p' must be an integer",
+        "name": "bad_request",
+        "temporary": false,
+        "timeout": false
+      },
+      "properties": {
+        "fault": {
+          "description": "Is the error a server-side fault?",
+          "example": false,
+          "type": "boolean"
+        },
+        "id": {
+          "description": "ID is a unique identifier for this particular occurrence of the problem.",
+          "example": "123abc",
+          "type": "string"
+        },
+        "message": {
+          "description": "Message is a human-readable explanation specific to this occurrence of the problem.",
+          "example": "parameter 'p' must be an integer",
+          "type": "string"
+        },
+        "name": {
+          "description": "Name is the name of this class of errors.",
+          "example": "bad_request",
+          "type": "string"
+        },
+        "temporary": {
+          "description": "Is the error temporary?",
+          "example": false,
+          "type": "boolean"
+        },
+        "timeout": {
+          "description": "Is the error a timeout?",
+          "example": false,
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name",
+        "id",
+        "message",
+        "temporary",
+        "timeout",
+        "fault"
+      ],
+      "title": "Mediatype identifier: application/vnd.goa.error; view=default",
+      "type": "object"
+    },
+    "CollectionShowNotFoundResponseBody": {
+      "description": "Collection not found",
+      "example": {
+        "id": 1,
+        "message": "abc123"
+      },
+      "properties": {
+        "id": {
+          "description": "Identifier of missing collection",
+          "example": 1,
+          "format": "int64",
+          "type": "integer"
+        },
+        "message": {
+          "description": "Message of error",
+          "example": "abc123",
+          "type": "string"
+        }
+      },
+      "required": [
+        "message",
+        "id"
+      ],
+      "title": "CollectionShowNotFoundResponseBody",
+      "type": "object"
+    },
+    "CollectionShowResponseBody": {
+      "description": "ShowResponseBody result type (default view)",
+      "example": {
+        "aip_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
+        "completed_at": "1970-01-01T00:00:01Z",
+        "created_at": "1970-01-01T00:00:01Z",
+        "id": 1,
+        "name": "abc123",
+        "original_id": "abc123",
+        "pipeline_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
+        "run_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
+        "started_at": "1970-01-01T00:00:01Z",
+        "status": "in progress",
+        "transfer_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
+        "workflow_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5"
+      },
+      "properties": {
+        "aip_id": {
+          "description": "Identifier of Archivematica AIP",
+          "example": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
+          "format": "uuid",
+          "type": "string"
+        },
+        "completed_at": {
+          "description": "Completion datetime",
+          "example": "1970-01-01T00:00:01Z",
+          "format": "date-time",
+          "type": "string"
+        },
+        "created_at": {
+          "description": "Creation datetime",
+          "example": "1970-01-01T00:00:01Z",
+          "format": "date-time",
+          "type": "string"
+        },
+        "id": {
+          "description": "Identifier of collection",
+          "example": 1,
+          "format": "int64",
+          "type": "integer"
+        },
+        "name": {
+          "description": "Name of the collection",
+          "example": "abc123",
+          "type": "string"
+        },
+        "original_id": {
+          "description": "Identifier provided by the client",
+          "example": "abc123",
+          "type": "string"
+        },
+        "pipeline_id": {
+          "description": "Identifier of Archivematica pipeline",
+          "example": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
+          "format": "uuid",
+          "type": "string"
+        },
+        "run_id": {
+          "description": "Identifier of latest processing workflow run",
+          "example": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
+          "format": "uuid",
+          "type": "string"
+        },
+        "started_at": {
+          "description": "Start datetime",
+          "example": "1970-01-01T00:00:01Z",
+          "format": "date-time",
+          "type": "string"
+        },
+        "status": {
+          "default": "new",
+          "description": "Status of the collection",
+          "enum": [
+            "new",
+            "in progress",
+            "done",
+            "error",
+            "unknown",
+            "queued",
+            "pending",
+            "abandoned"
+          ],
+          "example": "in progress",
+          "type": "string"
+        },
+        "transfer_id": {
+          "description": "Identifier of Archivematica tranfser",
+          "example": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
+          "format": "uuid",
+          "type": "string"
+        },
+        "workflow_id": {
+          "description": "Identifier of processing workflow",
+          "example": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
+          "format": "uuid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "status",
+        "created_at"
+      ],
+      "title": "Mediatype identifier: application/vnd.enduro.stored-collection; view=default",
+      "type": "object"
+    },
+    "CollectionWorkflowNotFoundResponseBody": {
+      "description": "Collection not found",
+      "example": {
+        "id": 1,
+        "message": "abc123"
+      },
+      "properties": {
+        "id": {
+          "description": "Identifier of missing collection",
+          "example": 1,
+          "format": "int64",
+          "type": "integer"
+        },
+        "message": {
+          "description": "Message of error",
+          "example": "abc123",
+          "type": "string"
+        }
+      },
+      "required": [
+        "message",
+        "id"
+      ],
+      "title": "CollectionWorkflowNotFoundResponseBody",
+      "type": "object"
+    },
+    "CollectionWorkflowResponseBody": {
+      "description": "WorkflowResponseBody result type (default view)",
+      "example": {
+        "history": [
+          {
+            "details": "abc123",
+            "id": 1,
+            "type": "abc123"
+          }
+        ],
+        "status": "abc123"
+      },
+      "properties": {
+        "history": {
+          "$ref": "#/definitions/EnduroCollectionWorkflowHistoryResponseBodyCollection"
+        },
+        "status": {
+          "example": "abc123",
+          "type": "string"
+        }
+      },
+      "title": "Mediatype identifier: application/vnd.enduro.collection-workflow-status; view=default",
+      "type": "object"
+    },
+    "EnduroCollectionWorkflowHistoryResponseBody": {
+      "description": "WorkflowHistoryEvent describes a history event in Temporal. (default view)",
+      "example": {
+        "details": "abc123",
+        "id": 1,
+        "type": "abc123"
+      },
+      "properties": {
+        "details": {
+          "description": "Contents of the event",
+          "example": "abc123",
+          "format": "binary",
+          "type": "string"
+        },
+        "id": {
+          "description": "Identifier of collection",
+          "example": 1,
+          "format": "int64",
+          "type": "integer"
+        },
+        "type": {
+          "description": "Type of the event",
+          "example": "abc123",
+          "type": "string"
+        }
+      },
+      "title": "Mediatype identifier: application/vnd.enduro.collection-workflow-history; view=default",
+      "type": "object"
+    },
+    "EnduroCollectionWorkflowHistoryResponseBodyCollection": {
+      "description": "EnduroCollection-Workflow-HistoryCollectionResponseBody is the result type for an array of EnduroCollection-Workflow-HistoryResponseBody (default view)",
+      "example": [
+        {
+          "details": "abc123",
+          "id": 1,
+          "type": "abc123"
+        }
+      ],
+      "items": {
+        "$ref": "#/definitions/EnduroCollectionWorkflowHistoryResponseBody"
+      },
+      "title": "Mediatype identifier: application/vnd.enduro.collection-workflow-history; type=collection; view=default",
+      "type": "array"
+    },
+    "EnduroStoredCollectionResponseBody": {
+      "description": "StoredCollection describes a collection retrieved by the service. (default view)",
+      "example": {
+        "aip_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
+        "completed_at": "1970-01-01T00:00:01Z",
+        "created_at": "1970-01-01T00:00:01Z",
+        "id": 1,
+        "name": "abc123",
+        "original_id": "abc123",
+        "pipeline_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
+        "run_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
+        "started_at": "1970-01-01T00:00:01Z",
+        "status": "in progress",
+        "transfer_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
+        "workflow_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5"
+      },
+      "properties": {
+        "aip_id": {
+          "description": "Identifier of Archivematica AIP",
+          "example": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
+          "format": "uuid",
+          "type": "string"
+        },
+        "completed_at": {
+          "description": "Completion datetime",
+          "example": "1970-01-01T00:00:01Z",
+          "format": "date-time",
+          "type": "string"
+        },
+        "created_at": {
+          "description": "Creation datetime",
+          "example": "1970-01-01T00:00:01Z",
+          "format": "date-time",
+          "type": "string"
+        },
+        "id": {
+          "description": "Identifier of collection",
+          "example": 1,
+          "format": "int64",
+          "type": "integer"
+        },
+        "name": {
+          "description": "Name of the collection",
+          "example": "abc123",
+          "type": "string"
+        },
+        "original_id": {
+          "description": "Identifier provided by the client",
+          "example": "abc123",
+          "type": "string"
+        },
+        "pipeline_id": {
+          "description": "Identifier of Archivematica pipeline",
+          "example": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
+          "format": "uuid",
+          "type": "string"
+        },
+        "run_id": {
+          "description": "Identifier of latest processing workflow run",
+          "example": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
+          "format": "uuid",
+          "type": "string"
+        },
+        "started_at": {
+          "description": "Start datetime",
+          "example": "1970-01-01T00:00:01Z",
+          "format": "date-time",
+          "type": "string"
+        },
+        "status": {
+          "default": "new",
+          "description": "Status of the collection",
+          "enum": [
+            "new",
+            "in progress",
+            "done",
+            "error",
+            "unknown",
+            "queued",
+            "pending",
+            "abandoned"
+          ],
+          "example": "in progress",
+          "type": "string"
+        },
+        "transfer_id": {
+          "description": "Identifier of Archivematica tranfser",
+          "example": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
+          "format": "uuid",
+          "type": "string"
+        },
+        "workflow_id": {
+          "description": "Identifier of processing workflow",
+          "example": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
+          "format": "uuid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "status",
+        "created_at"
+      ],
+      "title": "Mediatype identifier: application/vnd.enduro.stored-collection; view=default",
+      "type": "object"
+    },
+    "EnduroStoredCollectionResponseBodyCollection": {
+      "description": "EnduroStored-CollectionCollectionResponseBody is the result type for an array of EnduroStored-CollectionResponseBody (default view)",
+      "example": [
+        {
+          "aip_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
+          "completed_at": "1970-01-01T00:00:01Z",
+          "created_at": "1970-01-01T00:00:01Z",
+          "id": 1,
+          "name": "abc123",
+          "original_id": "abc123",
+          "pipeline_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
+          "run_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
+          "started_at": "1970-01-01T00:00:01Z",
+          "status": "in progress",
+          "transfer_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
+          "workflow_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5"
+        }
+      ],
+      "items": {
+        "$ref": "#/definitions/EnduroStoredCollectionResponseBody"
+      },
+      "title": "Mediatype identifier: application/vnd.enduro.stored-collection; type=collection; view=default",
+      "type": "array"
+    },
+    "EnduroStoredPipelineResponse": {
+      "description": "StoredPipeline describes a pipeline retrieved by this service. (default view)",
+      "example": {
+        "capacity": 1,
+        "current": 1,
+        "id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
+        "name": "abc123",
+        "status": "abc123"
+      },
+      "properties": {
+        "capacity": {
+          "description": "Maximum concurrent transfers",
+          "example": 1,
+          "format": "int64",
+          "type": "integer"
+        },
+        "current": {
+          "description": "Current transfers",
+          "example": 1,
+          "format": "int64",
+          "type": "integer"
+        },
+        "id": {
+          "description": "Identifier of pipeline",
+          "example": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
+          "format": "uuid",
+          "type": "string"
+        },
+        "name": {
+          "description": "Name of the pipeline",
+          "example": "abc123",
+          "type": "string"
+        },
+        "status": {
+          "example": "abc123",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "Mediatype identifier: application/vnd.enduro.stored-pipeline; view=default",
+      "type": "object"
+    },
+    "PipelineProcessingNotFoundResponseBody": {
+      "description": "Pipeline not found",
+      "example": {
+        "id": "abc123",
+        "message": "abc123"
+      },
+      "properties": {
+        "id": {
+          "description": "Identifier of missing pipeline",
+          "example": "abc123",
+          "type": "string"
+        },
+        "message": {
+          "description": "Message of error",
+          "example": "abc123",
+          "type": "string"
+        }
+      },
+      "required": [
+        "message",
+        "id"
+      ],
+      "title": "PipelineProcessingNotFoundResponseBody",
+      "type": "object"
+    },
+    "PipelineShowNotFoundResponseBody": {
+      "description": "Pipeline not found",
+      "example": {
+        "id": "abc123",
+        "message": "abc123"
+      },
+      "properties": {
+        "id": {
+          "description": "Identifier of missing pipeline",
+          "example": "abc123",
+          "type": "string"
+        },
+        "message": {
+          "description": "Message of error",
+          "example": "abc123",
+          "type": "string"
+        }
+      },
+      "required": [
+        "message",
+        "id"
+      ],
+      "title": "PipelineShowNotFoundResponseBody",
+      "type": "object"
+    },
+    "PipelineShowResponseBody": {
+      "description": "ShowResponseBody result type (default view)",
+      "example": {
+        "capacity": 1,
+        "current": 1,
+        "id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
+        "name": "abc123",
+        "status": "abc123"
+      },
+      "properties": {
+        "capacity": {
+          "description": "Maximum concurrent transfers",
+          "example": 1,
+          "format": "int64",
+          "type": "integer"
+        },
+        "current": {
+          "description": "Current transfers",
+          "example": 1,
+          "format": "int64",
+          "type": "integer"
+        },
+        "id": {
+          "description": "Identifier of pipeline",
+          "example": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
+          "format": "uuid",
+          "type": "string"
+        },
+        "name": {
+          "description": "Name of the pipeline",
+          "example": "abc123",
+          "type": "string"
+        },
+        "status": {
+          "example": "abc123",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "Mediatype identifier: application/vnd.enduro.stored-pipeline; view=default",
+      "type": "object"
+    }
+  },
+  "host": "localhost:9000",
+  "info": {
+    "title": "Enduro API",
+    "version": ""
+  },
+  "paths": {
+    "/batch": {
+      "get": {
+        "description": "Retrieve status of current batch operation.",
+        "operationId": "batch#status",
+        "responses": {
+          "200": {
+            "description": "OK response.",
+            "schema": {
+              "$ref": "#/definitions/BatchStatusResponseBody",
+              "required": [
+                "running"
+              ]
+            }
+          }
+        },
+        "schemes": [
+          "http"
+        ],
+        "summary": "status batch",
+        "tags": [
+          "batch"
+        ]
+      },
+      "post": {
+        "description": "Submit a new batch",
+        "operationId": "batch#submit",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "SubmitRequestBody",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/BatchSubmitRequestBody",
+              "required": [
+                "path"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Accepted response.",
+            "schema": {
+              "$ref": "#/definitions/BatchSubmitResponseBody",
+              "required": [
+                "workflow_id",
+                "run_id"
+              ]
+            }
+          },
+          "400": {
+            "description": "Bad Request response.",
+            "schema": {
+              "$ref": "#/definitions/BatchSubmitNotValidResponseBody"
+            }
+          },
+          "409": {
+            "description": "Conflict response.",
+            "schema": {
+              "$ref": "#/definitions/BatchSubmitNotAvailableResponseBody"
+            }
+          }
+        },
+        "schemes": [
+          "http"
+        ],
+        "summary": "submit batch",
+        "tags": [
+          "batch"
+        ]
+      }
+    },
+    "/batch/hints": {
+      "get": {
+        "description": "Retrieve form hints",
+        "operationId": "batch#hints",
+        "responses": {
+          "200": {
+            "description": "OK response.",
+            "schema": {
+              "$ref": "#/definitions/BatchHintsResponseBody"
+            }
+          }
+        },
+        "schemes": [
+          "http"
+        ],
+        "summary": "hints batch",
+        "tags": [
+          "batch"
+        ]
+      }
+    },
+    "/collection": {
+      "get": {
+        "description": "List all stored collections",
+        "operationId": "collection#list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "name",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "original_id",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "description": "Identifier of Archivematica tranfser",
+            "format": "uuid",
+            "in": "query",
+            "name": "transfer_id",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "description": "Identifier of Archivematica AIP",
+            "format": "uuid",
+            "in": "query",
+            "name": "aip_id",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "description": "Identifier of Archivematica pipeline",
+            "format": "uuid",
+            "in": "query",
+            "name": "pipeline_id",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "format": "date-time",
+            "in": "query",
+            "name": "earliest_created_time",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "format": "date-time",
+            "in": "query",
+            "name": "latest_created_time",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "enum": [
+              "new",
+              "in progress",
+              "done",
+              "error",
+              "unknown",
+              "queued",
+              "pending",
+              "abandoned"
+            ],
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "description": "Pagination cursor",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK response.",
+            "schema": {
+              "$ref": "#/definitions/CollectionListResponseBody",
+              "required": [
+                "items"
+              ]
+            }
+          }
+        },
+        "schemes": [
+          "http"
+        ],
+        "summary": "list collection",
+        "tags": [
+          "collection"
+        ]
+      }
+    },
+    "/collection/bulk": {
+      "get": {
+        "description": "Retrieve status of current bulk operation.",
+        "operationId": "collection#bulk_status",
+        "responses": {
+          "200": {
+            "description": "OK response.",
+            "schema": {
+              "$ref": "#/definitions/CollectionBulkStatusResponseBody",
+              "required": [
+                "running"
+              ]
+            }
+          }
+        },
+        "schemes": [
+          "http"
+        ],
+        "summary": "bulk_status collection",
+        "tags": [
+          "collection"
+        ]
+      },
+      "post": {
+        "description": "Bulk operations (retry, cancel...).",
+        "operationId": "collection#bulk",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "BulkRequestBody",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CollectionBulkRequestBody",
+              "required": [
+                "operation",
+                "status"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Accepted response.",
+            "schema": {
+              "$ref": "#/definitions/CollectionBulkResponseBody",
+              "required": [
+                "workflow_id",
+                "run_id"
+              ]
+            }
+          },
+          "400": {
+            "description": "Bad Request response.",
+            "schema": {
+              "$ref": "#/definitions/CollectionBulkNotValidResponseBody"
+            }
+          },
+          "409": {
+            "description": "Conflict response.",
+            "schema": {
+              "$ref": "#/definitions/CollectionBulkNotAvailableResponseBody"
+            }
+          }
+        },
+        "schemes": [
+          "http"
+        ],
+        "summary": "bulk collection",
+        "tags": [
+          "collection"
+        ]
+      }
+    },
+    "/collection/monitor": {
+      "get": {
+        "operationId": "collection#monitor",
+        "responses": {
+          "101": {
+            "description": "Switching Protocols response.",
+            "schema": {
+              "$ref": "#/definitions/CollectionMonitorResponseBody"
+            }
+          }
+        },
+        "schemes": [
+          "ws"
+        ],
+        "summary": "monitor collection",
+        "tags": [
+          "collection"
+        ]
+      }
+    },
+    "/collection/{id}": {
+      "delete": {
+        "description": "Delete collection by ID",
+        "operationId": "collection#delete",
+        "parameters": [
+          {
+            "description": "Identifier of collection to delete",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content response."
+          },
+          "404": {
+            "description": "Not Found response.",
+            "schema": {
+              "$ref": "#/definitions/CollectionDeleteNotFoundResponseBody",
+              "required": [
+                "message",
+                "id"
+              ]
+            }
+          }
+        },
+        "schemes": [
+          "http"
+        ],
+        "summary": "delete collection",
+        "tags": [
+          "collection"
+        ]
+      },
+      "get": {
+        "description": "Show collection by ID",
+        "operationId": "collection#show",
+        "parameters": [
+          {
+            "description": "Identifier of collection to show",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK response.",
+            "schema": {
+              "$ref": "#/definitions/CollectionShowResponseBody"
+            }
+          },
+          "404": {
+            "description": "Not Found response.",
+            "schema": {
+              "$ref": "#/definitions/CollectionShowNotFoundResponseBody",
+              "required": [
+                "message",
+                "id"
+              ]
+            }
+          }
+        },
+        "schemes": [
+          "http"
+        ],
+        "summary": "show collection",
+        "tags": [
+          "collection"
+        ]
+      }
+    },
+    "/collection/{id}/cancel": {
+      "post": {
+        "description": "Cancel collection processing by ID",
+        "operationId": "collection#cancel",
+        "parameters": [
+          {
+            "description": "Identifier of collection to remove",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK response."
+          },
+          "400": {
+            "description": "Bad Request response.",
+            "schema": {
+              "$ref": "#/definitions/CollectionCancelNotRunningResponseBody"
+            }
+          },
+          "404": {
+            "description": "Not Found response.",
+            "schema": {
+              "$ref": "#/definitions/CollectionCancelNotFoundResponseBody",
+              "required": [
+                "message",
+                "id"
+              ]
+            }
+          }
+        },
+        "schemes": [
+          "http"
+        ],
+        "summary": "cancel collection",
+        "tags": [
+          "collection"
+        ]
+      }
+    },
+    "/collection/{id}/decision": {
+      "post": {
+        "description": "Make decision for a pending collection by ID",
+        "operationId": "collection#decide",
+        "parameters": [
+          {
+            "description": "Identifier of collection to look up",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "in": "body",
+            "name": "object",
+            "required": true,
+            "schema": {
+              "properties": {
+                "option": {
+                  "description": "Decision option to proceed with",
+                  "example": "abc123",
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK response."
+          },
+          "400": {
+            "description": "Bad Request response.",
+            "schema": {
+              "$ref": "#/definitions/CollectionDecideNotValidResponseBody"
+            }
+          },
+          "404": {
+            "description": "Not Found response.",
+            "schema": {
+              "$ref": "#/definitions/CollectionDecideNotFoundResponseBody",
+              "required": [
+                "message",
+                "id"
+              ]
+            }
+          }
+        },
+        "schemes": [
+          "http"
+        ],
+        "summary": "decide collection",
+        "tags": [
+          "collection"
+        ]
+      }
+    },
+    "/collection/{id}/download": {
+      "get": {
+        "description": "Download collection by ID",
+        "operationId": "collection#download",
+        "parameters": [
+          {
+            "description": "Identifier of collection to look up",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK response.",
+            "headers": {
+              "Content-Disposition": {
+                "type": "string"
+              },
+              "Content-Length": {
+                "type": "int64"
+              },
+              "Content-Type": {
+                "type": "string"
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found response.",
+            "schema": {
+              "$ref": "#/definitions/CollectionDownloadNotFoundResponseBody",
+              "required": [
+                "message",
+                "id"
+              ]
+            }
+          }
+        },
+        "schemes": [
+          "http"
+        ],
+        "summary": "download collection",
+        "tags": [
+          "collection"
+        ]
+      }
+    },
+    "/collection/{id}/retry": {
+      "post": {
+        "description": "Retry collection processing by ID",
+        "operationId": "collection#retry",
+        "parameters": [
+          {
+            "description": "Identifier of collection to retry",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK response."
+          },
+          "400": {
+            "description": "Bad Request response.",
+            "schema": {
+              "$ref": "#/definitions/CollectionRetryNotRunningResponseBody"
+            }
+          },
+          "404": {
+            "description": "Not Found response.",
+            "schema": {
+              "$ref": "#/definitions/CollectionRetryNotFoundResponseBody",
+              "required": [
+                "message",
+                "id"
+              ]
+            }
+          }
+        },
+        "schemes": [
+          "http"
+        ],
+        "summary": "retry collection",
+        "tags": [
+          "collection"
+        ]
+      }
+    },
+    "/collection/{id}/workflow": {
+      "get": {
+        "description": "Retrieve workflow status by ID",
+        "operationId": "collection#workflow",
+        "parameters": [
+          {
+            "description": "Identifier of collection to look up",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK response.",
+            "schema": {
+              "$ref": "#/definitions/CollectionWorkflowResponseBody"
+            }
+          },
+          "404": {
+            "description": "Not Found response.",
+            "schema": {
+              "$ref": "#/definitions/CollectionWorkflowNotFoundResponseBody",
+              "required": [
+                "message",
+                "id"
+              ]
+            }
+          }
+        },
+        "schemes": [
+          "http"
+        ],
+        "summary": "workflow collection",
+        "tags": [
+          "collection"
+        ]
+      }
+    },
+    "/pipeline": {
+      "get": {
+        "description": "List all known pipelines",
+        "operationId": "pipeline#list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "name",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "default": false,
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "type": "boolean"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK response.",
+            "schema": {
+              "items": {
+                "$ref": "#/definitions/EnduroStoredPipelineResponse"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "schemes": [
+          "http"
+        ],
+        "summary": "list pipeline",
+        "tags": [
+          "pipeline"
+        ]
+      }
+    },
+    "/pipeline/{id}": {
+      "get": {
+        "description": "Show pipeline by ID",
+        "operationId": "pipeline#show",
+        "parameters": [
+          {
+            "description": "Identifier of pipeline to show",
+            "format": "uuid",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK response.",
+            "schema": {
+              "$ref": "#/definitions/PipelineShowResponseBody"
+            }
+          },
+          "404": {
+            "description": "Not Found response.",
+            "schema": {
+              "$ref": "#/definitions/PipelineShowNotFoundResponseBody",
+              "required": [
+                "message",
+                "id"
+              ]
+            }
+          }
+        },
+        "schemes": [
+          "http"
+        ],
+        "summary": "show pipeline",
+        "tags": [
+          "pipeline"
+        ]
+      }
+    },
+    "/pipeline/{id}/processing": {
+      "get": {
+        "description": "List all processing configurations of a pipeline given its ID",
+        "operationId": "pipeline#processing",
+        "parameters": [
+          {
+            "description": "Identifier of pipeline",
+            "format": "uuid",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK response.",
+            "schema": {
+              "items": {
+                "example": "abc123",
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "404": {
+            "description": "Not Found response.",
+            "schema": {
+              "$ref": "#/definitions/PipelineProcessingNotFoundResponseBody",
+              "required": [
+                "message",
+                "id"
+              ]
+            }
+          }
+        },
+        "schemes": [
+          "http"
+        ],
+        "summary": "processing pipeline",
+        "tags": [
+          "pipeline"
+        ]
+      }
+    },
+    "/swagger/swagger.json": {
+      "get": {
+        "description": "JSON document containing the API swagger definition.",
+        "operationId": "swagger#/swagger/swagger.json",
+        "responses": {
+          "200": {
+            "description": "File downloaded",
+            "schema": {
+              "type": "file"
+            }
+          }
+        },
+        "schemes": [
+          "http"
+        ],
+        "summary": "Download internal/api/gen/http/openapi.json",
+        "tags": [
+          "swagger"
+        ]
+      }
+    }
+  },
+  "produces": [
+    "application/json",
+    "application/xml",
+    "application/gob"
+  ],
+  "swagger": "2.0"
+}

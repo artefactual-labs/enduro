@@ -10,11 +10,13 @@ package design
 
 import (
 	. "goa.design/goa/v3/dsl"
+	"goa.design/goa/v3/expr"
 	cors "goa.design/plugins/v3/cors/dsl"
 )
 
 var _ = API("enduro", func() {
 	Title("Enduro API")
+	Randomizer(expr.NewDeterministicRandomizer())
 	Server("enduro", func() {
 		Services("pipeline", "batch", "collection", "swagger")
 		Host("localhost", func() {

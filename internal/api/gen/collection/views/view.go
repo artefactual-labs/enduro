@@ -62,7 +62,7 @@ type EnduroStoredCollectionView struct {
 	WorkflowID *string
 	// Identifier of latest processing workflow run
 	RunID *string
-	// Identifier of Archivematica transfer
+	// Identifier of Archivematica tranfser
 	TransferID *string
 	// Identifier of Archivematica AIP
 	AipID *string

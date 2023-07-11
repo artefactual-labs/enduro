@@ -21,20 +21,16 @@ var _ = Service("collection", func() {
 		Payload(func() {
 			Attribute("name", String)
 			Attribute("original_id", String)
-			Attribute("transfer_id", String, func() {
-				Format(FormatUUID)
-			})
-			Attribute("aip_id", String, func() {
-				Format(FormatUUID)
-			})
-			Attribute("pipeline_id", String, func() {
-				Format(FormatUUID)
-			})
+			AttributeUUID("transfer_id", "Identifier of Archivematica tranfser")
+			AttributeUUID("aip_id", "Identifier of Archivematica AIP")
+			AttributeUUID("pipeline_id", "Identifier of Archivematica pipeline")
 			Attribute("earliest_created_time", String, func() {
 				Format(FormatDateTime)
+				Example("e1d563b0-1474-4155-beed-f2d3a12e1529")
 			})
 			Attribute("latest_created_time", String, func() {
 				Format(FormatDateTime)
+				Example("e1d563b0-1474-4155-beed-f2d3a12e1529")
 			})
 			Attribute("status", String, func() {
 				EnumCollectionStatus()
@@ -217,22 +213,12 @@ var Collection = Type("Collection", func() {
 		EnumCollectionStatus()
 		Default("new")
 	})
-	Attribute("workflow_id", String, "Identifier of processing workflow", func() {
-		Format(FormatUUID)
-	})
-	Attribute("run_id", String, "Identifier of latest processing workflow run", func() {
-		Format(FormatUUID)
-	})
-	Attribute("transfer_id", String, "Identifier of Archivematica transfer", func() {
-		Format(FormatUUID)
-	})
-	Attribute("aip_id", String, "Identifier of Archivematica AIP", func() {
-		Format(FormatUUID)
-	})
+	AttributeUUID("workflow_id", "Identifier of processing workflow")
+	AttributeUUID("run_id", "Identifier of latest processing workflow run")
+	AttributeUUID("transfer_id", "Identifier of Archivematica tranfser")
+	AttributeUUID("aip_id", "Identifier of Archivematica AIP")
 	Attribute("original_id", String, "Identifier provided by the client")
-	Attribute("pipeline_id", String, "Identifier of Archivematica pipeline", func() {
-		Format(FormatUUID)
-	})
+	AttributeUUID("pipeline_id", "Identifier of Archivematica pipeline")
 	Attribute("created_at", String, "Creation datetime", func() {
 		Format(FormatDateTime)
 	})
