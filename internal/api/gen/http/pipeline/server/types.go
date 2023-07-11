@@ -20,7 +20,7 @@ type ListResponseBody []*EnduroStoredPipelineResponse
 // ShowResponseBody is the type of the "pipeline" service "show" endpoint HTTP
 // response body.
 type ShowResponseBody struct {
-	// Identifier of the pipeline
+	// Identifier of pipeline
 	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
 	// Name of the pipeline
 	Name string `form:"name" json:"name" xml:"name"`
@@ -51,7 +51,7 @@ type ProcessingNotFoundResponseBody struct {
 
 // EnduroStoredPipelineResponse is used to define fields on response body types.
 type EnduroStoredPipelineResponse struct {
-	// Identifier of the pipeline
+	// Identifier of pipeline
 	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
 	// Name of the pipeline
 	Name string `form:"name" json:"name" xml:"name"`

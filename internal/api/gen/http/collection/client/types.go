@@ -53,7 +53,7 @@ type ShowResponseBody struct {
 	WorkflowID *string `form:"workflow_id,omitempty" json:"workflow_id,omitempty" xml:"workflow_id,omitempty"`
 	// Identifier of latest processing workflow run
 	RunID *string `form:"run_id,omitempty" json:"run_id,omitempty" xml:"run_id,omitempty"`
-	// Identifier of Archivematica transfer
+	// Identifier of Archivematica tranfser
 	TransferID *string `form:"transfer_id,omitempty" json:"transfer_id,omitempty" xml:"transfer_id,omitempty"`
 	// Identifier of Archivematica AIP
 	AipID *string `form:"aip_id,omitempty" json:"aip_id,omitempty" xml:"aip_id,omitempty"`
@@ -260,7 +260,7 @@ type EnduroStoredCollectionResponseBody struct {
 	WorkflowID *string `form:"workflow_id,omitempty" json:"workflow_id,omitempty" xml:"workflow_id,omitempty"`
 	// Identifier of latest processing workflow run
 	RunID *string `form:"run_id,omitempty" json:"run_id,omitempty" xml:"run_id,omitempty"`
-	// Identifier of Archivematica transfer
+	// Identifier of Archivematica tranfser
 	TransferID *string `form:"transfer_id,omitempty" json:"transfer_id,omitempty" xml:"transfer_id,omitempty"`
 	// Identifier of Archivematica AIP
 	AipID *string `form:"aip_id,omitempty" json:"aip_id,omitempty" xml:"aip_id,omitempty"`

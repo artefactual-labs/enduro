@@ -36,7 +36,7 @@ var MethodNames = [3]string{"list", "show", "processing"}
 
 // EnduroStoredPipeline is the result type of the pipeline service show method.
 type EnduroStoredPipeline struct {
-	// Identifier of the pipeline
+	// Identifier of pipeline
 	ID *string
 	// Name of the pipeline
 	Name string

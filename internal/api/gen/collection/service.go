@@ -177,7 +177,7 @@ type EnduroStoredCollection struct {
 	WorkflowID *string
 	// Identifier of latest processing workflow run
 	RunID *string
-	// Identifier of Archivematica transfer
+	// Identifier of Archivematica tranfser
 	TransferID *string
 	// Identifier of Archivematica AIP
 	AipID *string
@@ -197,10 +197,13 @@ type EnduroStoredCollectionCollection []*EnduroStoredCollection
 
 // ListPayload is the payload type of the collection service list method.
 type ListPayload struct {
-	Name                *string
-	OriginalID          *string
-	TransferID          *string
-	AipID               *string
+	Name       *string
+	OriginalID *string
+	// Identifier of Archivematica tranfser
+	TransferID *string
+	// Identifier of Archivematica AIP
+	AipID *string
+	// Identifier of Archivematica pipeline
 	PipelineID          *string
 	EarliestCreatedTime *string
 	LatestCreatedTime   *string

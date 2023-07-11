@@ -28,7 +28,7 @@ var _ = Service("pipeline", func() {
 	Method("show", func() {
 		Description("Show pipeline by ID")
 		Payload(func() {
-			Attribute("id", String, "Identifier of pipeline to show", func() { Format(FormatUUID) })
+			AttributeUUID("id", "Identifier of pipeline to show")
 			Required("id")
 		})
 		Result(StoredPipeline)
@@ -42,7 +42,7 @@ var _ = Service("pipeline", func() {
 	Method("processing", func() {
 		Description("List all processing configurations of a pipeline given its ID")
 		Payload(func() {
-			Attribute("id", String, "Identifier of pipeline", func() { Format(FormatUUID) })
+			AttributeUUID("id", "Identifier of pipeline")
 			Required("id")
 		})
 		Result(ArrayOf(String))
@@ -57,7 +57,7 @@ var _ = Service("pipeline", func() {
 
 var Pipeline = Type("Pipeline", func() {
 	Description("Pipeline describes an Archivematica pipeline.")
-	Attribute("id", String, "Identifier of the pipeline", func() { Format(FormatUUID) })
+	AttributeUUID("id", "Identifier of pipeline")
 	Attribute("name", String, "Name of the pipeline")
 	Attribute("capacity", Int64, "Maximum concurrent transfers")
 	Attribute("current", Int64, "Current transfers")

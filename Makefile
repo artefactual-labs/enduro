@@ -21,6 +21,7 @@ include hack/make/dep_gomajor.mk
 include hack/make/dep_goreleaser.mk
 include hack/make/dep_gotestsum.mk
 include hack/make/dep_hugo.mk
+include hack/make/dep_jq.mk
 include hack/make/dep_mockgen.mk
 include hack/make/dep_temporal_cli.mk
 
@@ -87,6 +88,15 @@ lint: $(GOLANGCI_LINT) # @HELP Lints the code using golangci-lint.
 
 gen-goa: $(GOA) # @HELP Generates Goa assets.
 	goa gen github.com/artefactual-labs/enduro/internal/api/design -o internal/api
+	@$(MAKE) gen-goa-json-pretty
+
+gen-goa-json-pretty: goa_http_dir = "internal/api/gen/http"
+gen-goa-json-pretty: json_files = $(shell find $(goa_http_dir) -type f -name "*.json" | sort -u)
+gen-goa-json-pretty: $(JQ)
+	@for f in $(json_files); \
+		do (cat "$$f" | jq -S '.' >> "$$f".sorted && mv "$$f".sorted "$$f") \
+			&& echo "Formatting $$f with jq" || exit 1; \
+	done
 
 clean: # @HELP Cleans temporary files.
 	rm -rf ./build ./dist
