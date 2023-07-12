@@ -102,7 +102,7 @@ clean: # @HELP Cleans temporary files.
 	rm -rf ./build ./dist
 
 release-test-config: $(GORELEASER) # @HELP Tests the goreleaser config.
-	goreleaser --snapshot --skip-publish --rm-dist
+	goreleaser --snapshot --skip-publish --clean
 
 release-test: $(GORELEASER) # @HELP Tests the release with goreleaser.
 	goreleaser --skip-publish

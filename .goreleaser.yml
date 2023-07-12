@@ -28,10 +28,12 @@ builds:
 archives:
 - wrap_in_directory: true
   format: tar.gz
-  name_template: "{{.ProjectName}}_{{.Version}}_{{.Os}}-{{.Arch}}"
-  replacements:
-    linux: Linux
-    amd64: 64bit
+  name_template: >-
+    {{ .ProjectName }}_
+    {{- title .Os }}_
+    {{- if eq .Arch "amd64" }}64bit
+    {{- else if eq .Arch "386" }}32bit
+    {{- else }}{{ .Arch }}{{ end }}
   files:
   - LICENSE
   - README.md
