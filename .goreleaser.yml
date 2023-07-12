@@ -42,3 +42,11 @@ archives:
 checksum:
   name_template: checksums.txt
   algorithm: sha256
+
+milestones:
+  - repo:
+      owner: artefactual-labs
+      name: enduro
+    close: true
+    fail_on_error: false
+    name_template: "{{ .Tag }}" 
