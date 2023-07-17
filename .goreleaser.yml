@@ -30,8 +30,8 @@ archives:
   format: tar.gz
   name_template: >-
     {{ .ProjectName }}_
-    {{ .Version }}_
-    {{- title .Os }}_
+    {{- .Version }}_
+    {{- title .Os }}-
     {{- if eq .Arch "amd64" }}64bit
     {{- else if eq .Arch "386" }}32bit
     {{- else }}{{ .Arch }}{{ end }}
