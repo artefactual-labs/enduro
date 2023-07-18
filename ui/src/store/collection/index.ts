@@ -104,7 +104,7 @@ const actions: ActionTree<State, RootState> = {
 
   [SEARCH_COLLECTION]({ commit, dispatch }, id): any {
     const request: api.CollectionShowRequest = { id: +id };
-    return EnduroCollectionClient.collectionShow(request).then((response: api.CollectionShowResponseBody) => {
+    return EnduroCollectionClient.collectionShow(request).then((response) => {
       commit(SET_SEARCH_RESULT, response);
       commit(SET_SEARCH_ERROR, false);
       dispatch('pipeline/SEARCH_PIPELINE', response.pipelineId, { root: true });
@@ -184,14 +184,11 @@ const actions: ActionTree<State, RootState> = {
       }
     }
 
-    return EnduroCollectionClient.collectionList(request).then((response: api.CollectionListResponseBody) => {
+    return EnduroCollectionClient.collectionList(request).then((response) => {
       // collectionList does not transform the objects as collectionShow does.
       // Do it manually for now, I'd expect the generated client to start doing
       // this for us at some point.
-      response.items = response.items.map(
-        (item: api.EnduroStoredCollectionResponseBody): api.EnduroStoredCollectionResponseBody =>
-          api.EnduroStoredCollectionResponseBodyFromJSON(item),
-      );
+      response.items = response.items.map((item) => api.EnduroStoredCollectionFromJSON(item));
 
       commit(SET_SEARCH_RESULTS, response.items);
       commit(SET_SEARCH_ERROR, false);
@@ -221,9 +218,9 @@ const actions: ActionTree<State, RootState> = {
   },
 
   [MAKE_WORKFLOW_DECISION]({ commit }, payload): any {
-    const request: api.CollectionDecideRequest = {
+    const request: api.CollectionDecideOperationRequest = {
       id: +payload.id,
-      object: {
+      collectionDecideRequest: {
         option: payload.option,
       },
     };
