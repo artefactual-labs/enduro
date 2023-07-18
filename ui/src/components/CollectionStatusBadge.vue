@@ -21,14 +21,14 @@ export default class CollectionStatusBadge extends Vue {
   private defvariant: string = 'secondary';
 
   private variants: any = {
-    [api.CollectionShowResponseBodyStatusEnum.Error]: 'danger',
-    [api.CollectionShowResponseBodyStatusEnum.InProgress]: 'warning',
-    [api.CollectionShowResponseBodyStatusEnum.Done]: 'success',
-    [api.CollectionShowResponseBodyStatusEnum.New]: 'secondary',
-    [api.CollectionShowResponseBodyStatusEnum.Unknown]: 'dark',
-    [api.CollectionShowResponseBodyStatusEnum.Abandoned]: 'secondary',
-    [api.CollectionShowResponseBodyStatusEnum.Queued]: 'light',
-    [api.CollectionShowResponseBodyStatusEnum.Pending]: 'light',
+    [api.EnduroStoredCollectionStatusEnum.Error]: 'danger',
+    [api.EnduroStoredCollectionStatusEnum.InProgress]: 'warning',
+    [api.EnduroStoredCollectionStatusEnum.Done]: 'success',
+    [api.EnduroStoredCollectionStatusEnum.New]: 'secondary',
+    [api.EnduroStoredCollectionStatusEnum.Unknown]: 'dark',
+    [api.EnduroStoredCollectionStatusEnum.Abandoned]: 'secondary',
+    [api.EnduroStoredCollectionStatusEnum.Queued]: 'light',
+    [api.EnduroStoredCollectionStatusEnum.Pending]: 'light',
   };
 
   private variant(): string {
