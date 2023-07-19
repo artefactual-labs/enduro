@@ -5,7 +5,7 @@ $(call _assert_var,UNAME_ARCH2)
 $(call _assert_var,CACHE_VERSIONS)
 $(call _assert_var,CACHE_BIN)
 
-HUGO_VERSION ?= 0.115.2
+HUGO_VERSION ?= 0.115.3
 
 HUGO := $(CACHE_VERSIONS)/hugo/$(HUGO_VERSION)
 $(HUGO):

@@ -1,32 +1,32 @@
 [build]
 base = "website"
 publish = "public"
-command = "git submodule update --init --recursive && hugo --gc --minify"
+command = "hugo --gc --minify"
 ignore = "cd ..; git diff --quiet HEAD^ HEAD ./website ./internal/api/gen/http/openapi.json"
 
 [context.split1]
-command = "git submodule update --init --recursive && hugo --gc --minify --enableGitInfo"
+command = "hugo --gc --minify --enableGitInfo"
 
 [context.split1.environment]
-HUGO_VERSION = "0.113.0"
+HUGO_VERSION = "0.115.3"
 HUGO_ENV = "production"
 
 [context.deploy-preview]
-command = "git submodule update --init --recursive && hugo --gc --minify --buildFuture -b $DEPLOY_PRIME_URL"
+command = "hugo --gc --minify --buildFuture -b $DEPLOY_PRIME_URL"
 
 [context.deploy-preview.environment]
-HUGO_VERSION = "0.113.0"
+HUGO_VERSION = "0.115.3"
 
 [context.branch-deploy]
-command = "git submodule update --init --recursive && hugo --gc --minify -b $DEPLOY_PRIME_URL"
+command = "hugo --gc --minify -b $DEPLOY_PRIME_URL"
 
 [context.branch-deploy.environment]
-HUGO_VERSION = "ç"
+HUGO_VERSION = "0.115.3"
 
 [context.next.environment]
 HUGO_ENABLEGITINFO = "true"
 
 [context.production.environment]
-HUGO_VERSION = "0.113.0"
+HUGO_VERSION = "0.115.3"
 HUGO_ENV = "production"
 HUGO_ENABLEGITINFO = "true"
