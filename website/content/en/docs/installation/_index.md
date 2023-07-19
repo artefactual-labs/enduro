@@ -29,10 +29,9 @@ We use MySQL 8, which serves as the data store for Enduro and Temporal.
 
 ### Temporal
 
-Temporal is the orchestration engine. There are [multiple ways to run a Temporal
-Cluster](temporal-clusters). Our standard configuration uses an [Ansible
-role](temporal-ansible-role) to deploy both Enduro and Temporal on a remote
-server.
+Temporal is the orchestration engine. There are
+[multiple ways to run a Temporal Cluster]. Our standard configuration uses an
+[Ansible role] to deploy both Enduro and Temporal on a remote server.
 
 More on this topic can be found at the official [Temporal Cluster deployment
 guide](temporal-deployment).
@@ -107,8 +106,8 @@ the API via cURL is `curl -Ls 127.0.0.1:9000/collection | jq`:
 ]
 ```
 
-[temporal-clusters]: https://docs.temporal.io/kb/all-the-ways-to-run-a-cluster
-[temporal-ansible-role]: https://github.com/artefactual-labs/ansible-enduro-temporal
+[multiple ways to run a Temporal Cluster]: https://docs.temporal.io/kb/all-the-ways-to-run-a-cluster
+[Ansible role]: https://github.com/artefactual-labs/ansible-enduro-temporal
 [temporal-deployment]: https://docs.temporal.io/cluster-deployment-guide
 [temporal-web-ui]: https://docs.temporal.io/web-ui
 [minio-redis-access]: https://docs.min.io/docs/minio-bucket-notification-guide.html#Redis

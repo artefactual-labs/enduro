@@ -28,8 +28,7 @@ Use `npm run deps-minor` to install available updates.
 
 The version of Hugo is in `netlify.toml` and `hack/make/dep_hugo.mk`.
 
-Docsy is the Hugo theme (`website/themes/docsy`), installed as a submodule.
-We're still using v0.6.0 until we can address the update to Bootstrap 5.2.
+Docsy is the Hugo theme (`website/themes/docsy`), installed as a Hugo module.
 
 ## Other tools
 
