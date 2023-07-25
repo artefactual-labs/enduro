@@ -2,6 +2,7 @@ package manager
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/go-logr/logr"
 
@@ -31,6 +32,9 @@ func NewManager(logger logr.Logger, colsvc collection.Service, wsvc watcher.Serv
 }
 
 func HookAttr(hooks map[string]map[string]interface{}, hook string, attr string) (interface{}, error) {
+	hook = strings.ToLower(hook)
+	attr = strings.ToLower(attr)
+
 	configMap, ok := hooks[hook]
 	if !ok {
 		return "", fmt.Errorf("hook %q not found", hook)
