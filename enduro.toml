@@ -28,7 +28,7 @@ region = "us-west-1"
 bucket = "sips"
 pipeline = "am"
 retentionPeriod = "10s"
-stripTopLevelDir = true
+stripTopLevelDir = false
 rejectDuplicates = false
 
 [[watcher.filesystem]]
@@ -59,10 +59,10 @@ transferDeadline = "24h"
 checksumsCheckEnabled = false
 
 [[hooks."hari"]]
-baseURL = "" # E.g.: "https://192.168.1.50:8080/api"
-mock = true
-disabled = true
+baseURL = "https://192.168.1.50:8080/api"
+mock = false
+disabled = false
 
 [[hooks."prod"]]
 receiptPath = "./hack/production-system-interface"
-disabled = true
+disabled = false
