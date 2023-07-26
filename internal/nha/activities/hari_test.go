@@ -395,7 +395,7 @@ func TestHARIActivity(t *testing.T) {
 					Type:       nha.TransferTypeDPJ,
 				},
 			},
-			hariConfig: map[string]interface{}{"baseURL": "http://192.168.1.50:12345"},
+			hariConfig: map[string]interface{}{"baseurl": "http://192.168.1.50:12345"},
 			dirOpts: []fs.PathOp{
 				fs.WithDir("DPJ/journal"),
 				fs.WithFile("DPJ/journal/_____other_name_____.xml", "<avlxml/>"),
@@ -412,7 +412,7 @@ func TestHARIActivity(t *testing.T) {
 					Type:       nha.TransferTypeDPJ,
 				},
 			},
-			hariConfig: map[string]interface{}{"baseURL": string([]byte{0x7f})},
+			hariConfig: map[string]interface{}{"baseurl": string([]byte{0x7f})},
 			dirOpts: []fs.PathOp{
 				fs.WithDir("DPJ/journal"),
 				fs.WithFile("DPJ/journal/avlxml.xml", "<avlxml/>"),
@@ -455,8 +455,8 @@ func TestHARIActivity(t *testing.T) {
 
 			// Only override baseURL when the test case did not define it.
 			if tc.hariConfig != nil {
-				if _, ok := tc.hariConfig["baseURL"]; !ok {
-					tc.hariConfig["baseURL"] = deliveree.URL
+				if _, ok := tc.hariConfig["baseurl"]; !ok {
+					tc.hariConfig["baseurl"] = deliveree.URL
 				}
 			}
 
@@ -539,7 +539,7 @@ func TestHARIURL(t *testing.T) {
 	}
 	for _, tc := range tests {
 		act := createHariActivity(t, map[string]interface{}{
-			"baseURL": tc.baseURL,
+			"baseurl": tc.baseURL,
 		})
 
 		have, err := act.url()

@@ -110,7 +110,7 @@ func TestProdActivity(t *testing.T) {
 				},
 			},
 			hookConfig: &map[string]interface{}{
-				"receiptPath": tmpdir,
+				"receiptpath": tmpdir,
 			},
 			wantErr:               "error creating receipt file",
 			wantNonRetryableError: true,
@@ -128,7 +128,7 @@ func TestProdActivity(t *testing.T) {
 
 			tmpdir := fs.NewDir(t, "enduro")
 			defer tmpdir.Remove()
-			hookConfig := map[string]interface{}{"receiptPath": tmpdir.Path()}
+			hookConfig := map[string]interface{}{"receiptpath": tmpdir.Path()}
 			if tc.hookConfig != nil {
 				hookConfig = *tc.hookConfig
 			}
