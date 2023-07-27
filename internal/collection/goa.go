@@ -394,7 +394,7 @@ func (w *goaWrapper) Decide(ctx context.Context, payload *goacollection.DecidePa
 		return err
 	}
 
-	if c.DecisionToken == "" || c.Status != StatusPending {
+	if c.DecisionToken == nil || c.Status != StatusPending {
 		return goacollection.MakeNotValid(errors.New("collection is not awaiting decision"))
 	}
 

@@ -17,7 +17,7 @@ type Collection struct {
 	AIPID         string `db:"aip_id"`
 	OriginalID    string `db:"original_id"`
 	PipelineID    string `db:"pipeline_id"`
-	DecisionToken string `db:"decision_token"`
+	DecisionToken []byte `db:"decision_token"`
 	Status        Status `db:"status"`
 
 	// It defaults to CURRENT_TIMESTAMP(6) so populated as soon as possible.
