@@ -117,6 +117,49 @@ You can enable it in Visual Studio Code as follows:
 }
 ```
 
+## Enable tracing
+
+Enable the observability services by editing the root `.env` file as follows:
+
+    COMPOSE_FILE=docker-compose.yml:docker-compose.observability.yml
+
+Start all services again:
+
+    docker compose up -d
+
+Three new services should be ready:
+
+* Grafana (listens on `127.0.0.1:3000`),
+* Grafana Agent (listens on `127.0.0.1:12345`), and
+* Grafana Tempo (listens on `127.0.0.1:4317`).
+
+Enable tracing in `enduro.toml`:
+
+```toml
+[telemetry.traces]
+enabled = true
+address = "127.0.0.1:12345"
+ratio = 1.0
+```
+
+Run enduro:
+
+    make run
+
+Things that you can do:
+
+* Observe that `grafana-agent` logs received traces:
+
+      docker compose logs -f grafana-agent
+
+* Observe that `grafana-tempo` logs stored traces:
+
+      docker compose logs -f grafana-tempo
+
+* Use the [Grafana explorer](http://127.0.0.1:3000/explore) to search and
+  visualize traces.
+
+
 [docker-engine]: https://docs.docker.com/engine/install/
 [mc]: https://docs.min.io/docs/minio-client-quickstart-guide.html
 [go]: https://golang.org/doc/install

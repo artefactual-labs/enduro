@@ -19,6 +19,8 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/gorilla/websocket"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"go.opentelemetry.io/otel/trace"
 	goahttp "goa.design/goa/v3/http"
 	goahttpmwr "goa.design/goa/v3/http/middleware"
 	"goa.design/goa/v3/middleware"
@@ -37,7 +39,9 @@ import (
 )
 
 func HTTPServer(
-	logger logr.Logger, config *Config,
+	logger logr.Logger,
+	tp trace.TracerProvider,
+	config *Config,
 	pipesvc intpipe.Service,
 	batchsvc intbatch.Service,
 	colsvc intcol.Service,
@@ -81,6 +85,7 @@ func HTTPServer(
 
 	// Global middlewares.
 	var handler http.Handler = mux
+	handler = otelhttp.NewHandler(handler, "enduro/internal/api", otelhttp.WithTracerProvider(tp))
 	handler = goahttpmwr.RequestID()(handler)
 	handler = versionHeaderMiddleware(config.AppVersion)(handler)
 	if config.Debug {

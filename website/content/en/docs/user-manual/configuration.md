@@ -23,10 +23,16 @@ file using the optional argument `--config=example.toml`.
 
 Main configuration attributes that do not belong to a specific section.
 
+#### `verbosity` (Int)
+
+Chattiness of log operations. `0` is the default and best for production.
+
+E.g.: `0`
+
 #### `debug` (Bool)
 
-When enabled, the application logger will be configured with increased
-verbosity and a colored formatter.
+When enabled, the application logger will be configured with a human-readable
+format and a colored log record formatter.
 
 E.g.: `false`
 
@@ -36,6 +42,48 @@ Address of the debugging HTTP server including Prometheus metrics and profiling
 data.
 
 E.g.: `"127.0.0.1:9001"`
+
+### `[telemetry]`
+
+Telemetry configuration details.
+
+#### `[telemetry.traces]`
+
+Tracing configuration.
+
+For example:
+
+```toml
+[telemetry.traces]
+enabled = false
+address = "127.0.0.1:12345"
+ratio = 1.0
+```
+
+#### `enabled` (Bool)
+
+When enabled, traces will be delivered to the tracing data collector. It is
+disabled by default.
+
+E.g.: `false`
+
+#### `address` (String)
+
+Address of the OpenTelemetry tracing data collector (gRPC), e.g. Grafana Agent
+or OpenTelemetry Collector.
+
+E.g.: `"127.0.0.1:12345"`
+
+#### `ratio` (Float64)
+
+Sampling ratio. A sampling ratio of 0.25 means that, on average, one out of
+every four traces will be sampled. The default is to sample every transfer.
+
+E.g.: `0.25`
+
+#### `[telemetry.metrics]`
+
+Not available yet.
 
 ### `[temporal]`
 

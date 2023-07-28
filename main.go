@@ -13,15 +13,25 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/go-logr/logr"
 	"github.com/oklog/run"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"go.artefactual.dev/tools/log"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
+	"go.opentelemetry.io/otel/sdk/resource"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
+	"go.opentelemetry.io/otel/trace"
 	temporalsdk_activity "go.temporal.io/sdk/activity"
 	temporalsdk_client "go.temporal.io/sdk/client"
 	temporalsdk_worker "go.temporal.io/sdk/worker"
 	temporalsdk_workflow "go.temporal.io/sdk/workflow"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/artefactual-labs/enduro/internal/api"
 	"github.com/artefactual-labs/enduro/internal/batch"
@@ -92,12 +102,28 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	// Set up tracing.
+	tp, shutdown, err := initTracerProvider(ctx, logger, config.Telemetry)
+	if err != nil {
+		logger.Error(err, "Error creating tracer provider.")
+		os.Exit(1)
+	}
+	defer func() { _ = shutdown(ctx) }()
+	tracer := tp.Tracer("enduro")
+
 	database, err := db.Connect(config.Database.DSN)
 	if err != nil {
 		logger.Error(err, "Database configuration failed.")
 		os.Exit(1)
 	}
-	_ = database.Ping()
+	_, span := tracer.Start(ctx, "db-ping")
+	span.SetAttributes(attribute.String("db.driver", "mysql"))
+	if err := database.Ping(); err != nil {
+		span.SetStatus(codes.Error, "ping failed")
+		span.RecordError(err)
+	}
+	span.AddEvent("Connected!")
+	span.End()
 
 	temporalClient, err := temporalsdk_client.Dial(temporalsdk_client.Options{
 		Namespace: config.Temporal.Namespace,
@@ -152,7 +178,7 @@ func main() {
 
 		g.Add(
 			func() error {
-				srv = api.HTTPServer(logger, &config.API, pipesvc, batchsvc, colsvc)
+				srv = api.HTTPServer(logger, tp, &config.API, pipesvc, batchsvc, colsvc)
 				return srv.ListenAndServe()
 			},
 			func(err error) {
@@ -166,8 +192,8 @@ func main() {
 	// Watchers, where each watcher is a group actor.
 	{
 		for _, w := range wsvc.Watchers() {
+			w := w
 			done := make(chan struct{})
-			cur := w
 			g.Add(
 				func() error {
 					for {
@@ -175,30 +201,36 @@ func main() {
 						case <-done:
 							return nil
 						default:
-							event, err := cur.Watch(ctx)
+							event, err := w.Watch(ctx)
 							if err != nil {
 								if !errors.Is(err, watcher.ErrWatchTimeout) {
-									logger.Error(err, "Error monitoring watcher interface.", "watcher", cur)
+									logger.Error(err, "Error monitoring watcher interface.", "watcher", w)
 								}
 								continue
 							}
+							ctx, span := tracer.Start(ctx, "Watcher")
+							span.SetAttributes(
+								attribute.String("watcher", event.WatcherName),
+								attribute.String("bucket", event.Bucket),
+								attribute.String("key", event.Key),
+								attribute.Bool("dir", event.IsDir),
+							)
 							logger.V(1).Info("Starting new workflow", "watcher", event.WatcherName, "bucket", event.Bucket, "key", event.Key, "dir", event.IsDir)
-							go func() {
-								req := collection.ProcessingWorkflowRequest{
-									WatcherName:      event.WatcherName,
-									PipelineNames:    event.PipelineName,
-									RetentionPeriod:  event.RetentionPeriod,
-									CompletedDir:     event.CompletedDir,
-									StripTopLevelDir: event.StripTopLevelDir,
-									RejectDuplicates: event.RejectDuplicates,
-									Key:              event.Key,
-									IsDir:            event.IsDir,
-									ValidationConfig: config.Validation,
-								}
-								if err := collection.InitProcessingWorkflow(ctx, temporalClient, config.Temporal.TaskQueue, &req); err != nil {
-									logger.Error(err, "Error initializing processing workflow.")
-								}
-							}()
+							req := collection.ProcessingWorkflowRequest{
+								WatcherName:      event.WatcherName,
+								PipelineNames:    event.PipelineName,
+								RetentionPeriod:  event.RetentionPeriod,
+								CompletedDir:     event.CompletedDir,
+								StripTopLevelDir: event.StripTopLevelDir,
+								RejectDuplicates: event.RejectDuplicates,
+								Key:              event.Key,
+								IsDir:            event.IsDir,
+								ValidationConfig: config.Validation,
+							}
+							if err := collection.InitProcessingWorkflow(ctx, tracer, temporalClient, config.Temporal.TaskQueue, &req); err != nil {
+								logger.Error(err, "Error initializing processing workflow.")
+							}
+							span.End()
 						}
 					}
 				},
@@ -346,6 +378,7 @@ type configuration struct {
 	Watcher     watcher.Config
 	Pipeline    []pipeline.Config
 	Validation  validation.Config
+	Telemetry   TelemetryConfig
 
 	// This is a workaround for client-specific functionality.
 	// Simple mechanism to support an arbitrary number of hooks and parameters.
@@ -392,4 +425,61 @@ func readConfig(v *viper.Viper, config *configuration, configFile string) (found
 	}
 
 	return found, nil
+}
+
+type TelemetryConfig struct {
+	Traces struct {
+		Enabled       bool
+		Address       string
+		SamplingRatio *float64
+	}
+}
+
+func initTracerProvider(ctx context.Context, logger logr.Logger, cfg TelemetryConfig) (trace.TracerProvider, func(context.Context) error, error) {
+	if !cfg.Traces.Enabled || cfg.Traces.Address == "" {
+		logger.V(1).Info("Tracing system is disabled.", "enabled", cfg.Traces.Enabled, "addr", cfg.Traces.Address)
+		shutdown := func(context.Context) error { return nil }
+		return trace.NewNoopTracerProvider(), shutdown, nil
+	}
+
+	conn, err := grpc.DialContext(
+		ctx,
+		cfg.Traces.Address,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithBlock(),
+	)
+	if err != nil {
+		return nil, nil, fmt.Errorf("can't connect to telemetry data collector: %v", err)
+	}
+
+	exporter, err := otlptracegrpc.New(ctx, otlptracegrpc.WithGRPCConn(conn))
+	if err != nil {
+		return nil, nil, fmt.Errorf("can't create gRPC telemetry data exporter: %v", err)
+	}
+
+	resource, _ := resource.Merge(
+		resource.Default(),
+		resource.NewWithAttributes(
+			semconv.SchemaURL,
+			semconv.ServiceName(appName),
+			semconv.ServiceVersion(version),
+		),
+	)
+
+	var ratio float64 = 1
+	if cfg.Traces.SamplingRatio != nil {
+		ratio = *cfg.Traces.SamplingRatio
+	}
+	sampler := sdktrace.ParentBased(sdktrace.TraceIDRatioBased(ratio))
+
+	tp := sdktrace.NewTracerProvider(
+		sdktrace.WithSampler(sampler),
+		sdktrace.WithResource(resource),
+		sdktrace.WithBatcher(exporter),
+	)
+	shutdown := func(context.Context) error { return tp.Shutdown(ctx) }
+
+	logger.V(1).Info("Using OTel gRPC tracer provider.", "addr", cfg.Traces.Address, "ratio", ratio)
+
+	return tp, shutdown, nil
 }

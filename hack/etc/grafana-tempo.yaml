@@ -1,0 +1,20 @@
+server:
+  http_listen_port: 3200
+  graceful_shutdown_timeout: "1s"
+
+distributor:
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+  log_received_spans:
+    enabled: true
+    include_all_attributes: true
+
+storage:
+  trace:
+    backend: "local"
+    wal:
+      path: "/tmp/tempo/wal"
+    local:
+      path: "/tmp/tempo/blocks"
