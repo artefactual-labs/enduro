@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 	temporalsdk_api_enums "go.temporal.io/api/enums/v1"
 	temporalsdk_client "go.temporal.io/sdk/client"
 
@@ -60,7 +62,10 @@ type ProcessingWorkflowRequest struct {
 	RejectDuplicates bool
 }
 
-func InitProcessingWorkflow(ctx context.Context, c temporalsdk_client.Client, taskQueue string, req *ProcessingWorkflowRequest) error {
+func InitProcessingWorkflow(ctx context.Context, tr trace.Tracer, c temporalsdk_client.Client, taskQueue string, req *ProcessingWorkflowRequest) error {
+	_, span := tr.Start(ctx, "InitProcessingWorkflow")
+	defer span.End()
+
 	if req.WorkflowID == "" {
 		req.WorkflowID = fmt.Sprintf("processing-workflow-%s", uuid.New().String())
 	}
@@ -74,6 +79,10 @@ func InitProcessingWorkflow(ctx context.Context, c temporalsdk_client.Client, ta
 		WorkflowIDReusePolicy: temporalsdk_api_enums.WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE,
 	}
 	_, err := c.ExecuteWorkflow(ctx, opts, ProcessingWorkflowName, req)
+	if err != nil {
+		span.SetStatus(codes.Error, "ExecuteWorkflow failed")
+		span.RecordError(err)
+	}
 
 	return err
 }

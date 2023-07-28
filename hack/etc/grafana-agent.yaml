@@ -1,0 +1,22 @@
+server:
+  log_level: "info"
+
+traces:
+  configs:
+  - name: "default"
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: "0.0.0.0:4317"
+    remote_write:
+      - endpoint: "grafana-tempo:4317"
+        insecure: true
+    batch:
+      timeout: "1s"
+      send_batch_size: 100
+    automatic_logging:
+      backend: "stdout"
+      spans: true
+      processes: true
+      roots: true

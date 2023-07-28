@@ -4,6 +4,11 @@ verbosity = 2
 debug = true
 debugListen = "127.0.0.1:9001"
 
+[telemetry.traces]
+enabled = true
+address = "127.0.0.1:12345"
+ratio = 1.0
+
 [temporal]
 namespace = "default"
 address = "127.0.0.1:7233"

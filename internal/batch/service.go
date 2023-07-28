@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-logr/logr"
 	"go.artefactual.dev/tools/ref"
+	"go.opentelemetry.io/otel/trace"
 	temporalapi_enums "go.temporal.io/api/enums/v1"
 	temporalapi_serviceerror "go.temporal.io/api/serviceerror"
 	temporalsdk_client "go.temporal.io/sdk/client"
@@ -134,7 +135,8 @@ func (s *batchImpl) Hints(ctx context.Context) (*goabatch.BatchHintsResult, erro
 
 func (s *batchImpl) InitProcessingWorkflow(ctx context.Context, req *collection.ProcessingWorkflowRequest) error {
 	req.ValidationConfig = validation.Config{}
-	err := collection.InitProcessingWorkflow(ctx, s.cc, s.taskQueue, req)
+	tr := trace.NewNoopTracerProvider().Tracer("")
+	err := collection.InitProcessingWorkflow(ctx, tr, s.cc, s.taskQueue, req)
 	if err != nil {
 		s.logger.Error(err, "Error initializing processing workflow.")
 	}
