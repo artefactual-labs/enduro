@@ -311,6 +311,7 @@ storageServiceURL = "http://test:test@127.0.0.1:62081"
 capacity = 3
 retryDeadline = "10m"
 transferDeadline = "24h"
+unbag = false
 ```
 
 #### `name` (String)
@@ -396,6 +397,12 @@ optional fraction and a unit suffix, such as "30m", "24h" or "2h30m".
 Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
 
 E.g.: `24h` (String)
+
+#### `unbag` (Boolean)
+
+If enabled, bagged transfers will be unbagged.
+
+E.g.: `false`
 
 ### `[validation]`
 

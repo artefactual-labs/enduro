@@ -34,6 +34,7 @@ type Config struct {
 	Capacity           uint64
 	RetryDeadline      *time.Duration
 	TransferDeadline   *time.Duration
+	Unbag              bool
 }
 
 type Pipeline struct {
