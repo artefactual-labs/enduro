@@ -35,6 +35,7 @@ type BundleActivityParams struct {
 	StripTopLevelDir bool
 	IsDir            bool
 	BatchDir         string
+	Unbag            bool
 }
 
 type BundleActivityResult struct {
@@ -91,9 +92,11 @@ func (a *BundleActivity) Execute(ctx context.Context, params *BundleActivityPara
 		return nil, temporal.NewNonRetryableError(err)
 	}
 
-	err = unbag(res.FullPath)
-	if err != nil {
-		return nil, temporal.NewNonRetryableError(err)
+	if params.Unbag {
+		err = unbag(res.FullPath)
+		if err != nil {
+			return nil, temporal.NewNonRetryableError(err)
+		}
 	}
 
 	res.RelPath, err = filepath.Rel(params.TransferDir, res.FullPath)

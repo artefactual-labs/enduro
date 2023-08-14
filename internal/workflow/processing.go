@@ -453,6 +453,7 @@ func (w *ProcessingWorkflow) SessionHandler(sessCtx temporalsdk_workflow.Context
 				TempFile:         tinfo.TempFile,
 				StripTopLevelDir: tinfo.StripTopLevelDir,
 				BatchDir:         tinfo.BatchDir,
+				Unbag:            tinfo.PipelineConfig.Unbag,
 			}).Get(activityOpts, &tinfo.Bundle)
 			if err != nil {
 				return err
