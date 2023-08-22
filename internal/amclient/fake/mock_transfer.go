@@ -9,7 +9,7 @@ import (
 	reflect "reflect"
 
 	amclient "github.com/artefactual-labs/enduro/internal/amclient"
-	gomock "github.com/golang/mock/gomock"
+	gomock "go.uber.org/mock/gomock"
 )
 
 // MockTransferService is a mock of TransferService interface.
@@ -46,9 +46,33 @@ func (m *MockTransferService) Approve(arg0 context.Context, arg1 *amclient.Trans
 }
 
 // Approve indicates an expected call of Approve.
-func (mr *MockTransferServiceMockRecorder) Approve(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockTransferServiceMockRecorder) Approve(arg0, arg1 interface{}) *TransferServiceApproveCall {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Approve", reflect.TypeOf((*MockTransferService)(nil).Approve), arg0, arg1)
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Approve", reflect.TypeOf((*MockTransferService)(nil).Approve), arg0, arg1)
+	return &TransferServiceApproveCall{Call: call}
+}
+
+// TransferServiceApproveCall wrap *gomock.Call
+type TransferServiceApproveCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *TransferServiceApproveCall) Return(arg0 *amclient.TransferApproveResponse, arg1 *amclient.Response, arg2 error) *TransferServiceApproveCall {
+	c.Call = c.Call.Return(arg0, arg1, arg2)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *TransferServiceApproveCall) Do(f func(context.Context, *amclient.TransferApproveRequest) (*amclient.TransferApproveResponse, *amclient.Response, error)) *TransferServiceApproveCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *TransferServiceApproveCall) DoAndReturn(f func(context.Context, *amclient.TransferApproveRequest) (*amclient.TransferApproveResponse, *amclient.Response, error)) *TransferServiceApproveCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
 }
 
 // Hide mocks base method.
@@ -62,9 +86,33 @@ func (m *MockTransferService) Hide(arg0 context.Context, arg1 string) (*amclient
 }
 
 // Hide indicates an expected call of Hide.
-func (mr *MockTransferServiceMockRecorder) Hide(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockTransferServiceMockRecorder) Hide(arg0, arg1 interface{}) *TransferServiceHideCall {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Hide", reflect.TypeOf((*MockTransferService)(nil).Hide), arg0, arg1)
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Hide", reflect.TypeOf((*MockTransferService)(nil).Hide), arg0, arg1)
+	return &TransferServiceHideCall{Call: call}
+}
+
+// TransferServiceHideCall wrap *gomock.Call
+type TransferServiceHideCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *TransferServiceHideCall) Return(arg0 *amclient.TransferHideResponse, arg1 *amclient.Response, arg2 error) *TransferServiceHideCall {
+	c.Call = c.Call.Return(arg0, arg1, arg2)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *TransferServiceHideCall) Do(f func(context.Context, string) (*amclient.TransferHideResponse, *amclient.Response, error)) *TransferServiceHideCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *TransferServiceHideCall) DoAndReturn(f func(context.Context, string) (*amclient.TransferHideResponse, *amclient.Response, error)) *TransferServiceHideCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
 }
 
 // Start mocks base method.
@@ -78,9 +126,33 @@ func (m *MockTransferService) Start(arg0 context.Context, arg1 *amclient.Transfe
 }
 
 // Start indicates an expected call of Start.
-func (mr *MockTransferServiceMockRecorder) Start(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockTransferServiceMockRecorder) Start(arg0, arg1 interface{}) *TransferServiceStartCall {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Start", reflect.TypeOf((*MockTransferService)(nil).Start), arg0, arg1)
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Start", reflect.TypeOf((*MockTransferService)(nil).Start), arg0, arg1)
+	return &TransferServiceStartCall{Call: call}
+}
+
+// TransferServiceStartCall wrap *gomock.Call
+type TransferServiceStartCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *TransferServiceStartCall) Return(arg0 *amclient.TransferStartResponse, arg1 *amclient.Response, arg2 error) *TransferServiceStartCall {
+	c.Call = c.Call.Return(arg0, arg1, arg2)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *TransferServiceStartCall) Do(f func(context.Context, *amclient.TransferStartRequest) (*amclient.TransferStartResponse, *amclient.Response, error)) *TransferServiceStartCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *TransferServiceStartCall) DoAndReturn(f func(context.Context, *amclient.TransferStartRequest) (*amclient.TransferStartResponse, *amclient.Response, error)) *TransferServiceStartCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
 }
 
 // Status mocks base method.
@@ -94,9 +166,33 @@ func (m *MockTransferService) Status(arg0 context.Context, arg1 string) (*amclie
 }
 
 // Status indicates an expected call of Status.
-func (mr *MockTransferServiceMockRecorder) Status(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockTransferServiceMockRecorder) Status(arg0, arg1 interface{}) *TransferServiceStatusCall {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Status", reflect.TypeOf((*MockTransferService)(nil).Status), arg0, arg1)
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Status", reflect.TypeOf((*MockTransferService)(nil).Status), arg0, arg1)
+	return &TransferServiceStatusCall{Call: call}
+}
+
+// TransferServiceStatusCall wrap *gomock.Call
+type TransferServiceStatusCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *TransferServiceStatusCall) Return(arg0 *amclient.TransferStatusResponse, arg1 *amclient.Response, arg2 error) *TransferServiceStatusCall {
+	c.Call = c.Call.Return(arg0, arg1, arg2)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *TransferServiceStatusCall) Do(f func(context.Context, string) (*amclient.TransferStatusResponse, *amclient.Response, error)) *TransferServiceStatusCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *TransferServiceStatusCall) DoAndReturn(f func(context.Context, string) (*amclient.TransferStatusResponse, *amclient.Response, error)) *TransferServiceStatusCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
 }
 
 // Unapproved mocks base method.
@@ -110,7 +206,31 @@ func (m *MockTransferService) Unapproved(arg0 context.Context, arg1 *amclient.Tr
 }
 
 // Unapproved indicates an expected call of Unapproved.
-func (mr *MockTransferServiceMockRecorder) Unapproved(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockTransferServiceMockRecorder) Unapproved(arg0, arg1 interface{}) *TransferServiceUnapprovedCall {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Unapproved", reflect.TypeOf((*MockTransferService)(nil).Unapproved), arg0, arg1)
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Unapproved", reflect.TypeOf((*MockTransferService)(nil).Unapproved), arg0, arg1)
+	return &TransferServiceUnapprovedCall{Call: call}
+}
+
+// TransferServiceUnapprovedCall wrap *gomock.Call
+type TransferServiceUnapprovedCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *TransferServiceUnapprovedCall) Return(arg0 *amclient.TransferUnapprovedResponse, arg1 *amclient.Response, arg2 error) *TransferServiceUnapprovedCall {
+	c.Call = c.Call.Return(arg0, arg1, arg2)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *TransferServiceUnapprovedCall) Do(f func(context.Context, *amclient.TransferUnapprovedRequest) (*amclient.TransferUnapprovedResponse, *amclient.Response, error)) *TransferServiceUnapprovedCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *TransferServiceUnapprovedCall) DoAndReturn(f func(context.Context, *amclient.TransferUnapprovedRequest) (*amclient.TransferUnapprovedResponse, *amclient.Response, error)) *TransferServiceUnapprovedCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
 }

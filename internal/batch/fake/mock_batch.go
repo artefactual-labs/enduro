@@ -10,7 +10,7 @@ import (
 
 	batch "github.com/artefactual-labs/enduro/internal/api/gen/batch"
 	collection "github.com/artefactual-labs/enduro/internal/collection"
-	gomock "github.com/golang/mock/gomock"
+	gomock "go.uber.org/mock/gomock"
 )
 
 // MockService is a mock of Service interface.
@@ -46,9 +46,33 @@ func (m *MockService) Hints(arg0 context.Context) (*batch.BatchHintsResult, erro
 }
 
 // Hints indicates an expected call of Hints.
-func (mr *MockServiceMockRecorder) Hints(arg0 interface{}) *gomock.Call {
+func (mr *MockServiceMockRecorder) Hints(arg0 interface{}) *ServiceHintsCall {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Hints", reflect.TypeOf((*MockService)(nil).Hints), arg0)
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Hints", reflect.TypeOf((*MockService)(nil).Hints), arg0)
+	return &ServiceHintsCall{Call: call}
+}
+
+// ServiceHintsCall wrap *gomock.Call
+type ServiceHintsCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *ServiceHintsCall) Return(arg0 *batch.BatchHintsResult, arg1 error) *ServiceHintsCall {
+	c.Call = c.Call.Return(arg0, arg1)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *ServiceHintsCall) Do(f func(context.Context) (*batch.BatchHintsResult, error)) *ServiceHintsCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *ServiceHintsCall) DoAndReturn(f func(context.Context) (*batch.BatchHintsResult, error)) *ServiceHintsCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
 }
 
 // InitProcessingWorkflow mocks base method.
@@ -60,9 +84,33 @@ func (m *MockService) InitProcessingWorkflow(arg0 context.Context, arg1 *collect
 }
 
 // InitProcessingWorkflow indicates an expected call of InitProcessingWorkflow.
-func (mr *MockServiceMockRecorder) InitProcessingWorkflow(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockServiceMockRecorder) InitProcessingWorkflow(arg0, arg1 interface{}) *ServiceInitProcessingWorkflowCall {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InitProcessingWorkflow", reflect.TypeOf((*MockService)(nil).InitProcessingWorkflow), arg0, arg1)
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InitProcessingWorkflow", reflect.TypeOf((*MockService)(nil).InitProcessingWorkflow), arg0, arg1)
+	return &ServiceInitProcessingWorkflowCall{Call: call}
+}
+
+// ServiceInitProcessingWorkflowCall wrap *gomock.Call
+type ServiceInitProcessingWorkflowCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *ServiceInitProcessingWorkflowCall) Return(arg0 error) *ServiceInitProcessingWorkflowCall {
+	c.Call = c.Call.Return(arg0)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *ServiceInitProcessingWorkflowCall) Do(f func(context.Context, *collection.ProcessingWorkflowRequest) error) *ServiceInitProcessingWorkflowCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *ServiceInitProcessingWorkflowCall) DoAndReturn(f func(context.Context, *collection.ProcessingWorkflowRequest) error) *ServiceInitProcessingWorkflowCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
 }
 
 // Status mocks base method.
@@ -75,9 +123,33 @@ func (m *MockService) Status(arg0 context.Context) (*batch.BatchStatusResult, er
 }
 
 // Status indicates an expected call of Status.
-func (mr *MockServiceMockRecorder) Status(arg0 interface{}) *gomock.Call {
+func (mr *MockServiceMockRecorder) Status(arg0 interface{}) *ServiceStatusCall {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Status", reflect.TypeOf((*MockService)(nil).Status), arg0)
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Status", reflect.TypeOf((*MockService)(nil).Status), arg0)
+	return &ServiceStatusCall{Call: call}
+}
+
+// ServiceStatusCall wrap *gomock.Call
+type ServiceStatusCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *ServiceStatusCall) Return(arg0 *batch.BatchStatusResult, arg1 error) *ServiceStatusCall {
+	c.Call = c.Call.Return(arg0, arg1)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *ServiceStatusCall) Do(f func(context.Context) (*batch.BatchStatusResult, error)) *ServiceStatusCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *ServiceStatusCall) DoAndReturn(f func(context.Context) (*batch.BatchStatusResult, error)) *ServiceStatusCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
 }
 
 // Submit mocks base method.
@@ -90,7 +162,31 @@ func (m *MockService) Submit(arg0 context.Context, arg1 *batch.SubmitPayload) (*
 }
 
 // Submit indicates an expected call of Submit.
-func (mr *MockServiceMockRecorder) Submit(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockServiceMockRecorder) Submit(arg0, arg1 interface{}) *ServiceSubmitCall {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Submit", reflect.TypeOf((*MockService)(nil).Submit), arg0, arg1)
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Submit", reflect.TypeOf((*MockService)(nil).Submit), arg0, arg1)
+	return &ServiceSubmitCall{Call: call}
+}
+
+// ServiceSubmitCall wrap *gomock.Call
+type ServiceSubmitCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *ServiceSubmitCall) Return(arg0 *batch.BatchResult, arg1 error) *ServiceSubmitCall {
+	c.Call = c.Call.Return(arg0, arg1)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *ServiceSubmitCall) Do(f func(context.Context, *batch.SubmitPayload) (*batch.BatchResult, error)) *ServiceSubmitCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *ServiceSubmitCall) DoAndReturn(f func(context.Context, *batch.SubmitPayload) (*batch.BatchResult, error)) *ServiceSubmitCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
 }

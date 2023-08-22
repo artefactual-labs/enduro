@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/golang/mock/gomock"
+	"go.uber.org/mock/gomock"
 	"gotest.tools/v3/assert"
 
 	"github.com/artefactual-labs/enduro/internal/amclient"

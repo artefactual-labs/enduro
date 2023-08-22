@@ -47,7 +47,7 @@ func TestBatchServiceSubmit(t *testing.T) {
 
 		client.On(
 			"ExecuteWorkflow",
-			mock.AnythingOfType("*context.emptyCtx"),
+			mock.AnythingOfType("context.backgroundCtx"),
 			mock.AnythingOfType("internal.StartWorkflowOptions"),
 			mock.AnythingOfType("string"),
 			mock.AnythingOfType("batch.BatchWorkflowInput"),
@@ -73,7 +73,7 @@ func TestBatchServiceSubmit(t *testing.T) {
 		dur := time.Duration(time.Hour * 2)
 		client.On(
 			"ExecuteWorkflow",
-			mock.AnythingOfType("*context.emptyCtx"),
+			mock.AnythingOfType("context.backgroundCtx"),
 			mock.AnythingOfType("internal.StartWorkflowOptions"),
 			"batch-workflow",
 			BatchWorkflowInput{
@@ -111,7 +111,7 @@ func TestBatchServiceStatus(t *testing.T) {
 
 	t.Run("Fails if the workflow information is unavailable", func(t *testing.T) {
 		client := &temporalsdk_mocks.Client{}
-		client.On("DescribeWorkflowExecution", mock.AnythingOfType("*context.emptyCtx"), "batch-workflow", "").Return(nil, &temporalapi_serviceerror.Unavailable{})
+		client.On("DescribeWorkflowExecution", mock.AnythingOfType("context.backgroundCtx"), "batch-workflow", "").Return(nil, &temporalapi_serviceerror.Unavailable{})
 
 		batchsvc := NewService(logger, client, taskQueue, completedDirs)
 		_, err := batchsvc.Status(ctx)
@@ -121,7 +121,7 @@ func TestBatchServiceStatus(t *testing.T) {
 
 	t.Run("Fails if the workflow information is incomplete", func(t *testing.T) {
 		client := &temporalsdk_mocks.Client{}
-		client.On("DescribeWorkflowExecution", mock.AnythingOfType("*context.emptyCtx"), "batch-workflow", "").Return(&temporalapi_workflowservice.DescribeWorkflowExecutionResponse{}, nil)
+		client.On("DescribeWorkflowExecution", mock.AnythingOfType("context.backgroundCtx"), "batch-workflow", "").Return(&temporalapi_workflowservice.DescribeWorkflowExecutionResponse{}, nil)
 
 		batchsvc := NewService(logger, client, taskQueue, completedDirs)
 		_, err := batchsvc.Status(ctx)
@@ -131,7 +131,7 @@ func TestBatchServiceStatus(t *testing.T) {
 
 	t.Run("Identifies a non-running batch", func(t *testing.T) {
 		client := &temporalsdk_mocks.Client{}
-		client.On("DescribeWorkflowExecution", mock.AnythingOfType("*context.emptyCtx"), "batch-workflow", "").Return(nil, &temporalapi_serviceerror.NotFound{})
+		client.On("DescribeWorkflowExecution", mock.AnythingOfType("context.backgroundCtx"), "batch-workflow", "").Return(nil, &temporalapi_serviceerror.NotFound{})
 
 		batchsvc := NewService(logger, client, taskQueue, completedDirs)
 		result, err := batchsvc.Status(ctx)
@@ -144,7 +144,7 @@ func TestBatchServiceStatus(t *testing.T) {
 
 	t.Run("Identifies a running batch", func(t *testing.T) {
 		client := &temporalsdk_mocks.Client{}
-		client.On("DescribeWorkflowExecution", mock.AnythingOfType("*context.emptyCtx"), "batch-workflow", "").Return(&temporalapi_workflowservice.DescribeWorkflowExecutionResponse{
+		client.On("DescribeWorkflowExecution", mock.AnythingOfType("context.backgroundCtx"), "batch-workflow", "").Return(&temporalapi_workflowservice.DescribeWorkflowExecutionResponse{
 			WorkflowExecutionInfo: &temporalapi_workflow.WorkflowExecutionInfo{
 				Execution: &temporalapi_common.WorkflowExecution{
 					WorkflowId: wid,
@@ -167,7 +167,7 @@ func TestBatchServiceStatus(t *testing.T) {
 
 	t.Run("Identifies a closed batch", func(t *testing.T) {
 		client := &temporalsdk_mocks.Client{}
-		client.On("DescribeWorkflowExecution", mock.AnythingOfType("*context.emptyCtx"), "batch-workflow", "").Return(&temporalapi_workflowservice.DescribeWorkflowExecutionResponse{
+		client.On("DescribeWorkflowExecution", mock.AnythingOfType("context.backgroundCtx"), "batch-workflow", "").Return(&temporalapi_workflowservice.DescribeWorkflowExecutionResponse{
 			WorkflowExecutionInfo: &temporalapi_workflow.WorkflowExecutionInfo{
 				Execution: &temporalapi_common.WorkflowExecution{
 					WorkflowId: wid,

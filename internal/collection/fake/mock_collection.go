@@ -11,7 +11,7 @@ import (
 
 	collection "github.com/artefactual-labs/enduro/internal/api/gen/collection"
 	collection0 "github.com/artefactual-labs/enduro/internal/collection"
-	gomock "github.com/golang/mock/gomock"
+	gomock "go.uber.org/mock/gomock"
 )
 
 // MockService is a mock of Service interface.
@@ -47,9 +47,33 @@ func (m *MockService) CheckDuplicate(arg0 context.Context, arg1 uint) (bool, err
 }
 
 // CheckDuplicate indicates an expected call of CheckDuplicate.
-func (mr *MockServiceMockRecorder) CheckDuplicate(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockServiceMockRecorder) CheckDuplicate(arg0, arg1 interface{}) *ServiceCheckDuplicateCall {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckDuplicate", reflect.TypeOf((*MockService)(nil).CheckDuplicate), arg0, arg1)
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckDuplicate", reflect.TypeOf((*MockService)(nil).CheckDuplicate), arg0, arg1)
+	return &ServiceCheckDuplicateCall{Call: call}
+}
+
+// ServiceCheckDuplicateCall wrap *gomock.Call
+type ServiceCheckDuplicateCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *ServiceCheckDuplicateCall) Return(arg0 bool, arg1 error) *ServiceCheckDuplicateCall {
+	c.Call = c.Call.Return(arg0, arg1)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *ServiceCheckDuplicateCall) Do(f func(context.Context, uint) (bool, error)) *ServiceCheckDuplicateCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *ServiceCheckDuplicateCall) DoAndReturn(f func(context.Context, uint) (bool, error)) *ServiceCheckDuplicateCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
 }
 
 // Create mocks base method.
@@ -61,9 +85,33 @@ func (m *MockService) Create(arg0 context.Context, arg1 *collection0.Collection)
 }
 
 // Create indicates an expected call of Create.
-func (mr *MockServiceMockRecorder) Create(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockServiceMockRecorder) Create(arg0, arg1 interface{}) *ServiceCreateCall {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockService)(nil).Create), arg0, arg1)
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockService)(nil).Create), arg0, arg1)
+	return &ServiceCreateCall{Call: call}
+}
+
+// ServiceCreateCall wrap *gomock.Call
+type ServiceCreateCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *ServiceCreateCall) Return(arg0 error) *ServiceCreateCall {
+	c.Call = c.Call.Return(arg0)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *ServiceCreateCall) Do(f func(context.Context, *collection0.Collection) error) *ServiceCreateCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *ServiceCreateCall) DoAndReturn(f func(context.Context, *collection0.Collection) error) *ServiceCreateCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
 }
 
 // Goa mocks base method.
@@ -75,9 +123,33 @@ func (m *MockService) Goa() collection.Service {
 }
 
 // Goa indicates an expected call of Goa.
-func (mr *MockServiceMockRecorder) Goa() *gomock.Call {
+func (mr *MockServiceMockRecorder) Goa() *ServiceGoaCall {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Goa", reflect.TypeOf((*MockService)(nil).Goa))
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Goa", reflect.TypeOf((*MockService)(nil).Goa))
+	return &ServiceGoaCall{Call: call}
+}
+
+// ServiceGoaCall wrap *gomock.Call
+type ServiceGoaCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *ServiceGoaCall) Return(arg0 collection.Service) *ServiceGoaCall {
+	c.Call = c.Call.Return(arg0)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *ServiceGoaCall) Do(f func() collection.Service) *ServiceGoaCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *ServiceGoaCall) DoAndReturn(f func() collection.Service) *ServiceGoaCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
 }
 
 // SetOriginalID mocks base method.
@@ -89,9 +161,33 @@ func (m *MockService) SetOriginalID(arg0 context.Context, arg1 uint, arg2 string
 }
 
 // SetOriginalID indicates an expected call of SetOriginalID.
-func (mr *MockServiceMockRecorder) SetOriginalID(arg0, arg1, arg2 interface{}) *gomock.Call {
+func (mr *MockServiceMockRecorder) SetOriginalID(arg0, arg1, arg2 interface{}) *ServiceSetOriginalIDCall {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetOriginalID", reflect.TypeOf((*MockService)(nil).SetOriginalID), arg0, arg1, arg2)
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetOriginalID", reflect.TypeOf((*MockService)(nil).SetOriginalID), arg0, arg1, arg2)
+	return &ServiceSetOriginalIDCall{Call: call}
+}
+
+// ServiceSetOriginalIDCall wrap *gomock.Call
+type ServiceSetOriginalIDCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *ServiceSetOriginalIDCall) Return(arg0 error) *ServiceSetOriginalIDCall {
+	c.Call = c.Call.Return(arg0)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *ServiceSetOriginalIDCall) Do(f func(context.Context, uint, string) error) *ServiceSetOriginalIDCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *ServiceSetOriginalIDCall) DoAndReturn(f func(context.Context, uint, string) error) *ServiceSetOriginalIDCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
 }
 
 // SetStatus mocks base method.
@@ -103,9 +199,33 @@ func (m *MockService) SetStatus(arg0 context.Context, arg1 uint, arg2 collection
 }
 
 // SetStatus indicates an expected call of SetStatus.
-func (mr *MockServiceMockRecorder) SetStatus(arg0, arg1, arg2 interface{}) *gomock.Call {
+func (mr *MockServiceMockRecorder) SetStatus(arg0, arg1, arg2 interface{}) *ServiceSetStatusCall {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetStatus", reflect.TypeOf((*MockService)(nil).SetStatus), arg0, arg1, arg2)
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetStatus", reflect.TypeOf((*MockService)(nil).SetStatus), arg0, arg1, arg2)
+	return &ServiceSetStatusCall{Call: call}
+}
+
+// ServiceSetStatusCall wrap *gomock.Call
+type ServiceSetStatusCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *ServiceSetStatusCall) Return(arg0 error) *ServiceSetStatusCall {
+	c.Call = c.Call.Return(arg0)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *ServiceSetStatusCall) Do(f func(context.Context, uint, collection0.Status) error) *ServiceSetStatusCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *ServiceSetStatusCall) DoAndReturn(f func(context.Context, uint, collection0.Status) error) *ServiceSetStatusCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
 }
 
 // SetStatusInProgress mocks base method.
@@ -117,9 +237,33 @@ func (m *MockService) SetStatusInProgress(arg0 context.Context, arg1 uint, arg2 
 }
 
 // SetStatusInProgress indicates an expected call of SetStatusInProgress.
-func (mr *MockServiceMockRecorder) SetStatusInProgress(arg0, arg1, arg2 interface{}) *gomock.Call {
+func (mr *MockServiceMockRecorder) SetStatusInProgress(arg0, arg1, arg2 interface{}) *ServiceSetStatusInProgressCall {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetStatusInProgress", reflect.TypeOf((*MockService)(nil).SetStatusInProgress), arg0, arg1, arg2)
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetStatusInProgress", reflect.TypeOf((*MockService)(nil).SetStatusInProgress), arg0, arg1, arg2)
+	return &ServiceSetStatusInProgressCall{Call: call}
+}
+
+// ServiceSetStatusInProgressCall wrap *gomock.Call
+type ServiceSetStatusInProgressCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *ServiceSetStatusInProgressCall) Return(arg0 error) *ServiceSetStatusInProgressCall {
+	c.Call = c.Call.Return(arg0)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *ServiceSetStatusInProgressCall) Do(f func(context.Context, uint, time.Time) error) *ServiceSetStatusInProgressCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *ServiceSetStatusInProgressCall) DoAndReturn(f func(context.Context, uint, time.Time) error) *ServiceSetStatusInProgressCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
 }
 
 // SetStatusPending mocks base method.
@@ -131,9 +275,33 @@ func (m *MockService) SetStatusPending(arg0 context.Context, arg1 uint, arg2 []b
 }
 
 // SetStatusPending indicates an expected call of SetStatusPending.
-func (mr *MockServiceMockRecorder) SetStatusPending(arg0, arg1, arg2 interface{}) *gomock.Call {
+func (mr *MockServiceMockRecorder) SetStatusPending(arg0, arg1, arg2 interface{}) *ServiceSetStatusPendingCall {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetStatusPending", reflect.TypeOf((*MockService)(nil).SetStatusPending), arg0, arg1, arg2)
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetStatusPending", reflect.TypeOf((*MockService)(nil).SetStatusPending), arg0, arg1, arg2)
+	return &ServiceSetStatusPendingCall{Call: call}
+}
+
+// ServiceSetStatusPendingCall wrap *gomock.Call
+type ServiceSetStatusPendingCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *ServiceSetStatusPendingCall) Return(arg0 error) *ServiceSetStatusPendingCall {
+	c.Call = c.Call.Return(arg0)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *ServiceSetStatusPendingCall) Do(f func(context.Context, uint, []byte) error) *ServiceSetStatusPendingCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *ServiceSetStatusPendingCall) DoAndReturn(f func(context.Context, uint, []byte) error) *ServiceSetStatusPendingCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
 }
 
 // UpdateWorkflowStatus mocks base method.
@@ -145,7 +313,31 @@ func (m *MockService) UpdateWorkflowStatus(arg0 context.Context, arg1 uint, arg2
 }
 
 // UpdateWorkflowStatus indicates an expected call of UpdateWorkflowStatus.
-func (mr *MockServiceMockRecorder) UpdateWorkflowStatus(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9 interface{}) *gomock.Call {
+func (mr *MockServiceMockRecorder) UpdateWorkflowStatus(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9 interface{}) *ServiceUpdateWorkflowStatusCall {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateWorkflowStatus", reflect.TypeOf((*MockService)(nil).UpdateWorkflowStatus), arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9)
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateWorkflowStatus", reflect.TypeOf((*MockService)(nil).UpdateWorkflowStatus), arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9)
+	return &ServiceUpdateWorkflowStatusCall{Call: call}
+}
+
+// ServiceUpdateWorkflowStatusCall wrap *gomock.Call
+type ServiceUpdateWorkflowStatusCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *ServiceUpdateWorkflowStatusCall) Return(arg0 error) *ServiceUpdateWorkflowStatusCall {
+	c.Call = c.Call.Return(arg0)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *ServiceUpdateWorkflowStatusCall) Do(f func(context.Context, uint, string, string, string, string, string, string, collection0.Status, time.Time) error) *ServiceUpdateWorkflowStatusCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *ServiceUpdateWorkflowStatusCall) DoAndReturn(f func(context.Context, uint, string, string, string, string, string, string, collection0.Status, time.Time) error) *ServiceUpdateWorkflowStatusCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
 }

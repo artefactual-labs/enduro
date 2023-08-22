@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 	temporalsdk_testsuite "go.temporal.io/sdk/testsuite"
+	"go.uber.org/mock/gomock"
 
 	"github.com/artefactual-labs/enduro/internal/collection"
 	collectionfake "github.com/artefactual-labs/enduro/internal/collection/fake"
