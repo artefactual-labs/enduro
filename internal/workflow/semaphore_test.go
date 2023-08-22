@@ -4,11 +4,11 @@ import (
 	"testing"
 
 	"github.com/go-logr/logr"
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	temporalsdk_activity "go.temporal.io/sdk/activity"
 	temporalsdk_testsuite "go.temporal.io/sdk/testsuite"
 	temporalsdk_workflow "go.temporal.io/sdk/workflow"
+	"go.uber.org/mock/gomock"
 
 	collectionfake "github.com/artefactual-labs/enduro/internal/collection/fake"
 	"github.com/artefactual-labs/enduro/internal/pipeline"

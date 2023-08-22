@@ -9,7 +9,7 @@ import (
 	reflect "reflect"
 
 	pipeline "github.com/artefactual-labs/enduro/internal/api/gen/pipeline"
-	gomock "github.com/golang/mock/gomock"
+	gomock "go.uber.org/mock/gomock"
 )
 
 // MockService is a mock of Service interface.
@@ -45,9 +45,33 @@ func (m *MockService) List(arg0 context.Context, arg1 *pipeline.ListPayload) ([]
 }
 
 // List indicates an expected call of List.
-func (mr *MockServiceMockRecorder) List(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockServiceMockRecorder) List(arg0, arg1 interface{}) *ServiceListCall {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockService)(nil).List), arg0, arg1)
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockService)(nil).List), arg0, arg1)
+	return &ServiceListCall{Call: call}
+}
+
+// ServiceListCall wrap *gomock.Call
+type ServiceListCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *ServiceListCall) Return(arg0 []*pipeline.EnduroStoredPipeline, arg1 error) *ServiceListCall {
+	c.Call = c.Call.Return(arg0, arg1)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *ServiceListCall) Do(f func(context.Context, *pipeline.ListPayload) ([]*pipeline.EnduroStoredPipeline, error)) *ServiceListCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *ServiceListCall) DoAndReturn(f func(context.Context, *pipeline.ListPayload) ([]*pipeline.EnduroStoredPipeline, error)) *ServiceListCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
 }
 
 // Processing mocks base method.
@@ -60,9 +84,33 @@ func (m *MockService) Processing(arg0 context.Context, arg1 *pipeline.Processing
 }
 
 // Processing indicates an expected call of Processing.
-func (mr *MockServiceMockRecorder) Processing(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockServiceMockRecorder) Processing(arg0, arg1 interface{}) *ServiceProcessingCall {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Processing", reflect.TypeOf((*MockService)(nil).Processing), arg0, arg1)
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Processing", reflect.TypeOf((*MockService)(nil).Processing), arg0, arg1)
+	return &ServiceProcessingCall{Call: call}
+}
+
+// ServiceProcessingCall wrap *gomock.Call
+type ServiceProcessingCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *ServiceProcessingCall) Return(arg0 []string, arg1 error) *ServiceProcessingCall {
+	c.Call = c.Call.Return(arg0, arg1)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *ServiceProcessingCall) Do(f func(context.Context, *pipeline.ProcessingPayload) ([]string, error)) *ServiceProcessingCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *ServiceProcessingCall) DoAndReturn(f func(context.Context, *pipeline.ProcessingPayload) ([]string, error)) *ServiceProcessingCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
 }
 
 // Show mocks base method.
@@ -75,7 +123,31 @@ func (m *MockService) Show(arg0 context.Context, arg1 *pipeline.ShowPayload) (*p
 }
 
 // Show indicates an expected call of Show.
-func (mr *MockServiceMockRecorder) Show(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockServiceMockRecorder) Show(arg0, arg1 interface{}) *ServiceShowCall {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Show", reflect.TypeOf((*MockService)(nil).Show), arg0, arg1)
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Show", reflect.TypeOf((*MockService)(nil).Show), arg0, arg1)
+	return &ServiceShowCall{Call: call}
+}
+
+// ServiceShowCall wrap *gomock.Call
+type ServiceShowCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *ServiceShowCall) Return(arg0 *pipeline.EnduroStoredPipeline, arg1 error) *ServiceShowCall {
+	c.Call = c.Call.Return(arg0, arg1)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *ServiceShowCall) Do(f func(context.Context, *pipeline.ShowPayload) (*pipeline.EnduroStoredPipeline, error)) *ServiceShowCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *ServiceShowCall) DoAndReturn(f func(context.Context, *pipeline.ShowPayload) (*pipeline.EnduroStoredPipeline, error)) *ServiceShowCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
 }

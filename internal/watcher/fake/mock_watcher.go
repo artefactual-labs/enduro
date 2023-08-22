@@ -10,7 +10,7 @@ import (
 	reflect "reflect"
 
 	watcher "github.com/artefactual-labs/enduro/internal/watcher"
-	gomock "github.com/golang/mock/gomock"
+	gomock "go.uber.org/mock/gomock"
 )
 
 // MockService is a mock of Service interface.
@@ -46,9 +46,33 @@ func (m *MockService) ByName(arg0 string) (watcher.Watcher, error) {
 }
 
 // ByName indicates an expected call of ByName.
-func (mr *MockServiceMockRecorder) ByName(arg0 interface{}) *gomock.Call {
+func (mr *MockServiceMockRecorder) ByName(arg0 interface{}) *ServiceByNameCall {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ByName", reflect.TypeOf((*MockService)(nil).ByName), arg0)
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ByName", reflect.TypeOf((*MockService)(nil).ByName), arg0)
+	return &ServiceByNameCall{Call: call}
+}
+
+// ServiceByNameCall wrap *gomock.Call
+type ServiceByNameCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *ServiceByNameCall) Return(arg0 watcher.Watcher, arg1 error) *ServiceByNameCall {
+	c.Call = c.Call.Return(arg0, arg1)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *ServiceByNameCall) Do(f func(string) (watcher.Watcher, error)) *ServiceByNameCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *ServiceByNameCall) DoAndReturn(f func(string) (watcher.Watcher, error)) *ServiceByNameCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
 }
 
 // Delete mocks base method.
@@ -60,9 +84,33 @@ func (m *MockService) Delete(arg0 context.Context, arg1, arg2 string) error {
 }
 
 // Delete indicates an expected call of Delete.
-func (mr *MockServiceMockRecorder) Delete(arg0, arg1, arg2 interface{}) *gomock.Call {
+func (mr *MockServiceMockRecorder) Delete(arg0, arg1, arg2 interface{}) *ServiceDeleteCall {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockService)(nil).Delete), arg0, arg1, arg2)
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockService)(nil).Delete), arg0, arg1, arg2)
+	return &ServiceDeleteCall{Call: call}
+}
+
+// ServiceDeleteCall wrap *gomock.Call
+type ServiceDeleteCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *ServiceDeleteCall) Return(arg0 error) *ServiceDeleteCall {
+	c.Call = c.Call.Return(arg0)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *ServiceDeleteCall) Do(f func(context.Context, string, string) error) *ServiceDeleteCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *ServiceDeleteCall) DoAndReturn(f func(context.Context, string, string) error) *ServiceDeleteCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
 }
 
 // Dispose mocks base method.
@@ -74,9 +122,33 @@ func (m *MockService) Dispose(arg0 context.Context, arg1, arg2 string) error {
 }
 
 // Dispose indicates an expected call of Dispose.
-func (mr *MockServiceMockRecorder) Dispose(arg0, arg1, arg2 interface{}) *gomock.Call {
+func (mr *MockServiceMockRecorder) Dispose(arg0, arg1, arg2 interface{}) *ServiceDisposeCall {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Dispose", reflect.TypeOf((*MockService)(nil).Dispose), arg0, arg1, arg2)
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Dispose", reflect.TypeOf((*MockService)(nil).Dispose), arg0, arg1, arg2)
+	return &ServiceDisposeCall{Call: call}
+}
+
+// ServiceDisposeCall wrap *gomock.Call
+type ServiceDisposeCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *ServiceDisposeCall) Return(arg0 error) *ServiceDisposeCall {
+	c.Call = c.Call.Return(arg0)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *ServiceDisposeCall) Do(f func(context.Context, string, string) error) *ServiceDisposeCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *ServiceDisposeCall) DoAndReturn(f func(context.Context, string, string) error) *ServiceDisposeCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
 }
 
 // Download mocks base method.
@@ -88,9 +160,33 @@ func (m *MockService) Download(arg0 context.Context, arg1 io.Writer, arg2, arg3 
 }
 
 // Download indicates an expected call of Download.
-func (mr *MockServiceMockRecorder) Download(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+func (mr *MockServiceMockRecorder) Download(arg0, arg1, arg2, arg3 interface{}) *ServiceDownloadCall {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Download", reflect.TypeOf((*MockService)(nil).Download), arg0, arg1, arg2, arg3)
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Download", reflect.TypeOf((*MockService)(nil).Download), arg0, arg1, arg2, arg3)
+	return &ServiceDownloadCall{Call: call}
+}
+
+// ServiceDownloadCall wrap *gomock.Call
+type ServiceDownloadCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *ServiceDownloadCall) Return(arg0 error) *ServiceDownloadCall {
+	c.Call = c.Call.Return(arg0)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *ServiceDownloadCall) Do(f func(context.Context, io.Writer, string, string) error) *ServiceDownloadCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *ServiceDownloadCall) DoAndReturn(f func(context.Context, io.Writer, string, string) error) *ServiceDownloadCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
 }
 
 // Watchers mocks base method.
@@ -102,7 +198,31 @@ func (m *MockService) Watchers() []watcher.Watcher {
 }
 
 // Watchers indicates an expected call of Watchers.
-func (mr *MockServiceMockRecorder) Watchers() *gomock.Call {
+func (mr *MockServiceMockRecorder) Watchers() *ServiceWatchersCall {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Watchers", reflect.TypeOf((*MockService)(nil).Watchers))
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Watchers", reflect.TypeOf((*MockService)(nil).Watchers))
+	return &ServiceWatchersCall{Call: call}
+}
+
+// ServiceWatchersCall wrap *gomock.Call
+type ServiceWatchersCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *ServiceWatchersCall) Return(arg0 []watcher.Watcher) *ServiceWatchersCall {
+	c.Call = c.Call.Return(arg0)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *ServiceWatchersCall) Do(f func() []watcher.Watcher) *ServiceWatchersCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *ServiceWatchersCall) DoAndReturn(f func() []watcher.Watcher) *ServiceWatchersCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
 }

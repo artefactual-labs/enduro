@@ -9,7 +9,7 @@ import (
 	reflect "reflect"
 
 	amclient "github.com/artefactual-labs/enduro/internal/amclient"
-	gomock "github.com/golang/mock/gomock"
+	gomock "go.uber.org/mock/gomock"
 )
 
 // MockIngestService is a mock of IngestService interface.
@@ -46,9 +46,33 @@ func (m *MockIngestService) Hide(arg0 context.Context, arg1 string) (*amclient.I
 }
 
 // Hide indicates an expected call of Hide.
-func (mr *MockIngestServiceMockRecorder) Hide(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockIngestServiceMockRecorder) Hide(arg0, arg1 interface{}) *IngestServiceHideCall {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Hide", reflect.TypeOf((*MockIngestService)(nil).Hide), arg0, arg1)
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Hide", reflect.TypeOf((*MockIngestService)(nil).Hide), arg0, arg1)
+	return &IngestServiceHideCall{Call: call}
+}
+
+// IngestServiceHideCall wrap *gomock.Call
+type IngestServiceHideCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *IngestServiceHideCall) Return(arg0 *amclient.IngestHideResponse, arg1 *amclient.Response, arg2 error) *IngestServiceHideCall {
+	c.Call = c.Call.Return(arg0, arg1, arg2)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *IngestServiceHideCall) Do(f func(context.Context, string) (*amclient.IngestHideResponse, *amclient.Response, error)) *IngestServiceHideCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *IngestServiceHideCall) DoAndReturn(f func(context.Context, string) (*amclient.IngestHideResponse, *amclient.Response, error)) *IngestServiceHideCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
 }
 
 // Status mocks base method.
@@ -62,7 +86,31 @@ func (m *MockIngestService) Status(arg0 context.Context, arg1 string) (*amclient
 }
 
 // Status indicates an expected call of Status.
-func (mr *MockIngestServiceMockRecorder) Status(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockIngestServiceMockRecorder) Status(arg0, arg1 interface{}) *IngestServiceStatusCall {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Status", reflect.TypeOf((*MockIngestService)(nil).Status), arg0, arg1)
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Status", reflect.TypeOf((*MockIngestService)(nil).Status), arg0, arg1)
+	return &IngestServiceStatusCall{Call: call}
+}
+
+// IngestServiceStatusCall wrap *gomock.Call
+type IngestServiceStatusCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *IngestServiceStatusCall) Return(arg0 *amclient.IngestStatusResponse, arg1 *amclient.Response, arg2 error) *IngestServiceStatusCall {
+	c.Call = c.Call.Return(arg0, arg1, arg2)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *IngestServiceStatusCall) Do(f func(context.Context, string) (*amclient.IngestStatusResponse, *amclient.Response, error)) *IngestServiceStatusCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *IngestServiceStatusCall) DoAndReturn(f func(context.Context, string) (*amclient.IngestStatusResponse, *amclient.Response, error)) *IngestServiceStatusCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
 }

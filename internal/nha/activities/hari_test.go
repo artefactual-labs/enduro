@@ -12,8 +12,8 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	"github.com/golang/mock/gomock"
 	temporalsdk_temporal "go.temporal.io/sdk/temporal"
+	"go.uber.org/mock/gomock"
 	"gotest.tools/v3/assert"
 	"gotest.tools/v3/fs"
 

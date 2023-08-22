@@ -9,7 +9,7 @@ import (
 	reflect "reflect"
 
 	amclient "github.com/artefactual-labs/enduro/internal/amclient"
-	gomock "github.com/golang/mock/gomock"
+	gomock "go.uber.org/mock/gomock"
 )
 
 // MockProcessingConfigService is a mock of ProcessingConfigService interface.
@@ -46,9 +46,33 @@ func (m *MockProcessingConfigService) Get(arg0 context.Context, arg1 string) (*a
 }
 
 // Get indicates an expected call of Get.
-func (mr *MockProcessingConfigServiceMockRecorder) Get(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockProcessingConfigServiceMockRecorder) Get(arg0, arg1 interface{}) *ProcessingConfigServiceGetCall {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockProcessingConfigService)(nil).Get), arg0, arg1)
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockProcessingConfigService)(nil).Get), arg0, arg1)
+	return &ProcessingConfigServiceGetCall{Call: call}
+}
+
+// ProcessingConfigServiceGetCall wrap *gomock.Call
+type ProcessingConfigServiceGetCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *ProcessingConfigServiceGetCall) Return(arg0 *amclient.ProcessingConfig, arg1 *amclient.Response, arg2 error) *ProcessingConfigServiceGetCall {
+	c.Call = c.Call.Return(arg0, arg1, arg2)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *ProcessingConfigServiceGetCall) Do(f func(context.Context, string) (*amclient.ProcessingConfig, *amclient.Response, error)) *ProcessingConfigServiceGetCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *ProcessingConfigServiceGetCall) DoAndReturn(f func(context.Context, string) (*amclient.ProcessingConfig, *amclient.Response, error)) *ProcessingConfigServiceGetCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
 }
 
 // List mocks base method.
@@ -62,7 +86,31 @@ func (m *MockProcessingConfigService) List(arg0 context.Context) ([]string, *amc
 }
 
 // List indicates an expected call of List.
-func (mr *MockProcessingConfigServiceMockRecorder) List(arg0 interface{}) *gomock.Call {
+func (mr *MockProcessingConfigServiceMockRecorder) List(arg0 interface{}) *ProcessingConfigServiceListCall {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockProcessingConfigService)(nil).List), arg0)
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockProcessingConfigService)(nil).List), arg0)
+	return &ProcessingConfigServiceListCall{Call: call}
+}
+
+// ProcessingConfigServiceListCall wrap *gomock.Call
+type ProcessingConfigServiceListCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *ProcessingConfigServiceListCall) Return(arg0 []string, arg1 *amclient.Response, arg2 error) *ProcessingConfigServiceListCall {
+	c.Call = c.Call.Return(arg0, arg1, arg2)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *ProcessingConfigServiceListCall) Do(f func(context.Context) ([]string, *amclient.Response, error)) *ProcessingConfigServiceListCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *ProcessingConfigServiceListCall) DoAndReturn(f func(context.Context) ([]string, *amclient.Response, error)) *ProcessingConfigServiceListCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
 }

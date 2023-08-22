@@ -9,7 +9,7 @@ import (
 	reflect "reflect"
 
 	amclient "github.com/artefactual-labs/enduro/internal/amclient"
-	gomock "github.com/golang/mock/gomock"
+	gomock "go.uber.org/mock/gomock"
 )
 
 // MockTaskService is a mock of TaskService interface.
@@ -46,7 +46,31 @@ func (m *MockTaskService) Read(arg0 context.Context, arg1 string) (*amclient.Tas
 }
 
 // Read indicates an expected call of Read.
-func (mr *MockTaskServiceMockRecorder) Read(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockTaskServiceMockRecorder) Read(arg0, arg1 interface{}) *TaskServiceReadCall {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Read", reflect.TypeOf((*MockTaskService)(nil).Read), arg0, arg1)
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Read", reflect.TypeOf((*MockTaskService)(nil).Read), arg0, arg1)
+	return &TaskServiceReadCall{Call: call}
+}
+
+// TaskServiceReadCall wrap *gomock.Call
+type TaskServiceReadCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *TaskServiceReadCall) Return(arg0 *amclient.TaskDetailed, arg1 *amclient.Response, arg2 error) *TaskServiceReadCall {
+	c.Call = c.Call.Return(arg0, arg1, arg2)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *TaskServiceReadCall) Do(f func(context.Context, string) (*amclient.TaskDetailed, *amclient.Response, error)) *TaskServiceReadCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *TaskServiceReadCall) DoAndReturn(f func(context.Context, string) (*amclient.TaskDetailed, *amclient.Response, error)) *TaskServiceReadCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
 }
