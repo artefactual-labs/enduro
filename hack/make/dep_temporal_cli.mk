@@ -5,7 +5,7 @@ $(call _assert_var,UNAME_ARCH2)
 $(call _assert_var,CACHE_VERSIONS)
 $(call _assert_var,CACHE_BIN)
 
-TEMPORAL_CLI_VERSION ?= 0.10.0
+TEMPORAL_CLI_VERSION ?= 0.10.5
 
 TEMPORAL_CLI := $(CACHE_VERSIONS)/temporal/$(TEMPORAL_CLI_VERSION)
 $(TEMPORAL_CLI):
