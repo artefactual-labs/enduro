@@ -71,6 +71,7 @@ func NewMinioWatcher(ctx context.Context, config *MinioConfig) (*minioWatcher, e
 			retentionPeriod:  config.RetentionPeriod,
 			stripTopLevelDir: config.StripTopLevelDir,
 			rejectDuplicates: config.RejectDuplicates,
+			transferType:     config.TransferType,
 		},
 	}, nil
 }

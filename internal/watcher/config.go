@@ -38,6 +38,7 @@ type FilesystemConfig struct {
 	CompletedDir     string
 	StripTopLevelDir bool
 	RejectDuplicates bool
+	TransferType     string
 }
 
 // See minio.go for more.
@@ -58,4 +59,5 @@ type MinioConfig struct {
 	RetentionPeriod  *time.Duration
 	StripTopLevelDir bool
 	RejectDuplicates bool
+	TransferType     string
 }

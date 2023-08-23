@@ -43,6 +43,7 @@ paths:
                             processing_config: abc123
                             reject_duplicates: false
                             retention_period: abc123
+                            transfer_type: abc123
             responses:
                 "202":
                     description: Accepted response.
@@ -1162,6 +1163,9 @@ components:
                 retention_period:
                     type: string
                     example: abc123
+                transfer_type:
+                    type: string
+                    example: abc123
             example:
                 completed_dir: abc123
                 path: abc123
@@ -1169,6 +1173,7 @@ components:
                 processing_config: abc123
                 reject_duplicates: false
                 retention_period: abc123
+                transfer_type: abc123
             required:
                 - path
 tags:

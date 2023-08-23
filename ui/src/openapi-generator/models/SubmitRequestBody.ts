@@ -55,6 +55,12 @@ export interface SubmitRequestBody {
      * @memberof SubmitRequestBody
      */
     retentionPeriod?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof SubmitRequestBody
+     */
+    transferType?: string;
 }
 
 /**
@@ -83,6 +89,7 @@ export function SubmitRequestBodyFromJSONTyped(json: any, ignoreDiscriminator: b
         'processingConfig': !exists(json, 'processing_config') ? undefined : json['processing_config'],
         'rejectDuplicates': !exists(json, 'reject_duplicates') ? undefined : json['reject_duplicates'],
         'retentionPeriod': !exists(json, 'retention_period') ? undefined : json['retention_period'],
+        'transferType': !exists(json, 'transfer_type') ? undefined : json['transfer_type'],
     };
 }
 
@@ -101,6 +108,7 @@ export function SubmitRequestBodyToJSON(value?: SubmitRequestBody | null): any {
         'processing_config': value.processingConfig,
         'reject_duplicates': value.rejectDuplicates,
         'retention_period': value.retentionPeriod,
+        'transfer_type': value.transferType,
     };
 }
 

@@ -40,7 +40,8 @@ func UsageExamples() string {
       "pipeline": "abc123",
       "processing_config": "abc123",
       "reject_duplicates": false,
-      "retention_period": "abc123"
+      "retention_period": "abc123",
+      "transfer_type": "abc123"
    }'` + "\n" +
 		os.Args[0] + ` collection monitor` + "\n" +
 		""
@@ -412,7 +413,8 @@ Example:
       "pipeline": "abc123",
       "processing_config": "abc123",
       "reject_duplicates": false,
-      "retention_period": "abc123"
+      "retention_period": "abc123",
+      "transfer_type": "abc123"
    }'
 `, os.Args[0])
 }

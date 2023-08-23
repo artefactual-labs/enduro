@@ -64,7 +64,7 @@ func TestBatchServiceSubmit(t *testing.T) {
 
 	t.Run("Returns batch result", func(t *testing.T) {
 		client := &temporalsdk_mocks.Client{}
-		processingConfig, completedDir, retentionPeriod := "default", "/tmp", "2h"
+		processingConfig, completedDir, retentionPeriod, transferType := "default", "/tmp", "2h", "standard"
 
 		workflowRun := &temporalsdk_mocks.WorkflowRun{}
 		workflowRun.On("GetID").Return("batch-workflow")
@@ -82,6 +82,7 @@ func TestBatchServiceSubmit(t *testing.T) {
 				ProcessingConfig: processingConfig,
 				CompletedDir:     completedDir,
 				RetentionPeriod:  &dur,
+				TransferType:     transferType,
 			},
 		).Return(
 			workflowRun, nil,
@@ -94,6 +95,7 @@ func TestBatchServiceSubmit(t *testing.T) {
 			ProcessingConfig: &processingConfig,
 			CompletedDir:     &completedDir,
 			RetentionPeriod:  &retentionPeriod,
+			TransferType:     &transferType,
 		})
 
 		assert.NilError(t, err)

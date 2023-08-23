@@ -60,6 +60,9 @@ type ProcessingWorkflowRequest struct {
 
 	// Whether we reject duplicates based on name (key).
 	RejectDuplicates bool
+
+	// Transfer type.
+	TransferType string
 }
 
 func InitProcessingWorkflow(ctx context.Context, tr trace.Tracer, c temporalsdk_client.Client, taskQueue string, req *ProcessingWorkflowRequest) error {
@@ -68,6 +71,10 @@ func InitProcessingWorkflow(ctx context.Context, tr trace.Tracer, c temporalsdk_
 
 	if req.WorkflowID == "" {
 		req.WorkflowID = fmt.Sprintf("processing-workflow-%s", uuid.New().String())
+	}
+
+	if req.TransferType == "" {
+		req.TransferType = "standard"
 	}
 
 	ctx, cancel := context.WithTimeout(ctx, time.Second*5)

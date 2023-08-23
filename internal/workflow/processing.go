@@ -134,6 +134,11 @@ type TransferInfo struct {
 	//
 	// It is populated by BundleActivity.
 	Bundle activities.BundleActivityResult
+
+	// Archivematica transfer type.
+	//
+	// It is populated via the workflow request.
+	TransferType string
 }
 
 func (tinfo TransferInfo) ProcessingConfiguration() string {
@@ -167,6 +172,7 @@ func (w *ProcessingWorkflow) Execute(ctx temporalsdk_workflow.Context, req *coll
 			IsDir:            req.IsDir,
 			BatchDir:         req.BatchDir,
 			ProcessingConfig: req.ProcessingConfig,
+			TransferType:     req.TransferType,
 		}
 
 		// Attributes inferred from the name of the transfer. Populated by parseNameLocalActivity.
@@ -539,6 +545,7 @@ func (w *ProcessingWorkflow) transfer(sessCtx temporalsdk_workflow.Context, tinf
 				RelPath:            tinfo.Bundle.RelPath,
 				Name:               tinfo.Key,
 				ProcessingConfig:   tinfo.ProcessingConfiguration(),
+				TransferType:       tinfo.TransferType,
 			}).Get(activityOpts, &transferResponse)
 			if err != nil {
 				return err

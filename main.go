@@ -223,6 +223,7 @@ func main() {
 								CompletedDir:     event.CompletedDir,
 								StripTopLevelDir: event.StripTopLevelDir,
 								RejectDuplicates: event.RejectDuplicates,
+								TransferType:     event.TransferType,
 								Key:              event.Key,
 								IsDir:            event.IsDir,
 								ValidationConfig: config.Validation,

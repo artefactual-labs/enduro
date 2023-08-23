@@ -30,6 +30,7 @@ type Watcher interface {
 	CompletedDir() string
 	StripTopLevelDir() bool
 	RejectDuplicates() bool
+	TransferType() string
 
 	// Full path of the watched bucket when available, empty string otherwise.
 	Path() string
@@ -44,6 +45,7 @@ type commonWatcherImpl struct {
 	completedDir     string
 	stripTopLevelDir bool
 	rejectDuplicates bool
+	transferType     string
 }
 
 func (w *commonWatcherImpl) String() string {
@@ -68,6 +70,10 @@ func (w *commonWatcherImpl) StripTopLevelDir() bool {
 
 func (w *commonWatcherImpl) RejectDuplicates() bool {
 	return w.rejectDuplicates
+}
+
+func (w *commonWatcherImpl) TransferType() string {
+	return w.transferType
 }
 
 type Service interface {
