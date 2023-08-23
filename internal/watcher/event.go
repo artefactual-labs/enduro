@@ -32,6 +32,9 @@ type BlobEvent struct {
 	// Whether duplicates are rejected or not.
 	RejectDuplicates bool
 
+	// Which transfer type to use in Archivemaitca.
+	TransferType string
+
 	// Key of the blob.
 	Key string
 
@@ -50,6 +53,7 @@ func NewBlobEvent(w Watcher, key string, isDir bool) *BlobEvent {
 		CompletedDir:     w.CompletedDir(),
 		StripTopLevelDir: w.StripTopLevelDir(),
 		RejectDuplicates: w.RejectDuplicates(),
+		TransferType:     w.TransferType(),
 		Key:              key,
 		IsDir:            isDir,
 	}

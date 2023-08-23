@@ -18,6 +18,7 @@ var _ = Service("batch", func() {
 			Attribute("completed_dir", String)
 			Attribute("retention_period", String)
 			Attribute("reject_duplicates", Boolean, func() { Default(false) })
+			Attribute("transfer_type", String)
 			Required("path")
 		})
 		Result(BatchResult)

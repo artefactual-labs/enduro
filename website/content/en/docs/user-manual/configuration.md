@@ -163,6 +163,9 @@ stripTopLevelDir = true
 
 # Reject transfers with duplicate transfer names.
 rejectDuplicates = false
+
+# Archivematica transfer type.
+transferType = "standard"
 ```
 
 Namely, it monitors the `watched-dir` directory. It uses the inotify API for
@@ -189,6 +192,15 @@ successfully completed transfers with the same transfer name as the currently
 processing package. If it finds a duplicate the transfer will fail.
 
 E.g.: `false`
+
+#### `transferType` (String)
+
+Archivematica submission transfer type.
+
+The string should be one of the following: 
+"standard", "zipfile", "unzipped bag", "zipped bag", "dspace", "maildir", "TRIM" or "dataverse"
+
+E.g.: `standard`
 
 #### `completedDir` (String)
 
@@ -256,6 +268,9 @@ stripTopLevelDir = true
 
 # Reject transfers with duplicate transfer names.
 rejectDuplicates = false
+
+# Archivematica transfer type.
+transferType = "standard"
 ```
 
 MinIO will deliver new events to us via a Redis instance at
@@ -284,6 +299,15 @@ succesfully completed transfers with the same transfer name as the currently
 processing package. If it finds a duplicate the transfer will fail.
 
 E.g.: `false`
+
+#### `transferType` (String)
+
+Archivematica submission transfer type.
+
+The string should be one of the following: 
+"standard", "zipfile", "unzipped bag", "zipped bag", "dspace", "maildir", "TRIM" or "dataverse"
+
+E.g.: `standard`
 
 #### `pipeline` (String | Array(String))
 

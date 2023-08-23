@@ -22,6 +22,7 @@ type SubmitRequestBody struct {
 	CompletedDir     *string `form:"completed_dir,omitempty" json:"completed_dir,omitempty" xml:"completed_dir,omitempty"`
 	RetentionPeriod  *string `form:"retention_period,omitempty" json:"retention_period,omitempty" xml:"retention_period,omitempty"`
 	RejectDuplicates *bool   `form:"reject_duplicates,omitempty" json:"reject_duplicates,omitempty" xml:"reject_duplicates,omitempty"`
+	TransferType     *string `form:"transfer_type,omitempty" json:"transfer_type,omitempty" xml:"transfer_type,omitempty"`
 }
 
 // SubmitResponseBody is the type of the "batch" service "submit" endpoint HTTP
@@ -154,6 +155,7 @@ func NewSubmitPayload(body *SubmitRequestBody) *batch.SubmitPayload {
 		ProcessingConfig: body.ProcessingConfig,
 		CompletedDir:     body.CompletedDir,
 		RetentionPeriod:  body.RetentionPeriod,
+		TransferType:     body.TransferType,
 	}
 	if body.RejectDuplicates != nil {
 		v.RejectDuplicates = *body.RejectDuplicates

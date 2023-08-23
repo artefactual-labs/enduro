@@ -171,7 +171,8 @@
         "pipeline": "abc123",
         "processing_config": "abc123",
         "reject_duplicates": false,
-        "retention_period": "abc123"
+        "retention_period": "abc123",
+        "transfer_type": "abc123"
       },
       "properties": {
         "completed_dir": {
@@ -196,6 +197,10 @@
           "type": "boolean"
         },
         "retention_period": {
+          "example": "abc123",
+          "type": "string"
+        },
+        "transfer_type": {
           "example": "abc123",
           "type": "string"
         }

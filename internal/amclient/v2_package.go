@@ -33,14 +33,9 @@ type PackageCreateResponse struct {
 	ID string `json:"id,omitempty"`
 }
 
-const standardTransferType = "standard"
-
 func (s *PackageServiceOp) Create(ctx context.Context, r *PackageCreateRequest) (*PackageCreateResponse, *Response, error) {
 	path := fmt.Sprintf("%s/", packageBasePath)
 
-	if r.Type == "" {
-		r.Type = standardTransferType
-	}
 	r.Path = base64.StdEncoding.EncodeToString([]byte(r.Path))
 
 	req, err := s.client.NewRequestJSON(ctx, "POST", path, r)

@@ -73,6 +73,9 @@ func (s *batchImpl) Submit(ctx context.Context, payload *goabatch.SubmitPayload)
 		input.RetentionPeriod = &dur
 	}
 	input.RejectDuplicates = payload.RejectDuplicates
+	if payload.TransferType != nil {
+		input.TransferType = *payload.TransferType
+	}
 	opts := temporalsdk_client.StartWorkflowOptions{
 		ID:                       BatchWorkflowID,
 		WorkflowIDReusePolicy:    temporalapi_enums.WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE,

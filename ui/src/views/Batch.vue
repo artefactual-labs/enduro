@@ -31,6 +31,10 @@
 
             <pipeline-processing-configuration-dropdown v-show="pipelineId" :pipeline-id="pipelineId" v-on:pipeline-processing-configuration-selected="form.processingConfig = $event"/>
 
+            <b-form-group label="Transfer type" label-for="dropdown-select">
+              <b-form-select id="dropdown-select" v-model="form.transferType" :options="transferOptions"></b-form-select>
+            </b-form-group>
+
             <b-form-group label-for="reject-duplicates-checkbox">
               <b-form-checkbox id="reject-duplicates-checkbox" v-model="form.rejectDuplicates">
                 Reject transfers with duplicate names.
@@ -100,6 +104,7 @@ export default class Batch extends Vue {
     completedDir: null,
     retentionPeriod: null,
     rejectDuplicates: null,
+    transferType: null,
   };
 
   private tabIndex: number = 0;
@@ -113,6 +118,17 @@ export default class Batch extends Vue {
   private hints: api.BatchHintsResponseBody = {
     completedDirs: [],
   };
+
+  private transferOptions = [
+    { value: 'standard', text: 'Standard' },
+    { value: 'zipfile', text: 'Zipfile' },
+    { value: 'unzipped bag', text: 'Unzipped bag' },
+    { value: 'zipped bag', text: 'Zipped bag' },
+    { value: 'dspace', text: 'DSpace' },
+    { value: 'maildir', text: 'Maildir' },
+    { value: 'TRIM', text: 'TRIM' },
+    { value: 'dataverse', text: 'Dataverse' },
+  ];
 
   private onPipelineSelected($event: any): void {
     this.pipelineId = $event ? $event.value : null;
@@ -153,7 +169,7 @@ export default class Batch extends Vue {
   private onSubmit(evt: Event) {
     const request: api.BatchSubmitRequest = {
       submitRequestBody: {
-        path: this.form.path,
+        path: this.form.path
       },
     };
     if (this.form.pipeline) {
@@ -170,6 +186,9 @@ export default class Batch extends Vue {
     }
     if (this.form.rejectDuplicates) {
       request.submitRequestBody.rejectDuplicates = this.form.rejectDuplicates;
+    }
+    if (this.form.transferType) {
+      request.submitRequestBody.transferType = this.form.transferType;
     }
     return EnduroBatchClient.batchSubmit(request).then((response: api.BatchSubmitResponseBody) => {
       this.loadStatus();

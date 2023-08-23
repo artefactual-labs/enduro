@@ -77,6 +77,7 @@ func NewFilesystemWatcher(ctx context.Context, config *FilesystemConfig) (*files
 			completedDir:     config.CompletedDir,
 			stripTopLevelDir: config.StripTopLevelDir,
 			rejectDuplicates: config.RejectDuplicates,
+			transferType:     config.TransferType,
 		},
 	}
 

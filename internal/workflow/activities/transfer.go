@@ -28,6 +28,7 @@ type TransferActivityParams struct {
 	RelPath            string
 	Name               string
 	ProcessingConfig   string
+	TransferType       string
 }
 
 type TransferActivityResponse struct {
@@ -51,6 +52,7 @@ func (a *TransferActivity) Execute(ctx context.Context, params *TransferActivity
 
 	resp, httpResp, err := amc.Package.Create(ctx, &amclient.PackageCreateRequest{
 		Name:             params.Name,
+		Type:             params.TransferType,
 		Path:             path,
 		ProcessingConfig: params.ProcessingConfig,
 		AutoApprove:      true,
