@@ -16,13 +16,14 @@ import (
 // SubmitRequestBody is the type of the "batch" service "submit" endpoint HTTP
 // request body.
 type SubmitRequestBody struct {
-	Path             *string `form:"path,omitempty" json:"path,omitempty" xml:"path,omitempty"`
-	Pipeline         *string `form:"pipeline,omitempty" json:"pipeline,omitempty" xml:"pipeline,omitempty"`
-	ProcessingConfig *string `form:"processing_config,omitempty" json:"processing_config,omitempty" xml:"processing_config,omitempty"`
-	CompletedDir     *string `form:"completed_dir,omitempty" json:"completed_dir,omitempty" xml:"completed_dir,omitempty"`
-	RetentionPeriod  *string `form:"retention_period,omitempty" json:"retention_period,omitempty" xml:"retention_period,omitempty"`
-	RejectDuplicates *bool   `form:"reject_duplicates,omitempty" json:"reject_duplicates,omitempty" xml:"reject_duplicates,omitempty"`
-	TransferType     *string `form:"transfer_type,omitempty" json:"transfer_type,omitempty" xml:"transfer_type,omitempty"`
+	Path                *string `form:"path,omitempty" json:"path,omitempty" xml:"path,omitempty"`
+	Pipeline            *string `form:"pipeline,omitempty" json:"pipeline,omitempty" xml:"pipeline,omitempty"`
+	ProcessingConfig    *string `form:"processing_config,omitempty" json:"processing_config,omitempty" xml:"processing_config,omitempty"`
+	CompletedDir        *string `form:"completed_dir,omitempty" json:"completed_dir,omitempty" xml:"completed_dir,omitempty"`
+	RetentionPeriod     *string `form:"retention_period,omitempty" json:"retention_period,omitempty" xml:"retention_period,omitempty"`
+	RejectDuplicates    *bool   `form:"reject_duplicates,omitempty" json:"reject_duplicates,omitempty" xml:"reject_duplicates,omitempty"`
+	TransferType        *string `form:"transfer_type,omitempty" json:"transfer_type,omitempty" xml:"transfer_type,omitempty"`
+	ProcessNameMetadata *bool   `form:"process_name_metadata,omitempty" json:"process_name_metadata,omitempty" xml:"process_name_metadata,omitempty"`
 }
 
 // SubmitResponseBody is the type of the "batch" service "submit" endpoint HTTP
@@ -160,8 +161,14 @@ func NewSubmitPayload(body *SubmitRequestBody) *batch.SubmitPayload {
 	if body.RejectDuplicates != nil {
 		v.RejectDuplicates = *body.RejectDuplicates
 	}
+	if body.ProcessNameMetadata != nil {
+		v.ProcessNameMetadata = *body.ProcessNameMetadata
+	}
 	if body.RejectDuplicates == nil {
 		v.RejectDuplicates = false
+	}
+	if body.ProcessNameMetadata == nil {
+		v.ProcessNameMetadata = false
 	}
 
 	return v

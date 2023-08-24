@@ -76,6 +76,7 @@ func (s *batchImpl) Submit(ctx context.Context, payload *goabatch.SubmitPayload)
 	if payload.TransferType != nil {
 		input.TransferType = *payload.TransferType
 	}
+	input.MetadataConfig.ProcessNameMetadata = payload.ProcessNameMetadata
 	opts := temporalsdk_client.StartWorkflowOptions{
 		ID:                       BatchWorkflowID,
 		WorkflowIDReusePolicy:    temporalapi_enums.WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE,
@@ -138,6 +139,7 @@ func (s *batchImpl) Hints(ctx context.Context) (*goabatch.BatchHintsResult, erro
 
 func (s *batchImpl) InitProcessingWorkflow(ctx context.Context, req *collection.ProcessingWorkflowRequest) error {
 	req.ValidationConfig = validation.Config{}
+	// req.MetadataConfig = metadata.Config{}
 	tr := trace.NewNoopTracerProvider().Tracer("")
 	err := collection.InitProcessingWorkflow(ctx, tr, s.cc, s.taskQueue, req)
 	if err != nil {

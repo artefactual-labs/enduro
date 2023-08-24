@@ -39,6 +39,12 @@ export interface SubmitRequestBody {
     pipeline?: string;
     /**
      * 
+     * @type {boolean}
+     * @memberof SubmitRequestBody
+     */
+    processNameMetadata?: boolean;
+    /**
+     * 
      * @type {string}
      * @memberof SubmitRequestBody
      */
@@ -86,6 +92,7 @@ export function SubmitRequestBodyFromJSONTyped(json: any, ignoreDiscriminator: b
         'completedDir': !exists(json, 'completed_dir') ? undefined : json['completed_dir'],
         'path': json['path'],
         'pipeline': !exists(json, 'pipeline') ? undefined : json['pipeline'],
+        'processNameMetadata': !exists(json, 'process_name_metadata') ? undefined : json['process_name_metadata'],
         'processingConfig': !exists(json, 'processing_config') ? undefined : json['processing_config'],
         'rejectDuplicates': !exists(json, 'reject_duplicates') ? undefined : json['reject_duplicates'],
         'retentionPeriod': !exists(json, 'retention_period') ? undefined : json['retention_period'],
@@ -105,6 +112,7 @@ export function SubmitRequestBodyToJSON(value?: SubmitRequestBody | null): any {
         'completed_dir': value.completedDir,
         'path': value.path,
         'pipeline': value.pipeline,
+        'process_name_metadata': value.processNameMetadata,
         'processing_config': value.processingConfig,
         'reject_duplicates': value.rejectDuplicates,
         'retention_period': value.retentionPeriod,

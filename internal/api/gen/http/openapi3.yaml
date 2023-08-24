@@ -40,6 +40,7 @@ paths:
                             completed_dir: abc123
                             path: abc123
                             pipeline: abc123
+                            process_name_metadata: false
                             processing_config: abc123
                             reject_duplicates: false
                             retention_period: abc123
@@ -1153,6 +1154,10 @@ components:
                 pipeline:
                     type: string
                     example: abc123
+                process_name_metadata:
+                    type: boolean
+                    default: false
+                    example: false
                 processing_config:
                     type: string
                     example: abc123
@@ -1170,6 +1175,7 @@ components:
                 completed_dir: abc123
                 path: abc123
                 pipeline: abc123
+                process_name_metadata: false
                 processing_config: abc123
                 reject_duplicates: false
                 retention_period: abc123

@@ -19,6 +19,7 @@ var _ = Service("batch", func() {
 			Attribute("retention_period", String)
 			Attribute("reject_duplicates", Boolean, func() { Default(false) })
 			Attribute("transfer_type", String)
+			Attribute("process_name_metadata", Boolean, func() { Default(false) })
 			Required("path")
 		})
 		Result(BatchResult)

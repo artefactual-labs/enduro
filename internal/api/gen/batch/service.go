@@ -56,13 +56,14 @@ type BatchStatusResult struct {
 
 // SubmitPayload is the payload type of the batch service submit method.
 type SubmitPayload struct {
-	Path             string
-	Pipeline         *string
-	ProcessingConfig *string
-	CompletedDir     *string
-	RetentionPeriod  *string
-	RejectDuplicates bool
-	TransferType     *string
+	Path                string
+	Pipeline            *string
+	ProcessingConfig    *string
+	CompletedDir        *string
+	RetentionPeriod     *string
+	RejectDuplicates    bool
+	TransferType        *string
+	ProcessNameMetadata bool
 }
 
 // MakeNotAvailable builds a goa.ServiceError from an error.

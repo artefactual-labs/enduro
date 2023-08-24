@@ -1,7 +1,7 @@
 <template>
   <div class="form-group">
 
-    <label for="pipeline-processing-config-dropdown">Processing configuration</label>
+    <label for="pipeline-processing-configuration-dropdown">Processing configuration</label>
 
     <select
       class="form-control"
