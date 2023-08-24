@@ -74,3 +74,6 @@ disabled = true
 [[hooks."prod"]]
 receiptPath = "./hack/production-system-interface"
 disabled = true
+
+[metadata]
+processNameMetadata = false

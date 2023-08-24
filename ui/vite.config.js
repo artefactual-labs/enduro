@@ -38,6 +38,10 @@ export default {
         target: process.env.ENDURO_API_ADDRESS || "http://127.0.0.1:9000",
         changeOrigin: true,
       },
+      "/batch": {
+        target: process.env.ENDURO_API_ADDRESS || "http://127.0.0.1:9000",
+        changeOrigin: true,
+      },
     },
   },
 }

@@ -9,6 +9,7 @@ import (
 	temporalsdk_workflow "go.temporal.io/sdk/workflow"
 
 	"github.com/artefactual-labs/enduro/internal/collection"
+	"github.com/artefactual-labs/enduro/internal/metadata"
 	"github.com/artefactual-labs/enduro/internal/temporal"
 )
 
@@ -30,6 +31,7 @@ type BatchWorkflowInput struct {
 	RetentionPeriod  *time.Duration
 	RejectDuplicates bool
 	TransferType     string
+	MetadataConfig   metadata.Config
 }
 
 func BatchWorkflow(ctx temporalsdk_workflow.Context, params BatchWorkflowInput) error {
@@ -73,6 +75,7 @@ func (a *BatchActivity) Execute(ctx context.Context, params BatchWorkflowInput) 
 			RetentionPeriod:  params.RetentionPeriod,
 			RejectDuplicates: params.RejectDuplicates,
 			TransferType:     params.TransferType,
+			MetadataConfig:   params.MetadataConfig,
 		}
 		_ = a.batchsvc.InitProcessingWorkflow(ctx, &req)
 	}

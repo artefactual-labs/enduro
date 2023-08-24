@@ -13,4 +13,5 @@ const (
 	DeleteOriginalActivityName   = "delete-original-activity"
 	DisposeOriginalActivityName  = "dispose-original-activity"
 	ValidateTransferActivityName = "validate-transfer-activity"
+	PopulateMetadataActivityName = "populate-metadata-activity"
 )

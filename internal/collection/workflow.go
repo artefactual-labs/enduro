@@ -11,6 +11,7 @@ import (
 	temporalsdk_api_enums "go.temporal.io/api/enums/v1"
 	temporalsdk_client "go.temporal.io/sdk/client"
 
+	"github.com/artefactual-labs/enduro/internal/metadata"
 	"github.com/artefactual-labs/enduro/internal/validation"
 )
 
@@ -52,7 +53,7 @@ type ProcessingWorkflowRequest struct {
 	// Batch directory that contains the blob.
 	BatchDir string
 
-	// Configuration for the validating the transfer.
+	// Configuration for validating the transfer.
 	ValidationConfig validation.Config
 
 	// Processing configuration name.
@@ -63,6 +64,9 @@ type ProcessingWorkflowRequest struct {
 
 	// Transfer type.
 	TransferType string
+
+	// Configuration for metadata management.
+	MetadataConfig metadata.Config
 }
 
 func InitProcessingWorkflow(ctx context.Context, tr trace.Tracer, c temporalsdk_client.Client, taskQueue string, req *ProcessingWorkflowRequest) error {

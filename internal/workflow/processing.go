@@ -15,6 +15,7 @@ import (
 	temporalsdk_workflow "go.temporal.io/sdk/workflow"
 
 	"github.com/artefactual-labs/enduro/internal/collection"
+	"github.com/artefactual-labs/enduro/internal/metadata"
 	"github.com/artefactual-labs/enduro/internal/nha"
 	nha_activities "github.com/artefactual-labs/enduro/internal/nha/activities"
 	"github.com/artefactual-labs/enduro/internal/pipeline"
@@ -139,6 +140,8 @@ type TransferInfo struct {
 	//
 	// It is populated via the workflow request.
 	TransferType string
+
+	MetadataConfig metadata.Config
 }
 
 func (tinfo TransferInfo) ProcessingConfiguration() string {
@@ -173,6 +176,7 @@ func (w *ProcessingWorkflow) Execute(ctx temporalsdk_workflow.Context, req *coll
 			BatchDir:         req.BatchDir,
 			ProcessingConfig: req.ProcessingConfig,
 			TransferType:     req.TransferType,
+			MetadataConfig:   req.MetadataConfig,
 		}
 
 		// Attributes inferred from the name of the transfer. Populated by parseNameLocalActivity.
@@ -494,6 +498,29 @@ func (w *ProcessingWorkflow) SessionHandler(sessCtx temporalsdk_workflow.Context
 		}
 	}
 
+	nameMetadata := metadata.TransferName{}
+	if tinfo.MetadataConfig.IsEnabled() {
+		nameMetadata = metadata.FromTransferName(tinfo.Key, tinfo.IsDir)
+	}
+
+	// Populate metadata file with DC identifier.
+	{
+		if nameMetadata.DCIdentifier != "" {
+			activityOpts := temporalsdk_workflow.WithActivityOptions(sessCtx, temporalsdk_workflow.ActivityOptions{
+				ScheduleToStartTimeout: forever,
+				StartToCloseTimeout:    time.Minute,
+			})
+			params := activities.PopulateMetadataActivityParams{
+				Path:       tinfo.Bundle.FullPath,
+				Identifier: nameMetadata.DCIdentifier,
+			}
+			err := temporalsdk_workflow.ExecuteActivity(activityOpts, activities.PopulateMetadataActivityName, params).Get(activityOpts, nil)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
 	// Transfer process which is made of multiple activities
 	{
 		// Use our timed context if this transfer has a deadline set.
@@ -504,7 +531,7 @@ func (w *ProcessingWorkflow) SessionHandler(sessCtx temporalsdk_workflow.Context
 			defer cancel()
 		}
 
-		err := w.transfer(sessCtx, tinfo)
+		err := w.transfer(sessCtx, tinfo, nameMetadata)
 		if err != nil {
 			return err
 		}
@@ -532,12 +559,11 @@ func (w *ProcessingWorkflow) SessionHandler(sessCtx temporalsdk_workflow.Context
 	return nil
 }
 
-func (w *ProcessingWorkflow) transfer(sessCtx temporalsdk_workflow.Context, tinfo *TransferInfo) error {
+func (w *ProcessingWorkflow) transfer(sessCtx temporalsdk_workflow.Context, tinfo *TransferInfo, nameMetadata metadata.TransferName) error {
 	// Transfer.
 	{
 		if tinfo.TransferID == "" {
 			transferResponse := activities.TransferActivityResponse{}
-
 			activityOpts := withActivityOptsForRequest(sessCtx)
 			err := temporalsdk_workflow.ExecuteActivity(activityOpts, activities.TransferActivityName, &activities.TransferActivityParams{
 				PipelineName:       tinfo.PipelineName,
@@ -546,6 +572,7 @@ func (w *ProcessingWorkflow) transfer(sessCtx temporalsdk_workflow.Context, tinf
 				Name:               tinfo.Key,
 				ProcessingConfig:   tinfo.ProcessingConfiguration(),
 				TransferType:       tinfo.TransferType,
+				Accession:          nameMetadata.Accession,
 			}).Get(activityOpts, &transferResponse)
 			if err != nil {
 				return err

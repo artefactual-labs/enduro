@@ -29,6 +29,7 @@ type TransferActivityParams struct {
 	Name               string
 	ProcessingConfig   string
 	TransferType       string
+	Accession          string
 }
 
 type TransferActivityResponse struct {
@@ -56,6 +57,7 @@ func (a *TransferActivity) Execute(ctx context.Context, params *TransferActivity
 		Path:             path,
 		ProcessingConfig: params.ProcessingConfig,
 		AutoApprove:      true,
+		Accession:        params.Accession,
 	})
 	if err != nil {
 		if httpResp != nil {

@@ -23,22 +23,29 @@ func BuildSubmitPayload(batchSubmitBody string) (*batch.SubmitPayload, error) {
 	{
 		err = json.Unmarshal([]byte(batchSubmitBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"completed_dir\": \"abc123\",\n      \"path\": \"abc123\",\n      \"pipeline\": \"abc123\",\n      \"processing_config\": \"abc123\",\n      \"reject_duplicates\": false,\n      \"retention_period\": \"abc123\",\n      \"transfer_type\": \"abc123\"\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"completed_dir\": \"abc123\",\n      \"path\": \"abc123\",\n      \"pipeline\": \"abc123\",\n      \"process_name_metadata\": false,\n      \"processing_config\": \"abc123\",\n      \"reject_duplicates\": false,\n      \"retention_period\": \"abc123\",\n      \"transfer_type\": \"abc123\"\n   }'")
 		}
 	}
 	v := &batch.SubmitPayload{
-		Path:             body.Path,
-		Pipeline:         body.Pipeline,
-		ProcessingConfig: body.ProcessingConfig,
-		CompletedDir:     body.CompletedDir,
-		RetentionPeriod:  body.RetentionPeriod,
-		RejectDuplicates: body.RejectDuplicates,
-		TransferType:     body.TransferType,
+		Path:                body.Path,
+		Pipeline:            body.Pipeline,
+		ProcessingConfig:    body.ProcessingConfig,
+		CompletedDir:        body.CompletedDir,
+		RetentionPeriod:     body.RetentionPeriod,
+		RejectDuplicates:    body.RejectDuplicates,
+		TransferType:        body.TransferType,
+		ProcessNameMetadata: body.ProcessNameMetadata,
 	}
 	{
 		var zero bool
 		if v.RejectDuplicates == zero {
 			v.RejectDuplicates = false
+		}
+	}
+	{
+		var zero bool
+		if v.ProcessNameMetadata == zero {
+			v.ProcessNameMetadata = false
 		}
 	}
 

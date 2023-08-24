@@ -37,6 +37,7 @@ import (
 	"github.com/artefactual-labs/enduro/internal/batch"
 	"github.com/artefactual-labs/enduro/internal/collection"
 	"github.com/artefactual-labs/enduro/internal/db"
+	"github.com/artefactual-labs/enduro/internal/metadata"
 	nha_activities "github.com/artefactual-labs/enduro/internal/nha/activities"
 	"github.com/artefactual-labs/enduro/internal/pipeline"
 	"github.com/artefactual-labs/enduro/internal/temporal"
@@ -227,6 +228,7 @@ func main() {
 								Key:              event.Key,
 								IsDir:            event.IsDir,
 								ValidationConfig: config.Validation,
+								MetadataConfig:   config.Metadata,
 							}
 							if err := collection.InitProcessingWorkflow(ctx, tracer, temporalClient, config.Temporal.TaskQueue, &req); err != nil {
 								logger.Error(err, "Error initializing processing workflow.")
@@ -271,6 +273,7 @@ func main() {
 		w.RegisterActivityWithOptions(activities.NewHidePackageActivity(m).Execute, temporalsdk_activity.RegisterOptions{Name: activities.HidePackageActivityName})
 		w.RegisterActivityWithOptions(activities.NewDeleteOriginalActivity(m).Execute, temporalsdk_activity.RegisterOptions{Name: activities.DeleteOriginalActivityName})
 		w.RegisterActivityWithOptions(activities.NewDisposeOriginalActivity(m).Execute, temporalsdk_activity.RegisterOptions{Name: activities.DisposeOriginalActivityName})
+		w.RegisterActivityWithOptions(activities.NewPopulateMetadataActivity(pipelineRegistry).Execute, temporalsdk_activity.RegisterOptions{Name: activities.PopulateMetadataActivityName})
 
 		w.RegisterActivityWithOptions(workflow.NewAsyncCompletionActivity(colsvc).Execute, temporalsdk_activity.RegisterOptions{Name: workflow.AsyncCompletionActivityName})
 		w.RegisterActivityWithOptions(nha_activities.NewUpdateHARIActivity(m).Execute, temporalsdk_activity.RegisterOptions{Name: nha_activities.UpdateHARIActivityName})
@@ -380,6 +383,7 @@ type configuration struct {
 	Pipeline    []pipeline.Config
 	Validation  validation.Config
 	Telemetry   TelemetryConfig
+	Metadata    metadata.Config
 
 	// This is a workaround for client-specific functionality.
 	// Simple mechanism to support an arbitrary number of hooks and parameters.

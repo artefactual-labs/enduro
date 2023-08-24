@@ -197,10 +197,11 @@ E.g.: `false`
 
 Archivematica submission transfer type.
 
-The string should be one of the following: 
-"standard", "zipfile", "unzipped bag", "zipped bag", "dspace", "maildir", "TRIM" or "dataverse"
+The string should be one of the following:
+"standard", "zipfile", "unzipped bag", "zipped bag", "dspace", "maildir", "TRIM"
+or "dataverse".
 
-E.g.: `standard`
+E.g.: `"standard"`
 
 #### `completedDir` (String)
 
@@ -304,7 +305,7 @@ E.g.: `false`
 
 Archivematica submission transfer type.
 
-The string should be one of the following: 
+The string should be one of the following:
 "standard", "zipfile", "unzipped bag", "zipped bag", "dspace", "maildir", "TRIM" or "dataverse"
 
 E.g.: `standard`

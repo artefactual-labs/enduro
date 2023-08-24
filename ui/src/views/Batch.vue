@@ -31,13 +31,19 @@
 
             <pipeline-processing-configuration-dropdown v-show="pipelineId" :pipeline-id="pipelineId" v-on:pipeline-processing-configuration-selected="form.processingConfig = $event"/>
 
-            <b-form-group label="Transfer type" label-for="dropdown-select">
+            <b-form-group label="Transfer type" label-for="dropdown-select" description="Optional. Choose the transfer type, with the default being standard.">
               <b-form-select id="dropdown-select" v-model="form.transferType" :options="transferOptions"></b-form-select>
             </b-form-group>
 
             <b-form-group label-for="reject-duplicates-checkbox">
               <b-form-checkbox id="reject-duplicates-checkbox" v-model="form.rejectDuplicates">
                 Reject transfers with duplicate names.
+              </b-form-checkbox>
+            </b-form-group>
+
+            <b-form-group label-for="process-name-metadata-checkbox">
+              <b-form-checkbox id="process-name-metadata-checkbox" v-model="form.processNameMetadata">
+                Process transfer name metadata.
               </b-form-checkbox>
             </b-form-group>
 
@@ -69,7 +75,7 @@
             </b-tabs>
 
             <div class="actions">
-              <b-button type="submit" variant="primary">Submit</b-button>
+              <b-button type="submit" variant="primary" class="mx-2">Submit</b-button>
             </div>
 
           </b-form>
@@ -78,6 +84,7 @@
 
       </b-col>
     </b-row>
+
   </b-container>
 
 </template>
@@ -88,6 +95,16 @@ import { Component, Vue } from 'vue-property-decorator';
 import { api, EnduroBatchClient } from '../client';
 import PipelineDropdown from '@/components/PipelineDropdown.vue';
 import PipelineProcessingConfigurationDropdown from '@/components/PipelineProcessingConfigurationDropdown.vue';
+
+type UserDefaults = {
+  transferType: string | null;
+  rejectDuplicates: boolean;
+  processNameMetadata: boolean;
+  completedDir: string | null;
+  retentionPeriod: string | null;
+}
+
+const batchDefaultsStorageKey = "batchDefaults";
 
 @Component({
   components: {
@@ -101,10 +118,11 @@ export default class Batch extends Vue {
     path: null,
     pipeline: null,
     processingConfig: null,
+    transferType: null,
+    rejectDuplicates: false,
+    processNameMetadata: false,
     completedDir: null,
     retentionPeriod: null,
-    rejectDuplicates: null,
-    transferType: null,
   };
 
   private tabIndex: number = 0;
@@ -140,8 +158,41 @@ export default class Batch extends Vue {
   }
 
   private created() {
+    this.loadDefaults();
     this.loadStatus();
     this.loadHints();
+  }
+
+  // Load form defaults from previous choices made by the user.
+  private loadDefaults() {
+    const batchDefaults = localStorage.getItem(batchDefaultsStorageKey);
+    if (batchDefaults === null ) {
+      return;
+    }
+    let defaults : UserDefaults;
+    try {
+      defaults = JSON.parse(batchDefaults);
+    } catch(e) {
+      localStorage.removeItem(batchDefaultsStorageKey);
+      return;
+    }
+    this.form.transferType = defaults.transferType;
+    this.form.rejectDuplicates = defaults.rejectDuplicates;
+    this.form.processNameMetadata = defaults.processNameMetadata;
+    this.form.completedDir = defaults.completedDir;
+    this.form.retentionPeriod = defaults.retentionPeriod;
+  }
+
+  // Save choices made by the user that can be used as defaults next time.
+  private saveDefaults() {
+    const defaults: UserDefaults = {
+       transferType: this.form.transferType,
+       rejectDuplicates: this.form.rejectDuplicates,
+       processNameMetadata: this.form.processNameMetadata,
+       completedDir: this.form.completedDir,
+       retentionPeriod: this.form.retentionPeriod,
+    };
+    localStorage.setItem(batchDefaultsStorageKey, JSON.stringify(defaults));
   }
 
   private loadStatus() {
@@ -184,13 +235,13 @@ export default class Batch extends Vue {
     if (this.form.retentionPeriod && this.tabIndex === 1) {
       request.submitRequestBody.retentionPeriod = this.form.retentionPeriod;
     }
-    if (this.form.rejectDuplicates) {
-      request.submitRequestBody.rejectDuplicates = this.form.rejectDuplicates;
-    }
+    request.submitRequestBody.rejectDuplicates = this.form.rejectDuplicates;
     if (this.form.transferType) {
       request.submitRequestBody.transferType = this.form.transferType;
     }
+    request.submitRequestBody.processNameMetadata = this.form.processNameMetadata;
     return EnduroBatchClient.batchSubmit(request).then((response: api.BatchSubmitResponseBody) => {
+      this.saveDefaults();
       this.loadStatus();
     }).catch((response: Response) => {
       if (response.status === 409) {
