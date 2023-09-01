@@ -24,6 +24,7 @@ type SubmitRequestBody struct {
 	RejectDuplicates    bool    `form:"reject_duplicates" json:"reject_duplicates" xml:"reject_duplicates"`
 	TransferType        *string `form:"transfer_type,omitempty" json:"transfer_type,omitempty" xml:"transfer_type,omitempty"`
 	ProcessNameMetadata bool    `form:"process_name_metadata" json:"process_name_metadata" xml:"process_name_metadata"`
+	Depth               int     `form:"depth" json:"depth" xml:"depth"`
 }
 
 // SubmitResponseBody is the type of the "batch" service "submit" endpoint HTTP
@@ -97,6 +98,7 @@ func NewSubmitRequestBody(p *batch.SubmitPayload) *SubmitRequestBody {
 		RejectDuplicates:    p.RejectDuplicates,
 		TransferType:        p.TransferType,
 		ProcessNameMetadata: p.ProcessNameMetadata,
+		Depth:               p.Depth,
 	}
 	{
 		var zero bool
@@ -108,6 +110,12 @@ func NewSubmitRequestBody(p *batch.SubmitPayload) *SubmitRequestBody {
 		var zero bool
 		if body.ProcessNameMetadata == zero {
 			body.ProcessNameMetadata = false
+		}
+	}
+	{
+		var zero int
+		if body.Depth == zero {
+			body.Depth = 0
 		}
 	}
 	return body

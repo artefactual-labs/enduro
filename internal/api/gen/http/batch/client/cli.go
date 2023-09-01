@@ -13,6 +13,7 @@ import (
 	"fmt"
 
 	batch "github.com/artefactual-labs/enduro/internal/api/gen/batch"
+	goa "goa.design/goa/v3/pkg"
 )
 
 // BuildSubmitPayload builds the payload for the batch submit endpoint from CLI
@@ -23,7 +24,13 @@ func BuildSubmitPayload(batchSubmitBody string) (*batch.SubmitPayload, error) {
 	{
 		err = json.Unmarshal([]byte(batchSubmitBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"completed_dir\": \"abc123\",\n      \"path\": \"abc123\",\n      \"pipeline\": \"abc123\",\n      \"process_name_metadata\": false,\n      \"processing_config\": \"abc123\",\n      \"reject_duplicates\": false,\n      \"retention_period\": \"abc123\",\n      \"transfer_type\": \"abc123\"\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"completed_dir\": \"abc123\",\n      \"depth\": 1,\n      \"path\": \"abc123\",\n      \"pipeline\": \"abc123\",\n      \"process_name_metadata\": false,\n      \"processing_config\": \"abc123\",\n      \"reject_duplicates\": false,\n      \"retention_period\": \"abc123\",\n      \"transfer_type\": \"abc123\"\n   }'")
+		}
+		if body.Depth < 0 {
+			err = goa.MergeErrors(err, goa.InvalidRangeError("body.depth", body.Depth, 0, true))
+		}
+		if err != nil {
+			return nil, err
 		}
 	}
 	v := &batch.SubmitPayload{
@@ -35,6 +42,7 @@ func BuildSubmitPayload(batchSubmitBody string) (*batch.SubmitPayload, error) {
 		RejectDuplicates:    body.RejectDuplicates,
 		TransferType:        body.TransferType,
 		ProcessNameMetadata: body.ProcessNameMetadata,
+		Depth:               body.Depth,
 	}
 	{
 		var zero bool
@@ -46,6 +54,12 @@ func BuildSubmitPayload(batchSubmitBody string) (*batch.SubmitPayload, error) {
 		var zero bool
 		if v.ProcessNameMetadata == zero {
 			v.ProcessNameMetadata = false
+		}
+	}
+	{
+		var zero int
+		if v.Depth == zero {
+			v.Depth = 0
 		}
 	}
 

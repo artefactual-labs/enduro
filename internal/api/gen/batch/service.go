@@ -64,6 +64,7 @@ type SubmitPayload struct {
 	RejectDuplicates    bool
 	TransferType        *string
 	ProcessNameMetadata bool
+	Depth               int
 }
 
 // MakeNotAvailable builds a goa.ServiceError from an error.

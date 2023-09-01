@@ -2,7 +2,9 @@ package batch
 
 import (
 	"context"
-	"os"
+	"io/fs"
+	"path/filepath"
+	"strings"
 	"time"
 
 	temporalsdk_temporal "go.temporal.io/sdk/temporal"
@@ -32,6 +34,7 @@ type BatchWorkflowInput struct {
 	RejectDuplicates bool
 	TransferType     string
 	MetadataConfig   metadata.Config
+	Depth            int32
 }
 
 func BatchWorkflow(ctx temporalsdk_workflow.Context, params BatchWorkflowInput) error {
@@ -56,19 +59,39 @@ func NewBatchActivity(batchsvc Service) *BatchActivity {
 }
 
 func (a *BatchActivity) Execute(ctx context.Context, params BatchWorkflowInput) error {
-	files, err := os.ReadDir(params.Path)
-	if err != nil {
-		return temporal.NewNonRetryableError(err)
-	}
 	pipelines := []string{}
 	if params.PipelineName != "" {
 		pipelines = append(pipelines, params.PipelineName)
 	}
-	for _, file := range files {
+
+	if params.Depth < 0 {
+		params.Depth = 0
+	}
+
+	root := params.Path
+	err := filepath.WalkDir(root, func(path string, entry fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		rel, err := filepath.Rel(root, path)
+		if err != nil {
+			return err
+		}
+
+		if rel == "." {
+			return nil // Ignore root.
+		}
+
+		depth := len(strings.Split(rel, string(filepath.Separator))) - 1
+		if depth != int(params.Depth) {
+			return nil // Keep walking.
+		}
+
 		req := collection.ProcessingWorkflowRequest{
-			BatchDir:         params.Path,
-			Key:              file.Name(),
-			IsDir:            file.IsDir(),
+			BatchDir:         filepath.Dir(path),
+			Key:              entry.Name(),
+			IsDir:            entry.IsDir(),
 			PipelineNames:    pipelines,
 			ProcessingConfig: params.ProcessingConfig,
 			CompletedDir:     params.CompletedDir,
@@ -77,7 +100,14 @@ func (a *BatchActivity) Execute(ctx context.Context, params BatchWorkflowInput) 
 			TransferType:     params.TransferType,
 			MetadataConfig:   params.MetadataConfig,
 		}
+
 		_ = a.batchsvc.InitProcessingWorkflow(ctx, &req)
+
+		return fs.SkipDir
+	})
+	if err != nil {
+		return temporal.NewNonRetryableError(err)
 	}
+
 	return nil
 }

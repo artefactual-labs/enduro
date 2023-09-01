@@ -24,6 +24,7 @@ type SubmitRequestBody struct {
 	RejectDuplicates    *bool   `form:"reject_duplicates,omitempty" json:"reject_duplicates,omitempty" xml:"reject_duplicates,omitempty"`
 	TransferType        *string `form:"transfer_type,omitempty" json:"transfer_type,omitempty" xml:"transfer_type,omitempty"`
 	ProcessNameMetadata *bool   `form:"process_name_metadata,omitempty" json:"process_name_metadata,omitempty" xml:"process_name_metadata,omitempty"`
+	Depth               *int    `form:"depth,omitempty" json:"depth,omitempty" xml:"depth,omitempty"`
 }
 
 // SubmitResponseBody is the type of the "batch" service "submit" endpoint HTTP
@@ -164,11 +165,17 @@ func NewSubmitPayload(body *SubmitRequestBody) *batch.SubmitPayload {
 	if body.ProcessNameMetadata != nil {
 		v.ProcessNameMetadata = *body.ProcessNameMetadata
 	}
+	if body.Depth != nil {
+		v.Depth = *body.Depth
+	}
 	if body.RejectDuplicates == nil {
 		v.RejectDuplicates = false
 	}
 	if body.ProcessNameMetadata == nil {
 		v.ProcessNameMetadata = false
+	}
+	if body.Depth == nil {
+		v.Depth = 0
 	}
 
 	return v
@@ -178,6 +185,11 @@ func NewSubmitPayload(body *SubmitRequestBody) *batch.SubmitPayload {
 func ValidateSubmitRequestBody(body *SubmitRequestBody) (err error) {
 	if body.Path == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("path", "body"))
+	}
+	if body.Depth != nil {
+		if *body.Depth < 0 {
+			err = goa.MergeErrors(err, goa.InvalidRangeError("body.depth", *body.Depth, 0, true))
+		}
 	}
 	return
 }

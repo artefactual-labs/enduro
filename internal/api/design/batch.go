@@ -20,6 +20,10 @@ var _ = Service("batch", func() {
 			Attribute("reject_duplicates", Boolean, func() { Default(false) })
 			Attribute("transfer_type", String)
 			Attribute("process_name_metadata", Boolean, func() { Default(false) })
+			Attribute("depth", Int, func() {
+				Default(0)
+				Minimum(0)
+			})
 			Required("path")
 		})
 		Result(BatchResult)
