@@ -564,6 +564,7 @@
       "SubmitRequestBody": {
         "example": {
           "completed_dir": "abc123",
+          "depth": 1,
           "path": "abc123",
           "pipeline": "abc123",
           "process_name_metadata": false,
@@ -576,6 +577,12 @@
           "completed_dir": {
             "example": "abc123",
             "type": "string"
+          },
+          "depth": {
+            "default": 0,
+            "example": 1,
+            "minimum": 0,
+            "type": "integer"
           },
           "path": {
             "example": "abc123",
@@ -656,6 +663,7 @@
             "application/json": {
               "example": {
                 "completed_dir": "abc123",
+                "depth": 1,
                 "path": "abc123",
                 "pipeline": "abc123",
                 "process_name_metadata": false,

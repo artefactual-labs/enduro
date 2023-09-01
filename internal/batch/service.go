@@ -77,6 +77,7 @@ func (s *batchImpl) Submit(ctx context.Context, payload *goabatch.SubmitPayload)
 		input.TransferType = *payload.TransferType
 	}
 	input.MetadataConfig.ProcessNameMetadata = payload.ProcessNameMetadata
+	input.Depth = int32(payload.Depth)
 	opts := temporalsdk_client.StartWorkflowOptions{
 		ID:                       BatchWorkflowID,
 		WorkflowIDReusePolicy:    temporalapi_enums.WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE,

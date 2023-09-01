@@ -38,6 +38,7 @@ paths:
                             $ref: '#/components/schemas/SubmitRequestBody'
                         example:
                             completed_dir: abc123
+                            depth: 1
                             path: abc123
                             pipeline: abc123
                             process_name_metadata: false
@@ -1148,6 +1149,11 @@ components:
                 completed_dir:
                     type: string
                     example: abc123
+                depth:
+                    type: integer
+                    default: 0
+                    example: 1
+                    minimum: 0
                 path:
                     type: string
                     example: abc123
@@ -1173,6 +1179,7 @@ components:
                     example: abc123
             example:
                 completed_dir: abc123
+                depth: 1
                 path: abc123
                 pipeline: abc123
                 process_name_metadata: false

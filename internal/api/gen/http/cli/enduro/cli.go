@@ -36,6 +36,7 @@ func UsageExamples() string {
 	return os.Args[0] + ` pipeline list --name "abc123" --status false` + "\n" +
 		os.Args[0] + ` batch submit --body '{
       "completed_dir": "abc123",
+      "depth": 1,
       "path": "abc123",
       "pipeline": "abc123",
       "process_name_metadata": false,
@@ -410,6 +411,7 @@ Submit a new batch
 Example:
     %[1]s batch submit --body '{
       "completed_dir": "abc123",
+      "depth": 1,
       "path": "abc123",
       "pipeline": "abc123",
       "process_name_metadata": false,

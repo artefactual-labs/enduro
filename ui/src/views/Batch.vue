@@ -35,16 +35,20 @@
               <b-form-select id="dropdown-select" v-model="form.transferType" :options="transferOptions"></b-form-select>
             </b-form-group>
 
-            <b-form-group label-for="reject-duplicates-checkbox">
+            <b-form-group>
               <b-form-checkbox id="reject-duplicates-checkbox" v-model="form.rejectDuplicates">
                 Reject transfers with duplicate names.
               </b-form-checkbox>
             </b-form-group>
 
-            <b-form-group label-for="process-name-metadata-checkbox">
+            <b-form-group>
               <b-form-checkbox id="process-name-metadata-checkbox" v-model="form.processNameMetadata">
                 Process transfer name metadata.
               </b-form-checkbox>
+            </b-form-group>
+
+            <b-form-group label="Depth" label-for="depth-input" description="Depth where SIPs reside in the hierarchy.">
+              <b-form-input id="depth-input" v-model="form.depth" type="number" min="0"></b-form-input>
             </b-form-group>
 
             <b-tabs content-class="mt-3" tite-item-class="mt-3" v-model="tabIndex">
@@ -102,6 +106,7 @@ type UserDefaults = {
   processNameMetadata: boolean;
   completedDir: string | null;
   retentionPeriod: string | null;
+  depth: number;
 }
 
 const batchDefaultsStorageKey = "batchDefaults";
@@ -123,6 +128,7 @@ export default class Batch extends Vue {
     processNameMetadata: false,
     completedDir: null,
     retentionPeriod: null,
+    depth: 0,
   };
 
   private tabIndex: number = 0;
@@ -181,6 +187,7 @@ export default class Batch extends Vue {
     this.form.processNameMetadata = defaults.processNameMetadata;
     this.form.completedDir = defaults.completedDir;
     this.form.retentionPeriod = defaults.retentionPeriod;
+    this.form.depth = defaults.depth;
   }
 
   // Save choices made by the user that can be used as defaults next time.
@@ -191,6 +198,7 @@ export default class Batch extends Vue {
        processNameMetadata: this.form.processNameMetadata,
        completedDir: this.form.completedDir,
        retentionPeriod: this.form.retentionPeriod,
+       depth: this.form.depth,
     };
     localStorage.setItem(batchDefaultsStorageKey, JSON.stringify(defaults));
   }
@@ -240,6 +248,7 @@ export default class Batch extends Vue {
       request.submitRequestBody.transferType = this.form.transferType;
     }
     request.submitRequestBody.processNameMetadata = this.form.processNameMetadata;
+    request.submitRequestBody.depth = Number(this.form.depth);
     return EnduroBatchClient.batchSubmit(request).then((response: api.BatchSubmitResponseBody) => {
       this.saveDefaults();
       this.loadStatus();

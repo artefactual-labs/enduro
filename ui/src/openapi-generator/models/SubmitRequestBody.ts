@@ -27,6 +27,12 @@ export interface SubmitRequestBody {
     completedDir?: string;
     /**
      * 
+     * @type {number}
+     * @memberof SubmitRequestBody
+     */
+    depth?: number;
+    /**
+     * 
      * @type {string}
      * @memberof SubmitRequestBody
      */
@@ -90,6 +96,7 @@ export function SubmitRequestBodyFromJSONTyped(json: any, ignoreDiscriminator: b
     return {
         
         'completedDir': !exists(json, 'completed_dir') ? undefined : json['completed_dir'],
+        'depth': !exists(json, 'depth') ? undefined : json['depth'],
         'path': json['path'],
         'pipeline': !exists(json, 'pipeline') ? undefined : json['pipeline'],
         'processNameMetadata': !exists(json, 'process_name_metadata') ? undefined : json['process_name_metadata'],
@@ -110,6 +117,7 @@ export function SubmitRequestBodyToJSON(value?: SubmitRequestBody | null): any {
     return {
         
         'completed_dir': value.completedDir,
+        'depth': value.depth,
         'path': value.path,
         'pipeline': value.pipeline,
         'process_name_metadata': value.processNameMetadata,
