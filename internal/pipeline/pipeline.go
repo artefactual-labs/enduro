@@ -15,8 +15,8 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
+	"go.artefactual.dev/amclient"
 
-	"github.com/artefactual-labs/enduro/internal/amclient"
 	"github.com/artefactual-labs/enduro/internal/pipeline/sync/semaphore"
 )
 

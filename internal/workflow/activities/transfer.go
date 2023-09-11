@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/artefactual-labs/enduro/internal/amclient"
+	"go.artefactual.dev/amclient"
+
 	"github.com/artefactual-labs/enduro/internal/temporal"
 	"github.com/artefactual-labs/enduro/internal/workflow/manager"
 )

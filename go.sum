@@ -1305,6 +1305,8 @@ github.com/yuin/gopher-lua v1.1.0 h1:BojcDhfyDWgU2f2TOzYK/g5p2gxMrku8oupLDqlnSqE
 github.com/yuin/gopher-lua v1.1.0/go.mod h1:GBR0iDaNXjAgGg9zfCvksxSRnQx76gclCIb7kdAd1Pw=
 github.com/zeebo/assert v1.3.0/go.mod h1:Pq9JiuJQpG8JLJdtkwrJESF0Foym2/D9XMU5ciN/wJ0=
 github.com/zeebo/xxh3 v1.0.2/go.mod h1:5NWz9Sef7zIDm2JHfFlcQvNekmcEl9ekUZQQKCYaDcA=
+go.artefactual.dev/amclient v0.2.0 h1:fO1lUsxaG23EGtbgPBfye5+ytnqg3H7BxAoAaQr0Mqc=
+go.artefactual.dev/amclient v0.2.0/go.mod h1:jAJ98cSJ7QDSgMq/YUkmGpAJ4ssSzbIUN7XpynCa6uA=
 go.artefactual.dev/tools v0.4.0 h1:5DLO79JDdrJtt8lyvBOSQ8mDNg/QsHvn/zM3c+Cxvuo=
 go.artefactual.dev/tools v0.4.0/go.mod h1:bPOawySv59dJUPitqreJTLgeQkQvA5E2JGQj/zpunJ0=
 go.opencensus.io v0.21.0/go.mod h1:mSImk1erAIZhrmZN+AvHh14ztQfjbGwt4TtuofqLduU=

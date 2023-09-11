@@ -34,7 +34,6 @@ endef
 IGNORED_PACKAGES := \
 	github.com/artefactual-labs/enduro/hack/gencols \
 	github.com/artefactual-labs/enduro/hack/landfill/gencols \
-	github.com/artefactual-labs/enduro/internal/amclient/fake \
 	github.com/artefactual-labs/enduro/internal/api/design \
 	github.com/artefactual-labs/enduro/internal/api/gen/batch \
 	github.com/artefactual-labs/enduro/internal/api/gen/collection \
@@ -155,12 +154,6 @@ gen-mock: $(MOCKGEN)
 	mockgen -typed -destination=./internal/collection/fake/mock_collection.go -package=fake github.com/artefactual-labs/enduro/internal/collection Service
 	mockgen -typed -destination=./internal/pipeline/fake/mock_pipeline.go -package=fake github.com/artefactual-labs/enduro/internal/pipeline Service
 	mockgen -typed -destination=./internal/watcher/fake/mock_watcher.go -package=fake github.com/artefactual-labs/enduro/internal/watcher Service
-	mockgen -typed -destination=./internal/amclient/fake/mock_ingest.go -package=fake github.com/artefactual-labs/enduro/internal/amclient IngestService
-	mockgen -typed -destination=./internal/amclient/fake/mock_processing_config.go -package=fake github.com/artefactual-labs/enduro/internal/amclient ProcessingConfigService
-	mockgen -typed -destination=./internal/amclient/fake/mock_transfer.go -package=fake github.com/artefactual-labs/enduro/internal/amclient TransferService
-	mockgen -typed -destination=./internal/amclient/fake/mock_v2_jobs.go -package=fake github.com/artefactual-labs/enduro/internal/amclient JobsService
-	mockgen -typed -destination=./internal/amclient/fake/mock_v2_package.go -package=fake github.com/artefactual-labs/enduro/internal/amclient PackageService
-	mockgen -typed -destination=./internal/amclient/fake/mock_v2_task.go -package=fake github.com/artefactual-labs/enduro/internal/amclient TaskService
 
 temporal: # @HELP Runs a development instance of Temporal.
 temporal: PORT := 55555

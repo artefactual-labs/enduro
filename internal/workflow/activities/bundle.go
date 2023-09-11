@@ -12,8 +12,8 @@ import (
 	"github.com/mholt/archiver/v3"
 	"github.com/otiai10/copy"
 
-	"github.com/artefactual-labs/enduro/internal/amclient/bundler"
 	"github.com/artefactual-labs/enduro/internal/bagit"
+	"github.com/artefactual-labs/enduro/internal/bundler"
 	"github.com/artefactual-labs/enduro/internal/temporal"
 	"github.com/artefactual-labs/enduro/internal/watcher"
 	"github.com/artefactual-labs/enduro/internal/workflow/manager"
