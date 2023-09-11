@@ -41,6 +41,12 @@
               </b-form-checkbox>
             </b-form-group>
 
+            <b-form-group label-for="exclude-hidden-files-checkbox">
+              <b-form-checkbox id="exclude-hidden-files-checkbox" v-model="form.excludeHiddenFiles">
+                Exclude hidden files.
+              </b-form-checkbox>
+            </b-form-group>
+
             <b-form-group>
               <b-form-checkbox id="process-name-metadata-checkbox" v-model="form.processNameMetadata">
                 Process transfer name metadata.
@@ -103,6 +109,7 @@ import PipelineProcessingConfigurationDropdown from '@/components/PipelineProces
 type UserDefaults = {
   transferType: string | null;
   rejectDuplicates: boolean;
+  excludeHiddenFiles: boolean;
   processNameMetadata: boolean;
   completedDir: string | null;
   retentionPeriod: string | null;
@@ -184,6 +191,7 @@ export default class Batch extends Vue {
     }
     this.form.transferType = defaults.transferType;
     this.form.rejectDuplicates = defaults.rejectDuplicates;
+    this.form.excludeHiddenFiles = defaults.excludeHiddenFiles;
     this.form.processNameMetadata = defaults.processNameMetadata;
     this.form.completedDir = defaults.completedDir;
     this.form.retentionPeriod = defaults.retentionPeriod;
@@ -195,6 +203,7 @@ export default class Batch extends Vue {
     const defaults: UserDefaults = {
        transferType: this.form.transferType,
        rejectDuplicates: this.form.rejectDuplicates,
+       excludeHiddenFiles: this.form.excludeHiddenFiles,
        processNameMetadata: this.form.processNameMetadata,
        completedDir: this.form.completedDir,
        retentionPeriod: this.form.retentionPeriod,
@@ -243,10 +252,11 @@ export default class Batch extends Vue {
     if (this.form.retentionPeriod && this.tabIndex === 1) {
       request.submitRequestBody.retentionPeriod = this.form.retentionPeriod;
     }
-    request.submitRequestBody.rejectDuplicates = this.form.rejectDuplicates;
     if (this.form.transferType) {
       request.submitRequestBody.transferType = this.form.transferType;
     }
+    request.submitRequestBody.rejectDuplicates = this.form.rejectDuplicates;
+    request.submitRequestBody.excludeHiddenFiles = this.form.excludeHiddenFiles;
     request.submitRequestBody.processNameMetadata = this.form.processNameMetadata;
     request.submitRequestBody.depth = Number(this.form.depth);
     return EnduroBatchClient.batchSubmit(request).then((response: api.BatchSubmitResponseBody) => {

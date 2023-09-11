@@ -22,6 +22,7 @@ type SubmitRequestBody struct {
 	CompletedDir        *string `form:"completed_dir,omitempty" json:"completed_dir,omitempty" xml:"completed_dir,omitempty"`
 	RetentionPeriod     *string `form:"retention_period,omitempty" json:"retention_period,omitempty" xml:"retention_period,omitempty"`
 	RejectDuplicates    bool    `form:"reject_duplicates" json:"reject_duplicates" xml:"reject_duplicates"`
+	ExcludeHiddenFiles  bool    `form:"exclude_hidden_files" json:"exclude_hidden_files" xml:"exclude_hidden_files"`
 	TransferType        *string `form:"transfer_type,omitempty" json:"transfer_type,omitempty" xml:"transfer_type,omitempty"`
 	ProcessNameMetadata bool    `form:"process_name_metadata" json:"process_name_metadata" xml:"process_name_metadata"`
 	Depth               int     `form:"depth" json:"depth" xml:"depth"`
@@ -96,6 +97,7 @@ func NewSubmitRequestBody(p *batch.SubmitPayload) *SubmitRequestBody {
 		CompletedDir:        p.CompletedDir,
 		RetentionPeriod:     p.RetentionPeriod,
 		RejectDuplicates:    p.RejectDuplicates,
+		ExcludeHiddenFiles:  p.ExcludeHiddenFiles,
 		TransferType:        p.TransferType,
 		ProcessNameMetadata: p.ProcessNameMetadata,
 		Depth:               p.Depth,
@@ -104,6 +106,12 @@ func NewSubmitRequestBody(p *batch.SubmitPayload) *SubmitRequestBody {
 		var zero bool
 		if body.RejectDuplicates == zero {
 			body.RejectDuplicates = false
+		}
+	}
+	{
+		var zero bool
+		if body.ExcludeHiddenFiles == zero {
+			body.ExcludeHiddenFiles = false
 		}
 	}
 	{

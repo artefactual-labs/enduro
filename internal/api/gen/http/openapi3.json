@@ -565,6 +565,7 @@
         "example": {
           "completed_dir": "abc123",
           "depth": 1,
+          "exclude_hidden_files": false,
           "path": "abc123",
           "pipeline": "abc123",
           "process_name_metadata": false,
@@ -583,6 +584,11 @@
             "example": 1,
             "minimum": 0,
             "type": "integer"
+          },
+          "exclude_hidden_files": {
+            "default": false,
+            "example": false,
+            "type": "boolean"
           },
           "path": {
             "example": "abc123",
@@ -664,6 +670,7 @@
               "example": {
                 "completed_dir": "abc123",
                 "depth": 1,
+                "exclude_hidden_files": false,
                 "path": "abc123",
                 "pipeline": "abc123",
                 "process_name_metadata": false,

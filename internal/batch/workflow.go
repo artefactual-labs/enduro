@@ -26,15 +26,16 @@ type BatchProgress struct {
 }
 
 type BatchWorkflowInput struct {
-	Path             string
-	PipelineName     string
-	ProcessingConfig string
-	CompletedDir     string
-	RetentionPeriod  *time.Duration
-	RejectDuplicates bool
-	TransferType     string
-	MetadataConfig   metadata.Config
-	Depth            int32
+	Path               string
+	PipelineName       string
+	ProcessingConfig   string
+	CompletedDir       string
+	RetentionPeriod    *time.Duration
+	RejectDuplicates   bool
+	ExcludeHiddenFiles bool
+	TransferType       string
+	MetadataConfig     metadata.Config
+	Depth              int32
 }
 
 func BatchWorkflow(ctx temporalsdk_workflow.Context, params BatchWorkflowInput) error {
@@ -89,16 +90,17 @@ func (a *BatchActivity) Execute(ctx context.Context, params BatchWorkflowInput) 
 		}
 
 		req := collection.ProcessingWorkflowRequest{
-			BatchDir:         filepath.Dir(path),
-			Key:              entry.Name(),
-			IsDir:            entry.IsDir(),
-			PipelineNames:    pipelines,
-			ProcessingConfig: params.ProcessingConfig,
-			CompletedDir:     params.CompletedDir,
-			RetentionPeriod:  params.RetentionPeriod,
-			RejectDuplicates: params.RejectDuplicates,
-			TransferType:     params.TransferType,
-			MetadataConfig:   params.MetadataConfig,
+			BatchDir:           filepath.Dir(path),
+			Key:                entry.Name(),
+			IsDir:              entry.IsDir(),
+			PipelineNames:      pipelines,
+			ProcessingConfig:   params.ProcessingConfig,
+			CompletedDir:       params.CompletedDir,
+			RetentionPeriod:    params.RetentionPeriod,
+			RejectDuplicates:   params.RejectDuplicates,
+			ExcludeHiddenFiles: params.ExcludeHiddenFiles,
+			TransferType:       params.TransferType,
+			MetadataConfig:     params.MetadataConfig,
 		}
 
 		_ = a.batchsvc.InitProcessingWorkflow(ctx, &req)

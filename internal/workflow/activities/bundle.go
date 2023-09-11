@@ -28,14 +28,15 @@ func NewBundleActivity(m *manager.Manager) *BundleActivity {
 }
 
 type BundleActivityParams struct {
-	WatcherName      string
-	TransferDir      string
-	Key              string
-	TempFile         string
-	StripTopLevelDir bool
-	IsDir            bool
-	BatchDir         string
-	Unbag            bool
+	WatcherName        string
+	TransferDir        string
+	Key                string
+	TempFile           string
+	StripTopLevelDir   bool
+	ExcludeHiddenFiles bool
+	IsDir              bool
+	BatchDir           string
+	Unbag              bool
 }
 
 type BundleActivityResult struct {
@@ -69,7 +70,7 @@ func (a *BundleActivity) Execute(ctx context.Context, params *BundleActivityPara
 		} else {
 			src := filepath.Join(params.BatchDir, params.Key)
 			dst := params.TransferDir
-			res.FullPath, res.FullPathBeforeStrip, err = a.Copy(ctx, src, dst, params.StripTopLevelDir)
+			res.FullPath, res.FullPathBeforeStrip, err = a.Copy(ctx, src, dst, params.StripTopLevelDir, params.ExcludeHiddenFiles)
 		}
 	} else if params.IsDir {
 		var w watcher.Watcher
@@ -77,7 +78,7 @@ func (a *BundleActivity) Execute(ctx context.Context, params *BundleActivityPara
 		if err == nil {
 			src := filepath.Join(w.Path(), params.Key)
 			dst := params.TransferDir
-			res.FullPath, res.FullPathBeforeStrip, err = a.Copy(ctx, src, dst, false)
+			res.FullPath, res.FullPathBeforeStrip, err = a.Copy(ctx, src, dst, false, params.ExcludeHiddenFiles)
 		}
 	} else {
 		unar := a.Unarchiver(params.Key, params.TempFile)
@@ -185,7 +186,7 @@ func (a *BundleActivity) Bundle(ctx context.Context, unar archiver.Unarchiver, t
 }
 
 // Copy a transfer in the given destination using an intermediate temp. directory.
-func (a *BundleActivity) Copy(ctx context.Context, src, dst string, stripTopLevelDir bool) (string, string, error) {
+func (a *BundleActivity) Copy(ctx context.Context, src, dst string, stripTopLevelDir bool, excludeHiddenFiles bool) (string, string, error) {
 	const prefix = "enduro"
 	tempDir, err := os.MkdirTemp(dst, prefix)
 	if err != nil {
@@ -193,7 +194,16 @@ func (a *BundleActivity) Copy(ctx context.Context, src, dst string, stripTopLeve
 	}
 	_ = os.Chmod(tempDir, os.FileMode(0o755))
 
-	if err := copy.Copy(src, tempDir); err != nil {
+	if err := copy.Copy(src, tempDir, copy.Options{
+		Skip: func(srcinfo os.FileInfo, src, dest string) (bool, error) {
+			// Exclude hidden files.
+			if excludeHiddenFiles && strings.HasPrefix(srcinfo.Name(), ".") {
+				return true, nil
+			}
+
+			return false, nil
+		},
+	}); err != nil {
 		return "", "", fmt.Errorf("error copying transfer: %v", err)
 	}
 

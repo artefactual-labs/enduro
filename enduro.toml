@@ -35,6 +35,7 @@ pipeline = "am"
 retentionPeriod = "10s"
 stripTopLevelDir = true
 rejectDuplicates = false
+excludeHiddenFiles = false
 transferType = "standard"
 
 [[watcher.filesystem]]
@@ -46,6 +47,7 @@ completedDir = "./hack/landfill"
 ignore = '(^\.gitkeep)|(^*\.mft)$'
 stripTopLevelDir = true
 rejectDuplicates = false
+excludeHiddenFiles = false
 transferType = "standard"
 
 [[pipeline]]

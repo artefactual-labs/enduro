@@ -154,6 +154,7 @@ gen-mock: $(MOCKGEN)
 	mockgen -typed -destination=./internal/collection/fake/mock_collection.go -package=fake github.com/artefactual-labs/enduro/internal/collection Service
 	mockgen -typed -destination=./internal/pipeline/fake/mock_pipeline.go -package=fake github.com/artefactual-labs/enduro/internal/pipeline Service
 	mockgen -typed -destination=./internal/watcher/fake/mock_watcher.go -package=fake github.com/artefactual-labs/enduro/internal/watcher Service
+	mockgen -typed -destination=./internal/watcher/fake/mock_watcher_unit.go -package=fake github.com/artefactual-labs/enduro/internal/watcher Watcher
 
 temporal: # @HELP Runs a development instance of Temporal.
 temporal: PORT := 55555

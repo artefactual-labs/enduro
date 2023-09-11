@@ -88,6 +88,11 @@ type TransferInfo struct {
 	// It is populated via the workflow request.
 	StripTopLevelDir bool
 
+	// Whether hidden files are excluded from the transfer
+	//
+	// It is populated via the workflow request.
+	ExcludeHiddenFiles bool
+
 	// Key of the blob.
 	//
 	// It is populated via the workflow request.
@@ -166,17 +171,18 @@ func (w *ProcessingWorkflow) Execute(ctx temporalsdk_workflow.Context, req *coll
 		logger = temporalsdk_workflow.GetLogger(ctx)
 
 		tinfo = &TransferInfo{
-			CollectionID:     req.CollectionID,
-			WatcherName:      req.WatcherName,
-			RetentionPeriod:  req.RetentionPeriod,
-			CompletedDir:     req.CompletedDir,
-			StripTopLevelDir: req.StripTopLevelDir,
-			Key:              req.Key,
-			IsDir:            req.IsDir,
-			BatchDir:         req.BatchDir,
-			ProcessingConfig: req.ProcessingConfig,
-			TransferType:     req.TransferType,
-			MetadataConfig:   req.MetadataConfig,
+			CollectionID:       req.CollectionID,
+			WatcherName:        req.WatcherName,
+			RetentionPeriod:    req.RetentionPeriod,
+			CompletedDir:       req.CompletedDir,
+			StripTopLevelDir:   req.StripTopLevelDir,
+			ExcludeHiddenFiles: req.ExcludeHiddenFiles,
+			Key:                req.Key,
+			IsDir:              req.IsDir,
+			BatchDir:           req.BatchDir,
+			ProcessingConfig:   req.ProcessingConfig,
+			TransferType:       req.TransferType,
+			MetadataConfig:     req.MetadataConfig,
 		}
 
 		// Attributes inferred from the name of the transfer. Populated by parseNameLocalActivity.
@@ -456,14 +462,15 @@ func (w *ProcessingWorkflow) SessionHandler(sessCtx temporalsdk_workflow.Context
 		if tinfo.Bundle == (activities.BundleActivityResult{}) {
 			activityOpts := withActivityOptsForLongLivedRequest(sessCtx)
 			err := temporalsdk_workflow.ExecuteActivity(activityOpts, activities.BundleActivityName, &activities.BundleActivityParams{
-				WatcherName:      tinfo.WatcherName,
-				TransferDir:      tinfo.PipelineConfig.TransferDir,
-				Key:              tinfo.Key,
-				IsDir:            tinfo.IsDir,
-				TempFile:         tinfo.TempFile,
-				StripTopLevelDir: tinfo.StripTopLevelDir,
-				BatchDir:         tinfo.BatchDir,
-				Unbag:            tinfo.PipelineConfig.Unbag,
+				WatcherName:        tinfo.WatcherName,
+				TransferDir:        tinfo.PipelineConfig.TransferDir,
+				Key:                tinfo.Key,
+				IsDir:              tinfo.IsDir,
+				TempFile:           tinfo.TempFile,
+				StripTopLevelDir:   tinfo.StripTopLevelDir,
+				ExcludeHiddenFiles: tinfo.ExcludeHiddenFiles,
+				BatchDir:           tinfo.BatchDir,
+				Unbag:              tinfo.PipelineConfig.Unbag,
 			}).Get(activityOpts, &tinfo.Bundle)
 			if err != nil {
 				return err

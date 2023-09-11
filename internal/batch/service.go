@@ -72,10 +72,11 @@ func (s *batchImpl) Submit(ctx context.Context, payload *goabatch.SubmitPayload)
 		}
 		input.RetentionPeriod = &dur
 	}
-	input.RejectDuplicates = payload.RejectDuplicates
 	if payload.TransferType != nil {
 		input.TransferType = *payload.TransferType
 	}
+	input.RejectDuplicates = payload.RejectDuplicates
+	input.ExcludeHiddenFiles = payload.ExcludeHiddenFiles
 	input.MetadataConfig.ProcessNameMetadata = payload.ProcessNameMetadata
 	input.Depth = int32(payload.Depth)
 	opts := temporalsdk_client.StartWorkflowOptions{

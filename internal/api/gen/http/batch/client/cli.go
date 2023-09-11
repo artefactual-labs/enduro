@@ -24,7 +24,7 @@ func BuildSubmitPayload(batchSubmitBody string) (*batch.SubmitPayload, error) {
 	{
 		err = json.Unmarshal([]byte(batchSubmitBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"completed_dir\": \"abc123\",\n      \"depth\": 1,\n      \"path\": \"abc123\",\n      \"pipeline\": \"abc123\",\n      \"process_name_metadata\": false,\n      \"processing_config\": \"abc123\",\n      \"reject_duplicates\": false,\n      \"retention_period\": \"abc123\",\n      \"transfer_type\": \"abc123\"\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"completed_dir\": \"abc123\",\n      \"depth\": 1,\n      \"exclude_hidden_files\": false,\n      \"path\": \"abc123\",\n      \"pipeline\": \"abc123\",\n      \"process_name_metadata\": false,\n      \"processing_config\": \"abc123\",\n      \"reject_duplicates\": false,\n      \"retention_period\": \"abc123\",\n      \"transfer_type\": \"abc123\"\n   }'")
 		}
 		if body.Depth < 0 {
 			err = goa.MergeErrors(err, goa.InvalidRangeError("body.depth", body.Depth, 0, true))
@@ -40,6 +40,7 @@ func BuildSubmitPayload(batchSubmitBody string) (*batch.SubmitPayload, error) {
 		CompletedDir:        body.CompletedDir,
 		RetentionPeriod:     body.RetentionPeriod,
 		RejectDuplicates:    body.RejectDuplicates,
+		ExcludeHiddenFiles:  body.ExcludeHiddenFiles,
 		TransferType:        body.TransferType,
 		ProcessNameMetadata: body.ProcessNameMetadata,
 		Depth:               body.Depth,
@@ -48,6 +49,12 @@ func BuildSubmitPayload(batchSubmitBody string) (*batch.SubmitPayload, error) {
 		var zero bool
 		if v.RejectDuplicates == zero {
 			v.RejectDuplicates = false
+		}
+	}
+	{
+		var zero bool
+		if v.ExcludeHiddenFiles == zero {
+			v.ExcludeHiddenFiles = false
 		}
 	}
 	{

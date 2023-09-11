@@ -650,6 +650,10 @@ definitions:
                 default: 0
                 example: 1
                 minimum: 0
+            exclude_hidden_files:
+                type: boolean
+                default: false
+                example: false
             path:
                 type: string
                 example: abc123
@@ -676,6 +680,7 @@ definitions:
         example:
             completed_dir: abc123
             depth: 1
+            exclude_hidden_files: false
             path: abc123
             pipeline: abc123
             process_name_metadata: false

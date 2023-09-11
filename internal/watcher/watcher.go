@@ -30,6 +30,7 @@ type Watcher interface {
 	CompletedDir() string
 	StripTopLevelDir() bool
 	RejectDuplicates() bool
+	ExcludeHiddenFiles() bool
 	TransferType() string
 
 	// Full path of the watched bucket when available, empty string otherwise.
@@ -39,13 +40,14 @@ type Watcher interface {
 }
 
 type commonWatcherImpl struct {
-	name             string
-	pipeline         []string
-	retentionPeriod  *time.Duration
-	completedDir     string
-	stripTopLevelDir bool
-	rejectDuplicates bool
-	transferType     string
+	name               string
+	pipeline           []string
+	retentionPeriod    *time.Duration
+	completedDir       string
+	stripTopLevelDir   bool
+	rejectDuplicates   bool
+	excludeHiddenFiles bool
+	transferType       string
 }
 
 func (w *commonWatcherImpl) String() string {
@@ -70,6 +72,10 @@ func (w *commonWatcherImpl) StripTopLevelDir() bool {
 
 func (w *commonWatcherImpl) RejectDuplicates() bool {
 	return w.rejectDuplicates
+}
+
+func (w *commonWatcherImpl) ExcludeHiddenFiles() bool {
+	return w.excludeHiddenFiles
 }
 
 func (w *commonWatcherImpl) TransferType() string {
