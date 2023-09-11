@@ -33,12 +33,13 @@ type FilesystemConfig struct {
 	Inotify bool
 	Ignore  string
 
-	Pipeline         []string
-	RetentionPeriod  *time.Duration
-	CompletedDir     string
-	StripTopLevelDir bool
-	RejectDuplicates bool
-	TransferType     string
+	Pipeline           []string
+	RetentionPeriod    *time.Duration
+	CompletedDir       string
+	StripTopLevelDir   bool
+	RejectDuplicates   bool
+	ExcludeHiddenFiles bool
+	TransferType       string
 }
 
 // See minio.go for more.
@@ -55,9 +56,10 @@ type MinioConfig struct {
 	Token        string
 	Bucket       string
 
-	Pipeline         []string
-	RetentionPeriod  *time.Duration
-	StripTopLevelDir bool
-	RejectDuplicates bool
-	TransferType     string
+	Pipeline           []string
+	RetentionPeriod    *time.Duration
+	StripTopLevelDir   bool
+	RejectDuplicates   bool
+	ExcludeHiddenFiles bool
+	TransferType       string
 }

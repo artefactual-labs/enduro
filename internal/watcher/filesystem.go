@@ -71,13 +71,14 @@ func NewFilesystemWatcher(ctx context.Context, config *FilesystemConfig) (*files
 		path:  abspath,
 		regex: regex,
 		commonWatcherImpl: &commonWatcherImpl{
-			name:             config.Name,
-			pipeline:         config.Pipeline,
-			retentionPeriod:  config.RetentionPeriod,
-			completedDir:     config.CompletedDir,
-			stripTopLevelDir: config.StripTopLevelDir,
-			rejectDuplicates: config.RejectDuplicates,
-			transferType:     config.TransferType,
+			name:               config.Name,
+			pipeline:           config.Pipeline,
+			retentionPeriod:    config.RetentionPeriod,
+			completedDir:       config.CompletedDir,
+			stripTopLevelDir:   config.StripTopLevelDir,
+			rejectDuplicates:   config.RejectDuplicates,
+			excludeHiddenFiles: config.ExcludeHiddenFiles,
+			transferType:       config.TransferType,
 		},
 	}
 

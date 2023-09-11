@@ -1,13 +1,93 @@
 package activities
 
 import (
+	"os"
+	"path/filepath"
 	"runtime"
 	"syscall"
 	"testing"
 
+	"github.com/go-logr/logr"
+	temporalsdk_testsuite "go.temporal.io/sdk/testsuite"
+	"go.uber.org/mock/gomock"
 	"gotest.tools/v3/assert"
 	"gotest.tools/v3/fs"
+
+	collectionfake "github.com/artefactual-labs/enduro/internal/collection/fake"
+	"github.com/artefactual-labs/enduro/internal/pipeline"
+	"github.com/artefactual-labs/enduro/internal/watcher"
+	watcherfake "github.com/artefactual-labs/enduro/internal/watcher/fake"
+	"github.com/artefactual-labs/enduro/internal/workflow/manager"
 )
+
+func TestBundleActivity(t *testing.T) {
+	t.Parallel()
+
+	t.Run("Excludes hidden files", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		wsvc := watcherfake.NewMockService(ctrl)
+		m := manager.NewManager(
+			logr.Discard(),
+			collectionfake.NewMockService(ctrl),
+			wsvc,
+			&pipeline.Registry{},
+			map[string]map[string]interface{}{
+				"prod": {"disabled": "false"},
+				"hari": {"disabled": "false"},
+			},
+		)
+		activity := NewBundleActivity(m)
+		ts := &temporalsdk_testsuite.WorkflowTestSuite{}
+		env := ts.NewTestActivityEnvironment()
+		env.RegisterActivity(activity.Execute)
+
+		transferDir := fs.NewDir(
+			t, "enduro",
+			fs.WithDir(
+				"transfer",
+				fs.WithFile("foobar.txt", "Hello world!\n"),
+				fs.WithFile(".hidden", ""),
+			),
+		)
+
+		transferSourceDir := fs.NewDir(t, "enduro")
+
+		wsvc.EXPECT().ByName("watcher").DoAndReturn(func(string) (watcher.Watcher, error) {
+			w := watcherfake.NewMockWatcher(ctrl)
+			w.EXPECT().Path().Return(transferDir.Path())
+			return w, nil
+		})
+
+		fut, err := env.ExecuteActivity(activity.Execute, &BundleActivityParams{
+			WatcherName:        "watcher",
+			ExcludeHiddenFiles: true,
+			IsDir:              true,
+			TransferDir:        transferSourceDir.Path(),
+			Key:                "transfer",
+		})
+		assert.NilError(t, err)
+
+		// Capture final destination directory within the transfer source
+		// directory, i.e. Copy method uses a random name.
+		items, err := os.ReadDir(transferSourceDir.Path())
+		assert.NilError(t, err)
+		destDir := filepath.Join(transferSourceDir.Path(), items[0].Name())
+
+		res := BundleActivityResult{}
+		assert.NilError(t, fut.Get(&res))
+		assert.DeepEqual(t, res, res)
+		assert.Assert(t,
+			fs.Equal(
+				destDir,
+				fs.Expected(t,
+					// .hidden is not expected because ExcludeHiddenFiles is enabled.
+					fs.WithFile("foobar.txt", "Hello world!\n"),
+					fs.MatchAnyFileMode,
+				),
+			),
+		)
+	})
+}
 
 func TestUnbag(t *testing.T) {
 	if runtime.GOOS == "linux" || runtime.GOOS == "darwin" {

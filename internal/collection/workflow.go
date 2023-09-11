@@ -62,6 +62,9 @@ type ProcessingWorkflowRequest struct {
 	// Whether we reject duplicates based on name (key).
 	RejectDuplicates bool
 
+	// Whether we exclude hidden files from submission.
+	ExcludeHiddenFiles bool
+
 	// Transfer type.
 	TransferType string
 

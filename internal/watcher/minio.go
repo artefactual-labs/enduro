@@ -66,12 +66,13 @@ func NewMinioWatcher(ctx context.Context, config *MinioConfig) (*minioWatcher, e
 		listName: config.RedisList,
 		bucket:   config.Bucket,
 		commonWatcherImpl: &commonWatcherImpl{
-			name:             config.Name,
-			pipeline:         config.Pipeline,
-			retentionPeriod:  config.RetentionPeriod,
-			stripTopLevelDir: config.StripTopLevelDir,
-			rejectDuplicates: config.RejectDuplicates,
-			transferType:     config.TransferType,
+			name:               config.Name,
+			pipeline:           config.Pipeline,
+			retentionPeriod:    config.RetentionPeriod,
+			stripTopLevelDir:   config.StripTopLevelDir,
+			rejectDuplicates:   config.RejectDuplicates,
+			excludeHiddenFiles: config.ExcludeHiddenFiles,
+			transferType:       config.TransferType,
 		},
 	}, nil
 }

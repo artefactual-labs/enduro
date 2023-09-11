@@ -164,6 +164,9 @@ stripTopLevelDir = true
 # Reject transfers with duplicate transfer names.
 rejectDuplicates = false
 
+# Exclude hidden files from transfer.
+excludeHiddenFiles = false
+
 # Archivematica transfer type.
 transferType = "standard"
 ```
@@ -190,6 +193,12 @@ E.g.: `"10m"`
 When enabled, the workflow will execute a check on the internal database for
 successfully completed transfers with the same transfer name as the currently
 processing package. If it finds a duplicate the transfer will fail.
+
+E.g.: `false`
+
+#### `excludeHiddenFiles` (Boolean)
+
+When enabled, the workflow will exclude hidden files from the transfer.
 
 E.g.: `false`
 
@@ -270,6 +279,9 @@ stripTopLevelDir = true
 # Reject transfers with duplicate transfer names.
 rejectDuplicates = false
 
+# Exclude hidden files from transfer.
+excludeHiddenFiles = false
+
 # Archivematica transfer type.
 transferType = "standard"
 ```
@@ -298,6 +310,12 @@ E.g.: `"10m"`
 When enabled, the workflow will execute a check on the internal database for
 succesfully completed transfers with the same transfer name as the currently
 processing package. If it finds a duplicate the transfer will fail.
+
+E.g.: `false`
+
+#### `excludeHiddenFiles` (Boolean)
+
+When enabled, the workflow will exclude hidden files from the transfer.
 
 E.g.: `false`
 

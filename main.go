@@ -218,17 +218,18 @@ func main() {
 							)
 							logger.V(1).Info("Starting new workflow", "watcher", event.WatcherName, "bucket", event.Bucket, "key", event.Key, "dir", event.IsDir)
 							req := collection.ProcessingWorkflowRequest{
-								WatcherName:      event.WatcherName,
-								PipelineNames:    event.PipelineName,
-								RetentionPeriod:  event.RetentionPeriod,
-								CompletedDir:     event.CompletedDir,
-								StripTopLevelDir: event.StripTopLevelDir,
-								RejectDuplicates: event.RejectDuplicates,
-								TransferType:     event.TransferType,
-								Key:              event.Key,
-								IsDir:            event.IsDir,
-								ValidationConfig: config.Validation,
-								MetadataConfig:   config.Metadata,
+								WatcherName:        event.WatcherName,
+								PipelineNames:      event.PipelineName,
+								RetentionPeriod:    event.RetentionPeriod,
+								CompletedDir:       event.CompletedDir,
+								StripTopLevelDir:   event.StripTopLevelDir,
+								RejectDuplicates:   event.RejectDuplicates,
+								ExcludeHiddenFiles: event.ExcludeHiddenFiles,
+								TransferType:       event.TransferType,
+								Key:                event.Key,
+								IsDir:              event.IsDir,
+								ValidationConfig:   config.Validation,
+								MetadataConfig:     config.Metadata,
 							}
 							if err := collection.InitProcessingWorkflow(ctx, tracer, temporalClient, config.Temporal.TaskQueue, &req); err != nil {
 								logger.Error(err, "Error initializing processing workflow.")

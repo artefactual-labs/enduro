@@ -32,6 +32,9 @@ type BlobEvent struct {
 	// Whether duplicates are rejected or not.
 	RejectDuplicates bool
 
+	// Whether hidden files are exluded or not.
+	ExcludeHiddenFiles bool
+
 	// Which transfer type to use in Archivemaitca.
 	TransferType string
 
@@ -47,15 +50,16 @@ type BlobEvent struct {
 
 func NewBlobEvent(w Watcher, key string, isDir bool) *BlobEvent {
 	return &BlobEvent{
-		WatcherName:      w.String(),
-		PipelineName:     w.Pipelines(),
-		RetentionPeriod:  w.RetentionPeriod(),
-		CompletedDir:     w.CompletedDir(),
-		StripTopLevelDir: w.StripTopLevelDir(),
-		RejectDuplicates: w.RejectDuplicates(),
-		TransferType:     w.TransferType(),
-		Key:              key,
-		IsDir:            isDir,
+		WatcherName:        w.String(),
+		PipelineName:       w.Pipelines(),
+		RetentionPeriod:    w.RetentionPeriod(),
+		CompletedDir:       w.CompletedDir(),
+		StripTopLevelDir:   w.StripTopLevelDir(),
+		RejectDuplicates:   w.RejectDuplicates(),
+		ExcludeHiddenFiles: w.ExcludeHiddenFiles(),
+		TransferType:       w.TransferType(),
+		Key:                key,
+		IsDir:              isDir,
 	}
 }
 

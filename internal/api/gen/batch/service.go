@@ -62,6 +62,7 @@ type SubmitPayload struct {
 	CompletedDir        *string
 	RetentionPeriod     *string
 	RejectDuplicates    bool
+	ExcludeHiddenFiles  bool
 	TransferType        *string
 	ProcessNameMetadata bool
 	Depth               int

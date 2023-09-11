@@ -37,6 +37,7 @@ func UsageExamples() string {
 		os.Args[0] + ` batch submit --body '{
       "completed_dir": "abc123",
       "depth": 1,
+      "exclude_hidden_files": false,
       "path": "abc123",
       "pipeline": "abc123",
       "process_name_metadata": false,
@@ -412,6 +413,7 @@ Example:
     %[1]s batch submit --body '{
       "completed_dir": "abc123",
       "depth": 1,
+      "exclude_hidden_files": false,
       "path": "abc123",
       "pipeline": "abc123",
       "process_name_metadata": false,
