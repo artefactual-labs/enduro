@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/artefactual-labs/enduro/internal/amclient"
+	"go.artefactual.dev/amclient"
 )
 
 var (

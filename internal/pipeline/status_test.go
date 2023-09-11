@@ -6,11 +6,10 @@ import (
 	"net/http"
 	"testing"
 
+	"go.artefactual.dev/amclient"
+	"go.artefactual.dev/amclient/amclienttest"
 	"go.uber.org/mock/gomock"
 	"gotest.tools/v3/assert"
-
-	"github.com/artefactual-labs/enduro/internal/amclient"
-	amclientfake "github.com/artefactual-labs/enduro/internal/amclient/fake"
 )
 
 func TestTransferStatus(t *testing.T) {
@@ -20,12 +19,12 @@ func TestTransferStatus(t *testing.T) {
 	tid := "ba006a05-0420-48bc-817c-b50af0cc7793"
 
 	tests := map[string]struct {
-		fakefn  func(*amclientfake.MockTransferService)
+		fakefn  func(*amclienttest.MockTransferService)
 		wantSID *string
 		wantErr error
 	}{
 		"It returns a ErrStatusRetryable when the context deadline is exceeded": {
-			fakefn: func(tsfake *amclientfake.MockTransferService) {
+			fakefn: func(tsfake *amclienttest.MockTransferService) {
 				tsfake.
 					EXPECT().
 					Status(gomock.Eq(ctx), gomock.Eq(tid)).
@@ -38,7 +37,7 @@ func TestTransferStatus(t *testing.T) {
 			wantErr: ErrStatusRetryable,
 		},
 		"It returns a ErrStatusRetryable when a network timeout error is detected": {
-			fakefn: func(tsfake *amclientfake.MockTransferService) {
+			fakefn: func(tsfake *amclienttest.MockTransferService) {
 				tsfake.
 					EXPECT().
 					Status(gomock.Eq(ctx), gomock.Eq(tid)).
@@ -51,7 +50,7 @@ func TestTransferStatus(t *testing.T) {
 			wantErr: ErrStatusRetryable,
 		},
 		"It returns a ErrStatusRetryable when the server returns a 400 error (Status API server error)": {
-			fakefn: func(tsfake *amclientfake.MockTransferService) {
+			fakefn: func(tsfake *amclienttest.MockTransferService) {
 				tsfake.
 					EXPECT().
 					Status(gomock.Eq(ctx), gomock.Eq(tid)).
@@ -64,7 +63,7 @@ func TestTransferStatus(t *testing.T) {
 			wantErr: ErrStatusRetryable,
 		},
 		"It returns a ErrStatusNonRetryable when the server returns a 4xx error, e.g. 401 Unauthorized": {
-			fakefn: func(tsfake *amclientfake.MockTransferService) {
+			fakefn: func(tsfake *amclienttest.MockTransferService) {
 				tsfake.
 					EXPECT().
 					Status(gomock.Eq(ctx), gomock.Eq(tid)).
@@ -77,7 +76,7 @@ func TestTransferStatus(t *testing.T) {
 			wantErr: ErrStatusNonRetryable,
 		},
 		"It returns a ErrStatusRetryable when the server returns a 503 error, e.g. 503 Bad Gateway": {
-			fakefn: func(tsfake *amclientfake.MockTransferService) {
+			fakefn: func(tsfake *amclienttest.MockTransferService) {
 				tsfake.
 					EXPECT().
 					Status(gomock.Eq(ctx), gomock.Eq(tid)).
@@ -90,7 +89,7 @@ func TestTransferStatus(t *testing.T) {
 			wantErr: ErrStatusRetryable,
 		},
 		"It returns a ErrStatusNonRetryable when the server returns a 3xx error": {
-			fakefn: func(tsfake *amclientfake.MockTransferService) {
+			fakefn: func(tsfake *amclienttest.MockTransferService) {
 				tsfake.
 					EXPECT().
 					Status(gomock.Eq(ctx), gomock.Eq(tid)).
@@ -103,7 +102,7 @@ func TestTransferStatus(t *testing.T) {
 			wantErr: ErrStatusNonRetryable,
 		},
 		"It returns a ErrStatusNonRetryable when the API returns unmanageable statuses": {
-			fakefn: func(tsfake *amclientfake.MockTransferService) {
+			fakefn: func(tsfake *amclienttest.MockTransferService) {
 				tsfake.
 					EXPECT().
 					Status(gomock.Eq(ctx), gomock.Eq(tid)).
@@ -116,7 +115,7 @@ func TestTransferStatus(t *testing.T) {
 			wantErr: ErrStatusNonRetryable,
 		},
 		"It returns a ErrStatusNonRetryable when the API returns unknown statuses": {
-			fakefn: func(tsfake *amclientfake.MockTransferService) {
+			fakefn: func(tsfake *amclienttest.MockTransferService) {
 				tsfake.
 					EXPECT().
 					Status(gomock.Eq(ctx), gomock.Eq(tid)).
@@ -129,7 +128,7 @@ func TestTransferStatus(t *testing.T) {
 			wantErr: ErrStatusNonRetryable,
 		},
 		"It returns a ErrStatusNonRetryable when the API reports empty status": {
-			fakefn: func(tsfake *amclientfake.MockTransferService) {
+			fakefn: func(tsfake *amclienttest.MockTransferService) {
 				tsfake.
 					EXPECT().
 					Status(gomock.Eq(ctx), gomock.Eq(tid)).
@@ -142,7 +141,7 @@ func TestTransferStatus(t *testing.T) {
 			wantErr: ErrStatusNonRetryable,
 		},
 		"It returns a ErrStatusNonRetryable when the API reports that the transfer is in backlog": {
-			fakefn: func(tsfake *amclientfake.MockTransferService) {
+			fakefn: func(tsfake *amclienttest.MockTransferService) {
 				tsfake.
 					EXPECT().
 					Status(gomock.Eq(ctx), gomock.Eq(tid)).
@@ -158,7 +157,7 @@ func TestTransferStatus(t *testing.T) {
 			wantErr: ErrStatusNonRetryable,
 		},
 		"It returns a ErrStatusNonRetryable when the API reports that the transfer requires user input": {
-			fakefn: func(tsfake *amclientfake.MockTransferService) {
+			fakefn: func(tsfake *amclienttest.MockTransferService) {
 				tsfake.
 					EXPECT().
 					Status(gomock.Eq(ctx), gomock.Eq(tid)).
@@ -171,7 +170,7 @@ func TestTransferStatus(t *testing.T) {
 			wantErr: ErrStatusNonRetryable,
 		},
 		"It returns a ErrStatusInProgress when the API reports in-progress status": {
-			fakefn: func(tsfake *amclientfake.MockTransferService) {
+			fakefn: func(tsfake *amclienttest.MockTransferService) {
 				tsfake.
 					EXPECT().
 					Status(gomock.Eq(ctx), gomock.Eq(tid)).
@@ -184,7 +183,7 @@ func TestTransferStatus(t *testing.T) {
 			wantErr: ErrStatusInProgress,
 		},
 		"It returns a ErrStatusInProgress when the API reports in-progress status (2)": {
-			fakefn: func(tsfake *amclientfake.MockTransferService) {
+			fakefn: func(tsfake *amclienttest.MockTransferService) {
 				tsfake.
 					EXPECT().
 					Status(gomock.Eq(ctx), gomock.Eq(tid)).
@@ -200,7 +199,7 @@ func TestTransferStatus(t *testing.T) {
 			wantErr: ErrStatusInProgress,
 		},
 		"It returns the SIP ID when the API reports completion status": {
-			fakefn: func(tsfake *amclientfake.MockTransferService) {
+			fakefn: func(tsfake *amclienttest.MockTransferService) {
 				tsfake.
 					EXPECT().
 					Status(gomock.Eq(ctx), gomock.Eq(tid)).
@@ -226,7 +225,7 @@ func TestTransferStatus(t *testing.T) {
 
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
-			transferFake := amclientfake.NewMockTransferService(ctrl)
+			transferFake := amclienttest.NewMockTransferService(ctrl)
 			tc.fakefn(transferFake)
 
 			sid, err := TransferStatus(ctx, transferFake, tid)
@@ -247,11 +246,11 @@ func TestIngestStatus(t *testing.T) {
 	sid := "ba006a05-0420-48bc-817c-b50af0cc7793"
 
 	tests := map[string]struct {
-		fakefn  func(*amclientfake.MockIngestService)
+		fakefn  func(*amclienttest.MockIngestService)
 		wantErr error
 	}{
 		"It returns a ErrStatusRetryable when the context deadline is exceeded": {
-			fakefn: func(isfake *amclientfake.MockIngestService) {
+			fakefn: func(isfake *amclienttest.MockIngestService) {
 				isfake.
 					EXPECT().
 					Status(gomock.Eq(ctx), gomock.Eq(sid)).
@@ -264,7 +263,7 @@ func TestIngestStatus(t *testing.T) {
 			wantErr: ErrStatusRetryable,
 		},
 		"It returns a ErrStatusRetryable when a network timeout error is detected": {
-			fakefn: func(tsfake *amclientfake.MockIngestService) {
+			fakefn: func(tsfake *amclienttest.MockIngestService) {
 				tsfake.
 					EXPECT().
 					Status(gomock.Eq(ctx), gomock.Eq(sid)).
@@ -277,7 +276,7 @@ func TestIngestStatus(t *testing.T) {
 			wantErr: ErrStatusRetryable,
 		},
 		"It returns a ErrStatusRetryable when the server returns a 400 error (Status API server error)": {
-			fakefn: func(isfake *amclientfake.MockIngestService) {
+			fakefn: func(isfake *amclienttest.MockIngestService) {
 				isfake.
 					EXPECT().
 					Status(gomock.Eq(ctx), gomock.Eq(sid)).
@@ -290,7 +289,7 @@ func TestIngestStatus(t *testing.T) {
 			wantErr: ErrStatusRetryable,
 		},
 		"It returns a ErrStatusNonRetryable when the server returns a 4xx error, e.g. 401 Unauthorized": {
-			fakefn: func(isfake *amclientfake.MockIngestService) {
+			fakefn: func(isfake *amclienttest.MockIngestService) {
 				isfake.
 					EXPECT().
 					Status(gomock.Eq(ctx), gomock.Eq(sid)).
@@ -303,7 +302,7 @@ func TestIngestStatus(t *testing.T) {
 			wantErr: ErrStatusNonRetryable,
 		},
 		"It returns a ErrStatusRetryable when the server returns a 5xx error, e.g. 503 Service Unavailable": {
-			fakefn: func(isfake *amclientfake.MockIngestService) {
+			fakefn: func(isfake *amclienttest.MockIngestService) {
 				isfake.
 					EXPECT().
 					Status(gomock.Eq(ctx), gomock.Eq(sid)).
@@ -316,7 +315,7 @@ func TestIngestStatus(t *testing.T) {
 			wantErr: ErrStatusRetryable,
 		},
 		"It returns a ErrStatusNonRetryable when the server returns a 3xx error": {
-			fakefn: func(isfake *amclientfake.MockIngestService) {
+			fakefn: func(isfake *amclienttest.MockIngestService) {
 				isfake.
 					EXPECT().
 					Status(gomock.Eq(ctx), gomock.Eq(sid)).
@@ -329,7 +328,7 @@ func TestIngestStatus(t *testing.T) {
 			wantErr: ErrStatusNonRetryable,
 		},
 		"It returns a ErrStatusNonRetryable when the API reports unknown statuses": {
-			fakefn: func(isfake *amclientfake.MockIngestService) {
+			fakefn: func(isfake *amclienttest.MockIngestService) {
 				isfake.
 					EXPECT().
 					Status(gomock.Eq(ctx), gomock.Eq(sid)).
@@ -342,7 +341,7 @@ func TestIngestStatus(t *testing.T) {
 			wantErr: ErrStatusNonRetryable,
 		},
 		"It returns a ErrStatusNonRetryable when the API reports empty status": {
-			fakefn: func(isfake *amclientfake.MockIngestService) {
+			fakefn: func(isfake *amclienttest.MockIngestService) {
 				isfake.
 					EXPECT().
 					Status(gomock.Eq(ctx), gomock.Eq(sid)).
@@ -355,7 +354,7 @@ func TestIngestStatus(t *testing.T) {
 			wantErr: ErrStatusNonRetryable,
 		},
 		"It returns ErrStatusNonRetryable when the API reports USER_INPUT status": {
-			fakefn: func(isfake *amclientfake.MockIngestService) {
+			fakefn: func(isfake *amclienttest.MockIngestService) {
 				isfake.
 					EXPECT().
 					Status(gomock.Eq(ctx), gomock.Eq(sid)).
@@ -368,7 +367,7 @@ func TestIngestStatus(t *testing.T) {
 			wantErr: ErrStatusNonRetryable,
 		},
 		"It returns ErrStatusNonRetryable when the API reports FAILED status": {
-			fakefn: func(isfake *amclientfake.MockIngestService) {
+			fakefn: func(isfake *amclienttest.MockIngestService) {
 				isfake.
 					EXPECT().
 					Status(gomock.Eq(ctx), gomock.Eq(sid)).
@@ -381,7 +380,7 @@ func TestIngestStatus(t *testing.T) {
 			wantErr: ErrStatusNonRetryable,
 		},
 		"It returns ErrStatusNonRetryable when the API reports REJECTED status": {
-			fakefn: func(isfake *amclientfake.MockIngestService) {
+			fakefn: func(isfake *amclienttest.MockIngestService) {
 				isfake.
 					EXPECT().
 					Status(gomock.Eq(ctx), gomock.Eq(sid)).
@@ -394,7 +393,7 @@ func TestIngestStatus(t *testing.T) {
 			wantErr: ErrStatusNonRetryable,
 		},
 		"It returns ErrStatusInProgress when the API reports in-progress status": {
-			fakefn: func(isfake *amclientfake.MockIngestService) {
+			fakefn: func(isfake *amclienttest.MockIngestService) {
 				isfake.
 					EXPECT().
 					Status(gomock.Eq(ctx), gomock.Eq(sid)).
@@ -407,7 +406,7 @@ func TestIngestStatus(t *testing.T) {
 			wantErr: ErrStatusInProgress,
 		},
 		"It returns nil when the API reports completion status": {
-			fakefn: func(isfake *amclientfake.MockIngestService) {
+			fakefn: func(isfake *amclienttest.MockIngestService) {
 				isfake.
 					EXPECT().
 					Status(gomock.Eq(ctx), gomock.Eq(sid)).
@@ -429,7 +428,7 @@ func TestIngestStatus(t *testing.T) {
 
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
-			ingestFake := amclientfake.NewMockIngestService(ctrl)
+			ingestFake := amclienttest.NewMockIngestService(ctrl)
 			tc.fakefn(ingestFake)
 
 			err := IngestStatus(ctx, ingestFake, sid)
