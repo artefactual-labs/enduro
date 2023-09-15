@@ -62,8 +62,8 @@ func withActivityOptsForRequest(ctx temporalsdk_workflow.Context) temporalsdk_wo
 }
 
 // withActivityOptsForLocalAction returns a workflow context with activity
-// options suited for local activities like disk operations that should not
-// require a retry policy attached.
+// options suited for local actions like disk operations that should not require
+// a retry policy attached.
 func withActivityOptsForLocalAction(ctx temporalsdk_workflow.Context) temporalsdk_workflow.Context {
 	return temporalsdk_workflow.WithActivityOptions(ctx, temporalsdk_workflow.ActivityOptions{
 		StartToCloseTimeout: time.Hour,
