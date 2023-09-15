@@ -481,7 +481,7 @@ func (w *ProcessingWorkflow) SessionHandler(sessCtx temporalsdk_workflow.Context
 	// Delete local temporary files.
 	defer func() {
 		if tinfo.Bundle.FullPathBeforeStrip != "" {
-			activityOpts := withActivityOptsForRequest(sessCtx)
+			activityOpts := withActivityOptsForLocalAction(sessCtx)
 			_ = temporalsdk_workflow.ExecuteActivity(activityOpts, activities.CleanUpActivityName, &activities.CleanUpActivityParams{
 				FullPath: tinfo.Bundle.FullPathBeforeStrip,
 			}).Get(activityOpts, nil)
