@@ -179,8 +179,11 @@ extraction, the top-level directory will be omitted.
 
 #### `retentionPeriod` (String)
 
-The duration of time for which the transfer should be retained before being
-removed. It is mutually exclusive with `completedDir`.
+Specifies the duration for which a transfer will be retained before removal.
+This attribute is mutually exclusive with completedDir. If undefined, the
+transfer is not removed. If set to '0s', the transfer is removed immediately.
+This option is undefined by default, meaning the transfer will not be removed
+unless specified otherwise.
 
 The string should be constructed as a sequence of decimal numbers, each with
 optional fraction and a unit suffix, such as "30m", "24h" or "2h30m".
@@ -296,8 +299,11 @@ using the `am` pipeline.
 
 #### `retentionPeriod` (String)
 
-The duration of time for which the transfer should be retained before being
-removed.
+Specifies the duration for which a transfer will be retained before removal.
+This attribute is mutually exclusive with completedDir. If undefined, the
+transfer is not removed. If set to '0s', the transfer is removed immediately.
+This option is undefined by default, meaning the transfer will not be removed
+unless specified otherwise.
 
 The string should be constructed as a sequence of decimal numbers, each with
 optional fraction and a unit suffix, such as "30m", "24h" or "2h30m".
