@@ -30,7 +30,7 @@ require (
 	github.com/spf13/viper v1.16.0
 	github.com/stretchr/testify v1.8.4
 	go.artefactual.dev/amclient v0.2.0
-	go.artefactual.dev/tools v0.4.0
+	go.artefactual.dev/tools v0.6.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.42.0
 	go.opentelemetry.io/otel v1.16.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.16.0
@@ -38,7 +38,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.16.0
 	go.temporal.io/api v1.24.0
 	go.temporal.io/sdk v1.24.0
-	go.uber.org/mock v0.2.0
+	go.uber.org/mock v0.3.0
 	goa.design/goa/v3 v3.12.4
 	goa.design/plugins/v3 v3.12.4
 	gocloud.dev v0.34.0

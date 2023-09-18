@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/stretchr/testify/assert"
+	"go.artefactual.dev/tools/mockutil"
 	temporalsdk_activity "go.temporal.io/sdk/activity"
 	temporalsdk_testsuite "go.temporal.io/sdk/testsuite"
 	temporalsdk_workflow "go.temporal.io/sdk/workflow"
@@ -25,7 +26,7 @@ func TestSemaphoreAcquireRelease(t *testing.T) {
 	colsvc := collectionfake.NewMockService(ctrl)
 	colsvc.
 		EXPECT().
-		SetStatusInProgress(gomock.Any(), gomock.Eq(uint(12345)), gomock.Any()).
+		SetStatusInProgress(mockutil.Context(), gomock.Eq(uint(12345)), mockutil.Recent()).
 		Return(nil)
 
 	config := []pipeline.Config{
