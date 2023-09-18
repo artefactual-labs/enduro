@@ -8,8 +8,10 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	awsconfig "github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/redis/go-redis/v9"
 	"gocloud.dev/blob"
 	"gocloud.dev/blob/s3blob"
@@ -17,10 +19,10 @@ import (
 
 // minioWatcher implements a Watcher for watching lists in Redis.
 type minioWatcher struct {
-	client   redis.UniversalClient
-	sess     *session.Session
-	listName string
-	bucket   string
+	redisClient redis.UniversalClient
+	s3Client    *s3.Client
+	listName    string
+	bucketName  string
 	*commonWatcherImpl
 }
 
@@ -41,30 +43,39 @@ func NewMinioWatcher(ctx context.Context, config *MinioConfig) (*minioWatcher, e
 
 	client := redis.NewClient(opts)
 
-	sessOpts := session.Options{}
-	sessOpts.Config.WithRegion(config.Region)
-	if config.Profile != "" {
-		sessOpts.Profile = config.Profile
-	}
-	if config.Endpoint != "" {
-		sessOpts.Config.WithEndpoint(config.Endpoint)
-	}
-	if config.PathStyle {
-		sessOpts.Config.WithS3ForcePathStyle(config.PathStyle)
-	}
-	if config.Key != "" && config.Secret != "" {
-		sessOpts.Config.WithCredentials(credentials.NewStaticCredentials(config.Key, config.Secret, config.Token))
-	}
-	sess, err := session.NewSessionWithOptions(sessOpts)
+	awsConfig, err := awsconfig.LoadDefaultConfig(ctx,
+		awsconfig.WithSharedConfigProfile(config.Profile),
+		awsconfig.WithRegion(config.Region),
+		func(lo *awsconfig.LoadOptions) error {
+			if config.Key != "" && config.Secret != "" {
+				lo.Credentials = credentials.StaticCredentialsProvider{
+					Value: aws.Credentials{
+						AccessKeyID:     config.Key,
+						SecretAccessKey: config.Secret,
+						SessionToken:    config.Token,
+					},
+				}
+			}
+			return nil
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
 
+	s3Client := s3.NewFromConfig(awsConfig, func(opts *s3.Options) {
+		opts.UsePathStyle = config.PathStyle
+		opts.Region = config.Region
+		if config.Endpoint != "" {
+			opts.BaseEndpoint = &config.Endpoint
+		}
+	})
+
 	return &minioWatcher{
-		client:   client,
-		sess:     sess,
-		listName: config.RedisList,
-		bucket:   config.Bucket,
+		redisClient: client,
+		listName:    config.RedisList,
+		s3Client:    s3Client,
+		bucketName:  config.Bucket,
 		commonWatcherImpl: &commonWatcherImpl{
 			name:               config.Name,
 			pipeline:           config.Pipeline,
@@ -85,7 +96,7 @@ func (w *minioWatcher) Watch(ctx context.Context) (*BlobEvent, error) {
 		}
 		return nil, err
 	}
-	if event.Bucket != w.bucket {
+	if event.Bucket != w.bucketName {
 		return nil, ErrBucketMismatch
 	}
 	return event, nil
@@ -96,7 +107,7 @@ func (w *minioWatcher) Path() string {
 }
 
 func (w *minioWatcher) blpop(ctx context.Context) (*BlobEvent, error) {
-	val, err := w.client.BLPop(ctx, redisPopTimeout, w.listName).Result()
+	val, err := w.redisClient.BLPop(ctx, redisPopTimeout, w.listName).Result()
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving from Redis list: %w", err)
 	}
@@ -134,5 +145,5 @@ func (w *minioWatcher) event(blob string) (*BlobEvent, error) {
 }
 
 func (w *minioWatcher) OpenBucket(ctx context.Context) (*blob.Bucket, error) {
-	return s3blob.OpenBucket(ctx, w.sess, w.bucket, nil)
+	return s3blob.OpenBucketV2(ctx, w.s3Client, w.bucketName, nil)
 }
