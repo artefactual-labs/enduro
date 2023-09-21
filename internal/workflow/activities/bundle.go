@@ -16,15 +16,14 @@ import (
 	"github.com/artefactual-labs/enduro/internal/bundler"
 	"github.com/artefactual-labs/enduro/internal/temporal"
 	"github.com/artefactual-labs/enduro/internal/watcher"
-	"github.com/artefactual-labs/enduro/internal/workflow/manager"
 )
 
 type BundleActivity struct {
-	manager *manager.Manager
+	wsvc watcher.Service
 }
 
-func NewBundleActivity(m *manager.Manager) *BundleActivity {
-	return &BundleActivity{manager: m}
+func NewBundleActivity(wsvc watcher.Service) *BundleActivity {
+	return &BundleActivity{wsvc: wsvc}
 }
 
 type BundleActivityParams struct {
@@ -74,7 +73,7 @@ func (a *BundleActivity) Execute(ctx context.Context, params *BundleActivityPara
 		}
 	} else if params.IsDir {
 		var w watcher.Watcher
-		w, err = a.manager.Watcher.ByName(params.WatcherName)
+		w, err = a.wsvc.ByName(params.WatcherName)
 		if err == nil {
 			src := filepath.Join(w.Path(), params.Key)
 			dst := params.TransferDir

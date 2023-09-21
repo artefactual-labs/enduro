@@ -4,17 +4,13 @@ import (
 	"context"
 	"fmt"
 	"os"
-
-	"github.com/artefactual-labs/enduro/internal/workflow/manager"
 )
 
 // CleanUpActivity removes the contents that we've created in the TS location.
-type CleanUpActivity struct {
-	manager *manager.Manager
-}
+type CleanUpActivity struct{}
 
-func NewCleanUpActivity(m *manager.Manager) *CleanUpActivity {
-	return &CleanUpActivity{manager: m}
+func NewCleanUpActivity() *CleanUpActivity {
+	return &CleanUpActivity{}
 }
 
 type CleanUpActivityParams struct {

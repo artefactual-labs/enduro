@@ -15,7 +15,6 @@ import (
 	collectionfake "github.com/artefactual-labs/enduro/internal/collection/fake"
 	nha_activities "github.com/artefactual-labs/enduro/internal/nha/activities"
 	"github.com/artefactual-labs/enduro/internal/pipeline"
-	watcherfake "github.com/artefactual-labs/enduro/internal/watcher/fake"
 	"github.com/artefactual-labs/enduro/internal/workflow/manager"
 )
 
@@ -126,7 +125,6 @@ func buildManager(t *testing.T, ctrl *gomock.Controller) *manager.Manager {
 	return manager.NewManager(
 		logr.Discard(),
 		collectionfake.NewMockService(ctrl),
-		watcherfake.NewMockService(ctrl),
 		&pipeline.Registry{},
 		map[string]map[string]interface{}{
 			"prod": {"disabled": "false"},

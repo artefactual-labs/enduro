@@ -8,24 +8,21 @@ import (
 
 	"github.com/artefactual-labs/enduro/internal/collection"
 	"github.com/artefactual-labs/enduro/internal/pipeline"
-	"github.com/artefactual-labs/enduro/internal/watcher"
 )
 
 // Manager carries workflow and activity dependencies.
 type Manager struct {
 	Logger     logr.Logger
 	Collection collection.Service
-	Watcher    watcher.Service
 	Pipelines  *pipeline.Registry
 	Hooks      map[string]map[string]interface{}
 }
 
 // NewManager returns a pointer to a new Manager.
-func NewManager(logger logr.Logger, colsvc collection.Service, wsvc watcher.Service, pipelines *pipeline.Registry, hooks map[string]map[string]interface{}) *Manager {
+func NewManager(logger logr.Logger, colsvc collection.Service, pipelines *pipeline.Registry, hooks map[string]map[string]interface{}) *Manager {
 	return &Manager{
 		Logger:     logger,
 		Collection: colsvc,
-		Watcher:    wsvc,
 		Pipelines:  pipelines,
 		Hooks:      hooks,
 	}
