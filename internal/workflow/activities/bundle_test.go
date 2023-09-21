@@ -7,17 +7,13 @@ import (
 	"syscall"
 	"testing"
 
-	"github.com/go-logr/logr"
 	temporalsdk_testsuite "go.temporal.io/sdk/testsuite"
 	"go.uber.org/mock/gomock"
 	"gotest.tools/v3/assert"
 	"gotest.tools/v3/fs"
 
-	collectionfake "github.com/artefactual-labs/enduro/internal/collection/fake"
-	"github.com/artefactual-labs/enduro/internal/pipeline"
 	"github.com/artefactual-labs/enduro/internal/watcher"
 	watcherfake "github.com/artefactual-labs/enduro/internal/watcher/fake"
-	"github.com/artefactual-labs/enduro/internal/workflow/manager"
 )
 
 func TestBundleActivity(t *testing.T) {
@@ -26,17 +22,7 @@ func TestBundleActivity(t *testing.T) {
 	t.Run("Excludes hidden files", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		wsvc := watcherfake.NewMockService(ctrl)
-		m := manager.NewManager(
-			logr.Discard(),
-			collectionfake.NewMockService(ctrl),
-			wsvc,
-			&pipeline.Registry{},
-			map[string]map[string]interface{}{
-				"prod": {"disabled": "false"},
-				"hari": {"disabled": "false"},
-			},
-		)
-		activity := NewBundleActivity(m)
+		activity := NewBundleActivity(wsvc)
 		ts := &temporalsdk_testsuite.WorkflowTestSuite{}
 		env := ts.NewTestActivityEnvironment()
 		env.RegisterActivity(activity.Execute)

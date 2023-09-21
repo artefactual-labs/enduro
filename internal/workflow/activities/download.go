@@ -5,16 +5,18 @@ import (
 	"fmt"
 
 	"github.com/artefactual-labs/enduro/internal/temporal"
+	"github.com/artefactual-labs/enduro/internal/watcher"
 	"github.com/artefactual-labs/enduro/internal/workflow/manager"
 )
 
 // DownloadActivity downloads the blob into the pipeline processing directory.
 type DownloadActivity struct {
 	manager *manager.Manager
+	wsvc    watcher.Service
 }
 
-func NewDownloadActivity(m *manager.Manager) *DownloadActivity {
-	return &DownloadActivity{manager: m}
+func NewDownloadActivity(m *manager.Manager, wsvc watcher.Service) *DownloadActivity {
+	return &DownloadActivity{manager: m, wsvc: wsvc}
 }
 
 func (a *DownloadActivity) Execute(ctx context.Context, pipelineName, watcherName, key string) (string, error) {
@@ -29,7 +31,7 @@ func (a *DownloadActivity) Execute(ctx context.Context, pipelineName, watcherNam
 	}
 	defer file.Close()
 
-	if err := a.manager.Watcher.Download(ctx, file, watcherName, key); err != nil {
+	if err := a.wsvc.Download(ctx, file, watcherName, key); err != nil {
 		return "", temporal.NewNonRetryableError(fmt.Errorf("error downloading blob: %v", err))
 	}
 
