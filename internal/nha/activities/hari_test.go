@@ -11,7 +11,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-logr/logr"
 	temporalsdk_temporal "go.temporal.io/sdk/temporal"
 	"go.uber.org/mock/gomock"
 	"gotest.tools/v3/assert"
@@ -506,7 +505,6 @@ func createHariActivity(t *testing.T, hariConfig map[string]interface{}) *Update
 	}
 
 	manager := manager.NewManager(
-		logr.Discard(),
 		collectionfake.NewMockService(ctrl),
 		&pipeline.Registry{},
 		hooks,

@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-logr/logr"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
 	temporalsdk_activity "go.temporal.io/sdk/activity"
@@ -57,7 +58,7 @@ func TestSendReceiptsSequentialBehavior(t *testing.T) {
 		uint(12345),
 	).Return("ABANDON", nil).Once()
 
-	env.ExecuteWorkflow(NewProcessingWorkflow(m).sendReceipts, &params)
+	env.ExecuteWorkflow(NewProcessingWorkflow(m, logr.Discard()).sendReceipts, &params)
 
 	assert.Equal(t, env.IsWorkflowCompleted(), true)
 	assert.ErrorContains(t, env.GetWorkflowError(), "error sending hari receipt: user abandoned")
@@ -107,7 +108,7 @@ func TestSendReceipts(t *testing.T) {
 		},
 	).Return(nil).Once()
 
-	env.ExecuteWorkflow(NewProcessingWorkflow(m).sendReceipts, &params)
+	env.ExecuteWorkflow(NewProcessingWorkflow(m, logr.Discard()).sendReceipts, &params)
 
 	assert.Equal(t, env.IsWorkflowCompleted(), true)
 	assert.NilError(t, env.GetWorkflowError())

@@ -16,6 +16,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-logr/logr"
+
 	"github.com/artefactual-labs/enduro/internal/nha"
 	"github.com/artefactual-labs/enduro/internal/temporal"
 	"github.com/artefactual-labs/enduro/internal/workflow/manager"
@@ -35,6 +37,7 @@ var hariClient = &http.Client{
 // UpdateHARIActivity delivers a receipt to HARI.
 type UpdateHARIActivity struct {
 	manager *manager.Manager
+	logger  logr.Logger
 }
 
 func NewUpdateHARIActivity(m *manager.Manager) *UpdateHARIActivity {
@@ -239,7 +242,7 @@ func (a UpdateHARIActivity) buildMock() *httptest.Server {
 		blob, _ := io.ReadAll(r.Body)
 		defer r.Body.Close()
 
-		a.manager.Logger.V(1).Info(
+		a.logger.V(1).Info(
 			"Request received",
 			"method", r.Method,
 			"path", r.URL.Path,
