@@ -18,7 +18,6 @@ import (
 
 	collectionfake "github.com/artefactual-labs/enduro/internal/collection/fake"
 	"github.com/artefactual-labs/enduro/internal/nha"
-	"github.com/artefactual-labs/enduro/internal/pipeline"
 	"github.com/artefactual-labs/enduro/internal/workflow/manager"
 )
 
@@ -506,7 +505,6 @@ func createHariActivity(t *testing.T, hariConfig map[string]interface{}) *Update
 
 	manager := manager.NewManager(
 		collectionfake.NewMockService(ctrl),
-		&pipeline.Registry{},
 		hooks,
 	)
 

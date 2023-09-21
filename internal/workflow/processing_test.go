@@ -33,7 +33,8 @@ type ProcessingWorkflowTestSuite struct {
 func (s *ProcessingWorkflowTestSuite) SetupTest() {
 	s.env = s.NewTestWorkflowEnvironment()
 	s.manager = buildManager(s.T(), gomock.NewController(s.T()))
-	s.workflow = NewProcessingWorkflow(s.manager, logr.Discard())
+	pipelineRegistry, _ := pipeline.NewPipelineRegistry(logr.Discard(), []pipeline.Config{})
+	s.workflow = NewProcessingWorkflow(s.manager, pipelineRegistry, logr.Discard())
 }
 
 func (s *ProcessingWorkflowTestSuite) AfterTest(suiteName, testName string) {
@@ -52,7 +53,7 @@ func (s *ProcessingWorkflowTestSuite) TestParseErrorIsIgnored() {
 	s.env.OnActivity(nha_activities.ParseNameLocalActivity, mock.Anything, "key").Return(nil, errors.New("parse error")).Once()
 
 	// loadConfig is executed (workflow continued), returning an error.
-	s.env.OnActivity(loadConfigLocalActivity, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, errors.New("pipeline is unavailable")).Once()
+	s.env.OnActivity(loadConfigLocalActivity, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, errors.New("pipeline is unavailable")).Once()
 
 	// Defer updates the package with the error status before returning.
 	s.env.OnActivity(updatePackageLocalActivity, mock.Anything, mock.Anything, mock.Anything, &updatePackageLocalActivityParams{
@@ -124,7 +125,6 @@ func buildManager(t *testing.T, ctrl *gomock.Controller) *manager.Manager {
 
 	return manager.NewManager(
 		collectionfake.NewMockService(ctrl),
-		&pipeline.Registry{},
 		map[string]map[string]interface{}{
 			"prod": {"disabled": "false"},
 			"hari": {"disabled": "false"},

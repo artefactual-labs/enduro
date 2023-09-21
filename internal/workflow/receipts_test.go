@@ -15,6 +15,7 @@ import (
 
 	"github.com/artefactual-labs/enduro/internal/nha"
 	nha_activities "github.com/artefactual-labs/enduro/internal/nha/activities"
+	"github.com/artefactual-labs/enduro/internal/pipeline"
 )
 
 // sendReceipts exits immediately after an activity error, ensuring that
@@ -23,6 +24,7 @@ func TestSendReceiptsSequentialBehavior(t *testing.T) {
 	wts := temporalsdk_testsuite.WorkflowTestSuite{}
 	env := wts.NewTestWorkflowEnvironment()
 	m := buildManager(t, gomock.NewController(t))
+	pipelineRegistry, _ := pipeline.NewPipelineRegistry(logr.Discard(), []pipeline.Config{})
 
 	AsyncCompletionActivityName = uuid.New().String() + "-async-completion"
 	env.RegisterActivityWithOptions(NewAsyncCompletionActivity(m.Collection).Execute, temporalsdk_activity.RegisterOptions{Name: AsyncCompletionActivityName})
@@ -58,7 +60,7 @@ func TestSendReceiptsSequentialBehavior(t *testing.T) {
 		uint(12345),
 	).Return("ABANDON", nil).Once()
 
-	env.ExecuteWorkflow(NewProcessingWorkflow(m, logr.Discard()).sendReceipts, &params)
+	env.ExecuteWorkflow(NewProcessingWorkflow(m, pipelineRegistry, logr.Discard()).sendReceipts, &params)
 
 	assert.Equal(t, env.IsWorkflowCompleted(), true)
 	assert.ErrorContains(t, env.GetWorkflowError(), "error sending hari receipt: user abandoned")
@@ -69,6 +71,7 @@ func TestSendReceipts(t *testing.T) {
 	wts := temporalsdk_testsuite.WorkflowTestSuite{}
 	env := wts.NewTestWorkflowEnvironment()
 	m := buildManager(t, gomock.NewController(t))
+	pipelineRegistry, _ := pipeline.NewPipelineRegistry(logr.Discard(), []pipeline.Config{})
 
 	nha_activities.UpdateHARIActivityName = uuid.New().String()
 	env.RegisterActivityWithOptions(nha_activities.NewUpdateHARIActivity(m).Execute, temporalsdk_activity.RegisterOptions{Name: nha_activities.UpdateHARIActivityName})
@@ -108,7 +111,7 @@ func TestSendReceipts(t *testing.T) {
 		},
 	).Return(nil).Once()
 
-	env.ExecuteWorkflow(NewProcessingWorkflow(m, logr.Discard()).sendReceipts, &params)
+	env.ExecuteWorkflow(NewProcessingWorkflow(m, pipelineRegistry, logr.Discard()).sendReceipts, &params)
 
 	assert.Equal(t, env.IsWorkflowCompleted(), true)
 	assert.NilError(t, env.GetWorkflowError())

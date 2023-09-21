@@ -8,6 +8,7 @@ import (
 	temporalsdk_activity "go.temporal.io/sdk/activity"
 
 	"github.com/artefactual-labs/enduro/internal/collection"
+	"github.com/artefactual-labs/enduro/internal/pipeline"
 	"github.com/artefactual-labs/enduro/internal/workflow/manager"
 )
 
@@ -64,8 +65,8 @@ func checkDuplicatePackageLocalActivity(ctx context.Context, logger logr.Logger,
 	return colsvc.CheckDuplicate(ctx, id)
 }
 
-func loadConfigLocalActivity(ctx context.Context, m *manager.Manager, logger logr.Logger, pipeline string, tinfo *TransferInfo) (*TransferInfo, error) {
-	p, err := m.Pipelines.ByName(pipeline)
+func loadConfigLocalActivity(ctx context.Context, m *manager.Manager, pipelineRegistry *pipeline.Registry, logger logr.Logger, pipeline string, tinfo *TransferInfo) (*TransferInfo, error) {
+	p, err := pipelineRegistry.ByName(pipeline)
 	if err != nil {
 		logger.Error(err, "Error loading local configuration")
 		return nil, err

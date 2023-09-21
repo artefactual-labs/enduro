@@ -26,12 +26,13 @@ import (
 )
 
 type ProcessingWorkflow struct {
-	manager *manager.Manager
-	logger  logr.Logger
+	manager          *manager.Manager
+	pipelineRegistry *pipeline.Registry
+	logger           logr.Logger
 }
 
-func NewProcessingWorkflow(m *manager.Manager, l logr.Logger) *ProcessingWorkflow {
-	return &ProcessingWorkflow{manager: m, logger: l}
+func NewProcessingWorkflow(m *manager.Manager, pipelineRegistry *pipeline.Registry, l logr.Logger) *ProcessingWorkflow {
+	return &ProcessingWorkflow{manager: m, pipelineRegistry: pipelineRegistry, logger: l}
 }
 
 // TransferInfo is shared state that is passed down to activities. It can be
@@ -284,7 +285,7 @@ func (w *ProcessingWorkflow) Execute(ctx temporalsdk_workflow.Context, req *coll
 		if err := temporalsdk_workflow.SideEffect(ctx, func(ctx temporalsdk_workflow.Context) interface{} {
 			names := req.PipelineNames
 			if len(names) < 1 {
-				names = w.manager.Pipelines.Names()
+				names = w.pipelineRegistry.Names()
 				if len(names) < 1 {
 					return ""
 				}
@@ -302,7 +303,7 @@ func (w *ProcessingWorkflow) Execute(ctx temporalsdk_workflow.Context, req *coll
 	// Load pipeline configuration and hooks.
 	{
 		activityOpts := withLocalActivityWithoutRetriesOpts(ctx)
-		err := temporalsdk_workflow.ExecuteLocalActivity(activityOpts, loadConfigLocalActivity, w.manager, w.logger, tinfo.PipelineName, tinfo).Get(activityOpts, &tinfo)
+		err := temporalsdk_workflow.ExecuteLocalActivity(activityOpts, loadConfigLocalActivity, w.manager, w.pipelineRegistry, w.logger, tinfo.PipelineName, tinfo).Get(activityOpts, &tinfo)
 		if err != nil {
 			return fmt.Errorf("error loading configuration: %v", err)
 		}
@@ -431,7 +432,7 @@ func (w *ProcessingWorkflow) SessionHandler(sessCtx temporalsdk_workflow.Context
 	{
 		var acquired bool
 		var err error
-		acquired, release, err = acquirePipeline(sessCtx, w.manager.Collection, w.manager.Pipelines, tinfo.PipelineName, tinfo.CollectionID)
+		acquired, release, err = acquirePipeline(sessCtx, w.manager.Collection, w.pipelineRegistry, tinfo.PipelineName, tinfo.CollectionID)
 		if acquired {
 			defer func() {
 				_ = release(sessCtx)
