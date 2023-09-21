@@ -250,7 +250,7 @@ func main() {
 		// TODO: this is a temporary workaround for dependency injection until we
 		// figure out what's the depdencency tree is going to look like after POC.
 		// The share-everything pattern should be avoided.
-		m := manager.NewManager(logger, colsvc, pipelineRegistry, config.Hooks)
+		m := manager.NewManager(colsvc, pipelineRegistry, config.Hooks)
 
 		done := make(chan struct{})
 		w := temporalsdk_worker.New(temporalClient, config.Temporal.TaskQueue, temporalsdk_worker.Options{
@@ -262,7 +262,7 @@ func main() {
 			os.Exit(1)
 		}
 
-		w.RegisterWorkflowWithOptions(workflow.NewProcessingWorkflow(m).Execute, temporalsdk_workflow.RegisterOptions{Name: collection.ProcessingWorkflowName})
+		w.RegisterWorkflowWithOptions(workflow.NewProcessingWorkflow(m, logger).Execute, temporalsdk_workflow.RegisterOptions{Name: collection.ProcessingWorkflowName})
 		w.RegisterActivityWithOptions(activities.NewAcquirePipelineActivity(pipelineRegistry).Execute, temporalsdk_activity.RegisterOptions{Name: activities.AcquirePipelineActivityName})
 		w.RegisterActivityWithOptions(activities.NewDownloadActivity(m, wsvc).Execute, temporalsdk_activity.RegisterOptions{Name: activities.DownloadActivityName})
 		w.RegisterActivityWithOptions(activities.NewBundleActivity(wsvc).Execute, temporalsdk_activity.RegisterOptions{Name: activities.BundleActivityName})

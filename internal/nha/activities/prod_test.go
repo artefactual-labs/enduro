@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-logr/logr"
 	"go.uber.org/mock/gomock"
 	"gotest.tools/v3/assert"
 	"gotest.tools/v3/fs"
@@ -162,7 +161,6 @@ func createProdActivity(t *testing.T, hookConfig map[string]interface{}) *Update
 	ctrl := gomock.NewController(t)
 
 	manager := manager.NewManager(
-		logr.Discard(),
 		collectionfake.NewMockService(ctrl),
 		&pipeline.Registry{},
 		map[string]map[string]interface{}{

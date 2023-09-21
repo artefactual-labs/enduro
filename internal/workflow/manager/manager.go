@@ -4,24 +4,20 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/go-logr/logr"
-
 	"github.com/artefactual-labs/enduro/internal/collection"
 	"github.com/artefactual-labs/enduro/internal/pipeline"
 )
 
 // Manager carries workflow and activity dependencies.
 type Manager struct {
-	Logger     logr.Logger
 	Collection collection.Service
 	Pipelines  *pipeline.Registry
 	Hooks      map[string]map[string]interface{}
 }
 
 // NewManager returns a pointer to a new Manager.
-func NewManager(logger logr.Logger, colsvc collection.Service, pipelines *pipeline.Registry, hooks map[string]map[string]interface{}) *Manager {
+func NewManager(colsvc collection.Service, pipelines *pipeline.Registry, hooks map[string]map[string]interface{}) *Manager {
 	return &Manager{
-		Logger:     logger,
 		Collection: colsvc,
 		Pipelines:  pipelines,
 		Hooks:      hooks,
