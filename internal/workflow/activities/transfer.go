@@ -7,8 +7,8 @@ import (
 
 	"go.artefactual.dev/amclient"
 
+	"github.com/artefactual-labs/enduro/internal/pipeline"
 	"github.com/artefactual-labs/enduro/internal/temporal"
-	"github.com/artefactual-labs/enduro/internal/workflow/manager"
 )
 
 // TransferActivity submits the transfer to Archivematica and returns its ID.
@@ -16,11 +16,11 @@ import (
 // This is our first interaction with Archivematica. The workflow ends here
 // after authentication errors.
 type TransferActivity struct {
-	manager *manager.Manager
+	pipelineRegistry *pipeline.Registry
 }
 
-func NewTransferActivity(m *manager.Manager) *TransferActivity {
-	return &TransferActivity{manager: m}
+func NewTransferActivity(pipelineRegistry *pipeline.Registry) *TransferActivity {
+	return &TransferActivity{pipelineRegistry: pipelineRegistry}
 }
 
 type TransferActivityParams struct {
@@ -40,7 +40,7 @@ type TransferActivityResponse struct {
 }
 
 func (a *TransferActivity) Execute(ctx context.Context, params *TransferActivityParams) (*TransferActivityResponse, error) {
-	p, err := a.manager.Pipelines.ByName(params.PipelineName)
+	p, err := a.pipelineRegistry.ByName(params.PipelineName)
 	if err != nil {
 		return nil, temporal.NewNonRetryableError(err)
 	}

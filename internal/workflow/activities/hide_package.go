@@ -4,20 +4,20 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/artefactual-labs/enduro/internal/pipeline"
 	"github.com/artefactual-labs/enduro/internal/temporal"
-	"github.com/artefactual-labs/enduro/internal/workflow/manager"
 )
 
 type HidePackageActivity struct {
-	manager *manager.Manager
+	pipelineRegistry *pipeline.Registry
 }
 
-func NewHidePackageActivity(m *manager.Manager) *HidePackageActivity {
-	return &HidePackageActivity{manager: m}
+func NewHidePackageActivity(pipelineRegistry *pipeline.Registry) *HidePackageActivity {
+	return &HidePackageActivity{pipelineRegistry: pipelineRegistry}
 }
 
 func (a *HidePackageActivity) Execute(ctx context.Context, unitID, unitType, pipelineName string) error {
-	p, err := a.manager.Pipelines.ByName(pipelineName)
+	p, err := a.pipelineRegistry.ByName(pipelineName)
 	if err != nil {
 		return temporal.NewNonRetryableError(err)
 	}

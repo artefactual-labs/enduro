@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/artefactual-labs/enduro/internal/pipeline"
 	"github.com/artefactual-labs/enduro/internal/temporal"
 	"github.com/artefactual-labs/enduro/internal/watcher"
 	"github.com/artefactual-labs/enduro/internal/workflow/manager"
@@ -11,16 +12,17 @@ import (
 
 // DownloadActivity downloads the blob into the pipeline processing directory.
 type DownloadActivity struct {
-	manager *manager.Manager
-	wsvc    watcher.Service
+	manager          *manager.Manager
+	wsvc             watcher.Service
+	pipelineRegistry *pipeline.Registry
 }
 
-func NewDownloadActivity(m *manager.Manager, wsvc watcher.Service) *DownloadActivity {
-	return &DownloadActivity{manager: m, wsvc: wsvc}
+func NewDownloadActivity(m *manager.Manager, pipelineRegistry *pipeline.Registry, wsvc watcher.Service) *DownloadActivity {
+	return &DownloadActivity{manager: m, pipelineRegistry: pipelineRegistry, wsvc: wsvc}
 }
 
 func (a *DownloadActivity) Execute(ctx context.Context, pipelineName, watcherName, key string) (string, error) {
-	p, err := a.manager.Pipelines.ByName(pipelineName)
+	p, err := a.pipelineRegistry.ByName(pipelineName)
 	if err != nil {
 		return "", temporal.NewNonRetryableError(err)
 	}
