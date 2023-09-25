@@ -13,6 +13,7 @@ import (
 	"go.uber.org/mock/gomock"
 	"gotest.tools/v3/assert"
 
+	collectionfake "github.com/artefactual-labs/enduro/internal/collection/fake"
 	"github.com/artefactual-labs/enduro/internal/nha"
 	nha_activities "github.com/artefactual-labs/enduro/internal/nha/activities"
 	"github.com/artefactual-labs/enduro/internal/pipeline"
@@ -24,10 +25,12 @@ func TestSendReceiptsSequentialBehavior(t *testing.T) {
 	wts := temporalsdk_testsuite.WorkflowTestSuite{}
 	env := wts.NewTestWorkflowEnvironment()
 	m := buildManager(t, gomock.NewController(t))
+	ctrl := gomock.NewController(t)
+	colsvc := collectionfake.NewMockService(ctrl)
 	pipelineRegistry, _ := pipeline.NewPipelineRegistry(logr.Discard(), []pipeline.Config{})
 
 	AsyncCompletionActivityName = uuid.New().String() + "-async-completion"
-	env.RegisterActivityWithOptions(NewAsyncCompletionActivity(m.Collection).Execute, temporalsdk_activity.RegisterOptions{Name: AsyncCompletionActivityName})
+	env.RegisterActivityWithOptions(NewAsyncCompletionActivity(colsvc).Execute, temporalsdk_activity.RegisterOptions{Name: AsyncCompletionActivityName})
 
 	nha_activities.UpdateHARIActivityName = uuid.New().String() + "-update-hary"
 	env.RegisterActivityWithOptions(nha_activities.NewUpdateHARIActivity(m).Execute, temporalsdk_activity.RegisterOptions{Name: nha_activities.UpdateHARIActivityName})
@@ -60,7 +63,7 @@ func TestSendReceiptsSequentialBehavior(t *testing.T) {
 		uint(12345),
 	).Return("ABANDON", nil).Once()
 
-	env.ExecuteWorkflow(NewProcessingWorkflow(m, pipelineRegistry, logr.Discard()).sendReceipts, &params)
+	env.ExecuteWorkflow(NewProcessingWorkflow(m, colsvc, pipelineRegistry, logr.Discard()).sendReceipts, &params)
 
 	assert.Equal(t, env.IsWorkflowCompleted(), true)
 	assert.ErrorContains(t, env.GetWorkflowError(), "error sending hari receipt: user abandoned")
@@ -71,6 +74,8 @@ func TestSendReceipts(t *testing.T) {
 	wts := temporalsdk_testsuite.WorkflowTestSuite{}
 	env := wts.NewTestWorkflowEnvironment()
 	m := buildManager(t, gomock.NewController(t))
+	ctrl := gomock.NewController(t)
+	colsvc := collectionfake.NewMockService(ctrl)
 	pipelineRegistry, _ := pipeline.NewPipelineRegistry(logr.Discard(), []pipeline.Config{})
 
 	nha_activities.UpdateHARIActivityName = uuid.New().String()
@@ -111,7 +116,7 @@ func TestSendReceipts(t *testing.T) {
 		},
 	).Return(nil).Once()
 
-	env.ExecuteWorkflow(NewProcessingWorkflow(m, pipelineRegistry, logr.Discard()).sendReceipts, &params)
+	env.ExecuteWorkflow(NewProcessingWorkflow(m, colsvc, pipelineRegistry, logr.Discard()).sendReceipts, &params)
 
 	assert.Equal(t, env.IsWorkflowCompleted(), true)
 	assert.NilError(t, env.GetWorkflowError())

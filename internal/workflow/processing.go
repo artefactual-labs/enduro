@@ -27,12 +27,13 @@ import (
 
 type ProcessingWorkflow struct {
 	manager          *manager.Manager
+	colsvc           collection.Service
 	pipelineRegistry *pipeline.Registry
 	logger           logr.Logger
 }
 
-func NewProcessingWorkflow(m *manager.Manager, pipelineRegistry *pipeline.Registry, l logr.Logger) *ProcessingWorkflow {
-	return &ProcessingWorkflow{manager: m, pipelineRegistry: pipelineRegistry, logger: l}
+func NewProcessingWorkflow(m *manager.Manager, colsvc collection.Service, pipelineRegistry *pipeline.Registry, l logr.Logger) *ProcessingWorkflow {
+	return &ProcessingWorkflow{manager: m, colsvc: colsvc, pipelineRegistry: pipelineRegistry, logger: l}
 }
 
 // TransferInfo is shared state that is passed down to activities. It can be
@@ -201,13 +202,13 @@ func (w *ProcessingWorkflow) Execute(ctx temporalsdk_workflow.Context, req *coll
 		var err error
 
 		if req.CollectionID == 0 {
-			err = temporalsdk_workflow.ExecuteLocalActivity(activityOpts, createPackageLocalActivity, w.logger, w.manager.Collection, &createPackageLocalActivityParams{
+			err = temporalsdk_workflow.ExecuteLocalActivity(activityOpts, createPackageLocalActivity, w.logger, w.colsvc, &createPackageLocalActivityParams{
 				Key:    req.Key,
 				Status: status,
 			}).Get(activityOpts, &tinfo.CollectionID)
 		} else {
 			// TODO: investigate better way to reset the collection.
-			err = temporalsdk_workflow.ExecuteLocalActivity(activityOpts, updatePackageLocalActivity, w.logger, w.manager.Collection, &updatePackageLocalActivityParams{
+			err = temporalsdk_workflow.ExecuteLocalActivity(activityOpts, updatePackageLocalActivity, w.logger, w.colsvc, &updatePackageLocalActivityParams{
 				CollectionID: req.CollectionID,
 				Key:          req.Key,
 				PipelineID:   "",
@@ -234,7 +235,7 @@ func (w *ProcessingWorkflow) Execute(ctx temporalsdk_workflow.Context, req *coll
 		// Use disconnected context so it also runs after cancellation.
 		dctx, _ := temporalsdk_workflow.NewDisconnectedContext(ctx)
 		activityOpts := withLocalActivityOpts(dctx)
-		_ = temporalsdk_workflow.ExecuteLocalActivity(activityOpts, updatePackageLocalActivity, w.logger, w.manager.Collection, &updatePackageLocalActivityParams{
+		_ = temporalsdk_workflow.ExecuteLocalActivity(activityOpts, updatePackageLocalActivity, w.logger, w.colsvc, &updatePackageLocalActivityParams{
 			CollectionID: tinfo.CollectionID,
 			Key:          tinfo.Key,
 			PipelineID:   tinfo.PipelineID,
@@ -250,7 +251,7 @@ func (w *ProcessingWorkflow) Execute(ctx temporalsdk_workflow.Context, req *coll
 		if req.RejectDuplicates {
 			var exists bool
 			activityOpts := withLocalActivityOpts(ctx)
-			err := temporalsdk_workflow.ExecuteLocalActivity(activityOpts, checkDuplicatePackageLocalActivity, w.logger, w.manager.Collection, tinfo.CollectionID).Get(activityOpts, &exists)
+			err := temporalsdk_workflow.ExecuteLocalActivity(activityOpts, checkDuplicatePackageLocalActivity, w.logger, w.colsvc, tinfo.CollectionID).Get(activityOpts, &exists)
 			if err != nil {
 				return fmt.Errorf("error checking duplicate: %v", err)
 			}
@@ -274,7 +275,7 @@ func (w *ProcessingWorkflow) Execute(ctx temporalsdk_workflow.Context, req *coll
 
 		if nameInfo.Identifier != "" {
 			activityOpts = withLocalActivityOpts(ctx)
-			_ = temporalsdk_workflow.ExecuteLocalActivity(activityOpts, setOriginalIDLocalActivity, w.manager.Collection, tinfo.CollectionID, nameInfo.Identifier).Get(activityOpts, nil)
+			_ = temporalsdk_workflow.ExecuteLocalActivity(activityOpts, setOriginalIDLocalActivity, w.colsvc, tinfo.CollectionID, nameInfo.Identifier).Get(activityOpts, nil)
 		}
 	}
 
@@ -432,7 +433,7 @@ func (w *ProcessingWorkflow) SessionHandler(sessCtx temporalsdk_workflow.Context
 	{
 		var acquired bool
 		var err error
-		acquired, release, err = acquirePipeline(sessCtx, w.manager.Collection, w.pipelineRegistry, tinfo.PipelineName, tinfo.CollectionID)
+		acquired, release, err = acquirePipeline(sessCtx, w.colsvc, w.pipelineRegistry, tinfo.PipelineName, tinfo.CollectionID)
 		if acquired {
 			defer func() {
 				_ = release(sessCtx)
@@ -596,7 +597,7 @@ func (w *ProcessingWorkflow) transfer(sessCtx temporalsdk_workflow.Context, tinf
 	// Persist TransferID + PipelineID.
 	{
 		activityOpts := withLocalActivityOpts(sessCtx)
-		_ = temporalsdk_workflow.ExecuteLocalActivity(activityOpts, updatePackageLocalActivity, w.logger, w.manager.Collection, &updatePackageLocalActivityParams{
+		_ = temporalsdk_workflow.ExecuteLocalActivity(activityOpts, updatePackageLocalActivity, w.logger, w.colsvc, &updatePackageLocalActivityParams{
 			CollectionID: tinfo.CollectionID,
 			Key:          tinfo.Key,
 			Status:       collection.StatusInProgress,
@@ -622,7 +623,7 @@ func (w *ProcessingWorkflow) transfer(sessCtx temporalsdk_workflow.Context, tinf
 	// Persist SIPID.
 	{
 		activityOpts := withLocalActivityOpts(sessCtx)
-		_ = temporalsdk_workflow.ExecuteLocalActivity(activityOpts, updatePackageLocalActivity, w.logger, w.manager.Collection, &updatePackageLocalActivityParams{
+		_ = temporalsdk_workflow.ExecuteLocalActivity(activityOpts, updatePackageLocalActivity, w.logger, w.colsvc, &updatePackageLocalActivityParams{
 			CollectionID: tinfo.CollectionID,
 			Key:          tinfo.Key,
 			TransferID:   tinfo.TransferID,

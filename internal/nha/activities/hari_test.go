@@ -12,11 +12,9 @@ import (
 	"time"
 
 	temporalsdk_temporal "go.temporal.io/sdk/temporal"
-	"go.uber.org/mock/gomock"
 	"gotest.tools/v3/assert"
 	"gotest.tools/v3/fs"
 
-	collectionfake "github.com/artefactual-labs/enduro/internal/collection/fake"
 	"github.com/artefactual-labs/enduro/internal/nha"
 	"github.com/artefactual-labs/enduro/internal/workflow/manager"
 )
@@ -497,14 +495,11 @@ func testError(t *testing.T, err error, wantErr string, wantNonRetryable bool) {
 func createHariActivity(t *testing.T, hariConfig map[string]interface{}) *UpdateHARIActivity {
 	t.Helper()
 
-	ctrl := gomock.NewController(t)
-
 	hooks := map[string]map[string]interface{}{
 		"hari": hariConfig,
 	}
 
 	manager := manager.NewManager(
-		collectionfake.NewMockService(ctrl),
 		hooks,
 	)
 
