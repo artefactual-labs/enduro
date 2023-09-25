@@ -1,18 +1,18 @@
-package manager
+package hooks
 
 import (
 	"fmt"
 	"strings"
 )
 
-// Manager carries workflow and activity dependencies.
-type Manager struct {
+// Hooks carries workflow and activity dependencies.
+type Hooks struct {
 	Hooks map[string]map[string]interface{}
 }
 
-// NewManager returns a pointer to a new Manager.
-func NewManager(hooks map[string]map[string]interface{}) *Manager {
-	return &Manager{
+// NewHooks returns a pointer to a new Hooks.
+func NewHooks(hooks map[string]map[string]interface{}) *Hooks {
+	return &Hooks{
 		Hooks: hooks,
 	}
 }

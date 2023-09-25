@@ -22,18 +22,18 @@ import (
 	"github.com/artefactual-labs/enduro/internal/pipeline"
 	"github.com/artefactual-labs/enduro/internal/validation"
 	"github.com/artefactual-labs/enduro/internal/workflow/activities"
-	"github.com/artefactual-labs/enduro/internal/workflow/manager"
+	"github.com/artefactual-labs/enduro/internal/workflow/hooks"
 )
 
 type ProcessingWorkflow struct {
-	manager          *manager.Manager
+	hooks            *hooks.Hooks
 	colsvc           collection.Service
 	pipelineRegistry *pipeline.Registry
 	logger           logr.Logger
 }
 
-func NewProcessingWorkflow(m *manager.Manager, colsvc collection.Service, pipelineRegistry *pipeline.Registry, l logr.Logger) *ProcessingWorkflow {
-	return &ProcessingWorkflow{manager: m, colsvc: colsvc, pipelineRegistry: pipelineRegistry, logger: l}
+func NewProcessingWorkflow(h *hooks.Hooks, colsvc collection.Service, pipelineRegistry *pipeline.Registry, l logr.Logger) *ProcessingWorkflow {
+	return &ProcessingWorkflow{hooks: h, colsvc: colsvc, pipelineRegistry: pipelineRegistry, logger: l}
 }
 
 // TransferInfo is shared state that is passed down to activities. It can be
@@ -267,8 +267,8 @@ func (w *ProcessingWorkflow) Execute(ctx temporalsdk_workflow.Context, req *coll
 		err := temporalsdk_workflow.ExecuteLocalActivity(activityOpts, nha_activities.ParseNameLocalActivity, tinfo.Key).Get(activityOpts, &nameInfo)
 
 		// An error should only stop the workflow if hari/prod activities are enabled.
-		hariDisabled, _ := manager.HookAttrBool(w.manager.Hooks, "hari", "disabled")
-		prodDisabled, _ := manager.HookAttrBool(w.manager.Hooks, "prod", "disabled")
+		hariDisabled, _ := hooks.HookAttrBool(w.hooks.Hooks, "hari", "disabled")
+		prodDisabled, _ := hooks.HookAttrBool(w.hooks.Hooks, "prod", "disabled")
 		if err != nil && !hariDisabled && !prodDisabled {
 			return fmt.Errorf("error parsing transfer name: %v", err)
 		}
@@ -304,7 +304,7 @@ func (w *ProcessingWorkflow) Execute(ctx temporalsdk_workflow.Context, req *coll
 	// Load pipeline configuration and hooks.
 	{
 		activityOpts := withLocalActivityWithoutRetriesOpts(ctx)
-		err := temporalsdk_workflow.ExecuteLocalActivity(activityOpts, loadConfigLocalActivity, w.manager, w.pipelineRegistry, w.logger, tinfo.PipelineName, tinfo).Get(activityOpts, &tinfo)
+		err := temporalsdk_workflow.ExecuteLocalActivity(activityOpts, loadConfigLocalActivity, w.hooks, w.pipelineRegistry, w.logger, tinfo.PipelineName, tinfo).Get(activityOpts, &tinfo)
 		if err != nil {
 			return fmt.Errorf("error loading configuration: %v", err)
 		}

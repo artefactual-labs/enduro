@@ -15,7 +15,7 @@ import (
 	collectionfake "github.com/artefactual-labs/enduro/internal/collection/fake"
 	nha_activities "github.com/artefactual-labs/enduro/internal/nha/activities"
 	"github.com/artefactual-labs/enduro/internal/pipeline"
-	"github.com/artefactual-labs/enduro/internal/workflow/manager"
+	"github.com/artefactual-labs/enduro/internal/workflow/hooks"
 )
 
 type ProcessingWorkflowTestSuite struct {
@@ -24,7 +24,7 @@ type ProcessingWorkflowTestSuite struct {
 
 	env *temporalsdk_testsuite.TestWorkflowEnvironment
 
-	manager *manager.Manager
+	hooks *hooks.Hooks
 
 	// Each test registers the workflow with a different name to avoid dups.
 	workflow *ProcessingWorkflow
@@ -33,9 +33,9 @@ type ProcessingWorkflowTestSuite struct {
 func (s *ProcessingWorkflowTestSuite) SetupTest() {
 	ctrl := gomock.NewController(s.T())
 	s.env = s.NewTestWorkflowEnvironment()
-	s.manager = buildManager(s.T(), ctrl)
+	s.hooks = buildHooks(s.T(), ctrl)
 	pipelineRegistry, _ := pipeline.NewPipelineRegistry(logr.Discard(), []pipeline.Config{})
-	s.workflow = NewProcessingWorkflow(s.manager, collectionfake.NewMockService(ctrl), pipelineRegistry, logr.Discard())
+	s.workflow = NewProcessingWorkflow(s.hooks, collectionfake.NewMockService(ctrl), pipelineRegistry, logr.Discard())
 }
 
 func (s *ProcessingWorkflowTestSuite) AfterTest(suiteName, testName string) {
@@ -44,8 +44,8 @@ func (s *ProcessingWorkflowTestSuite) AfterTest(suiteName, testName string) {
 
 // Workflow ignores an error in parseName when NHA hooks are disabled.
 func (s *ProcessingWorkflowTestSuite) TestParseErrorIsIgnored() {
-	s.manager.Hooks["hari"]["disabled"] = true
-	s.manager.Hooks["prod"]["disabled"] = true
+	s.hooks.Hooks["hari"]["disabled"] = true
+	s.hooks.Hooks["prod"]["disabled"] = true
 
 	// Collection is persisted.
 	s.env.OnActivity(createPackageLocalActivity, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(uint(12345), nil).Once()
@@ -83,8 +83,8 @@ func (s *ProcessingWorkflowTestSuite) TestParseErrorIsIgnored() {
 
 // Workflow does not ignore an error in parseName when NHA hooks are enabled.
 func (s *ProcessingWorkflowTestSuite) TestParseError() {
-	s.manager.Hooks["hari"]["disabled"] = false
-	s.manager.Hooks["prod"]["disabled"] = false
+	s.hooks.Hooks["hari"]["disabled"] = false
+	s.hooks.Hooks["prod"]["disabled"] = false
 
 	// Collection is persisted.
 	s.env.OnActivity(createPackageLocalActivity, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(uint(12345), nil).Once()
@@ -121,10 +121,10 @@ func TestProcessingWorkflow(t *testing.T) {
 	suite.Run(t, new(ProcessingWorkflowTestSuite))
 }
 
-func buildManager(t *testing.T, ctrl *gomock.Controller) *manager.Manager {
+func buildHooks(t *testing.T, ctrl *gomock.Controller) *hooks.Hooks {
 	t.Helper()
 
-	return manager.NewManager(
+	return hooks.NewHooks(
 		map[string]map[string]interface{}{
 			"prod": {"disabled": "false"},
 			"hari": {"disabled": "false"},
