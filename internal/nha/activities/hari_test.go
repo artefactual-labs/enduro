@@ -16,7 +16,7 @@ import (
 	"gotest.tools/v3/fs"
 
 	"github.com/artefactual-labs/enduro/internal/nha"
-	"github.com/artefactual-labs/enduro/internal/workflow/manager"
+	"github.com/artefactual-labs/enduro/internal/workflow/hooks"
 )
 
 type serverResponse struct {
@@ -495,15 +495,13 @@ func testError(t *testing.T, err error, wantErr string, wantNonRetryable bool) {
 func createHariActivity(t *testing.T, hariConfig map[string]interface{}) *UpdateHARIActivity {
 	t.Helper()
 
-	hooks := map[string]map[string]interface{}{
-		"hari": hariConfig,
-	}
-
-	manager := manager.NewManager(
-		hooks,
+	hooks := hooks.NewHooks(
+		map[string]map[string]interface{}{
+			"hari": hariConfig,
+		},
 	)
 
-	return NewUpdateHARIActivity(manager)
+	return NewUpdateHARIActivity(hooks)
 }
 
 func TestHARIURL(t *testing.T) {

@@ -9,7 +9,7 @@ import (
 
 	"github.com/artefactual-labs/enduro/internal/nha"
 	nha_activities "github.com/artefactual-labs/enduro/internal/nha/activities"
-	"github.com/artefactual-labs/enduro/internal/workflow/manager"
+	"github.com/artefactual-labs/enduro/internal/workflow/hooks"
 )
 
 type sendReceiptsParams struct {
@@ -22,7 +22,7 @@ type sendReceiptsParams struct {
 }
 
 func (w *ProcessingWorkflow) sendReceipts(ctx temporalsdk_workflow.Context, params *sendReceiptsParams) error {
-	if disabled, _ := manager.HookAttrBool(w.manager.Hooks, "hari", "disabled"); !disabled {
+	if disabled, _ := hooks.HookAttrBool(w.hooks.Hooks, "hari", "disabled"); !disabled {
 		opts := temporalsdk_workflow.ActivityOptions{
 			StartToCloseTimeout: time.Minute * 20,
 			RetryPolicy: &temporalsdk_temporal.RetryPolicy{
@@ -41,7 +41,7 @@ func (w *ProcessingWorkflow) sendReceipts(ctx temporalsdk_workflow.Context, para
 		}
 	}
 
-	if disabled, _ := manager.HookAttrBool(w.manager.Hooks, "prod", "disabled"); !disabled {
+	if disabled, _ := hooks.HookAttrBool(w.hooks.Hooks, "prod", "disabled"); !disabled {
 		opts := temporalsdk_workflow.ActivityOptions{
 			StartToCloseTimeout: time.Second * 10,
 			RetryPolicy: &temporalsdk_temporal.RetryPolicy{

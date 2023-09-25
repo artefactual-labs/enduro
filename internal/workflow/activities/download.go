@@ -7,18 +7,18 @@ import (
 	"github.com/artefactual-labs/enduro/internal/pipeline"
 	"github.com/artefactual-labs/enduro/internal/temporal"
 	"github.com/artefactual-labs/enduro/internal/watcher"
-	"github.com/artefactual-labs/enduro/internal/workflow/manager"
+	"github.com/artefactual-labs/enduro/internal/workflow/hooks"
 )
 
 // DownloadActivity downloads the blob into the pipeline processing directory.
 type DownloadActivity struct {
-	manager          *manager.Manager
+	hooks            *hooks.Hooks
 	wsvc             watcher.Service
 	pipelineRegistry *pipeline.Registry
 }
 
-func NewDownloadActivity(m *manager.Manager, pipelineRegistry *pipeline.Registry, wsvc watcher.Service) *DownloadActivity {
-	return &DownloadActivity{manager: m, pipelineRegistry: pipelineRegistry, wsvc: wsvc}
+func NewDownloadActivity(h *hooks.Hooks, pipelineRegistry *pipeline.Registry, wsvc watcher.Service) *DownloadActivity {
+	return &DownloadActivity{hooks: h, pipelineRegistry: pipelineRegistry, wsvc: wsvc}
 }
 
 func (a *DownloadActivity) Execute(ctx context.Context, pipelineName, watcherName, key string) (string, error) {

@@ -11,7 +11,7 @@ import (
 
 	"github.com/artefactual-labs/enduro/internal/nha"
 	"github.com/artefactual-labs/enduro/internal/temporal"
-	"github.com/artefactual-labs/enduro/internal/workflow/manager"
+	"github.com/artefactual-labs/enduro/internal/workflow/hooks"
 )
 
 // Similar to time.RFC3339 with dashes and colons removed.
@@ -20,11 +20,11 @@ const rfc3339forFilename = "20060102.150405.999999999"
 // UpdateProductionSystemActivity sends a receipt to the production system
 // using their filesystem interface using GoAnywhere.
 type UpdateProductionSystemActivity struct {
-	manager *manager.Manager
+	hooks *hooks.Hooks
 }
 
-func NewUpdateProductionSystemActivity(m *manager.Manager) *UpdateProductionSystemActivity {
-	return &UpdateProductionSystemActivity{manager: m}
+func NewUpdateProductionSystemActivity(h *hooks.Hooks) *UpdateProductionSystemActivity {
+	return &UpdateProductionSystemActivity{hooks: h}
 }
 
 type UpdateProductionSystemActivityParams struct {
@@ -41,7 +41,7 @@ func (a *UpdateProductionSystemActivity) Execute(ctx context.Context, params *Up
 		params.StoredAt = time.Now().UTC()
 	}
 
-	receiptPath, err := manager.HookAttrString(a.manager.Hooks, "prod", "receiptPath")
+	receiptPath, err := hooks.HookAttrString(a.hooks.Hooks, "prod", "receiptPath")
 	if err != nil {
 		return temporal.NewNonRetryableError(fmt.Errorf("error looking up receiptPath configuration attribute: %v", err))
 	}

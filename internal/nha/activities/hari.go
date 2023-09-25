@@ -20,7 +20,7 @@ import (
 
 	"github.com/artefactual-labs/enduro/internal/nha"
 	"github.com/artefactual-labs/enduro/internal/temporal"
-	"github.com/artefactual-labs/enduro/internal/workflow/manager"
+	"github.com/artefactual-labs/enduro/internal/workflow/hooks"
 )
 
 var hariClient = &http.Client{
@@ -36,12 +36,12 @@ var hariClient = &http.Client{
 
 // UpdateHARIActivity delivers a receipt to HARI.
 type UpdateHARIActivity struct {
-	manager *manager.Manager
-	logger  logr.Logger
+	hooks  *hooks.Hooks
+	logger logr.Logger
 }
 
-func NewUpdateHARIActivity(m *manager.Manager) *UpdateHARIActivity {
-	return &UpdateHARIActivity{manager: m}
+func NewUpdateHARIActivity(h *hooks.Hooks) *UpdateHARIActivity {
+	return &UpdateHARIActivity{hooks: h}
 }
 
 type UpdateHARIActivityParams struct {
@@ -62,7 +62,7 @@ func (a UpdateHARIActivity) Execute(ctx context.Context, params *UpdateHARIActiv
 		return temporal.NewNonRetryableError(fmt.Errorf("error in URL construction: %v", err))
 	}
 
-	mock, _ := manager.HookAttrBool(a.manager.Hooks, "hari", "mock")
+	mock, _ := hooks.HookAttrBool(a.hooks.Hooks, "hari", "mock")
 	if mock {
 		ts := a.buildMock()
 		defer ts.Close()
@@ -174,7 +174,7 @@ func (a UpdateHARIActivity) slimDown(f io.Reader) ([]byte, error) {
 func (a UpdateHARIActivity) url() (string, error) {
 	p, _ := url.Parse("v1/hari/avlxml")
 
-	b, err := manager.HookAttrString(a.manager.Hooks, "hari", "baseURL")
+	b, err := hooks.HookAttrString(a.hooks.Hooks, "hari", "baseURL")
 	if err != nil {
 		return "", fmt.Errorf("error looking up baseURL configuration attribute: %v", err)
 	}

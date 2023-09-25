@@ -9,7 +9,7 @@ import (
 
 	"github.com/artefactual-labs/enduro/internal/collection"
 	"github.com/artefactual-labs/enduro/internal/pipeline"
-	"github.com/artefactual-labs/enduro/internal/workflow/manager"
+	"github.com/artefactual-labs/enduro/internal/workflow/hooks"
 )
 
 type createPackageLocalActivityParams struct {
@@ -65,7 +65,7 @@ func checkDuplicatePackageLocalActivity(ctx context.Context, logger logr.Logger,
 	return colsvc.CheckDuplicate(ctx, id)
 }
 
-func loadConfigLocalActivity(ctx context.Context, m *manager.Manager, pipelineRegistry *pipeline.Registry, logger logr.Logger, pipeline string, tinfo *TransferInfo) (*TransferInfo, error) {
+func loadConfigLocalActivity(ctx context.Context, h *hooks.Hooks, pipelineRegistry *pipeline.Registry, logger logr.Logger, pipeline string, tinfo *TransferInfo) (*TransferInfo, error) {
 	p, err := pipelineRegistry.ByName(pipeline)
 	if err != nil {
 		logger.Error(err, "Error loading local configuration")
@@ -73,7 +73,7 @@ func loadConfigLocalActivity(ctx context.Context, m *manager.Manager, pipelineRe
 	}
 
 	tinfo.PipelineConfig = p.Config()
-	tinfo.Hooks = m.Hooks
+	tinfo.Hooks = h.Hooks
 
 	return tinfo, nil
 }

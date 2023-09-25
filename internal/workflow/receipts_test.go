@@ -24,7 +24,7 @@ import (
 func TestSendReceiptsSequentialBehavior(t *testing.T) {
 	wts := temporalsdk_testsuite.WorkflowTestSuite{}
 	env := wts.NewTestWorkflowEnvironment()
-	m := buildManager(t, gomock.NewController(t))
+	h := buildHooks(t, gomock.NewController(t))
 	ctrl := gomock.NewController(t)
 	colsvc := collectionfake.NewMockService(ctrl)
 	pipelineRegistry, _ := pipeline.NewPipelineRegistry(logr.Discard(), []pipeline.Config{})
@@ -33,7 +33,7 @@ func TestSendReceiptsSequentialBehavior(t *testing.T) {
 	env.RegisterActivityWithOptions(NewAsyncCompletionActivity(colsvc).Execute, temporalsdk_activity.RegisterOptions{Name: AsyncCompletionActivityName})
 
 	nha_activities.UpdateHARIActivityName = uuid.New().String() + "-update-hary"
-	env.RegisterActivityWithOptions(nha_activities.NewUpdateHARIActivity(m).Execute, temporalsdk_activity.RegisterOptions{Name: nha_activities.UpdateHARIActivityName})
+	env.RegisterActivityWithOptions(nha_activities.NewUpdateHARIActivity(h).Execute, temporalsdk_activity.RegisterOptions{Name: nha_activities.UpdateHARIActivityName})
 
 	params := sendReceiptsParams{
 		SIPID:        "91e3ed2f-b798-4f4e-9133-74193f0d6a4f",
@@ -63,7 +63,7 @@ func TestSendReceiptsSequentialBehavior(t *testing.T) {
 		uint(12345),
 	).Return("ABANDON", nil).Once()
 
-	env.ExecuteWorkflow(NewProcessingWorkflow(m, colsvc, pipelineRegistry, logr.Discard()).sendReceipts, &params)
+	env.ExecuteWorkflow(NewProcessingWorkflow(h, colsvc, pipelineRegistry, logr.Discard()).sendReceipts, &params)
 
 	assert.Equal(t, env.IsWorkflowCompleted(), true)
 	assert.ErrorContains(t, env.GetWorkflowError(), "error sending hari receipt: user abandoned")
@@ -73,16 +73,16 @@ func TestSendReceiptsSequentialBehavior(t *testing.T) {
 func TestSendReceipts(t *testing.T) {
 	wts := temporalsdk_testsuite.WorkflowTestSuite{}
 	env := wts.NewTestWorkflowEnvironment()
-	m := buildManager(t, gomock.NewController(t))
+	h := buildHooks(t, gomock.NewController(t))
 	ctrl := gomock.NewController(t)
 	colsvc := collectionfake.NewMockService(ctrl)
 	pipelineRegistry, _ := pipeline.NewPipelineRegistry(logr.Discard(), []pipeline.Config{})
 
 	nha_activities.UpdateHARIActivityName = uuid.New().String()
-	env.RegisterActivityWithOptions(nha_activities.NewUpdateHARIActivity(m).Execute, temporalsdk_activity.RegisterOptions{Name: nha_activities.UpdateHARIActivityName})
+	env.RegisterActivityWithOptions(nha_activities.NewUpdateHARIActivity(h).Execute, temporalsdk_activity.RegisterOptions{Name: nha_activities.UpdateHARIActivityName})
 
 	nha_activities.UpdateProductionSystemActivityName = uuid.New().String()
-	env.RegisterActivityWithOptions(nha_activities.NewUpdateProductionSystemActivity(m).Execute, temporalsdk_activity.RegisterOptions{Name: nha_activities.UpdateProductionSystemActivityName})
+	env.RegisterActivityWithOptions(nha_activities.NewUpdateProductionSystemActivity(h).Execute, temporalsdk_activity.RegisterOptions{Name: nha_activities.UpdateProductionSystemActivityName})
 
 	params := sendReceiptsParams{
 		SIPID:        "91e3ed2f-b798-4f4e-9133-74193f0d6a4f",
@@ -116,7 +116,7 @@ func TestSendReceipts(t *testing.T) {
 		},
 	).Return(nil).Once()
 
-	env.ExecuteWorkflow(NewProcessingWorkflow(m, colsvc, pipelineRegistry, logr.Discard()).sendReceipts, &params)
+	env.ExecuteWorkflow(NewProcessingWorkflow(h, colsvc, pipelineRegistry, logr.Discard()).sendReceipts, &params)
 
 	assert.Equal(t, env.IsWorkflowCompleted(), true)
 	assert.NilError(t, env.GetWorkflowError())

@@ -11,7 +11,7 @@ import (
 	"gotest.tools/v3/fs"
 
 	"github.com/artefactual-labs/enduro/internal/nha"
-	"github.com/artefactual-labs/enduro/internal/workflow/manager"
+	"github.com/artefactual-labs/enduro/internal/workflow/hooks"
 )
 
 func TestProdActivity(t *testing.T) {
@@ -155,11 +155,11 @@ func TestProdActivity(t *testing.T) {
 func createProdActivity(t *testing.T, hookConfig map[string]interface{}) *UpdateProductionSystemActivity {
 	t.Helper()
 
-	manager := manager.NewManager(
+	hooks := hooks.NewHooks(
 		map[string]map[string]interface{}{
 			"prod": hookConfig,
 		},
 	)
 
-	return NewUpdateProductionSystemActivity(manager)
+	return NewUpdateProductionSystemActivity(hooks)
 }
