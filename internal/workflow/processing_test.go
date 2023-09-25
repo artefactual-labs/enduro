@@ -31,10 +31,11 @@ type ProcessingWorkflowTestSuite struct {
 }
 
 func (s *ProcessingWorkflowTestSuite) SetupTest() {
+	ctrl := gomock.NewController(s.T())
 	s.env = s.NewTestWorkflowEnvironment()
-	s.manager = buildManager(s.T(), gomock.NewController(s.T()))
+	s.manager = buildManager(s.T(), ctrl)
 	pipelineRegistry, _ := pipeline.NewPipelineRegistry(logr.Discard(), []pipeline.Config{})
-	s.workflow = NewProcessingWorkflow(s.manager, pipelineRegistry, logr.Discard())
+	s.workflow = NewProcessingWorkflow(s.manager, collectionfake.NewMockService(ctrl), pipelineRegistry, logr.Discard())
 }
 
 func (s *ProcessingWorkflowTestSuite) AfterTest(suiteName, testName string) {
@@ -124,7 +125,6 @@ func buildManager(t *testing.T, ctrl *gomock.Controller) *manager.Manager {
 	t.Helper()
 
 	return manager.NewManager(
-		collectionfake.NewMockService(ctrl),
 		map[string]map[string]interface{}{
 			"prod": {"disabled": "false"},
 			"hari": {"disabled": "false"},

@@ -7,11 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"go.uber.org/mock/gomock"
 	"gotest.tools/v3/assert"
 	"gotest.tools/v3/fs"
 
-	collectionfake "github.com/artefactual-labs/enduro/internal/collection/fake"
 	"github.com/artefactual-labs/enduro/internal/nha"
 	"github.com/artefactual-labs/enduro/internal/workflow/manager"
 )
@@ -157,10 +155,7 @@ func TestProdActivity(t *testing.T) {
 func createProdActivity(t *testing.T, hookConfig map[string]interface{}) *UpdateProductionSystemActivity {
 	t.Helper()
 
-	ctrl := gomock.NewController(t)
-
 	manager := manager.NewManager(
-		collectionfake.NewMockService(ctrl),
 		map[string]map[string]interface{}{
 			"prod": hookConfig,
 		},

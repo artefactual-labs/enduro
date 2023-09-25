@@ -3,21 +3,17 @@ package manager
 import (
 	"fmt"
 	"strings"
-
-	"github.com/artefactual-labs/enduro/internal/collection"
 )
 
 // Manager carries workflow and activity dependencies.
 type Manager struct {
-	Collection collection.Service
-	Hooks      map[string]map[string]interface{}
+	Hooks map[string]map[string]interface{}
 }
 
 // NewManager returns a pointer to a new Manager.
-func NewManager(colsvc collection.Service, hooks map[string]map[string]interface{}) *Manager {
+func NewManager(hooks map[string]map[string]interface{}) *Manager {
 	return &Manager{
-		Collection: colsvc,
-		Hooks:      hooks,
+		Hooks: hooks,
 	}
 }
 
