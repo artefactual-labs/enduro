@@ -22,7 +22,7 @@
     "humanize-duration": "^3.30.0",
     "moment": "^2.29.4",
     "npm-check-updates": "^16.14.4",
-    "postcss": "^8.4.29",
+    "postcss": "^8.4.31",
     "sass": "1.67.*",
     "style-resources-loader": "^1.5.0",
     "typescript": "^5.2.2",
