@@ -382,20 +382,17 @@ paths:
                     description: OK response.
                     headers:
                         Content-Disposition:
-                            required: true
                             schema:
                                 type: string
                                 example: abc123
                             example: abc123
                         Content-Length:
-                            required: true
                             schema:
                                 type: integer
                                 example: 1
                                 format: int64
                             example: 1
                         Content-Type:
-                            required: true
                             schema:
                                 type: string
                                 example: abc123

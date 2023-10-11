@@ -1305,7 +1305,6 @@
             "headers": {
               "Content-Disposition": {
                 "example": "abc123",
-                "required": true,
                 "schema": {
                   "example": "abc123",
                   "type": "string"
@@ -1313,7 +1312,6 @@
               },
               "Content-Length": {
                 "example": 1,
-                "required": true,
                 "schema": {
                   "example": 1,
                   "format": "int64",
@@ -1322,7 +1320,6 @@
               },
               "Content-Type": {
                 "example": "abc123",
-                "required": true,
                 "schema": {
                   "example": "abc123",
                   "type": "string"
