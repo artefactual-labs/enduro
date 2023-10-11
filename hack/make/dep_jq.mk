@@ -5,7 +5,7 @@ $(call _assert_var,UNAME_ARCH)
 $(call _assert_var,CACHE_VERSIONS)
 $(call _assert_var,CACHE_BIN)
 
-JQ_VERSION ?= 1.6
+JQ_VERSION ?= 1.7
 
 ifeq ($(UNAME_OS),Darwin)
 JQ_OS := osx
