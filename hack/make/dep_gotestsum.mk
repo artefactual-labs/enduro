@@ -5,7 +5,7 @@ $(call _assert_var,UNAME_ARCH2)
 $(call _assert_var,CACHE_VERSIONS)
 $(call _assert_var,CACHE_BIN)
 
-GOTESTSUM_VERSION ?= 1.10.1
+GOTESTSUM_VERSION ?= 1.11.0
 
 GOTESTSUM := $(CACHE_VERSIONS)/gotestsum/$(GOTESTSUM_VERSION)
 $(GOTESTSUM):

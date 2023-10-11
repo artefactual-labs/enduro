@@ -5,7 +5,7 @@ $(call _assert_var,UNAME_ARCH)
 $(call _assert_var,CACHE_VERSIONS)
 $(call _assert_var,CACHE_BIN)
 
-GORELEASER_VERSION ?= 1.20.0
+GORELEASER_VERSION ?= 1.21.1
 
 GORELEASER := $(CACHE_VERSIONS)/goreleaser/$(GORELEASER_VERSION)
 $(GORELEASER):
