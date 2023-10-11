@@ -15,9 +15,9 @@
   "homepage": "https://github.com/artefactual-labs/enduro",
   "dependencies": {},
   "devDependencies": {
-    "autoprefixer": "^10.4.14",
-    "npm-check-updates": "^16.10.12",
-    "postcss": "^8.4.24",
+    "autoprefixer": "^10.4.16",
+    "npm-check-updates": "^16.14.5",
+    "postcss": "^8.4.31",
     "postcss-cli": "^10.1.0"
   }
 }
