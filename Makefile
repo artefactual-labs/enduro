@@ -32,30 +32,17 @@ define NEWLINE
 endef
 
 IGNORED_PACKAGES := \
-	github.com/artefactual-labs/enduro/hack/gencols \
-	github.com/artefactual-labs/enduro/hack/landfill/gencols \
+	github.com/artefactual-labs/enduro/hack/% \
+	github.com/artefactual-labs/enduro/%/fake \
 	github.com/artefactual-labs/enduro/internal/api/design \
-	github.com/artefactual-labs/enduro/internal/api/gen/batch \
-	github.com/artefactual-labs/enduro/internal/api/gen/collection \
-	github.com/artefactual-labs/enduro/internal/api/gen/collection/views \
-	github.com/artefactual-labs/enduro/internal/api/gen/http/batch/client \
-	github.com/artefactual-labs/enduro/internal/api/gen/http/batch/server \
-	github.com/artefactual-labs/enduro/internal/api/gen/http/cli/enduro \
-	github.com/artefactual-labs/enduro/internal/api/gen/http/collection/client \
-	github.com/artefactual-labs/enduro/internal/api/gen/http/collection/server \
-	github.com/artefactual-labs/enduro/internal/api/gen/http/pipeline/client \
-	github.com/artefactual-labs/enduro/internal/api/gen/http/pipeline/server \
-	github.com/artefactual-labs/enduro/internal/api/gen/http/swagger/client \
-	github.com/artefactual-labs/enduro/internal/api/gen/http/swagger/server \
-	github.com/artefactual-labs/enduro/internal/api/gen/pipeline \
-	github.com/artefactual-labs/enduro/internal/api/gen/pipeline/views \
-	github.com/artefactual-labs/enduro/internal/api/gen/swagger \
+	github.com/artefactual-labs/enduro/internal/api/gen/% \
 	github.com/artefactual-labs/enduro/internal/batch/fake \
 	github.com/artefactual-labs/enduro/internal/collection/fake \
 	github.com/artefactual-labs/enduro/internal/pipeline/fake \
 	github.com/artefactual-labs/enduro/internal/watcher/fake
-PACKAGES		:= $(shell go list ./...)
-TEST_PACKAGES	:= $(filter-out $(IGNORED_PACKAGES),$(PACKAGES))
+PACKAGES := $(shell go list ./...)
+TEST_PACKAGES := $(filter-out $(IGNORED_PACKAGES),$(PACKAGES))
+TEST_IGNORED_PACKAGES := $(filter $(IGNORED_PACKAGES),$(PACKAGES))
 
 run: # @HELP Builds and run the enduro binary.
 run: build
@@ -80,9 +67,13 @@ test: $(GOTESTSUM) # @HELP Tests using gotestsum.
 test-race: $(GOTESTSUM) # @HELP Tests using gotestsum and the race detector.
 	gotestsum $(TEST_PACKAGES) -- -race
 
-ignored: # @HELP Prints ignored packages.
-ignored:
-	$(foreach PACKAGE,$(IGNORED_PACKAGES),@echo $(PACKAGE)$(NEWLINE))
+list-tested-packages: # @HELP Print a list of packages being tested.
+list-tested-packages:
+	$(foreach PACKAGE,$(TEST_PACKAGES),@echo $(PACKAGE)$(NEWLINE))
+
+list-ignored-packages: # @HELP Print a list of packages ignored in testing.
+list-ignored-packages:
+	$(foreach PACKAGE,$(TEST_IGNORED_PACKAGES),@echo $(PACKAGE)$(NEWLINE))
 
 lint: # @HELP Lints the code using golangci-lint.
 lint: $(GOLANGCI_LINT)
