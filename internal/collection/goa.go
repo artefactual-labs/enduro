@@ -472,12 +472,12 @@ func (w *goaWrapper) BulkStatus(ctx context.Context) (*goacollection.BulkStatusR
 	result.RunID = &resp.WorkflowExecutionInfo.Execution.RunId
 
 	if resp.WorkflowExecutionInfo.StartTime != nil {
-		t := resp.WorkflowExecutionInfo.StartTime.Format(time.RFC3339)
+		t := resp.WorkflowExecutionInfo.StartTime.AsTime().Format(time.RFC3339)
 		result.StartedAt = &t
 	}
 
 	if resp.WorkflowExecutionInfo.CloseTime != nil {
-		t := resp.WorkflowExecutionInfo.CloseTime.Format(time.RFC3339)
+		t := resp.WorkflowExecutionInfo.CloseTime.AsTime().Format(time.RFC3339)
 		result.ClosedAt = &t
 	}
 
