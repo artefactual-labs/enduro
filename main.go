@@ -26,6 +26,7 @@ import (
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
 	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/trace/noop"
 	temporalsdk_activity "go.temporal.io/sdk/activity"
 	temporalsdk_client "go.temporal.io/sdk/client"
 	temporalsdk_worker "go.temporal.io/sdk/worker"
@@ -442,7 +443,7 @@ func initTracerProvider(ctx context.Context, logger logr.Logger, cfg TelemetryCo
 	if !cfg.Traces.Enabled || cfg.Traces.Address == "" {
 		logger.V(1).Info("Tracing system is disabled.", "enabled", cfg.Traces.Enabled, "addr", cfg.Traces.Address)
 		shutdown := func(context.Context) error { return nil }
-		return trace.NewNoopTracerProvider(), shutdown, nil
+		return noop.NewTracerProvider(), shutdown, nil
 	}
 
 	conn, err := grpc.DialContext(
