@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/trace/noop"
 	temporalapi_common "go.temporal.io/api/common/v1"
 	temporalapi_enums "go.temporal.io/api/enums/v1"
 	temporalapi_serviceerror "go.temporal.io/api/serviceerror"
@@ -266,7 +266,7 @@ func (w *goaWrapper) Retry(ctx context.Context, payload *goacollection.RetryPayl
 
 	req.WorkflowID = *goacol.WorkflowID
 	req.CollectionID = goacol.ID
-	tr := trace.NewNoopTracerProvider().Tracer("")
+	tr := noop.NewTracerProvider().Tracer("")
 	if err := InitProcessingWorkflow(ctx, tr, w.cc, w.taskQueue, req); err != nil {
 		return fmt.Errorf("error starting the new workflow instance: %w", err)
 	}
