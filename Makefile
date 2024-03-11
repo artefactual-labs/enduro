@@ -34,6 +34,7 @@ endef
 IGNORED_PACKAGES := \
 	github.com/artefactual-labs/enduro/hack/% \
 	github.com/artefactual-labs/enduro/%/fake \
+	github.com/artefactual-labs/enduro/ui \
 	github.com/artefactual-labs/enduro/internal/api/design \
 	github.com/artefactual-labs/enduro/internal/api/gen/% \
 	github.com/artefactual-labs/enduro/internal/batch/fake \
@@ -61,11 +62,20 @@ build:
 deps: $(GOMAJOR) # @HELP Lists available module dependency updates.
 	gomajor list
 
-test: $(GOTESTSUM) # @HELP Tests using gotestsum.
-	gotestsum $(TEST_PACKAGES)
+test: # @HELP Run all tests and output a summary using gotestsum.
+test: TFORMAT ?= short
+test: GOTEST_FLAGS ?=
+test: COMBINED_FLAGS ?= $(GOTEST_FLAGS) $(TEST_PACKAGES)
+test: $(GOTESTSUM)
+	gotestsum --format=$(TFORMAT) -- $(COMBINED_FLAGS)
 
-test-race: $(GOTESTSUM) # @HELP Tests using gotestsum and the race detector.
-	gotestsum $(TEST_PACKAGES) -- -race
+test-race: # @HELP Run all tests with the race detector.
+test-race:
+	$(MAKE) test GOTEST_FLAGS="-race"
+
+test-ci: # @HELP Run all tests in CI with coverage and the race detector.
+test-ci:
+	$(MAKE) test GOTEST_FLAGS="-race -coverprofile=covreport -covermode=atomic"
 
 list-tested-packages: # @HELP Print a list of packages being tested.
 list-tested-packages:
