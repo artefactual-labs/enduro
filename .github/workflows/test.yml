@@ -20,7 +20,7 @@ jobs:
         with:
           go-version: ${{ steps.go_version.outputs.go_version }}
       - name: Test
-        run: go test -race -coverprofile=covreport -covermode=atomic -coverpkg=$(./hack/coverpkgs.sh) -v ./...
+        run: make test-ci
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1
         with:
