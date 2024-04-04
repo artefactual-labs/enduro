@@ -19,6 +19,7 @@ include hack/make/dep_goa.mk
 include hack/make/dep_golangci_lint.mk
 include hack/make/dep_gomajor.mk
 include hack/make/dep_goreleaser.mk
+include hack/make/dep_gosec.mk
 include hack/make/dep_gotestsum.mk
 include hack/make/dep_hugo.mk
 include hack/make/dep_jq.mk
@@ -61,6 +62,14 @@ build:
 
 deps: $(GOMAJOR) # @HELP Lists available module dependency updates.
 	gomajor list
+
+gosec: # @HELP Run gosec security scanner.
+gosec: $(GOSEC)
+	gosec \
+		-exclude-dir=hack \
+		-exclude-dir=internal/api/gen \
+		-exclude-dir=ui \
+		./...
 
 test: # @HELP Run all tests and output a summary using gotestsum.
 test: TFORMAT ?= short
