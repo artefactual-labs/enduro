@@ -330,7 +330,12 @@ func main() {
 			mux.Handle("/debug/pprof/heap", pprof.Handler("heap"))
 			mux.Handle("/debug/pprof/threadcreate", pprof.Handler("threadcreate"))
 
-			return http.Serve(ln, mux)
+			srv := &http.Server{
+				ReadTimeout:  5 * time.Second,
+				WriteTimeout: 5 * time.Second,
+				Handler:      mux,
+			}
+			return srv.Serve(ln)
 		}, func(error) {
 			ln.Close()
 		})
