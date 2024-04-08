@@ -292,7 +292,7 @@ func (w *ProcessingWorkflow) Execute(ctx temporalsdk_workflow.Context, req *coll
 				}
 			}
 			src := rand.NewSource(time.Now().UnixNano())
-			rnd := rand.New(src)
+			rnd := rand.New(src) // #nosec G404 -- not security sensitive.
 			return names[rnd.Intn(len(names))]
 		}).Get(&pick); err != nil {
 			return err
