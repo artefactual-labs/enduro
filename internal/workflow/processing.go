@@ -11,6 +11,7 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/artefactual-sdps/temporal-activities/archive"
 	"github.com/go-logr/logr"
 	temporalsdk_temporal "go.temporal.io/sdk/temporal"
 	temporalsdk_workflow "go.temporal.io/sdk/workflow"
@@ -20,6 +21,7 @@ import (
 	"github.com/artefactual-labs/enduro/internal/nha"
 	nha_activities "github.com/artefactual-labs/enduro/internal/nha/activities"
 	"github.com/artefactual-labs/enduro/internal/pipeline"
+	"github.com/artefactual-labs/enduro/internal/temporal"
 	"github.com/artefactual-labs/enduro/internal/validation"
 	"github.com/artefactual-labs/enduro/internal/workflow/activities"
 	"github.com/artefactual-labs/enduro/internal/workflow/hooks"
@@ -453,10 +455,42 @@ func (w *ProcessingWorkflow) SessionHandler(sessCtx temporalsdk_workflow.Context
 			// case, the activity whould be executed again.
 			if tinfo.TempFile == "" {
 				activityOpts := withActivityOptsForLongLivedRequest(sessCtx)
-				err := temporalsdk_workflow.ExecuteActivity(activityOpts, activities.DownloadActivityName, tinfo.PipelineName, tinfo.WatcherName, tinfo.Key).Get(activityOpts, &tinfo.TempFile)
+				err := temporalsdk_workflow.ExecuteActivity(
+					activityOpts,
+					activities.DownloadActivityName,
+					tinfo.PipelineName,
+					tinfo.WatcherName,
+					tinfo.Key,
+				).Get(activityOpts, &tinfo.TempFile)
 				if err != nil {
 					return err
 				}
+			}
+		}
+	}
+
+	// Extract downloaded archive file contents.
+	{
+		if tinfo.WatcherName != "" && !tinfo.IsDir {
+			activityOpts := withActivityOptsForLocalAction(sessCtx)
+			var result archive.ExtractActivityResult
+			err := temporalsdk_workflow.ExecuteActivity(
+				activityOpts,
+				archive.ExtractActivityName,
+				&archive.ExtractActivityParams{SourcePath: tinfo.TempFile},
+			).Get(activityOpts, &result)
+			if err != nil {
+				switch err {
+				case archive.ErrInvalidArchive:
+					// Not an archive file, bundle it as-is (no error).
+				default:
+					return temporal.NewNonRetryableError(err)
+				}
+			} else {
+				// Continue with the extracted archive contents.
+				tinfo.TempFile = result.ExtractPath
+				tinfo.StripTopLevelDir = false
+				tinfo.IsDir = true
 			}
 		}
 	}
@@ -466,7 +500,6 @@ func (w *ProcessingWorkflow) SessionHandler(sessCtx temporalsdk_workflow.Context
 		if tinfo.Bundle == (activities.BundleActivityResult{}) {
 			activityOpts := withActivityOptsForLongLivedRequest(sessCtx)
 			err := temporalsdk_workflow.ExecuteActivity(activityOpts, activities.BundleActivityName, &activities.BundleActivityParams{
-				WatcherName:        tinfo.WatcherName,
 				TransferDir:        tinfo.PipelineConfig.TransferDir,
 				Key:                tinfo.Key,
 				IsDir:              tinfo.IsDir,

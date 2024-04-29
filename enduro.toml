@@ -21,6 +21,10 @@ debug = false
 [database]
 dsn = "enduro:enduro123@tcp(127.0.0.1:7450)/enduro"
 
+[extractActivity]
+dirMode = "0o700"
+fileMode = "0o600"
+
 [[watcher.minio]]
 name = "dev-minio"
 redisAddress = "redis://127.0.0.1:7470"
@@ -69,7 +73,7 @@ unbag = false
 checksumsCheckEnabled = false
 
 [[hooks."hari"]]
-baseURL = "" # E.g.: "https://192.168.1.50:8080/api"
+baseURL = ""    # E.g.: "https://192.168.1.50:8080/api"
 mock = true
 disabled = true
 

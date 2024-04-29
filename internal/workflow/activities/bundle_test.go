@@ -8,21 +8,15 @@ import (
 	"testing"
 
 	temporalsdk_testsuite "go.temporal.io/sdk/testsuite"
-	"go.uber.org/mock/gomock"
 	"gotest.tools/v3/assert"
 	"gotest.tools/v3/fs"
-
-	"github.com/artefactual-labs/enduro/internal/watcher"
-	watcherfake "github.com/artefactual-labs/enduro/internal/watcher/fake"
 )
 
 func TestBundleActivity(t *testing.T) {
 	t.Parallel()
 
 	t.Run("Excludes hidden files", func(t *testing.T) {
-		ctrl := gomock.NewController(t)
-		wsvc := watcherfake.NewMockService(ctrl)
-		activity := NewBundleActivity(wsvc)
+		activity := NewBundleActivity()
 		ts := &temporalsdk_testsuite.WorkflowTestSuite{}
 		env := ts.NewTestActivityEnvironment()
 		env.RegisterActivity(activity.Execute)
@@ -38,14 +32,8 @@ func TestBundleActivity(t *testing.T) {
 
 		transferSourceDir := fs.NewDir(t, "enduro")
 
-		wsvc.EXPECT().ByName("watcher").DoAndReturn(func(string) (watcher.Watcher, error) {
-			w := watcherfake.NewMockWatcher(ctrl)
-			w.EXPECT().Path().Return(transferDir.Path())
-			return w, nil
-		})
-
 		fut, err := env.ExecuteActivity(activity.Execute, &BundleActivityParams{
-			WatcherName:        "watcher",
+			TempFile:           transferDir.Join("transfer"),
 			ExcludeHiddenFiles: true,
 			IsDir:              true,
 			TransferDir:        transferSourceDir.Path(),

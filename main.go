@@ -13,6 +13,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/artefactual-sdps/temporal-activities/archive"
 	"github.com/go-logr/logr"
 	"github.com/oklog/run"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -263,7 +264,8 @@ func main() {
 		w.RegisterWorkflowWithOptions(workflow.NewProcessingWorkflow(h, colsvc, pipelineRegistry, logger).Execute, temporalsdk_workflow.RegisterOptions{Name: collection.ProcessingWorkflowName})
 		w.RegisterActivityWithOptions(activities.NewAcquirePipelineActivity(pipelineRegistry).Execute, temporalsdk_activity.RegisterOptions{Name: activities.AcquirePipelineActivityName})
 		w.RegisterActivityWithOptions(activities.NewDownloadActivity(h, pipelineRegistry, wsvc).Execute, temporalsdk_activity.RegisterOptions{Name: activities.DownloadActivityName})
-		w.RegisterActivityWithOptions(activities.NewBundleActivity(wsvc).Execute, temporalsdk_activity.RegisterOptions{Name: activities.BundleActivityName})
+		w.RegisterActivityWithOptions(archive.NewExtractActivity(config.ExtractActivity).Execute, temporalsdk_activity.RegisterOptions{Name: archive.ExtractActivityName})
+		w.RegisterActivityWithOptions(activities.NewBundleActivity().Execute, temporalsdk_activity.RegisterOptions{Name: activities.BundleActivityName})
 		w.RegisterActivityWithOptions(activities.NewValidateTransferActivity().Execute, temporalsdk_activity.RegisterOptions{Name: activities.ValidateTransferActivityName})
 		w.RegisterActivityWithOptions(activities.NewTransferActivity(pipelineRegistry).Execute, temporalsdk_activity.RegisterOptions{Name: activities.TransferActivityName})
 		w.RegisterActivityWithOptions(activities.NewPollTransferActivity(pipelineRegistry).Execute, temporalsdk_activity.RegisterOptions{Name: activities.PollTransferActivityName})
@@ -377,17 +379,18 @@ func main() {
 }
 
 type configuration struct {
-	Verbosity   int
-	Debug       bool
-	DebugListen string
-	API         api.Config
-	Database    db.Config
-	Temporal    temporal.Config
-	Watcher     watcher.Config
-	Pipeline    []pipeline.Config
-	Validation  validation.Config
-	Telemetry   TelemetryConfig
-	Metadata    metadata.Config
+	Verbosity       int
+	Debug           bool
+	DebugListen     string
+	API             api.Config
+	ExtractActivity archive.Config
+	Database        db.Config
+	Temporal        temporal.Config
+	Watcher         watcher.Config
+	Pipeline        []pipeline.Config
+	Validation      validation.Config
+	Telemetry       TelemetryConfig
+	Metadata        metadata.Config
 
 	// This is a workaround for client-specific functionality.
 	// Simple mechanism to support an arbitrary number of hooks and parameters.
