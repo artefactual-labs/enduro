@@ -9,25 +9,20 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/mholt/archiver/v3"
 	"github.com/otiai10/copy"
 
 	"github.com/artefactual-labs/enduro/internal/bagit"
 	"github.com/artefactual-labs/enduro/internal/bundler"
 	"github.com/artefactual-labs/enduro/internal/temporal"
-	"github.com/artefactual-labs/enduro/internal/watcher"
 )
 
-type BundleActivity struct {
-	wsvc watcher.Service
-}
+type BundleActivity struct{}
 
-func NewBundleActivity(wsvc watcher.Service) *BundleActivity {
-	return &BundleActivity{wsvc: wsvc}
+func NewBundleActivity() *BundleActivity {
+	return &BundleActivity{}
 }
 
 type BundleActivityParams struct {
-	WatcherName        string
 	TransferDir        string
 	Key                string
 	TempFile           string
@@ -72,21 +67,19 @@ func (a *BundleActivity) Execute(ctx context.Context, params *BundleActivityPara
 			res.FullPath, res.FullPathBeforeStrip, err = a.Copy(ctx, src, dst, params.StripTopLevelDir, params.ExcludeHiddenFiles)
 		}
 	} else if params.IsDir {
-		var w watcher.Watcher
-		w, err = a.wsvc.ByName(params.WatcherName)
-		if err == nil {
-			src := filepath.Join(w.Path(), params.Key)
-			dst := params.TransferDir
-			res.FullPath, res.FullPathBeforeStrip, err = a.Copy(ctx, src, dst, false, params.ExcludeHiddenFiles)
-		}
+		// For a standard (non-batch) package that has been downloaded (and
+		// possibly extracted) to a local directory (params.TempFile), copy the
+		// package directory to params.TransferDir for processing.
+		res.FullPath, res.FullPathBeforeStrip, err = a.Copy(
+			ctx,
+			params.TempFile,
+			params.TransferDir,
+			params.StripTopLevelDir,
+			params.ExcludeHiddenFiles,
+		)
 	} else {
-		unar := a.Unarchiver(params.Key, params.TempFile)
-		if unar == nil {
-			res.FullPath, err = a.SingleFile(ctx, params.TransferDir, params.Key, params.TempFile)
-			res.FullPathBeforeStrip = res.FullPath
-		} else {
-			res.FullPath, res.FullPathBeforeStrip, err = a.Bundle(ctx, unar, params.TransferDir, params.Key, params.TempFile, params.StripTopLevelDir)
-		}
+		res.FullPath, err = a.SingleFile(ctx, params.TransferDir, params.Key, params.TempFile)
+		res.FullPathBeforeStrip = res.FullPath
 	}
 	if err != nil {
 		return nil, temporal.NewNonRetryableError(err)
@@ -105,26 +98,6 @@ func (a *BundleActivity) Execute(ctx context.Context, params *BundleActivityPara
 	}
 
 	return res, err
-}
-
-// Unarchiver returns the unarchiver suited for the archival format.
-func (a *BundleActivity) Unarchiver(key, filename string) archiver.Unarchiver {
-	if iface, err := archiver.ByExtension(key); err == nil {
-		if u, ok := iface.(archiver.Unarchiver); ok {
-			return u
-		}
-	}
-
-	file, err := os.Open(filename)
-	if err != nil {
-		return nil
-	}
-	defer file.Close()
-	if u, err := archiver.ByHeader(file); err == nil {
-		return u
-	}
-
-	return nil
 }
 
 // SingleFile bundles a transfer with the downloaded blob in it.
@@ -154,34 +127,6 @@ func (a *BundleActivity) SingleFile(ctx context.Context, transferDir, key, tempF
 	}
 
 	return b.FullBaseFsPath(), nil
-}
-
-// Bundle a transfer with the contents found in the archive.
-func (a *BundleActivity) Bundle(ctx context.Context, unar archiver.Unarchiver, transferDir, key, tempFile string, stripTopLevelDir bool) (string, string, error) {
-	// Create a new directory for our transfer with the name randomized.
-	const prefix = "enduro"
-	tempDir, err := os.MkdirTemp(transferDir, prefix)
-	if err != nil {
-		return "", "", fmt.Errorf("error creating temporary directory: %s", err)
-	}
-	_ = os.Chmod(tempDir, os.FileMode(0o755))
-
-	if err := unar.Unarchive(tempFile, tempDir); err != nil {
-		return "", "", fmt.Errorf("error unarchiving file: %v", err)
-	}
-
-	tempDirBeforeStrip := tempDir
-	if stripTopLevelDir {
-		tempDir, err = stripDirContainer(tempDir)
-		if err != nil {
-			return "", "", err
-		}
-	}
-
-	// Delete the archive. We still have a copy in the watched source.
-	_ = os.Remove(tempFile)
-
-	return tempDir, tempDirBeforeStrip, nil
 }
 
 // Copy a transfer in the given destination using an intermediate temp. directory.
