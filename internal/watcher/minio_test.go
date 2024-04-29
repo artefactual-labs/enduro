@@ -19,7 +19,7 @@ func newWatcher(t *testing.T) (*miniredis.Miniredis, watcher.Watcher) {
 
 	m, err := miniredis.Run()
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Couldn't start miniredis: %v\n", err)
 	}
 
 	dur := time.Duration(time.Second)
@@ -30,7 +30,6 @@ func newWatcher(t *testing.T) (*miniredis.Miniredis, watcher.Watcher) {
 		Region:           "eu-south-1",
 		Endpoint:         "endpoint",
 		PathStyle:        true,
-		Profile:          "profile",
 		Key:              "key",
 		Secret:           "secret",
 		Token:            "token",
@@ -43,7 +42,7 @@ func newWatcher(t *testing.T) (*miniredis.Miniredis, watcher.Watcher) {
 	var w watcher.Watcher
 	w, err = watcher.NewMinioWatcher(context.Background(), &config)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Couldn't start watcher: %v\n", err)
 	}
 
 	return m, w
