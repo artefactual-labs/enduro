@@ -13,11 +13,10 @@
     "url": "https://github.com/artefactual-labs/enduro/issues"
   },
   "homepage": "https://github.com/artefactual-labs/enduro",
-  "dependencies": {},
   "devDependencies": {
-    "autoprefixer": "^10.4.16",
+    "autoprefixer": "^10.4.19",
     "npm-check-updates": "^16.14.5",
-    "postcss": "^8.4.31",
+    "postcss": "^8.4.38",
     "postcss-cli": "^10.1.0"
   }
 }
