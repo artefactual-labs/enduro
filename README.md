@@ -19,7 +19,7 @@ fault-tolerant workflows suited for preservation.
 
 ## Further reading
 
-Visit https://enduroproject.netlify.com for more details.
+Visit https://enduroproject.netlify.app for more details.
 
 [National Health Archive (NHA)]: https://www.piql.com/norwegians-digital-health-data-to-be-preserved-for-future-generations/
 [National Center for Truth and Reconciliation (NCTR)]: https://nctr.ca/about/about-the-nctr/our-mandate/
