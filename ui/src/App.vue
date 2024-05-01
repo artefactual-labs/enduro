@@ -12,7 +12,7 @@
               <b-nav-item :to="{ name: 'pipelines' }">Pipelines</b-nav-item>
             </b-navbar-nav>
             <b-navbar-nav class="ml-auto">
-              <b-nav-item href="https://enduroproject.netlify.com">Docs</b-nav-item>
+              <b-nav-item href="https://enduroproject.netlify.app">Docs</b-nav-item>
               <b-nav-item href="https://github.com/artefactual-labs/enduro">GitHub</b-nav-item>
             </b-navbar-nav>
           </b-collapse>

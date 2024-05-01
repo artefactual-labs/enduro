@@ -6,7 +6,7 @@ description: >
   Help us write better documentation.
 ---
 
-Our docs are served from: https://enduroproject.netlify.com/. This is kindly
+Our docs are served from: https://enduroproject.netlify.app/. This is kindly
 offered by Netlify. We are not using a custom domain yet.
 
 The docs are built with [Hugo][hugo]. The sources are hosted in the Enduro
