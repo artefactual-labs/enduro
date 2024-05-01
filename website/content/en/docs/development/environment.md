@@ -42,14 +42,14 @@ Finall, build and run Enduro with:
     make run
 
 With Enduro running in the background, you should be able to access the web
-interface via http://127.0.0.1:9000/ or connect to the API, e.g.:
+interface via <http://127.0.0.1:9000/> or connect to the API, e.g.:
 
     curl -v 127.0.0.1:9000/collection
 
 ## Set up MinIO for object storage
 
 MinIO is one of the services installed automatically with Docker Compose. You
-should be able to access the web file browser via http://127.0.0.1:7460 using
+should be able to access the web file browser via <http://127.0.0.1:7460> using
 the following credentials:
 
 - Access key: `minio`
@@ -89,7 +89,7 @@ since the event is buffered by Redis.
     make run
 
 Additionally, you can visualize workflows and activities from Temporal UI. Try
-opening the following link: http://127.0.0.1:7440/namespaces/default/workflows.
+opening the following link: <http://127.0.0.1:7440/namespaces/default/workflows>.
 
 ## Development workflow
 
