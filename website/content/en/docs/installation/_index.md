@@ -60,7 +60,7 @@ both Temporal (be prepared for an extensive set of metrics here) and Enduro.
 In Enduro, the `debugListen` configuration parameter determines the address of
 the HTTP server from which the metrics are served. E.g. use
 `debugListen=127.0.0.1:9001` to make metrics available at
-http://127.0.0.1:9001/metrics.
+<http://127.0.0.1:9001/metrics>.
 
 ## Enduro
 
@@ -73,7 +73,7 @@ more about the configuration details [here]({{< relref
 The configuration attribute `api.listen` determines the address where Enduro
 sets up the server to listen.
 
-Assuming that `api.listen=127.0.0.1:9000`, opening http://127.0.0.1:9000 from
+Assuming that `api.listen=127.0.0.1:9000`, opening <http://127.0.0.1:9000> from
 your browser will bring you to the web interface. An example on how to consume
 the API via cURL is `curl -Ls 127.0.0.1:9000/collection | jq`:
 

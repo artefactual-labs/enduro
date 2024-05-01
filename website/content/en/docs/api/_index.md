@@ -13,6 +13,6 @@ our <a href="{{< ref "/docs/development/api.md" >}}">API development</a> docs.
 {{% /alert %}}
 
 The reference below is based on Swagger UI. The default host is
-http://127.0.0.1:9000, you can try out the API from here!
+<http://127.0.0.1:9000>, you can try out the API from here!
 
 {{< swaggerui src="/openapi.json" >}}

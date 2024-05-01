@@ -26,7 +26,7 @@ run:
 
     hugo serve
 
-The site is now available at http://localhost:1313. The site is updated
+The site is now available at <http://localhost:1313>. The site is updated
 automatically when you make changes to the sources.
 
 [netlify]: https://www.netlify.com/
