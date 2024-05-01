@@ -8,25 +8,25 @@ ignore = "cd ..; git diff --quiet HEAD^ HEAD ./website ./internal/api/gen/http/o
 command = "hugo --gc --minify --enableGitInfo"
 
 [context.split1.environment]
-HUGO_VERSION = "0.115.3"
+HUGO_VERSION = "0.125.5"
 HUGO_ENV = "production"
 
 [context.deploy-preview]
 command = "hugo --gc --minify --buildFuture -b $DEPLOY_PRIME_URL"
 
 [context.deploy-preview.environment]
-HUGO_VERSION = "0.115.3"
+HUGO_VERSION = "0.125.5"
 
 [context.branch-deploy]
 command = "hugo --gc --minify -b $DEPLOY_PRIME_URL"
 
 [context.branch-deploy.environment]
-HUGO_VERSION = "0.115.3"
+HUGO_VERSION = "0.125.5"
 
 [context.next.environment]
 HUGO_ENABLEGITINFO = "true"
 
 [context.production.environment]
-HUGO_VERSION = "0.115.3"
+HUGO_VERSION = "0.125.5"
 HUGO_ENV = "production"
 HUGO_ENABLEGITINFO = "true"

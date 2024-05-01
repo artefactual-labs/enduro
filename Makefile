@@ -46,6 +46,8 @@ PACKAGES := $(shell go list ./...)
 TEST_PACKAGES := $(filter-out $(IGNORED_PACKAGES),$(PACKAGES))
 TEST_IGNORED_PACKAGES := $(filter $(IGNORED_PACKAGES),$(PACKAGES))
 
+export PATH:=$(GOBIN):$(PATH)
+
 run: # @HELP Builds and run the enduro binary.
 run: build
 	./build/enduro
