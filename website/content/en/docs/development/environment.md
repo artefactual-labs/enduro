@@ -164,7 +164,7 @@ Things that you can do:
 [mc]: https://docs.min.io/docs/minio-client-quickstart-guide.html
 [go]: https://golang.org/doc/install
 [gopls]: https://github.com/golang/tools/blob/master/gopls/README.md
-[node]: https://nodejs.org
+[nodejs]: https://nodejs.org
 [make]: https://www.gnu.org/software/make/
 [issue-118]: https://github.com/artefactual-labs/enduro/issues/118
 [docker-non-root]: https://docs.docker.com/engine/install/linux-postinstall/#manage-docker-as-a-non-root-user
