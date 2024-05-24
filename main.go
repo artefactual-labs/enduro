@@ -255,6 +255,8 @@ func main() {
 		w := temporalsdk_worker.New(temporalClient, config.Temporal.TaskQueue, temporalsdk_worker.Options{
 			EnableSessionWorker:               true,
 			MaxConcurrentSessionExecutionSize: 5000,
+			MaxHeartbeatThrottleInterval:      time.Minute * 5,
+			DefaultHeartbeatThrottleInterval:  time.Minute * 5,
 		})
 		if err != nil {
 			logger.Error(err, "Error creating Temporal worker.")

@@ -325,6 +325,7 @@ func (w *ProcessingWorkflow) Execute(ctx temporalsdk_workflow.Context, req *coll
 			sessCtx, err := temporalsdk_workflow.CreateSession(activityOpts, &temporalsdk_workflow.SessionOptions{
 				CreationTimeout:  forever,
 				ExecutionTimeout: forever,
+				HeartbeatTimeout: time.Hour * 1,
 			})
 			if err != nil {
 				return fmt.Errorf("error creating session: %v", err)
