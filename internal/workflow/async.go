@@ -67,7 +67,6 @@ func executeActivityWithAsyncErrorHandling(ctx temporalsdk_workflow.Context, col
 			var decision asyncDecision
 			activityOpts = withActivityOptsForAsyncCompletion(ctx)
 			err = temporalsdk_workflow.ExecuteActivity(activityOpts, AsyncCompletionActivityName, colID).Get(activityOpts, &decision)
-
 			// Asynchronous completion failed.
 			if err != nil {
 				if temporalsdk_temporal.IsTimeoutError(err) {

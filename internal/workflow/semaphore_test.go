@@ -2,6 +2,7 @@ package workflow
 
 import (
 	"testing"
+	"time"
 
 	"github.com/go-logr/logr"
 	"github.com/stretchr/testify/assert"
@@ -43,7 +44,7 @@ func TestSemaphoreAcquireRelease(t *testing.T) {
 
 	env.RegisterWorkflowWithOptions(
 		func(ctx temporalsdk_workflow.Context) error {
-			acquired, release, err := acquirePipeline(ctx, colsvc, registry, "am1", 12345)
+			acquired, release, err := acquirePipeline(ctx, colsvc, registry, "am1", 12345, time.Minute*1)
 			assert.Nil(t, err)
 			assert.Equal(t, acquired, true)
 

@@ -36,6 +36,7 @@ func withActivityOptsForLongLivedRequest(ctx temporalsdk_workflow.Context) tempo
 // The activity is responsible for returning a NRE error.
 func withActivityOptsForHeartbeatedRequest(ctx temporalsdk_workflow.Context, heartbeatTimeout time.Duration) temporalsdk_workflow.Context {
 	return temporalsdk_workflow.WithActivityOptions(ctx, temporalsdk_workflow.ActivityOptions{
+		ScheduleToStartTimeout: forever,
 		ScheduleToCloseTimeout: forever,
 		HeartbeatTimeout:       heartbeatTimeout,
 		RetryPolicy: &temporalsdk_temporal.RetryPolicy{
