@@ -263,7 +263,7 @@ func main() {
 			os.Exit(1)
 		}
 
-		w.RegisterWorkflowWithOptions(workflow.NewProcessingWorkflow(h, colsvc, pipelineRegistry, logger, workflow.Config{ActivityHeartbeatTimeout: config.Activity.HeartbeatTimeout}).Execute, temporalsdk_workflow.RegisterOptions{Name: collection.ProcessingWorkflowName})
+		w.RegisterWorkflowWithOptions(workflow.NewProcessingWorkflow(h, colsvc, pipelineRegistry, logger, config.Workflow).Execute, temporalsdk_workflow.RegisterOptions{Name: collection.ProcessingWorkflowName})
 		w.RegisterActivityWithOptions(activities.NewAcquirePipelineActivity(pipelineRegistry).Execute, temporalsdk_activity.RegisterOptions{Name: activities.AcquirePipelineActivityName})
 		w.RegisterActivityWithOptions(activities.NewDownloadActivity(h, pipelineRegistry, wsvc).Execute, temporalsdk_activity.RegisterOptions{Name: activities.DownloadActivityName})
 		w.RegisterActivityWithOptions(archive.NewExtractActivity(config.ExtractActivity).Execute, temporalsdk_activity.RegisterOptions{Name: archive.ExtractActivityName})
@@ -394,7 +394,7 @@ type configuration struct {
 	Telemetry       TelemetryConfig
 	Metadata        metadata.Config
 	Worker          WorkerConfig
-	Activity        ActivityConfig
+	Workflow        workflow.Config
 
 	// This is a workaround for client-specific functionality.
 	// Simple mechanism to support an arbitrary number of hooks and parameters.
@@ -403,10 +403,6 @@ type configuration struct {
 
 type WorkerConfig struct {
 	HeartbeatThrottleInterval time.Duration
-}
-
-type ActivityConfig struct {
-	HeartbeatTimeout time.Duration
 }
 
 func (c configuration) Validate() error {

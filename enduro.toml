@@ -85,7 +85,7 @@ disabled = true
 processNameMetadata = false
 
 [worker]
-heartbeatThrottleInterval = "5m"
+heartbeatThrottleInterval = "60s"
 
-[activity]
-heartbeatTimeout = "1h"
+[workflow]
+activityHeartbeatTimeout = "20s"
