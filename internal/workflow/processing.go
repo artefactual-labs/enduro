@@ -32,10 +32,15 @@ type ProcessingWorkflow struct {
 	colsvc           collection.Service
 	pipelineRegistry *pipeline.Registry
 	logger           logr.Logger
+	config           Config
 }
 
-func NewProcessingWorkflow(h *hooks.Hooks, colsvc collection.Service, pipelineRegistry *pipeline.Registry, l logr.Logger) *ProcessingWorkflow {
-	return &ProcessingWorkflow{hooks: h, colsvc: colsvc, pipelineRegistry: pipelineRegistry, logger: l}
+type Config struct {
+	ActivityHeartbeatTimeout time.Duration
+}
+
+func NewProcessingWorkflow(h *hooks.Hooks, colsvc collection.Service, pipelineRegistry *pipeline.Registry, l logr.Logger, c Config) *ProcessingWorkflow {
+	return &ProcessingWorkflow{hooks: h, colsvc: colsvc, pipelineRegistry: pipelineRegistry, logger: l, config: c}
 }
 
 // TransferInfo is shared state that is passed down to activities. It can be
@@ -325,6 +330,7 @@ func (w *ProcessingWorkflow) Execute(ctx temporalsdk_workflow.Context, req *coll
 			sessCtx, err := temporalsdk_workflow.CreateSession(activityOpts, &temporalsdk_workflow.SessionOptions{
 				CreationTimeout:  forever,
 				ExecutionTimeout: forever,
+				HeartbeatTimeout: w.config.ActivityHeartbeatTimeout,
 			})
 			if err != nil {
 				return fmt.Errorf("error creating session: %v", err)
@@ -435,7 +441,7 @@ func (w *ProcessingWorkflow) SessionHandler(sessCtx temporalsdk_workflow.Context
 	{
 		var acquired bool
 		var err error
-		acquired, release, err = acquirePipeline(sessCtx, w.colsvc, w.pipelineRegistry, tinfo.PipelineName, tinfo.CollectionID)
+		acquired, release, err = acquirePipeline(sessCtx, w.colsvc, w.pipelineRegistry, tinfo.PipelineName, tinfo.CollectionID, w.config.ActivityHeartbeatTimeout)
 		if acquired {
 			defer func() {
 				_ = release(sessCtx)
@@ -642,7 +648,7 @@ func (w *ProcessingWorkflow) transfer(sessCtx temporalsdk_workflow.Context, tinf
 	// Poll transfer.
 	{
 		if tinfo.SIPID == "" {
-			activityOpts := withActivityOptsForHeartbeatedRequest(sessCtx, time.Minute)
+			activityOpts := withActivityOptsForHeartbeatedRequest(sessCtx, w.config.ActivityHeartbeatTimeout)
 			err := temporalsdk_workflow.ExecuteActivity(activityOpts, activities.PollTransferActivityName, &activities.PollTransferActivityParams{
 				PipelineName: tinfo.PipelineName,
 				TransferID:   tinfo.TransferID,
@@ -669,7 +675,7 @@ func (w *ProcessingWorkflow) transfer(sessCtx temporalsdk_workflow.Context, tinf
 	// Poll ingest.
 	{
 		if tinfo.StoredAt.IsZero() {
-			activityOpts := withActivityOptsForHeartbeatedRequest(sessCtx, time.Minute)
+			activityOpts := withActivityOptsForHeartbeatedRequest(sessCtx, w.config.ActivityHeartbeatTimeout)
 			err := temporalsdk_workflow.ExecuteActivity(activityOpts, activities.PollIngestActivityName, &activities.PollIngestActivityParams{
 				PipelineName: tinfo.PipelineName,
 				SIPID:        tinfo.SIPID,

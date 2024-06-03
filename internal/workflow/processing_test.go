@@ -35,7 +35,7 @@ func (s *ProcessingWorkflowTestSuite) SetupTest() {
 	s.env = s.NewTestWorkflowEnvironment()
 	s.hooks = buildHooks(s.T(), ctrl)
 	pipelineRegistry, _ := pipeline.NewPipelineRegistry(logr.Discard(), []pipeline.Config{})
-	s.workflow = NewProcessingWorkflow(s.hooks, collectionfake.NewMockService(ctrl), pipelineRegistry, logr.Discard())
+	s.workflow = NewProcessingWorkflow(s.hooks, collectionfake.NewMockService(ctrl), pipelineRegistry, logr.Discard(), Config{})
 }
 
 func (s *ProcessingWorkflowTestSuite) AfterTest(suiteName, testName string) {

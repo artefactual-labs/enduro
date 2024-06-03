@@ -63,7 +63,7 @@ func TestSendReceiptsSequentialBehavior(t *testing.T) {
 		uint(12345),
 	).Return("ABANDON", nil).Once()
 
-	env.ExecuteWorkflow(NewProcessingWorkflow(h, colsvc, pipelineRegistry, logr.Discard()).sendReceipts, &params)
+	env.ExecuteWorkflow(NewProcessingWorkflow(h, colsvc, pipelineRegistry, logr.Discard(), Config{}).sendReceipts, &params)
 
 	assert.Equal(t, env.IsWorkflowCompleted(), true)
 	assert.ErrorContains(t, env.GetWorkflowError(), "error sending hari receipt: user abandoned")
@@ -116,7 +116,7 @@ func TestSendReceipts(t *testing.T) {
 		},
 	).Return(nil).Once()
 
-	env.ExecuteWorkflow(NewProcessingWorkflow(h, colsvc, pipelineRegistry, logr.Discard()).sendReceipts, &params)
+	env.ExecuteWorkflow(NewProcessingWorkflow(h, colsvc, pipelineRegistry, logr.Discard(), Config{}).sendReceipts, &params)
 
 	assert.Equal(t, env.IsWorkflowCompleted(), true)
 	assert.NilError(t, env.GetWorkflowError())

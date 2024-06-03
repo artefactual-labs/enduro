@@ -255,13 +255,15 @@ func main() {
 		w := temporalsdk_worker.New(temporalClient, config.Temporal.TaskQueue, temporalsdk_worker.Options{
 			EnableSessionWorker:               true,
 			MaxConcurrentSessionExecutionSize: 5000,
+			MaxHeartbeatThrottleInterval:      config.Worker.HeartbeatThrottleInterval,
+			DefaultHeartbeatThrottleInterval:  config.Worker.HeartbeatThrottleInterval,
 		})
 		if err != nil {
 			logger.Error(err, "Error creating Temporal worker.")
 			os.Exit(1)
 		}
 
-		w.RegisterWorkflowWithOptions(workflow.NewProcessingWorkflow(h, colsvc, pipelineRegistry, logger).Execute, temporalsdk_workflow.RegisterOptions{Name: collection.ProcessingWorkflowName})
+		w.RegisterWorkflowWithOptions(workflow.NewProcessingWorkflow(h, colsvc, pipelineRegistry, logger, config.Workflow).Execute, temporalsdk_workflow.RegisterOptions{Name: collection.ProcessingWorkflowName})
 		w.RegisterActivityWithOptions(activities.NewAcquirePipelineActivity(pipelineRegistry).Execute, temporalsdk_activity.RegisterOptions{Name: activities.AcquirePipelineActivityName})
 		w.RegisterActivityWithOptions(activities.NewDownloadActivity(h, pipelineRegistry, wsvc).Execute, temporalsdk_activity.RegisterOptions{Name: activities.DownloadActivityName})
 		w.RegisterActivityWithOptions(archive.NewExtractActivity(config.ExtractActivity).Execute, temporalsdk_activity.RegisterOptions{Name: archive.ExtractActivityName})
@@ -391,10 +393,16 @@ type configuration struct {
 	Validation      validation.Config
 	Telemetry       TelemetryConfig
 	Metadata        metadata.Config
+	Worker          WorkerConfig
+	Workflow        workflow.Config
 
 	// This is a workaround for client-specific functionality.
 	// Simple mechanism to support an arbitrary number of hooks and parameters.
 	Hooks map[string]map[string]interface{}
+}
+
+type WorkerConfig struct {
+	HeartbeatThrottleInterval time.Duration
 }
 
 func (c configuration) Validate() error {

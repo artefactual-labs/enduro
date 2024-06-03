@@ -83,3 +83,9 @@ disabled = true
 
 [metadata]
 processNameMetadata = false
+
+[worker]
+heartbeatThrottleInterval = "60s"
+
+[workflow]
+activityHeartbeatTimeout = "20s"

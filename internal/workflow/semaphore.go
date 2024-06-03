@@ -24,7 +24,7 @@ var noopReleaser = releaser(func(ctx temporalsdk_workflow.Context) error {
 // acquirePipeline acquires the pipeline semaphore. It returns a releaser that
 // users should execute. It's safe to execute more than once or when the acquire
 // operation failed (no-op).
-func acquirePipeline(ctx temporalsdk_workflow.Context, colsvc collection.Service, pipelineRegistry *pipeline.Registry, pipelineName string, colID uint) (bool, releaser, error) {
+func acquirePipeline(ctx temporalsdk_workflow.Context, colsvc collection.Service, pipelineRegistry *pipeline.Registry, pipelineName string, colID uint, heartBeatTimeout time.Duration) (bool, releaser, error) {
 	var acquired bool
 
 	// The releaser defaults to a no-op operation, a nil value would panic.
