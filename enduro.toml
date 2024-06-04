@@ -85,12 +85,10 @@ disabled = true
 processNameMetadata = false
 
 [worker]
-<<<<<<< HEAD
 heartbeatThrottleInterval = "1m"
 maxConcurrentWorkflowsExecutionsSize = 15
 maxConcurrentSessionExecutionSize = 15
-=======
-maxCuncurrentSessions = 1000
+maxConcurrentSessions = 1000
 heartbeatThrottleInterval = "60s"
 >>>>>>> 7e05837 (Make worker concurrent sessions configurable)
 
