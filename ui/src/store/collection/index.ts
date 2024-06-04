@@ -185,11 +185,6 @@ const actions: ActionTree<State, RootState> = {
     }
 
     return EnduroCollectionClient.collectionList(request).then((response) => {
-      // collectionList does not transform the objects as collectionShow does.
-      // Do it manually for now, I'd expect the generated client to start doing
-      // this for us at some point.
-      response.items = response.items.map((item) => api.EnduroStoredCollectionFromJSON(item));
-
       commit(SET_SEARCH_RESULTS, response.items);
       commit(SET_SEARCH_ERROR, false);
       commit(SET_SEARCH_NEXT_CURSOR, response.nextCursor);
