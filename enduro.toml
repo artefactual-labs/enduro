@@ -85,7 +85,6 @@ disabled = true
 processNameMetadata = false
 
 [worker]
-maxCuncurrentSessions = 1000
 heartbeatThrottleInterval = "60s"
 
 [workflow]
