@@ -253,10 +253,11 @@ func main() {
 
 		done := make(chan struct{})
 		w := temporalsdk_worker.New(temporalClient, config.Temporal.TaskQueue, temporalsdk_worker.Options{
-			EnableSessionWorker:               true,
-			MaxConcurrentSessionExecutionSize: 50,
-			MaxHeartbeatThrottleInterval:      config.Worker.HeartbeatThrottleInterval,
-			DefaultHeartbeatThrottleInterval:  config.Worker.HeartbeatThrottleInterval,
+			EnableSessionWorker:                    true,
+			MaxConcurrentSessionExecutionSize:      50,
+			MaxConcurrentWorkflowTaskExecutionSize: 10,
+			MaxHeartbeatThrottleInterval:           config.Worker.HeartbeatThrottleInterval,
+			DefaultHeartbeatThrottleInterval:       config.Worker.HeartbeatThrottleInterval,
 		})
 		if err != nil {
 			logger.Error(err, "Error creating Temporal worker.")
@@ -503,3 +504,5 @@ func initTracerProvider(ctx context.Context, logger logr.Logger, cfg TelemetryCo
 
 	return tp, shutdown, nil
 }
+
+// http://192.168.0.135:8080
