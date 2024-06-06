@@ -33,7 +33,8 @@ func acquirePipeline(ctx temporalsdk_workflow.Context, colsvc collection.Service
 	// Acquire the pipeline semaphore.
 	{
 		ctx := temporalsdk_workflow.WithActivityOptions(ctx, temporalsdk_workflow.ActivityOptions{
-			HeartbeatTimeout:       time.Minute,
+			// TODO:(daniel) here
+			HeartbeatTimeout:       time.Hour * 1,
 			WaitForCancellation:    false,
 			ScheduleToStartTimeout: forever,
 			StartToCloseTimeout:    forever,

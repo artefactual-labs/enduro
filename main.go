@@ -254,7 +254,7 @@ func main() {
 		done := make(chan struct{})
 		w := temporalsdk_worker.New(temporalClient, config.Temporal.TaskQueue, temporalsdk_worker.Options{
 			EnableSessionWorker:               true,
-			MaxConcurrentSessionExecutionSize: 5000,
+			MaxConcurrentSessionExecutionSize: 50,
 			MaxHeartbeatThrottleInterval:      config.Worker.HeartbeatThrottleInterval,
 			DefaultHeartbeatThrottleInterval:  config.Worker.HeartbeatThrottleInterval,
 		})

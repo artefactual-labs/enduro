@@ -11,7 +11,7 @@ ratio = 1.0
 
 [temporal]
 namespace = "default"
-address = "127.0.0.1:7233"
+address = "192.168.0.135:7233"
 taskQueue = "global"
 
 [api]
@@ -64,7 +64,7 @@ processingDir = ""
 processingConfig = "automated"
 # transferLocationID = "88f6b517-c0cc-411b-8abf-79544ce96f54"
 storageServiceURL = "http://test:test@127.0.0.1:62081"
-capacity = 3
+capacity = 50
 retryDeadline = "10m"
 transferDeadline = "24h"
 unbag = false
@@ -85,7 +85,7 @@ disabled = true
 processNameMetadata = false
 
 [worker]
-heartbeatThrottleInterval = "60s"
+heartbeatThrottleInterval = "5m"
 
 [workflow]
-activityHeartbeatTimeout = "20s"
+activityHeartbeatTimeout = "1h"
