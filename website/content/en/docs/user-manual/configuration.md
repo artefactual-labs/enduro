@@ -477,19 +477,25 @@ E.g.: `5m` (String)
 
 #### `maxConcurrentWorkflowsExecutionsSize` (int)
 
-Sets the maximum number of concurrent workflow executions that Enduro will accept from the workflow engine.
-A good rule of thumb is to make this value 2 times the sum total of the Archivematica pipeline capacity.
+Sets the maximum number of concurrent workflow executions that Enduro will 
+accept from the workflow engine.
 
-If the total pipeline capacity is 5, then this value could be set to 10.
+A good rule of thumb is to set this value to twice the sum of the capacities 
+of all the configured pipelines. For example, if two pipelines are configured 
+with a capacity of `5` each, the value should be `20`.
+
 E.g.: `10`
 
-#### `maxConcurrentSessionExecutionSize` (in)
+#### `maxConcurrentSessionExecutionSize` (int)
 
-Sets the maximum number of concurrenlty running (workflow engine) sessions that Enduro supports.
-This value governs how many concurrent SIPs are going to be processed at any given time, regardless of pipeline
-capacity. This setting can be used to trotthle from a single place how many concurrent pipelines Enduro will run.
+Sets the maximum number of concurrently running (workflow engine) sessions that
+Enduro supports. This value governs how many concurrent SIPs are going to be 
+processed at any given time, regardless of pipeline
+capacity. This setting can be used to throttle from a single place how many 
+concurrent pipelines Enduro will run.
 
-We recommend to make this value directly proportinal (or higher) than the Archivematica pipeline capacity.
+We recommend setting this value to be directly proportional to (or higher than) 
+the Archivematica pipeline capacity.
 
 E.g.: `5`
 
