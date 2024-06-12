@@ -86,6 +86,11 @@ func main() {
 		os.Exit(1)
 	}
 
+	numOfWorkflows := uint64(0)
+	for _, a := range config.Pipeline {
+		numOfWorkflows += a.Capacity
+	}
+
 	// Logging configuration.
 	logger := log.New(os.Stderr,
 		log.WithName(appName),
@@ -254,8 +259,8 @@ func main() {
 		done := make(chan struct{})
 		w := temporalsdk_worker.New(temporalClient, config.Temporal.TaskQueue, temporalsdk_worker.Options{
 			EnableSessionWorker:                    true,
-			MaxConcurrentSessionExecutionSize:      config.Worker.MaxConcurrentSessionExecutionSize,
-			MaxConcurrentWorkflowTaskExecutionSize: config.Worker.MaxConcurrentWorkflowsExecutionsSize,
+			MaxConcurrentSessionExecutionSize:      int(numOfWorkflows),
+			MaxConcurrentWorkflowTaskExecutionSize: int(numOfWorkflows),
 			MaxHeartbeatThrottleInterval:           config.Worker.HeartbeatThrottleInterval,
 			DefaultHeartbeatThrottleInterval:       config.Worker.HeartbeatThrottleInterval,
 		})
