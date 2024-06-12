@@ -86,7 +86,8 @@ processNameMetadata = false
 
 [worker]
 heartbeatThrottleInterval = "1m"
-maxConcurrentTransfers = 15
+MaxConcurrentWorkflowsExecutionsSize = 15
+MaxConcurrentSessionExecutionSize = 15
 
 [workflow]
 activityHeartbeatTimeout = "30s"
