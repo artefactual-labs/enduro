@@ -253,10 +253,11 @@ func main() {
 
 		done := make(chan struct{})
 		w := temporalsdk_worker.New(temporalClient, config.Temporal.TaskQueue, temporalsdk_worker.Options{
-			EnableSessionWorker:               true,
-			MaxConcurrentSessionExecutionSize: 5000,
-			MaxHeartbeatThrottleInterval:      config.Worker.HeartbeatThrottleInterval,
-			DefaultHeartbeatThrottleInterval:  config.Worker.HeartbeatThrottleInterval,
+			EnableSessionWorker:                    true,
+			MaxConcurrentSessionExecutionSize:      config.Worker.MaxConcurrentSessionExecutionSize,
+			MaxConcurrentWorkflowTaskExecutionSize: config.Worker.MaxConcurrentWorkflowsExecutionsSize,
+			MaxHeartbeatThrottleInterval:           config.Worker.HeartbeatThrottleInterval,
+			DefaultHeartbeatThrottleInterval:       config.Worker.HeartbeatThrottleInterval,
 		})
 		if err != nil {
 			logger.Error(err, "Error creating Temporal worker.")
@@ -402,7 +403,9 @@ type configuration struct {
 }
 
 type WorkerConfig struct {
-	HeartbeatThrottleInterval time.Duration
+	HeartbeatThrottleInterval            time.Duration
+	MaxConcurrentSessionExecutionSize    int
+	MaxConcurrentWorkflowsExecutionsSize int
 }
 
 func (c configuration) Validate() error {

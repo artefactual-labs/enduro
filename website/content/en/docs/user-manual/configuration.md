@@ -462,6 +462,57 @@ does not include a document with checksums, e.g. `checksum.sha1`.
 
 E.g.: `false`
 
+
+### `[worker]`
+
+#### `heartbeatThrottleInterval` (String)
+
+Specifies the interval at which Enduro sends heartbeats to the workflow engine.
+
+The string should be constructed as a sequence of decimal numbers, each with
+optional fraction and a unit suffix, such as "30m", "24h" or "2h30m".
+Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
+
+E.g.: `5m` (String)
+
+#### `maxConcurrentWorkflowsExecutionsSize` (int)
+
+Sets the maximum number of concurrent workflow executions that Enduro will 
+accept from the workflow engine.
+
+A good rule of thumb is to set this value to twice the sum of the capacities 
+of all the configured pipelines. For example, if two pipelines are configured 
+with a capacity of `5` each, the value should be `20`.
+
+E.g.: `10`
+
+#### `maxConcurrentSessionExecutionSize` (int)
+
+Sets the maximum number of concurrently running (workflow engine) sessions that
+Enduro supports. This value governs how many concurrent SIPs are going to be 
+processed at any given time, regardless of pipeline
+capacity. This setting can be used to throttle from a single place how many 
+concurrent pipelines Enduro will run.
+
+We recommend setting this value to be directly proportional to (or higher than) 
+the Archivematica pipeline capacity.
+
+E.g.: `5`
+
+### `[worker]`
+
+#### `activityHeartbeatTimeout` (String)
+
+Specifies the timeout duration for activities that send heartbeats to the workflow engine.
+If the activity takes more time to send a heartbeat to the workflow engine, the workflow will fail
+with a `heartbeatTimeout` error.
+
+The string should be constructed as a sequence of decimal numbers, each with
+optional fraction and a unit suffix, such as "30m", "24h" or "2h30m".
+Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
+
+E.g.: `5m` (String)
+
 ## Configuration example
 
 Source: https://github.com/artefactual-labs/enduro/blob/main/enduro.toml.
