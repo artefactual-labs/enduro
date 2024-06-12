@@ -499,7 +499,7 @@ the Archivematica pipeline capacity.
 
 E.g.: `5`
 
-### `[worker]`
+### `[workflow]`
 
 #### `activityHeartbeatTimeout` (String)
 
