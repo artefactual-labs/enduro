@@ -89,6 +89,10 @@ func (a *BatchActivity) Execute(ctx context.Context, params BatchWorkflowInput) 
 			return nil // Keep walking.
 		}
 
+		if strings.HasPrefix(filepath.Base(path), ".") && !entry.IsDir() {
+			return nil // Don't process hidden files as SIPs
+		}
+
 		req := collection.ProcessingWorkflowRequest{
 			BatchDir:           filepath.Dir(path),
 			Key:                entry.Name(),
