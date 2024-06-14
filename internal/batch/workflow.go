@@ -84,13 +84,13 @@ func (a *BatchActivity) Execute(ctx context.Context, params BatchWorkflowInput) 
 			return nil // Ignore root.
 		}
 
-		if strings.HasPrefix(filepath.Base(path), ".") {
-			return nil // Ignore hidden files
-		}
-
 		depth := len(strings.Split(rel, string(filepath.Separator))) - 1
 		if depth != int(params.Depth) {
 			return nil // Keep walking.
+		}
+
+		if strings.HasPrefix(filepath.Base(path), ".") && !entry.IsDir() {
+			return nil // Ignore hidden files.
 		}
 
 		req := collection.ProcessingWorkflowRequest{
