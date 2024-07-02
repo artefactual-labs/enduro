@@ -9,13 +9,17 @@ menu:
 
 > Enduro brings endurance to Archivematica-based preservation workflows.
 
-Enduro is a proof of concept. It aims to provide a tool to orchestrate reliable
-workflows where multi-pipeline [Archivematica][archivematica] deployments are integrated with other systems.
+Enduro is a new application under development by Artefactual Systems. Originally created 
+as a more stable replacement for Archivematica’s [automation-tools][automation-tools] 
+library of scripts, it has since evolved into a flexible tool to be paired with 
+preservation applications (like [a3m][a3m] or [Archivematica][archivematica])to provide 
+initial ingest activities such as content and structure validation, packaging, and more.
 
-It could be seen as a replacement for [automation-tools][automation-tools], but
-it is also a new space for experimentation and research to build a distributed
-system that enables users to run failure-oblivious and durable preservation
-workflows.
+Enduro aims to cover our clients' needs while exploring new and innovative ways to build 
+durable and fault-tolerant workflows suited for preservation. It is also a new space for 
+experimentation and research to build a distributed system that enables users to run 
+failure-oblivious and durable preservation workflows.
 
 [archivematica]: https://archivematica.org
 [automation-tools]: https://github.com/artefactual/automation-tools
+[a3m]: https://github.com/artefactual-labs/a3m
