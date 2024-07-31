@@ -150,7 +150,7 @@ export default class CollectionShowWorkflow extends Vue {
     for (const event of this.history.history) {
       const details = event.details;
       if (event.type === 'MarkerRecorded') {
-        const attrs = details.Attributes.marker_recorded_event_attributes;
+        const attrs = details.Attributes.MarkerRecordedEventAttributes;
         if (attrs.marker_name !== 'LocalActivity') {
           continue;
         }
@@ -166,7 +166,7 @@ export default class CollectionShowWorkflow extends Vue {
           replayed: innerDetails.ReplayTime,
         };
       } else if (event.type === 'ActivityTaskScheduled') {
-        const attrs = details.Attributes.activity_task_scheduled_event_attributes;
+        const attrs = details.Attributes.ActivityTaskScheduledEventAttributes;
         const name = attrs.activity_type.name;
         if (ignoredActivities.includes(name)) {
           continue;
@@ -179,13 +179,13 @@ export default class CollectionShowWorkflow extends Vue {
           started: details.event_time,
         };
       } else if (event.type === 'ActivityTaskStarted') {
-        const attrs = details.Attributes.activity_task_started_event_attributes;
+        const attrs = details.Attributes.ActivityTaskStartedEventAttributes;
         if (attrs.scheduled_event_id in this.activities) {
           const item = this.activities[attrs.scheduled_event_id];
           item.attempts = attrs.attempt;
         }
       } else if (event.type === 'ActivityTaskFailed') {
-        const attrs = details.Attributes.activity_task_failed_event_attributes;
+        const attrs = details.Attributes.ActivityTaskFailedEventAttributes;
         this.activityError = true;
         if (attrs.scheduled_event_id in this.activities) {
           const item = this.activities[attrs.scheduled_event_id];
@@ -195,7 +195,7 @@ export default class CollectionShowWorkflow extends Vue {
           item.duration = this.duration(item.started, item.completed);
         }
       } else if (event.type === 'ActivityTaskCompleted') {
-        const attrs = details.Attributes.activity_task_completed_event_attributes;
+        const attrs = details.Attributes.ActivityTaskCompletedEventAttributes;
         if (attrs.scheduled_event_id in this.activities) {
           const item = this.activities[attrs.scheduled_event_id];
           item.status = 'done';
@@ -206,7 +206,7 @@ export default class CollectionShowWorkflow extends Vue {
           }
         }
       } else if (event.type === 'ActivityTaskTimedOut') {
-        const attrs = details.Attributes.activity_task_timed_out_event_attributes;
+        const attrs = details.Attributes.ActivityTaskTimedOutEventAttributes;
         if (attrs.scheduled_event_id in this.activities) {
           const item = this.activities[attrs.scheduled_event_id];
           item.status = 'timed out';
@@ -217,7 +217,7 @@ export default class CollectionShowWorkflow extends Vue {
       } else if (event.type === 'WorkflowExecutionCompleted') {
         this.completedAt = details.event_time;
       } else if (event.type === 'WorkflowExecutionFailed') {
-        const attrs = details.Attributes.workflow_execution_failed_event_attributes;
+        const attrs = details.Attributes.WorkflowExecutionFailedEventAttributes;
         this.workflowError = this.workflowErrorDescription(attrs.failure);
         this.completedAt = details.event_time;
       }
@@ -253,18 +253,18 @@ export default class CollectionShowWorkflow extends Vue {
     const attrs: any = event.details;
 
     if (event.type === 'ActivityTaskScheduled') {
-      ret = 'Activity: ' + attrs.Attributes.activity_task_scheduled_event_attributes.activity_type.name;
+      ret = 'Activity: ' + attrs.Attributes.ActivityTaskScheduledEventAttributes.activity_type.name;
     } else if (event.type === 'ActivityTaskFailed') {
-      const body = attrs.Attributes.activity_task_failed_event_attributes;
+      const body = attrs.Attributes.ActivityTaskFailedEventAttributes;
       ret = JSON.stringify(body, null, 2);
     } else if (event.type === 'DecisionTaskScheduled') {
       const attempt: number = parseInt(attrs.decisionTaskScheduledEventAttributes.attempt, 10) + 1;
       ret = 'Attempts: ' + attempt;
     } else if (event.type === 'WorkflowExecutionFailed') {
-      const body = attrs.Attributes.workflow_execution_failed_event_attributes;
+      const body = attrs.Attributes.WorkflowExecutionFailedEventAttributes;
       ret = JSON.stringify(body, null, 2);
     } else if (event.type == 'WorkflowExecutionStarted') {
-      const body = attrs.Attributes.workflow_execution_started_event_attributes;
+      const body = attrs.Attributes.WorkflowExecutionStartedEventAttributes;
       ret = JSON.stringify(body, null, 2);
     }
 
