@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -61,6 +62,11 @@ func (a *BundleActivity) Execute(ctx context.Context, params *BundleActivityPara
 			res.FullPath = filepath.Join(params.BatchDir, params.Key)
 			// This makes the workflow not to delete the original content in the transfer directory
 			res.FullPathBeforeStrip = ""
+			if params.ExcludeHiddenFiles {
+				if err := removeHiddenFiles(res.FullPath); err != nil {
+					return nil, temporal.NewNonRetryableError(fmt.Errorf("failed to remove hidden files: %w", err))
+				}
+			}
 		} else {
 			src := filepath.Join(params.BatchDir, params.Key)
 			dst := params.TransferDir
@@ -311,4 +317,20 @@ func unbag(path string) error {
 	}
 
 	return nil
+}
+
+func removeHiddenFiles(path string) error {
+	return filepath.WalkDir(path, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		info, err := d.Info()
+		if err != nil {
+			return err
+		}
+		if strings.HasPrefix(info.Name(), ".") {
+			return os.Remove(path)
+		}
+		return nil
+	})
 }
