@@ -61,6 +61,46 @@ func TestBundleActivity(t *testing.T) {
 			),
 		)
 	})
+
+	t.Run("Remove hidden files when BatchDir is a subfolder of the TransferDir", func(t *testing.T) {
+		activity := NewBundleActivity()
+		ts := &temporalsdk_testsuite.WorkflowTestSuite{}
+		env := ts.NewTestActivityEnvironment()
+		env.RegisterActivity(activity.Execute)
+
+		transferDir := fs.NewDir(t, "enduro",
+			fs.WithDir("batch-folder",
+				fs.WithDir(
+					"transfer",
+					fs.WithFile("foobar.txt", "Hello world!\n"),
+					fs.WithFile(".hidden", ""),
+				),
+			),
+		)
+
+		fut, err := env.ExecuteActivity(activity.Execute, &BundleActivityParams{
+			ExcludeHiddenFiles: true,
+			IsDir:              true,
+			TransferDir:        transferDir.Path(),
+			BatchDir:           transferDir.Join("batch-folder"),
+			Key:                "transfer",
+		})
+		assert.NilError(t, err)
+
+		res := BundleActivityResult{}
+		assert.NilError(t, fut.Get(&res))
+		assert.DeepEqual(t, res, res)
+		assert.Assert(t,
+			fs.Equal(
+				transferDir.Join("batch-folder", "transfer"),
+				fs.Expected(t,
+					// .hidden is not expected because ExcludeHiddenFiles is enabled.
+					fs.WithFile("foobar.txt", "Hello world!\n"),
+					fs.MatchAnyFileMode,
+				),
+			),
+		)
+	})
 }
 
 func TestUnbag(t *testing.T) {
