@@ -61,6 +61,51 @@ func TestBundleActivity(t *testing.T) {
 			),
 		)
 	})
+
+	t.Run("Remove hidden files when BatchDir is a subfolder of the TransferDir", func(t *testing.T) {
+		activity := NewBundleActivity()
+		ts := &temporalsdk_testsuite.WorkflowTestSuite{}
+		env := ts.NewTestActivityEnvironment()
+		env.RegisterActivity(activity.Execute)
+
+		transferDir := fs.NewDir(t, "enduro",
+			fs.WithDir("batch-folder",
+				fs.WithDir(
+					"sip",
+					fs.WithFile("foobar.txt", "Hello world!\n"),
+					fs.WithFile(".hidden", ""),
+				),
+			),
+		)
+		batchDir := transferDir.Join("batch-folder")
+		sipSourceDir := transferDir.Join("batch-folder", "sip")
+
+		fut, err := env.ExecuteActivity(activity.Execute, &BundleActivityParams{
+			ExcludeHiddenFiles: true,
+			IsDir:              true,
+			TransferDir:        transferDir.Path(),
+			BatchDir:           batchDir,
+			Key:                "sip",
+		})
+		assert.NilError(t, err)
+
+		res := BundleActivityResult{}
+		assert.NilError(t, fut.Get(&res))
+		assert.Assert(t,
+			fs.Equal(
+				sipSourceDir,
+				fs.Expected(t,
+					// .hidden is not expected because ExcludeHiddenFiles is enabled.
+					fs.WithFile("foobar.txt", "Hello world!\n"),
+					fs.MatchAnyFileMode,
+				),
+			),
+		)
+		assert.DeepEqual(t, res.FullPath, sipSourceDir)
+		rePath, err := filepath.Rel(transferDir.Path(), sipSourceDir)
+		assert.NilError(t, err)
+		assert.DeepEqual(t, res.RelPath, rePath)
+	})
 }
 
 func TestUnbag(t *testing.T) {
