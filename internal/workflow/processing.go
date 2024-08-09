@@ -457,8 +457,8 @@ func (w *ProcessingWorkflow) SessionHandler(sessCtx temporalsdk_workflow.Context
 		if tinfo.WatcherName != "" && !tinfo.IsDir {
 			// TODO: even if TempFile is defined, we should confirm that the file is
 			// locally available in disk, just in case we're in the context of a
-			// session retry where a different working is doing the work. In that
-			// case, the activity whould be executed again.
+			// session retry where a different worker is doing the work. In that
+			// case, the activity would be executed again.
 			if tinfo.TempFile == "" {
 				activityOpts := withActivityOptsForLongLivedRequest(sessCtx)
 				err := temporalsdk_workflow.ExecuteActivity(
@@ -475,6 +475,9 @@ func (w *ProcessingWorkflow) SessionHandler(sessCtx temporalsdk_workflow.Context
 		}
 	}
 
+	// Both of these values relate to temporary files on Enduro's processing Dir that never get cleaned-up.
+	var tempBlob, tempExtracted string
+	tempBlob = tinfo.TempFile
 	// Extract downloaded archive file contents.
 	{
 		if tinfo.WatcherName != "" && !tinfo.IsDir {
@@ -497,6 +500,7 @@ func (w *ProcessingWorkflow) SessionHandler(sessCtx temporalsdk_workflow.Context
 				tinfo.TempFile = result.ExtractPath
 				tinfo.StripTopLevelDir = false
 				tinfo.IsDir = true
+				tempExtracted = result.ExtractPath
 			}
 		}
 	}
@@ -523,11 +527,33 @@ func (w *ProcessingWorkflow) SessionHandler(sessCtx temporalsdk_workflow.Context
 
 	// Delete local temporary files.
 	defer func() {
+		// We need disconnected context here because when session gets released the cleanup
+		// activities get scheduled and then immediately canceled.
+		cleanUpContext, cancel := temporalsdk_workflow.NewDisconnectedContext(sessCtx)
+		defer cancel()
 		if tinfo.Bundle.FullPathBeforeStrip != "" {
-			activityOpts := withActivityOptsForLocalAction(sessCtx)
-			_ = temporalsdk_workflow.ExecuteActivity(activityOpts, activities.CleanUpActivityName, &activities.CleanUpActivityParams{
+			activityOpts := withActivityOptsForLocalAction(cleanUpContext)
+			if err := temporalsdk_workflow.ExecuteActivity(activityOpts, activities.CleanUpActivityName, &activities.CleanUpActivityParams{
 				FullPath: tinfo.Bundle.FullPathBeforeStrip,
-			}).Get(activityOpts, nil)
+			}).Get(activityOpts, nil); err != nil {
+				w.logger.Error(err, "failed to clean up", "path", tinfo.Bundle.FullPathBeforeStrip)
+			}
+		}
+		if tempBlob != "" {
+			activityOpts := withActivityOptsForLocalAction(cleanUpContext)
+			if err := temporalsdk_workflow.ExecuteActivity(activityOpts, activities.CleanUpActivityName, &activities.CleanUpActivityParams{
+				FullPath: tempBlob,
+			}).Get(activityOpts, nil); err != nil {
+				w.logger.Error(err, "failed to clean up", "path", tempBlob)
+			}
+		}
+		if tempExtracted != "" {
+			activityOpts := withActivityOptsForLocalAction(cleanUpContext)
+			if err := temporalsdk_workflow.ExecuteActivity(activityOpts, activities.CleanUpActivityName, &activities.CleanUpActivityParams{
+				FullPath: tempExtracted,
+			}).Get(activityOpts, nil); err != nil {
+				w.logger.Error(err, "failed to clean up", "path", tempExtracted)
+			}
 		}
 	}()
 
