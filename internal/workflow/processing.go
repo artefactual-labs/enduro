@@ -529,31 +529,23 @@ func (w *ProcessingWorkflow) SessionHandler(sessCtx temporalsdk_workflow.Context
 	defer func() {
 		// We need disconnected context here because when session gets released the cleanup
 		// activities get scheduled and then immediately canceled.
-		cleanUpContext, cancel := temporalsdk_workflow.NewDisconnectedContext(sessCtx)
-		defer cancel()
+		var filesToRemove []string
 		if tinfo.Bundle.FullPathBeforeStrip != "" {
-			activityOpts := withActivityOptsForLocalAction(cleanUpContext)
-			if err := temporalsdk_workflow.ExecuteActivity(activityOpts, activities.CleanUpActivityName, &activities.CleanUpActivityParams{
-				FullPath: tinfo.Bundle.FullPathBeforeStrip,
-			}).Get(activityOpts, nil); err != nil {
-				w.logger.Error(err, "failed to clean up", "path", tinfo.Bundle.FullPathBeforeStrip)
-			}
+			filesToRemove = append(filesToRemove, tinfo.Bundle.FullPathBeforeStrip)
 		}
 		if tempBlob != "" {
-			activityOpts := withActivityOptsForLocalAction(cleanUpContext)
-			if err := temporalsdk_workflow.ExecuteActivity(activityOpts, activities.CleanUpActivityName, &activities.CleanUpActivityParams{
-				FullPath: tempBlob,
-			}).Get(activityOpts, nil); err != nil {
-				w.logger.Error(err, "failed to clean up", "path", tempBlob)
-			}
+			filesToRemove = append(filesToRemove, tempBlob)
 		}
 		if tempExtracted != "" {
-			activityOpts := withActivityOptsForLocalAction(cleanUpContext)
-			if err := temporalsdk_workflow.ExecuteActivity(activityOpts, activities.CleanUpActivityName, &activities.CleanUpActivityParams{
-				FullPath: tempExtracted,
-			}).Get(activityOpts, nil); err != nil {
-				w.logger.Error(err, "failed to clean up", "path", tempExtracted)
-			}
+			filesToRemove = append(filesToRemove, tempExtracted)
+		}
+		cleanUpCtx, cancel := temporalsdk_workflow.NewDisconnectedContext(sessCtx)
+		defer cancel()
+		activityOpts := withActivityOptsForLocalAction(cleanUpCtx)
+		if err := temporalsdk_workflow.ExecuteActivity(activityOpts, activities.CleanUpActivityName, &activities.CleanUpActivityParams{
+			Paths: filesToRemove,
+		}).Get(activityOpts, nil); err != nil {
+			w.logger.Error(err, "failed to clean up temporary files", "path", tempExtracted)
 		}
 	}()
 

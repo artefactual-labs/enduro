@@ -14,16 +14,18 @@ func NewCleanUpActivity() *CleanUpActivity {
 }
 
 type CleanUpActivityParams struct {
-	FullPath string
+	Paths []string
 }
 
 func (a *CleanUpActivity) Execute(ctx context.Context, params *CleanUpActivityParams) error {
-	if params == nil || params.FullPath == "" {
-		return fmt.Errorf("error processing parameters: missing or empty")
+	if params == nil {
+		return fmt.Errorf("error processing parameters: missing")
 	}
 
-	if err := os.RemoveAll(params.FullPath); err != nil {
-		return fmt.Errorf("error removing transfer directory: %v", err)
+	for _, p := range params.Paths {
+		if err := os.RemoveAll(p); err != nil {
+			return fmt.Errorf("error removing path: %v", err)
+		}
 	}
 
 	return nil
