@@ -57,6 +57,7 @@ func (a *TransferActivity) Execute(ctx context.Context, params *TransferActivity
 		Type:             params.TransferType,
 		Path:             path,
 		ProcessingConfig: params.ProcessingConfig,
+		AccessSystemID:   params.Name,
 		AutoApprove:      true,
 		Accession:        params.Accession,
 	})
