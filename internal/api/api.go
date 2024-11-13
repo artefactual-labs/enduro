@@ -90,7 +90,7 @@ func HTTPServer(
 	handler = versionHeaderMiddleware(config.AppVersion)(handler)
 	if config.Debug {
 		handler = goahttpmwr.Log(loggerAdapter(logger))(handler)
-		handler = goahttpmwr.Debug(mux, os.Stdout)(handler)
+		handler = Debug(mux, os.Stdout)(handler)
 	}
 
 	return &http.Server{
