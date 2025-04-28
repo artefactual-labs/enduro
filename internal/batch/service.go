@@ -143,7 +143,8 @@ func (s *batchImpl) InitProcessingWorkflow(ctx context.Context, req *collection.
 	req.ValidationConfig = validation.Config{}
 	// req.MetadataConfig = metadata.Config{}
 	tr := noop.NewTracerProvider().Tracer("")
-	err := collection.InitProcessingWorkflow(ctx, tr, s.cc, s.taskQueue, req)
+
+	err := collection.InitProcessingWorkflow(ctx, tr, s.cc, req)
 	if err != nil {
 		s.logger.Error(err, "Error initializing processing workflow.")
 	}

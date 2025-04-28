@@ -57,6 +57,7 @@ type Pipeline struct {
 	status          string
 	statusUpdatedAt time.Time
 	statusLock      sync.RWMutex
+	TaskQueue       string
 }
 
 func NewPipeline(logger logr.Logger, config Config) (*Pipeline, error) {
@@ -64,23 +65,28 @@ func NewPipeline(logger logr.Logger, config Config) (*Pipeline, error) {
 	config.ProcessingDir = expandPath(config.ProcessingDir)
 
 	p := &Pipeline{
-		logger: logger,
-		sem:    semaphore.NewWeighted(int64(config.Capacity)),
-		config: &config,
-		client: httpClient(),
+		logger:    logger,
+		sem:       semaphore.NewWeighted(int64(config.Capacity)),
+		config:    &config,
+		client:    httpClient(),
+		TaskQueue: TaskQueueName(config.Name),
 	}
 
 	if config.ID != "" {
 		p.ID = config.ID
 	}
 
-	// init() enriches our record by retrieving the UUID but we still return
-	// the the object in case of errors.
+	// init() enriches our record by retrieving the UUID, but we still return
+	// the object in case of errors.
 	if err := p.init(); err != nil {
 		return p, err
 	}
 
 	return p, nil
+}
+
+func TaskQueueName(name string) string {
+	return fmt.Sprintf("pipeline-%s", name)
 }
 
 // init connects with the pipeline to retrieve its identifier, unless one has
