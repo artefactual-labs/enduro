@@ -2,9 +2,16 @@ import Vue from 'vue';
 import moment from 'moment';
 import humanizeDuration from 'humanize-duration';
 
-Vue.filter('formatDateTimeString', (value: string) => {
-  const date = new Date(value);
-  return date.toLocaleString();
+export interface EventTime {
+  seconds: number
+  nanos: number
+}
+
+Vue.filter('formatDateTimeString', (value: string | EventTime): String => {
+    const date =  typeof(value) === 'string'
+        ? new Date(value)
+        : fromEventTimeToDate(value);
+    return date.toLocaleString();
 });
 
 Vue.filter('formatDateTime', (value: Date) => {
@@ -27,9 +34,15 @@ Vue.filter('formatDuration', (from: Date, to: Date) => {
   return humanizeDuration(moment.duration(diff).asMilliseconds());
 });
 
-Vue.filter('formatEpochDuration', (from: number, to: number) => {
-  const f = new Date(Math.round(from / 1000 / 1000));
-  const t = new Date(Math.round(to / 1000 / 1000));
+Vue.filter('formatEpochDuration', (from: EventTime, to: EventTime) => {
+  const f = fromEventTimeToDate(from)
+  const t = fromEventTimeToDate(to)
   const diff = moment(t).diff(f);
   return humanizeDuration(moment.duration(diff).asMilliseconds());
 });
+
+export function fromEventTimeToDate(ev :EventTime): Date {
+  let secondsToMilis = ev.seconds * 1000;
+  let nanosecondsToMilis = ev.nanos / 1_000_000;
+  return new Date(secondsToMilis + nanosecondsToMilis);
+}

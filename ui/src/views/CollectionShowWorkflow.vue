@@ -85,6 +85,7 @@ import { namespace } from 'vuex-class';
 import * as CollectionStore from '../store/collection';
 import CollectionStatusBadge from '@/components/CollectionStatusBadge.vue';
 import { api, EnduroCollectionClient } from '../client';
+import { EventTime, fromEventTimeToDate } from "@/filters";
 
 const collectionStoreNs = namespace('collection');
 
@@ -236,9 +237,9 @@ export default class CollectionShowWorkflow extends Vue {
     return desc
   }
 
-  private duration(startedAt: string, completedAt: string): string {
-    const started = new Date(startedAt);
-    const completed = new Date(completedAt);
+  private duration(startedAt: EventTime, completedAt: EventTime): string {
+    const started = fromEventTimeToDate(startedAt);
+    const completed = fromEventTimeToDate(completedAt);
     const took = (completed.getTime() - started.getTime()) / 1000;
     return took.toLocaleString();
   }
