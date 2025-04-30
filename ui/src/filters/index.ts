@@ -7,10 +7,11 @@ export interface EventTime {
   nanos: number
 }
 
-Vue.filter('formatDateTimeString', (value: string | EventTime): Date => {
-    return typeof(value) === 'string'
+Vue.filter('formatDateTimeString', (value: string | EventTime): String => {
+    const date =  typeof(value) === 'string'
         ? new Date(value)
         : fromEventTimeToDate(value);
+    return date.toLocaleString();
 });
 
 Vue.filter('formatDateTime', (value: Date) => {
