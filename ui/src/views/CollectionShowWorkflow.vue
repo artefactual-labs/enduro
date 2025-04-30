@@ -238,8 +238,8 @@ export default class CollectionShowWorkflow extends Vue {
   }
 
   private duration(startedAt: EventTime, completedAt: EventTime): string {
-    const started = new Date(fromEventTimeToDate(startedAt));
-    const completed = new Date(fromEventTimeToDate(completedAt));
+    const started = fromEventTimeToDate(startedAt);
+    const completed = fromEventTimeToDate(completedAt);
     const took = (completed.getTime() - started.getTime()) / 1000;
     return took.toLocaleString();
   }
