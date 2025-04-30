@@ -1,3 +1,16 @@
+// This file is based on `debug.go` from the Goa project:
+// https://github.com/goadesign/goa/blob/v3/http/middleware/debug.go
+//
+// Copyright (c) 2015 Raphaël Simon
+// Licensed under the MIT License:
+// https://github.com/goadesign/goa/blob/v3/LICENSE
+//
+// Modifications have been made from the original version. Namely, to solve an
+// issue where response bodies of type `application/x-7z-compressed` should not
+// be printed, this copy of the middleware was created and modified accordingly,
+// as the original debug middleware in the Goa library could not be directly
+// altered.
+
 package api
 
 import (
@@ -16,10 +29,10 @@ import (
 	"goa.design/goa/v3/middleware"
 )
 
-// Debug returns a debug middleware which prints detailed information about
+// debug returns a debug middleware which prints detailed information about
 // incoming requests and outgoing responses including all headers, parameters
 // and bodies.
-func Debug(mux goahttp.Muxer, w io.Writer) func(http.Handler) http.Handler {
+func debug(mux goahttp.Muxer, w io.Writer) func(http.Handler) http.Handler {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 			buf := &bytes.Buffer{}
