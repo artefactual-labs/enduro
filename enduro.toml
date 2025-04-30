@@ -43,23 +43,11 @@ excludeHiddenFiles = false
 transferType = "standard"
 
 [[watcher.filesystem]]
-name = "dev-fs-1"
-path = "/home/daniel/.am/watcher_1"
+name = "dev-fs"
+path = "./hack/watched-dir"
 inotify = false
 pipeline = "am"
-completeDir = "/home/daniel/.am/watcher_1"
-ignore = '(^\.gitkeep)|(^*\.mft)$'
-stripTopLevelDir = true
-rejectDuplicates = false
-excludeHiddenFiles = false
-transferType = "standard"
-
-[[watcher.filesystem]]
-name = "dev-fs-2"
-path = "/home/daniel/.am/watcher_2"
-inotify = false
-pipeline = "am-2"
-completeDir = "/home/daniel/.am/watcher_2"
+completeDir = "./hack/landfill"
 ignore = '(^\.gitkeep)|(^*\.mft)$'
 stripTopLevelDir = true
 rejectDuplicates = false
@@ -76,22 +64,7 @@ processingDir = ""
 processingConfig = "automated"
 # transferLocationID = "88f6b517-c0cc-411b-8abf-79544ce96f54"
 storageServiceURL = "http://test:test@127.0.0.1:62081"
-capacity = 10
-retryDeadline = "10m"
-transferDeadline = "24h"
-unbag = false
-
-[[pipeline]]
-name = "am-2"
-baseURL = "http://127.0.0.1:62082"
-user = "test"
-key = "test"
-transferDir = "~/.am/pipeline_2/ss-location-data"
-processingDir = ""
-processingConfig = "automated"
-# transferLocationID = "88f6b517-c0cc-411b-8abf-79544ce96f54"
-storageServiceURL = "http://test:test@127.0.0.1:62083"
-capacity = 10
+capacity = 3
 retryDeadline = "10m"
 transferDeadline = "24h"
 unbag = false
@@ -113,8 +86,8 @@ processNameMetadata = false
 
 [worker]
 heartbeatThrottleInterval = "1m"
-maxConcurrentWorkflowsExecutionsSize = 30
-maxConcurrentSessionExecutionSize = 30
+maxConcurrentWorkflowsExecutionsSize = 15
+maxConcurrentSessionExecutionSize = 15
 
 [workflow]
 activityHeartbeatTimeout = "30s"
