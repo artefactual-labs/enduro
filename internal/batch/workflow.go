@@ -60,11 +60,6 @@ func NewBatchActivity(batchsvc Service) *BatchActivity {
 }
 
 func (a *BatchActivity) Execute(ctx context.Context, params BatchWorkflowInput) error {
-	pipelines := []string{}
-	if params.PipelineName != "" {
-		pipelines = append(pipelines, params.PipelineName)
-	}
-
 	if params.Depth < 0 {
 		params.Depth = 0
 	}
@@ -97,7 +92,7 @@ func (a *BatchActivity) Execute(ctx context.Context, params BatchWorkflowInput) 
 			BatchDir:           filepath.Dir(path),
 			Key:                entry.Name(),
 			IsDir:              entry.IsDir(),
-			PipelineNames:      pipelines,
+			PipelineName:       params.PipelineName,
 			ProcessingConfig:   params.ProcessingConfig,
 			CompletedDir:       params.CompletedDir,
 			RetentionPeriod:    params.RetentionPeriod,

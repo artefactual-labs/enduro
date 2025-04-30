@@ -71,7 +71,7 @@ func (s *ProcessingWorkflowTestSuite) TestParseErrorIsIgnored() {
 	s.env.ExecuteWorkflow(s.workflow.Execute, &collection.ProcessingWorkflowRequest{
 		CollectionID:     0,
 		WatcherName:      "watcher",
-		PipelineNames:    []string{"pipeline"},
+		PipelineName:     "pipeline",
 		RetentionPeriod:  &retentionPeriod,
 		StripTopLevelDir: true,
 		Key:              "key",
@@ -107,7 +107,7 @@ func (s *ProcessingWorkflowTestSuite) TestParseError() {
 	s.env.ExecuteWorkflow(s.workflow.Execute, &collection.ProcessingWorkflowRequest{
 		CollectionID:     0,
 		WatcherName:      "watcher",
-		PipelineNames:    []string{"pipeline"},
+		PipelineName:     "pipeline",
 		RetentionPeriod:  &retentionPeriod,
 		StripTopLevelDir: true,
 		Key:              "key",

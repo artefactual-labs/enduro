@@ -12,6 +12,7 @@ import (
 	temporalsdk_client "go.temporal.io/sdk/client"
 
 	"github.com/artefactual-labs/enduro/internal/metadata"
+	"github.com/artefactual-labs/enduro/internal/pipeline"
 	"github.com/artefactual-labs/enduro/internal/validation"
 )
 
@@ -28,10 +29,7 @@ type ProcessingWorkflowRequest struct {
 	// Name of the watcher that received this blob.
 	WatcherName string
 
-	// Pipelines that are available for processing. The workflow will choose one
-	// (randomly picked for now). If the slice is empty, it will be
-	// automatically populated from the list of all configured pipelines.
-	PipelineNames []string
+	PipelineName string
 
 	// Period of time to schedule the deletion of the original blob from the
 	// watched data source. nil means no deletion.
@@ -72,7 +70,7 @@ type ProcessingWorkflowRequest struct {
 	MetadataConfig metadata.Config
 }
 
-func InitProcessingWorkflow(ctx context.Context, tr trace.Tracer, c temporalsdk_client.Client, taskQueue string, req *ProcessingWorkflowRequest) error {
+func InitProcessingWorkflow(ctx context.Context, tr trace.Tracer, c temporalsdk_client.Client, req *ProcessingWorkflowRequest) error {
 	_, span := tr.Start(ctx, "InitProcessingWorkflow")
 	defer span.End()
 
@@ -89,7 +87,7 @@ func InitProcessingWorkflow(ctx context.Context, tr trace.Tracer, c temporalsdk_
 
 	opts := temporalsdk_client.StartWorkflowOptions{
 		ID:                    req.WorkflowID,
-		TaskQueue:             taskQueue,
+		TaskQueue:             pipeline.TaskQueueName(req.PipelineName),
 		WorkflowIDReusePolicy: temporalsdk_api_enums.WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE,
 	}
 	_, err := c.ExecuteWorkflow(ctx, opts, ProcessingWorkflowName, req)

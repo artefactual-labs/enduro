@@ -286,27 +286,7 @@ func (w *ProcessingWorkflow) Execute(ctx temporalsdk_workflow.Context, req *coll
 		}
 	}
 
-	// Randomly choose the pipeline from the list of names provided. If the
-	// list is empty then choose one from the list of all configured pipelines.
-	{
-		var pick string
-		if err := temporalsdk_workflow.SideEffect(ctx, func(ctx temporalsdk_workflow.Context) interface{} {
-			names := req.PipelineNames
-			if len(names) < 1 {
-				names = w.pipelineRegistry.Names()
-				if len(names) < 1 {
-					return ""
-				}
-			}
-			src := rand.NewSource(time.Now().UnixNano())
-			rnd := rand.New(src) // #nosec G404 -- not security sensitive.
-			return names[rnd.Intn(len(names))]
-		}).Get(&pick); err != nil {
-			return err
-		}
-
-		tinfo.PipelineName = pick
-	}
+	tinfo.PipelineName = req.PipelineName
 
 	// Load pipeline configuration and hooks.
 	{
@@ -705,4 +685,19 @@ func (w *ProcessingWorkflow) transfer(sessCtx temporalsdk_workflow.Context, tinf
 	}
 
 	return nil
+}
+
+// RandomPipeline will randomly choose the pipeline from the list of names provided. If the
+// list is empty then choose one from the list of all configured pipelines.
+func RandomPipeline(pipelineNames []string, registry *pipeline.Registry) string {
+	names := pipelineNames
+	if len(names) < 1 {
+		names = registry.Names()
+		if len(names) < 1 {
+			return ""
+		}
+	}
+	src := rand.NewSource(time.Now().UnixNano())
+	rnd := rand.New(src) // #nosec G404 -- not security sensitive.
+	return names[rnd.Intn(len(names))]
 }
