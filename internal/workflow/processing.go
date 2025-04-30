@@ -687,7 +687,7 @@ func (w *ProcessingWorkflow) transfer(sessCtx temporalsdk_workflow.Context, tinf
 	return nil
 }
 
-// RandomPipeline  will randomly choose the pipeline from the list of names provided. If the
+// RandomPipeline will randomly choose the pipeline from the list of names provided. If the
 // list is empty then choose one from the list of all configured pipelines.
 func RandomPipeline(pipelineNames []string, registry *pipeline.Registry) string {
 	names := pipelineNames

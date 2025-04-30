@@ -263,7 +263,7 @@ func main() {
 			logger.Error(errors.New("Pipeline not active"), "Cannot create worker and task queue for inactive pipeline")
 			continue
 		}
-		RegisterWorker(
+		registerWorker(
 			p.TaskQueue,
 			temporalClient,
 			pipelineRegistry,
@@ -272,10 +272,10 @@ func main() {
 			wsvc,
 			batchsvc,
 			logger,
-			g,
+			&g,
 		)
 	}
-	RegisterWorker(
+	registerWorker(
 		config.Temporal.TaskQueue,
 		temporalClient,
 		pipelineRegistry,
@@ -284,7 +284,7 @@ func main() {
 		wsvc,
 		batchsvc,
 		logger,
-		g,
+		&g,
 	)
 
 	// Observability server.
@@ -490,7 +490,7 @@ func initTracerProvider(ctx context.Context, logger logr.Logger, cfg TelemetryCo
 	return tp, shutdown, nil
 }
 
-func RegisterWorker(
+func registerWorker(
 	taskQueue string,
 	temporalClient temporalsdk_client.Client,
 	pipelineRegistry *pipeline.Registry,
@@ -499,58 +499,56 @@ func RegisterWorker(
 	wsvc watcher.Service,
 	batchsvc batch.Service,
 	logger logr.Logger,
-	g run.Group,
+	g *run.Group,
 ) {
 	// Workflow and activity worker.
-	{
-		h := hooks.NewHooks(config.Hooks)
+	h := hooks.NewHooks(config.Hooks)
 
-		done := make(chan struct{})
-		w := temporalsdk_worker.New(temporalClient, taskQueue, temporalsdk_worker.Options{
-			EnableSessionWorker:                    true,
-			MaxConcurrentSessionExecutionSize:      config.Worker.MaxConcurrentSessionExecutionSize,
-			MaxConcurrentWorkflowTaskExecutionSize: config.Worker.MaxConcurrentWorkflowsExecutionsSize,
-			MaxHeartbeatThrottleInterval:           config.Worker.HeartbeatThrottleInterval,
-			DefaultHeartbeatThrottleInterval:       config.Worker.HeartbeatThrottleInterval,
-		})
+	done := make(chan struct{})
+	w := temporalsdk_worker.New(temporalClient, taskQueue, temporalsdk_worker.Options{
+		EnableSessionWorker:                    true,
+		MaxConcurrentSessionExecutionSize:      config.Worker.MaxConcurrentSessionExecutionSize,
+		MaxConcurrentWorkflowTaskExecutionSize: config.Worker.MaxConcurrentWorkflowsExecutionsSize,
+		MaxHeartbeatThrottleInterval:           config.Worker.HeartbeatThrottleInterval,
+		DefaultHeartbeatThrottleInterval:       config.Worker.HeartbeatThrottleInterval,
+	})
 
-		w.RegisterWorkflowWithOptions(workflow.NewProcessingWorkflow(h, colsvc, pipelineRegistry, logger, config.Workflow).Execute, temporalsdk_workflow.RegisterOptions{Name: collection.ProcessingWorkflowName})
-		w.RegisterActivityWithOptions(activities.NewAcquirePipelineActivity(pipelineRegistry).Execute, temporalsdk_activity.RegisterOptions{Name: activities.AcquirePipelineActivityName})
-		w.RegisterActivityWithOptions(activities.NewDownloadActivity(h, pipelineRegistry, wsvc).Execute, temporalsdk_activity.RegisterOptions{Name: activities.DownloadActivityName})
-		w.RegisterActivityWithOptions(archive.NewExtractActivity(config.ExtractActivity).Execute, temporalsdk_activity.RegisterOptions{Name: archive.ExtractActivityName})
-		w.RegisterActivityWithOptions(activities.NewBundleActivity().Execute, temporalsdk_activity.RegisterOptions{Name: activities.BundleActivityName})
-		w.RegisterActivityWithOptions(activities.NewValidateTransferActivity().Execute, temporalsdk_activity.RegisterOptions{Name: activities.ValidateTransferActivityName})
-		w.RegisterActivityWithOptions(activities.NewTransferActivity(pipelineRegistry).Execute, temporalsdk_activity.RegisterOptions{Name: activities.TransferActivityName})
-		w.RegisterActivityWithOptions(activities.NewPollTransferActivity(pipelineRegistry).Execute, temporalsdk_activity.RegisterOptions{Name: activities.PollTransferActivityName})
-		w.RegisterActivityWithOptions(activities.NewPollIngestActivity(pipelineRegistry).Execute, temporalsdk_activity.RegisterOptions{Name: activities.PollIngestActivityName})
-		w.RegisterActivityWithOptions(activities.NewCleanUpActivity().Execute, temporalsdk_activity.RegisterOptions{Name: activities.CleanUpActivityName})
-		w.RegisterActivityWithOptions(activities.NewHidePackageActivity(pipelineRegistry).Execute, temporalsdk_activity.RegisterOptions{Name: activities.HidePackageActivityName})
-		w.RegisterActivityWithOptions(activities.NewDeleteOriginalActivity(wsvc).Execute, temporalsdk_activity.RegisterOptions{Name: activities.DeleteOriginalActivityName})
-		w.RegisterActivityWithOptions(activities.NewDisposeOriginalActivity(wsvc).Execute, temporalsdk_activity.RegisterOptions{Name: activities.DisposeOriginalActivityName})
-		w.RegisterActivityWithOptions(activities.NewPopulateMetadataActivity(pipelineRegistry).Execute, temporalsdk_activity.RegisterOptions{Name: activities.PopulateMetadataActivityName})
+	w.RegisterWorkflowWithOptions(workflow.NewProcessingWorkflow(h, colsvc, pipelineRegistry, logger, config.Workflow).Execute, temporalsdk_workflow.RegisterOptions{Name: collection.ProcessingWorkflowName})
+	w.RegisterActivityWithOptions(activities.NewAcquirePipelineActivity(pipelineRegistry).Execute, temporalsdk_activity.RegisterOptions{Name: activities.AcquirePipelineActivityName})
+	w.RegisterActivityWithOptions(activities.NewDownloadActivity(h, pipelineRegistry, wsvc).Execute, temporalsdk_activity.RegisterOptions{Name: activities.DownloadActivityName})
+	w.RegisterActivityWithOptions(archive.NewExtractActivity(config.ExtractActivity).Execute, temporalsdk_activity.RegisterOptions{Name: archive.ExtractActivityName})
+	w.RegisterActivityWithOptions(activities.NewBundleActivity().Execute, temporalsdk_activity.RegisterOptions{Name: activities.BundleActivityName})
+	w.RegisterActivityWithOptions(activities.NewValidateTransferActivity().Execute, temporalsdk_activity.RegisterOptions{Name: activities.ValidateTransferActivityName})
+	w.RegisterActivityWithOptions(activities.NewTransferActivity(pipelineRegistry).Execute, temporalsdk_activity.RegisterOptions{Name: activities.TransferActivityName})
+	w.RegisterActivityWithOptions(activities.NewPollTransferActivity(pipelineRegistry).Execute, temporalsdk_activity.RegisterOptions{Name: activities.PollTransferActivityName})
+	w.RegisterActivityWithOptions(activities.NewPollIngestActivity(pipelineRegistry).Execute, temporalsdk_activity.RegisterOptions{Name: activities.PollIngestActivityName})
+	w.RegisterActivityWithOptions(activities.NewCleanUpActivity().Execute, temporalsdk_activity.RegisterOptions{Name: activities.CleanUpActivityName})
+	w.RegisterActivityWithOptions(activities.NewHidePackageActivity(pipelineRegistry).Execute, temporalsdk_activity.RegisterOptions{Name: activities.HidePackageActivityName})
+	w.RegisterActivityWithOptions(activities.NewDeleteOriginalActivity(wsvc).Execute, temporalsdk_activity.RegisterOptions{Name: activities.DeleteOriginalActivityName})
+	w.RegisterActivityWithOptions(activities.NewDisposeOriginalActivity(wsvc).Execute, temporalsdk_activity.RegisterOptions{Name: activities.DisposeOriginalActivityName})
+	w.RegisterActivityWithOptions(activities.NewPopulateMetadataActivity(pipelineRegistry).Execute, temporalsdk_activity.RegisterOptions{Name: activities.PopulateMetadataActivityName})
 
-		w.RegisterActivityWithOptions(workflow.NewAsyncCompletionActivity(colsvc).Execute, temporalsdk_activity.RegisterOptions{Name: workflow.AsyncCompletionActivityName})
-		w.RegisterActivityWithOptions(nha_activities.NewUpdateHARIActivity(h).Execute, temporalsdk_activity.RegisterOptions{Name: nha_activities.UpdateHARIActivityName})
-		w.RegisterActivityWithOptions(nha_activities.NewUpdateProductionSystemActivity(h).Execute, temporalsdk_activity.RegisterOptions{Name: nha_activities.UpdateProductionSystemActivityName})
+	w.RegisterActivityWithOptions(workflow.NewAsyncCompletionActivity(colsvc).Execute, temporalsdk_activity.RegisterOptions{Name: workflow.AsyncCompletionActivityName})
+	w.RegisterActivityWithOptions(nha_activities.NewUpdateHARIActivity(h).Execute, temporalsdk_activity.RegisterOptions{Name: nha_activities.UpdateHARIActivityName})
+	w.RegisterActivityWithOptions(nha_activities.NewUpdateProductionSystemActivity(h).Execute, temporalsdk_activity.RegisterOptions{Name: nha_activities.UpdateProductionSystemActivityName})
 
-		w.RegisterWorkflowWithOptions(collection.BulkWorkflow, temporalsdk_workflow.RegisterOptions{Name: collection.BulkWorkflowName})
-		w.RegisterActivityWithOptions(collection.NewBulkActivity(colsvc).Execute, temporalsdk_activity.RegisterOptions{Name: collection.BulkActivityName})
+	w.RegisterWorkflowWithOptions(collection.BulkWorkflow, temporalsdk_workflow.RegisterOptions{Name: collection.BulkWorkflowName})
+	w.RegisterActivityWithOptions(collection.NewBulkActivity(colsvc).Execute, temporalsdk_activity.RegisterOptions{Name: collection.BulkActivityName})
 
-		w.RegisterWorkflowWithOptions(batch.BatchWorkflow, temporalsdk_workflow.RegisterOptions{Name: batch.BatchWorkflowName})
-		w.RegisterActivityWithOptions(batch.NewBatchActivity(batchsvc).Execute, temporalsdk_activity.RegisterOptions{Name: batch.BatchActivityName})
+	w.RegisterWorkflowWithOptions(batch.BatchWorkflow, temporalsdk_workflow.RegisterOptions{Name: batch.BatchWorkflowName})
+	w.RegisterActivityWithOptions(batch.NewBatchActivity(batchsvc).Execute, temporalsdk_activity.RegisterOptions{Name: batch.BatchActivityName})
 
-		g.Add(
-			func() error {
-				if err := w.Start(); err != nil {
-					return err
-				}
-				<-done
-				return nil
-			},
-			func(err error) {
-				w.Stop()
-				close(done)
-			},
-		)
-	}
+	g.Add(
+		func() error {
+			if err := w.Start(); err != nil {
+				return err
+			}
+			<-done
+			return nil
+		},
+		func(err error) {
+			w.Stop()
+			close(done)
+		},
+	)
 }
