@@ -22,7 +22,7 @@
         {
             "name": "gotestsum",
             "url": "https://github.com/gotestyourself/gotestsum",
-            "version": "1.11.0",
+            "version": "1.12.2",
             "asset_pattern": "{name}_{version}_{goos}_{goarch}.tar.gz"
         },
         {
