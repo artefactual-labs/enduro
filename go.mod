@@ -38,7 +38,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.24.0
 	go.temporal.io/api v1.32.0
 	go.temporal.io/sdk v1.26.1
-	go.uber.org/mock v0.4.0
+	go.uber.org/mock v0.5.2
 	goa.design/goa/v3 v3.13.2
 	goa.design/plugins/v3 v3.13.2
 	gocloud.dev v0.37.0
