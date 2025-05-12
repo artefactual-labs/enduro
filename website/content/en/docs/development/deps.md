@@ -8,7 +8,9 @@ description: >
 
 ## Go
 
-The version of Go used by this projected is determined in [`.go-version`](https://github.com/artefactual-labs/enduro/blob/main/.go-version).
+The version of Go used by this project is specified in the `go.mod` file.
+
+`.go-version` is used by the Netlify project.
 
 ## Go modules
 
