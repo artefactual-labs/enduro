@@ -6,19 +6,14 @@ on:
 name: Test
 jobs:
   test:
-    strategy:
-      fail-fast: false
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Read Go version
-        id: go_version
-        run: echo "go_version=$(cat .go-version)" >> $GITHUB_OUTPUT
-      - name: Install Go (${{ steps.go_version.outputs.go_version }})
+      - name: Install Go
         uses: actions/setup-go@v5
         with:
-          go-version: ${{ steps.go_version.outputs.go_version }}
+          go-version-file: go.mod
       - name: Test
         run: make test-ci
       - name: Upload coverage to Codecov
