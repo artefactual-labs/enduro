@@ -39,7 +39,7 @@
         {
             "name": "mockgen",
             "go_package": "go.uber.org/mock/mockgen",
-            "version": "0.3.0"
+            "version": "0.5.2"
         },
         {
             "name": "temporal-cli",
