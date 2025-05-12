@@ -9,11 +9,21 @@ on:
 jobs:
   govulncheck:
     name: Go vulnerability check
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: Check out code
         uses: actions/checkout@v4
       - name: Run govulncheck
         uses: golang/govulncheck-action@v1
         with:
           go-version-file: go.mod
+  gosec:
+    name: GoSec security scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+      - name: Scan code
+        uses: securego/gosec@master
+        with:
+          args: ./...
