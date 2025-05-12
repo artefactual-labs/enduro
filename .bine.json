@@ -10,7 +10,7 @@
         {
             "name": "goreleaser",
             "url": "https://github.com/goreleaser/goreleaser",
-            "version": "1.21.1",
+            "version": "2.9.0",
             "asset_pattern": "{name}_{os}_{arch}.tar.gz"
         },
         {
