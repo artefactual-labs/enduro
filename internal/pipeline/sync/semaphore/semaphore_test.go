@@ -22,7 +22,7 @@ const maxSleep = 1 * time.Millisecond
 func HammerWeighted(sem *semaphore.Weighted, n int64, loops int) {
 	for range loops {
 		sem.Acquire(context.Background(), n)
-		time.Sleep(time.Duration(rand.Int63n(int64(maxSleep/time.Nanosecond))) * time.Nanosecond)
+		time.Sleep(time.Duration(rand.Int63n(int64(maxSleep/time.Nanosecond))) * time.Nanosecond) //nolint: gosec
 		sem.Release(n)
 	}
 }

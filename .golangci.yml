@@ -2,6 +2,7 @@ version: "2"
 linters:
   default: standard
   enable:
+    - gosec
     - importas
     - intrange
     - misspell
@@ -14,6 +15,15 @@ linters:
           alias: temporalapi_$1
       no-unaliased: true
       no-extra-aliases: false
+    gosec:
+      # TODO: these must be put back again.
+      # They were excluded during the migration to golangci-lint.
+      excludes:
+        - G104
+        - G115
+        - G301
+        - G302
+        - G304
   exclusions:
     warn-unused: true
     generated: lax

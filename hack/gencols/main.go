@@ -55,7 +55,7 @@ func main() {
 }
 
 func pipeline() string {
-	return pipelineIDs[rand.Intn(pipelinesCount)]
+	return pipelineIDs[rand.Intn(pipelinesCount)] //nolint: gosec
 }
 
 func id() string {
