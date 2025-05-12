@@ -104,13 +104,9 @@ clean: # @HELP Cleans temporary files.
 clean:
 	rm -rf ./build ./dist
 
-release-test-config: # @HELP Tests the goreleaser config.
-release-test-config: tool-goreleaser
-	goreleaser --snapshot --skip-publish --clean
-
-release-test: # @HELP Tests the release with goreleaser.
-release-test: tool-goreleaser
-	goreleaser --skip-publish
+release-build: # @HELP Generate the release build with GoReleaser.
+release-build: tool-goreleaser
+	goreleaser build --clean --auto-snapshot
 
 website: # @HELP Serves the website for development.
 website: tool-hugo
