@@ -1,6 +1,7 @@
 /.env
 /build
 /covreport
+/junit.xml
 /dist
 /enduro
 
