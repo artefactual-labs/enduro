@@ -14,18 +14,6 @@ else
     MAKEFLAGS += -s
 endif
 
-include hack/make/bootstrap.mk
-include hack/make/dep_goa.mk
-include hack/make/dep_golangci_lint.mk
-include hack/make/dep_gomajor.mk
-include hack/make/dep_goreleaser.mk
-include hack/make/dep_gotestsum.mk
-include hack/make/dep_hugo.mk
-include hack/make/dep_jq.mk
-include hack/make/dep_mockgen.mk
-include hack/make/dep_temporal_cli.mk
-
-
 define NEWLINE
 
 
@@ -45,7 +33,10 @@ PACKAGES := $(shell go list ./...)
 TEST_PACKAGES := $(filter-out $(IGNORED_PACKAGES),$(PACKAGES))
 TEST_IGNORED_PACKAGES := $(filter $(IGNORED_PACKAGES),$(PACKAGES))
 
-export PATH:=$(GOBIN):$(PATH)
+# Configure bine.
+export PATH := $(shell go tool bine path):$(PATH)
+tool-%:
+	@go tool bine get $* 1> /dev/null
 
 run: # @HELP Builds and run the enduro binary.
 run: build
@@ -61,14 +52,14 @@ build:
 	mkdir -p ./build
 	$(GO) build -trimpath -o build/enduro $(GO_FLAGS) -v
 
-deps: $(GOMAJOR) # @HELP Lists available module dependency updates.
-	gomajor list
+deps: tool-go-mod-outdated # @HELP Lists available module dependency updates.
+	go list -u -m -json all | go-mod-outdated -update -direct
 
 test: # @HELP Run all tests and output a summary using gotestsum.
 test: TFORMAT ?= short
 test: GOTEST_FLAGS ?=
 test: COMBINED_FLAGS ?= $(GOTEST_FLAGS) $(TEST_PACKAGES)
-test: $(GOTESTSUM)
+test: tool-gotestsum
 	gotestsum --format=$(TFORMAT) -- $(COMBINED_FLAGS)
 
 test-race: # @HELP Run all tests with the race detector.
@@ -88,21 +79,21 @@ list-ignored-packages:
 	$(foreach PACKAGE,$(TEST_IGNORED_PACKAGES),@echo $(PACKAGE)$(NEWLINE))
 
 fmt: # @HELP Formats the code using golangci-lint.
-fmt: $(GOLANGCI_LINT)
+fmt: tool-golangci-lint
 	golangci-lint fmt -v
 
 lint: # @HELP Lints the code using golangci-lint.
-lint: $(GOLANGCI_LINT)
+lint: tool-golangci-lint
 	golangci-lint run -v --fix
 
 gen-goa: # @HELP Generates Goa assets.
-gen-goa: $(GOA)
+gen-goa: tool-goa
 	goa gen github.com/artefactual-labs/enduro/internal/api/design -o internal/api
 	@$(MAKE) gen-goa-json-pretty
 
 gen-goa-json-pretty: goa_http_dir = "internal/api/gen/http"
 gen-goa-json-pretty: json_files = $(shell find $(goa_http_dir) -type f -name "*.json" | sort -u)
-gen-goa-json-pretty: $(JQ)
+gen-goa-json-pretty: tool-jq
 	@for f in $(json_files); \
 		do (cat "$$f" | jq -S '.' >> "$$f".sorted && mv "$$f".sorted "$$f") \
 			&& echo "Formatting $$f with jq" || exit 1; \
@@ -113,15 +104,15 @@ clean:
 	rm -rf ./build ./dist
 
 release-test-config: # @HELP Tests the goreleaser config.
-release-test-config: $(GORELEASER)
+release-test-config: tool-goreleaser
 	goreleaser --snapshot --skip-publish --clean
 
 release-test: # @HELP Tests the release with goreleaser.
-release-test: $(GORELEASER)
+release-test: tool-goreleaser
 	goreleaser --skip-publish
 
 website: # @HELP Serves the website for development.
-website: $(HUGO)
+website: tool-hugo
 	hugo serve --source=website/
 
 ui: # @HELP Builds the UI.
@@ -156,7 +147,7 @@ flush:
 	docker compose exec --user=root mysql mysql -hlocalhost -uroot -proot123 -e "create database enduro"
 
 gen-mock: # @HELP Generates mocks with mockgen.
-gen-mock: $(MOCKGEN)
+gen-mock: tool-mockgen
 	mockgen -typed -destination=./internal/batch/fake/mock_batch.go -package=fake github.com/artefactual-labs/enduro/internal/batch Service
 	mockgen -typed -destination=./internal/collection/fake/mock_collection.go -package=fake github.com/artefactual-labs/enduro/internal/collection Service
 	mockgen -typed -destination=./internal/pipeline/fake/mock_pipeline.go -package=fake github.com/artefactual-labs/enduro/internal/pipeline Service
@@ -166,8 +157,8 @@ gen-mock: $(MOCKGEN)
 temporal: # @HELP Runs a development instance of Temporal.
 temporal: PORT := 55555
 temporal: LOG_LEVEL := warn
-temporal: $(TEMPORAL_CLI)
-	temporal server start-dev --namespace=default --port=$(PORT) --headless --log-format=pretty --log-level=$(LOG_LEVEL)
+temporal: tool-temporal-cli
+	temporal-cli server start-dev --namespace=default --port=$(PORT) --headless --log-format=pretty --log-level=$(LOG_LEVEL)
 
 help: # @HELP Prints this message.
 	echo "TARGETS:"
