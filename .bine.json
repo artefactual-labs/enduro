@@ -33,7 +33,7 @@
         {
             "name": "hugo",
             "url": "https://github.com/gohugoio/hugo",
-            "version": "0.125.5",
+            "version": "0.147.2",
             "asset_pattern": "{name}_extended_{version}_{goos}-{goarch}.tar.gz"
         },
         {
