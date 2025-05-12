@@ -62,8 +62,8 @@ func (a *TransferActivity) Execute(ctx context.Context, params *TransferActivity
 	})
 	if err != nil {
 		if httpResp != nil {
-			switch {
-			case httpResp.StatusCode == http.StatusForbidden:
+			switch httpResp.StatusCode {
+			case http.StatusForbidden:
 				return nil, temporal.NewNonRetryableError(fmt.Errorf("authentication error: %v", err))
 			}
 		}

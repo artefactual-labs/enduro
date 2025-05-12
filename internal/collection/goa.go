@@ -426,7 +426,7 @@ func (w *goaWrapper) Bulk(ctx context.Context, payload *goacollection.BulkPayloa
 	opts := temporalsdk_client.StartWorkflowOptions{
 		ID:                       BulkWorkflowID,
 		WorkflowIDReusePolicy:    temporalapi_enums.WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE,
-		TaskQueue:                w.collectionImpl.taskQueue,
+		TaskQueue:                w.taskQueue,
 		WorkflowExecutionTimeout: time.Hour,
 	}
 	exec, err := w.cc.ExecuteWorkflow(ctx, opts, BulkWorkflowName, input)

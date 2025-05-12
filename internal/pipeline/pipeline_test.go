@@ -46,7 +46,7 @@ func TestPipelineSemaphore(t *testing.T) {
 			assert.Equal(t, err, nil)
 		}()
 
-		for i := 0; i < 10; i++ {
+		for range 10 {
 			p.Release()
 		}
 	})
@@ -56,7 +56,7 @@ func TestPipelineSemaphore(t *testing.T) {
 
 		p, _ := NewPipeline(logr.Discard(), Config{Capacity: 3})
 
-		for i := 0; i < 50; i++ {
+		for range 50 {
 			p.Release()
 		}
 

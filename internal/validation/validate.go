@@ -44,7 +44,7 @@ func (v ChecksumExistsValidator) Valid() error {
 			return nil
 		}
 	}
-	return fmt.Errorf("Transfer does not contain checksums (path=%s)", v.path)
+	return fmt.Errorf("transfer does not contain checksums (path=%s)", v.path)
 }
 
 func fileExists(name string) bool {

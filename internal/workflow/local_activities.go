@@ -82,7 +82,7 @@ func setStatusInProgressLocalActivity(ctx context.Context, colsvc collection.Ser
 	return colsvc.SetStatusInProgress(ctx, colID, startedAt)
 }
 
-//nolint:deadcode,unused
+//nolint:unused
 func setStatusLocalActivity(ctx context.Context, colsvc collection.Service, colID uint, status collection.Status) error {
 	return colsvc.SetStatus(ctx, colID, status)
 }

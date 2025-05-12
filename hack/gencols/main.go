@@ -7,7 +7,6 @@ import (
 	"math/rand"
 	"os"
 	"strconv"
-	"time"
 
 	"github.com/google/uuid"
 )
@@ -36,8 +35,6 @@ var pipelineIDs []string = []string{
 var pipelinesCount int = len(pipelineIDs)
 
 func main() {
-	rand.Seed(time.Now().UnixNano())
-
 	w := csv.NewWriter(os.Stdout)
 	var c int
 	for {

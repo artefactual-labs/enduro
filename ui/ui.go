@@ -12,10 +12,11 @@ import (
 // Assets contains the web front-end static assets.
 //
 // Some valid accessors:
-//  dist [dir]
-//  dist/assets [dir]
-//  dist/index.html [file]
-//  dist/favicon.ico [file]
+//
+//	dist [dir]
+//	dist/assets [dir]
+//	dist/index.html [file]
+//	dist/favicon.ico [file]
 //
 //go:embed dist/*
 var Assets embed.FS

@@ -42,7 +42,7 @@ func readIdentifiers(path string) (TransferIdentifiers, error) {
 
 // readIdentifier returns the specified identifier found in the given transfer
 // path. file matching uses case-insensitive suffix matching.
-func readIdentifier(path string, fileSuffix string, idtype string) (string, error) {
+func readIdentifier(path, fileSuffix, idtype string) (string, error) {
 	identifiers, err := readIdentifiers(path)
 	if err != nil {
 		return "", fmt.Errorf("error reading identifier: %v", err)

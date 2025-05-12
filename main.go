@@ -260,7 +260,7 @@ func main() {
 		if p.Status(ctx) == "active" {
 			logger.Info("Creating worker and task queue", "Pipeline", p.TaskQueue)
 		} else {
-			logger.Error(errors.New("Pipeline not active"), "Cannot create worker and task queue for inactive pipeline")
+			logger.Error(errors.New("pipeline not active"), "Cannot create worker and task queue for inactive pipeline.")
 			continue
 		}
 		registerWorker(
