@@ -56,11 +56,12 @@ deps: tool-go-mod-outdated # @HELP Lists available module dependency updates.
 	go list -u -m -json all | go-mod-outdated -update -direct
 
 test: # @HELP Run all tests and output a summary using gotestsum.
-test: TFORMAT ?= short
+test: TFORMAT ?= testdox
+test: GOTESTSUM_FLAGS ?=
 test: GOTEST_FLAGS ?=
 test: COMBINED_FLAGS ?= $(GOTEST_FLAGS) $(TEST_PACKAGES)
 test: tool-gotestsum
-	gotestsum --format=$(TFORMAT) -- $(COMBINED_FLAGS)
+	gotestsum --format=$(TFORMAT) $(GOTESTSUM_FLAGS) -- $(COMBINED_FLAGS)
 
 test-race: # @HELP Run all tests with the race detector.
 test-race:
@@ -68,7 +69,7 @@ test-race:
 
 test-ci: # @HELP Run all tests in CI with coverage and the race detector.
 test-ci:
-	$(MAKE) test GOTEST_FLAGS="-race -coverprofile=covreport -covermode=atomic"
+	$(MAKE) test GOTESTSUM_FLAGS="--junitfile=junit.xml" GOTEST_FLAGS="-race -coverprofile=covreport -covermode=atomic"
 
 list-tested-packages: # @HELP Print a list of packages being tested.
 list-tested-packages:
