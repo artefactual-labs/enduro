@@ -1,0 +1,57 @@
+{
+    "project": "enduro",
+    "bins": [
+        {
+            "name": "golangci-lint",
+            "url": "https://github.com/golangci/golangci-lint",
+            "version": "2.1.6",
+            "asset_pattern": "{name}-{version}-{goos}-{goarch}.tar.gz"
+        },
+        {
+            "name": "goreleaser",
+            "url": "https://github.com/goreleaser/goreleaser",
+            "version": "1.21.1",
+            "asset_pattern": "{name}_{os}_{arch}.tar.gz"
+        },
+        {
+            "name": "go-mod-outdated",
+            "url": "https://github.com/psampaz/go-mod-outdated",
+            "version": "0.9.0",
+            "asset_pattern": "{name}_{version}_{os}_{arch}.tar.gz"
+        },
+        {
+            "name": "gotestsum",
+            "url": "https://github.com/gotestyourself/gotestsum",
+            "version": "1.11.0",
+            "asset_pattern": "{name}_{version}_{goos}_{goarch}.tar.gz"
+        },
+        {
+            "name": "goa",
+            "go_package": "goa.design/goa/v3/cmd/goa",
+            "version": "3.13.2"
+        },
+        {
+            "name": "hugo",
+            "url": "https://github.com/gohugoio/hugo",
+            "version": "0.125.5",
+            "asset_pattern": "{name}_extended_{version}_{goos}-{goarch}.tar.gz"
+        },
+        {
+            "name": "mockgen",
+            "go_package": "go.uber.org/mock/mockgen",
+            "version": "0.3.0"
+        },
+        {
+            "name": "temporal-cli",
+            "url": "https://github.com/temporalio/cli",
+            "version": "0.10.6",
+            "asset_pattern": "temporal_cli_{version}_{goos}_{goarch}.tar.gz"
+        },
+        {
+            "name": "jq",
+            "url": "https://github.com/jqlang/jq",
+            "version": "jq-1.7.1",
+            "asset_pattern": "{name}-{goos}-{goarch}"
+        }
+    ]
+}
