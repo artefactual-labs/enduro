@@ -136,7 +136,7 @@ func (a *BundleActivity) SingleFile(ctx context.Context, transferDir, key, tempF
 }
 
 // Copy a transfer in the given destination using an intermediate temp. directory.
-func (a *BundleActivity) Copy(ctx context.Context, src, dst string, stripTopLevelDir bool, excludeHiddenFiles bool) (string, string, error) {
+func (a *BundleActivity) Copy(ctx context.Context, src, dst string, stripTopLevelDir, excludeHiddenFiles bool) (string, string, error) {
 	const prefix = "enduro"
 	tempDir, err := os.MkdirTemp(dst, prefix)
 	if err != nil {

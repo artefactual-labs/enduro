@@ -1,38 +1,44 @@
-run:
-  deadline: 60s
-  skip-dirs:
-    - hack
-    - website
-    - ui
-
+version: "2"
 linters:
+  default: standard
   enable:
-    - misspell
-    - gofumpt
     - importas
+    - intrange
+    - misspell
+  settings:
+    importas:
+      alias:
+        - pkg: go.temporal.io/sdk/(\w+)
+          alias: temporalsdk_$1
+        - pkg: go.temporal.io/api/(\w+)
+          alias: temporalapi_$1
+      no-unaliased: true
+      no-extra-aliases: false
+  exclusions:
+    warn-unused: true
+    generated: lax
+    presets:
+      - std-error-handling
+    rules:
+      - linters: [errcheck]
+        path: _test\.go
+      - linters: [staticcheck]
+        path: internal/api/design
+        text: "ST1001: " # dot imports are allowed in goa design files.
+formatters:
+  enable:
     - gci
-
-issues:
-  exclude-rules:
-    - path: _test\.go
-      linters:
-        - errcheck
-
-linters-settings:
-  gci:
-    no-inline-comments: true
-    no-prefix-comments: false
-    sections:
-      - standard
-      - default
-      - prefix(github.com/artefactual-labs/enduro)
-    section-separators:
-      - newLine
-  importas:
-    no-unaliased: true
-    no-extra-aliases: false
-    alias:
-      - pkg: go.temporal.io/sdk/(\w+)
-        alias: temporalsdk_$1
-      - pkg: go.temporal.io/api/(\w+)
-        alias: temporalapi_$1
+    - gofumpt
+  settings:
+    gci:
+      sections:
+        - standard
+        - default
+        - localmodule
+      no-inline-comments: true
+      no-prefix-comments: false
+    gofumpt:
+      extra-rules: true
+  exclusions:
+    warn-unused: true
+    generated: lax

@@ -56,26 +56,26 @@ func HTTPServer(
 	}
 
 	// Pipeline service.
-	var pipelineEndpoints *pipeline.Endpoints = pipeline.NewEndpoints(pipesvc)
+	pipelineEndpoints := pipeline.NewEndpoints(pipesvc)
 	pipelineErrorHandler := errorHandler(logger, "Pipeline error.")
-	var pipelineServer *pipelinesvr.Server = pipelinesvr.New(pipelineEndpoints, mux, dec, enc, pipelineErrorHandler, nil)
+	pipelineServer := pipelinesvr.New(pipelineEndpoints, mux, dec, enc, pipelineErrorHandler, nil)
 	pipelinesvr.Mount(mux, pipelineServer)
 
 	// Batch service.
-	var batchEndpoints *batch.Endpoints = batch.NewEndpoints(batchsvc)
+	batchEndpoints := batch.NewEndpoints(batchsvc)
 	batchErrorHandler := errorHandler(logger, "Batch error.")
-	var batchServer *batchsvr.Server = batchsvr.New(batchEndpoints, mux, dec, enc, batchErrorHandler, nil)
+	batchServer := batchsvr.New(batchEndpoints, mux, dec, enc, batchErrorHandler, nil)
 	batchsvr.Mount(mux, batchServer)
 
 	// Collection service.
-	var collectionEndpoints *collection.Endpoints = collection.NewEndpoints(colsvc.Goa())
+	collectionEndpoints := collection.NewEndpoints(colsvc.Goa())
 	collectionErrorHandler := errorHandler(logger, "Collection error.")
-	var collectionServer *collectionsvr.Server = collectionsvr.New(collectionEndpoints, mux, dec, enc, collectionErrorHandler, nil, websocketUpgrader, nil)
+	collectionServer := collectionsvr.New(collectionEndpoints, mux, dec, enc, collectionErrorHandler, nil, websocketUpgrader, nil)
 	collectionServer.Download = writeTimeout(collectionServer.Download, 0)
 	collectionsvr.Mount(mux, collectionServer)
 
 	// Swagger service.
-	var swaggerService *swaggersvr.Server = swaggersvr.New(nil, nil, nil, nil, nil, nil, nil)
+	swaggerService := swaggersvr.New(nil, nil, nil, nil, nil, nil, nil)
 	swaggersvr.Mount(mux, swaggerService)
 
 	// Web handler.

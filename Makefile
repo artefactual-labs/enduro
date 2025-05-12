@@ -96,9 +96,13 @@ list-ignored-packages: # @HELP Print a list of packages ignored in testing.
 list-ignored-packages:
 	$(foreach PACKAGE,$(TEST_IGNORED_PACKAGES),@echo $(PACKAGE)$(NEWLINE))
 
+fmt: # @HELP Formats the code using golangci-lint.
+fmt: $(GOLANGCI_LINT)
+	golangci-lint fmt -v
+
 lint: # @HELP Lints the code using golangci-lint.
 lint: $(GOLANGCI_LINT)
-	golangci-lint run -v --timeout=5m --fix
+	golangci-lint run -v --fix
 
 gen-goa: # @HELP Generates Goa assets.
 gen-goa: $(GOA)

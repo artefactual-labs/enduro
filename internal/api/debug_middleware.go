@@ -43,7 +43,7 @@ func debug(mux goahttp.Muxer, w io.Writer) func(http.Handler) http.Handler {
 			}
 
 			// Request URL
-			buf.WriteString(fmt.Sprintf("> [%s] %s %s", reqID, r.Method, r.URL.String()))
+			fmt.Fprintf(buf, "> [%s] %s %s", reqID, r.Method, r.URL.String())
 
 			// Request Headers
 			keys := make([]string, len(r.Header))
@@ -54,7 +54,7 @@ func debug(mux goahttp.Muxer, w io.Writer) func(http.Handler) http.Handler {
 			}
 			sort.Strings(keys)
 			for _, k := range keys {
-				buf.WriteString(fmt.Sprintf("\n> [%s] %s: %s", reqID, k, strings.Join(r.Header[k], ", ")))
+				fmt.Fprintf(buf, "\n> [%s] %s: %s", reqID, k, strings.Join(r.Header[k], ", "))
 			}
 
 			// Request parameters
@@ -67,7 +67,7 @@ func debug(mux goahttp.Muxer, w io.Writer) func(http.Handler) http.Handler {
 			}
 			sort.Strings(keys)
 			for _, k := range keys {
-				buf.WriteString(fmt.Sprintf("\n> [%s] %s: %s", reqID, k, params[k]))
+				fmt.Fprintf(buf, "\n> [%s] %s: %s", reqID, k, params[k])
 			}
 
 			// Request body
@@ -79,7 +79,7 @@ func debug(mux goahttp.Muxer, w io.Writer) func(http.Handler) http.Handler {
 				buf.WriteByte('\n')
 				lines := strings.Split(string(b), "\n")
 				for _, line := range lines {
-					buf.WriteString(fmt.Sprintf("[%s] %s\n", reqID, line))
+					fmt.Fprintf(buf, "[%s] %s\n", reqID, line)
 				}
 			}
 			r.Body = io.NopCloser(bytes.NewBuffer(b))
@@ -87,7 +87,7 @@ func debug(mux goahttp.Muxer, w io.Writer) func(http.Handler) http.Handler {
 			dupper := &responseDupper{ResponseWriter: rw, Buffer: &bytes.Buffer{}}
 			h.ServeHTTP(dupper, r)
 
-			buf.WriteString(fmt.Sprintf("\n< [%s] %s", reqID, http.StatusText(dupper.Status)))
+			fmt.Fprintf(buf, "\n< [%s] %s", reqID, http.StatusText(dupper.Status))
 			keys = make([]string, len(dupper.Header()))
 			printResponseBody := true
 			i = 0
@@ -100,13 +100,13 @@ func debug(mux goahttp.Muxer, w io.Writer) func(http.Handler) http.Handler {
 			}
 			sort.Strings(keys)
 			for _, k := range keys {
-				buf.WriteString(fmt.Sprintf("\n< [%s] %s: %s", reqID, k, strings.Join(dupper.Header()[k], ", ")))
+				fmt.Fprintf(buf, "\n< [%s] %s: %s", reqID, k, strings.Join(dupper.Header()[k], ", "))
 			}
 			if printResponseBody {
 				buf.WriteByte('\n')
 				lines := strings.Split(dupper.Buffer.String(), "\n")
 				for _, line := range lines {
-					buf.WriteString(fmt.Sprintf("[%s] %s\n", reqID, line))
+					fmt.Fprintf(buf, "[%s] %s\n", reqID, line)
 				}
 			}
 			buf.WriteByte('\n')

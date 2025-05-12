@@ -274,7 +274,7 @@ type avlRequestTime struct {
 
 func (t avlRequestTime) MarshalJSON() ([]byte, error) {
 	const format = "2006-01-02T15:04:05-07:00"
-	s := fmt.Sprintf("\"%s\"", t.Time.Format(format))
+	s := fmt.Sprintf("\"%s\"", t.Format(format))
 	return []byte(s), nil
 }
 

@@ -98,16 +98,16 @@ func IngestStatus(ctx context.Context, ingestService amclient.IngestService, ID 
 		return fmt.Errorf("error checking ingest status (%w): status is empty", ErrStatusNonRetryable)
 	}
 
-	switch {
+	switch status.Status {
 
 	default:
 		fallthrough
-	case status.Status == "USER_INPUT" || status.Status == "FAILED" || status.Status == "REJECTED":
+	case "USER_INPUT", "FAILED", "REJECTED":
 		// TODO: (not in POC) User interactions with workflow.
 		return fmt.Errorf("error checking ingest status (%w): ingest is in a state that we can't handle: %s", ErrStatusNonRetryable, status.Status)
-	case status.Status == "PROCESSING":
+	case "PROCESSING":
 		return ErrStatusInProgress
-	case status.Status == "COMPLETE":
+	case "COMPLETE":
 		return nil
 
 	}

@@ -17,7 +17,7 @@ func NewHooks(hooks map[string]map[string]interface{}) *Hooks {
 	}
 }
 
-func HookAttr(hooks map[string]map[string]interface{}, hook string, attr string) (interface{}, error) {
+func HookAttr(hooks map[string]map[string]interface{}, hook, attr string) (interface{}, error) {
 	hook = strings.ToLower(hook)
 	attr = strings.ToLower(attr)
 
@@ -34,7 +34,7 @@ func HookAttr(hooks map[string]map[string]interface{}, hook string, attr string)
 	return value, nil
 }
 
-func HookAttrString(hooks map[string]map[string]interface{}, hook string, attr string) (string, error) {
+func HookAttrString(hooks map[string]map[string]interface{}, hook, attr string) (string, error) {
 	accessor := fmt.Sprintf("%s:%s", hook, attr)
 
 	value, err := HookAttr(hooks, hook, attr)
@@ -50,7 +50,7 @@ func HookAttrString(hooks map[string]map[string]interface{}, hook string, attr s
 	return v, nil
 }
 
-func HookAttrBool(hooks map[string]map[string]interface{}, hook string, attr string) (bool, error) {
+func HookAttrBool(hooks map[string]map[string]interface{}, hook, attr string) (bool, error) {
 	accessor := fmt.Sprintf("%s:%s", hook, attr)
 
 	value, err := HookAttr(hooks, hook, attr)

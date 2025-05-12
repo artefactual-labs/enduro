@@ -76,7 +76,7 @@ func (m *MetadataSet) Write() error {
 	// Build a list of fields
 	fields := []string{}
 	for field, o := range occurrences {
-		for i := 0; i < o; i++ {
+		for range o {
 			fields = append(fields, field)
 		}
 	}

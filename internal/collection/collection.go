@@ -19,7 +19,7 @@ type Service interface {
 	Goa() goacollection.Service
 	Create(context.Context, *Collection) error
 	CheckDuplicate(ctx context.Context, id uint) (bool, error)
-	UpdateWorkflowStatus(ctx context.Context, ID uint, name string, workflowID, runID, transferID, aipID, pipelineID string, status Status, storedAt time.Time) error
+	UpdateWorkflowStatus(ctx context.Context, ID uint, name, workflowID, runID, transferID, aipID, pipelineID string, status Status, storedAt time.Time) error
 	SetStatus(ctx context.Context, ID uint, status Status) error
 	SetStatusInProgress(ctx context.Context, ID uint, startedAt time.Time) error
 	SetStatusPending(ctx context.Context, ID uint, taskToken []byte) error
@@ -110,7 +110,7 @@ func publishEvent(ctx context.Context, events EventService, eventType string, id
 	})
 }
 
-func (svc *collectionImpl) UpdateWorkflowStatus(ctx context.Context, ID uint, name string, workflowID, runID, transferID, aipID, pipelineID string, status Status, storedAt time.Time) error {
+func (svc *collectionImpl) UpdateWorkflowStatus(ctx context.Context, ID uint, name, workflowID, runID, transferID, aipID, pipelineID string, status Status, storedAt time.Time) error {
 	// Ensure that storedAt is reset during retries.
 	completedAt := &storedAt
 	if status == StatusInProgress {

@@ -46,7 +46,7 @@ func TestChecksumExistsValidator(t *testing.T) {
 					fs.WithFile("notchecksum.txt", ""),
 				),
 			},
-			errorMessage: "Transfer does not contain checksums",
+			errorMessage: "transfer does not contain checksums",
 		},
 	}
 	for name, tc := range tests {
