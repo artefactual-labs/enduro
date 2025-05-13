@@ -29,8 +29,8 @@
 
 <style lang="scss">
 
-@import 'node_modules/bootstrap/scss/bootstrap';
-@import 'node_modules/bootstrap-vue/src/index.scss';
+@import 'bootstrap/scss/bootstrap';
+@import 'bootstrap-vue/src/index.scss';
 
 #app {
   font-family: 'Avenir', Helvetica, Arial, sans-serif;

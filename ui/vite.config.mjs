@@ -12,11 +12,11 @@ export default {
   css: {
     preprocessorOptions: {
       scss: {
-        additionalData: `@import "src/common/global.scss"; @import "src/common/style.scss";`,
+        additionalData: `@import "@/common/global.scss"; @import "@/common/style.scss";`,
         // Silence deprecation warnings emitted by bootstrap 4.x or our own code.
         // We won't be able to migrate to Dart Sass 3.x unless we deal with these.
         quietDeps: true,
-        silenceDeprecations: ["legacy-js-api", "import", "color-functions", "global-builtin"],
+        silenceDeprecations: ["import", "color-functions", "global-builtin"],
       },
     },
     postcss: {
