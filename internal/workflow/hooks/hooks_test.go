@@ -6,7 +6,7 @@ import (
 	"gotest.tools/v3/assert"
 )
 
-var sampleHooks = map[string]map[string]interface{}{
+var sampleHooks = map[string]map[string]any{
 	"hari": {
 		"baseurl":  "https://192.168.1.50:8080/api",
 		"disabled": false,

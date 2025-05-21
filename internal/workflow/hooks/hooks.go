@@ -7,17 +7,17 @@ import (
 
 // Hooks carries workflow and activity dependencies.
 type Hooks struct {
-	Hooks map[string]map[string]interface{}
+	Hooks map[string]map[string]any
 }
 
 // NewHooks returns a pointer to a new Hooks.
-func NewHooks(hooks map[string]map[string]interface{}) *Hooks {
+func NewHooks(hooks map[string]map[string]any) *Hooks {
 	return &Hooks{
 		Hooks: hooks,
 	}
 }
 
-func HookAttr(hooks map[string]map[string]interface{}, hook, attr string) (interface{}, error) {
+func HookAttr(hooks map[string]map[string]any, hook, attr string) (any, error) {
 	hook = strings.ToLower(hook)
 	attr = strings.ToLower(attr)
 
@@ -34,7 +34,7 @@ func HookAttr(hooks map[string]map[string]interface{}, hook, attr string) (inter
 	return value, nil
 }
 
-func HookAttrString(hooks map[string]map[string]interface{}, hook, attr string) (string, error) {
+func HookAttrString(hooks map[string]map[string]any, hook, attr string) (string, error) {
 	accessor := fmt.Sprintf("%s:%s", hook, attr)
 
 	value, err := HookAttr(hooks, hook, attr)
@@ -50,7 +50,7 @@ func HookAttrString(hooks map[string]map[string]interface{}, hook, attr string) 
 	return v, nil
 }
 
-func HookAttrBool(hooks map[string]map[string]interface{}, hook, attr string) (bool, error) {
+func HookAttrBool(hooks map[string]map[string]any, hook, attr string) (bool, error) {
 	accessor := fmt.Sprintf("%s:%s", hook, attr)
 
 	value, err := HookAttr(hooks, hook, attr)

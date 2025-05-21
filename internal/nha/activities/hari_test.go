@@ -40,7 +40,7 @@ func TestHARIActivity(t *testing.T) {
 
 		// HARI hook configuration. If baseURL is defined, it overrides the
 		// one provided by the test HTTP server.
-		hariConfig map[string]interface{}
+		hariConfig map[string]any
 
 		// Temporary directory options. Optional.
 		dirOpts []fs.PathOp
@@ -65,7 +65,7 @@ func TestHARIActivity(t *testing.T) {
 					Type:       nha.TransferTypeDPJ,
 				},
 			},
-			hariConfig: map[string]interface{}{},
+			hariConfig: map[string]any{},
 			dirOpts: []fs.PathOp{
 				fs.WithDir("DPJ/journal"),
 				// XML generated is a trimmed-down version, e.g. `pasientjournal` not included.
@@ -107,7 +107,7 @@ func TestHARIActivity(t *testing.T) {
 					Type:       nha.TransferTypeEPJ,
 				},
 			},
-			hariConfig: map[string]interface{}{},
+			hariConfig: map[string]any{},
 			dirOpts: []fs.PathOp{
 				fs.WithDir("EPJ/journal"),
 				fs.WithFile("EPJ/journal/avlxml.xml", "<avlxml/>"),
@@ -139,7 +139,7 @@ func TestHARIActivity(t *testing.T) {
 					Type:       nha.TransferTypeAVLXML,
 				},
 			},
-			hariConfig: map[string]interface{}{},
+			hariConfig: map[string]any{},
 			dirOpts: []fs.PathOp{
 				fs.WithDir("AVLXML/objekter"),
 				fs.WithFile(
@@ -166,7 +166,7 @@ func TestHARIActivity(t *testing.T) {
 					Type:       nha.TransferTypeAVLXML,
 				},
 			},
-			hariConfig: map[string]interface{}{},
+			hariConfig: map[string]any{},
 			dirOpts: []fs.PathOp{
 				fs.WithDir("AVLXML/objekter"),
 				fs.WithFile(
@@ -193,7 +193,7 @@ func TestHARIActivity(t *testing.T) {
 					Type:       nha.TransferTypeOther,
 				},
 			},
-			hariConfig: map[string]interface{}{},
+			hariConfig: map[string]any{},
 			dirOpts: []fs.PathOp{
 				fs.WithDir("OTHER/journal"),
 				fs.WithFile("OTHER/journal/avlxml.xml", "<avlxml/>"),
@@ -225,7 +225,7 @@ func TestHARIActivity(t *testing.T) {
 					Type:       nha.TransferTypeDPJ,
 				},
 			},
-			hariConfig: map[string]interface{}{},
+			hariConfig: map[string]any{},
 			dirOpts: []fs.PathOp{
 				fs.WithDir("DPJ/Journal"),
 				fs.WithFile("DPJ/Journal/avlxml.xml", "<avlxml/>"),
@@ -257,7 +257,7 @@ func TestHARIActivity(t *testing.T) {
 					Type:       nha.TransferTypeDPJ,
 				},
 			},
-			hariConfig: map[string]interface{}{},
+			hariConfig: map[string]any{},
 			dirOpts: []fs.PathOp{
 				fs.WithDir("DPJ/journal"),
 				fs.WithFile("DPJ/journal/avlxml.xml", "<avlxml/>"),
@@ -289,7 +289,7 @@ func TestHARIActivity(t *testing.T) {
 					Type:       nha.TransferTypeDPJ,
 				},
 			},
-			hariConfig: map[string]interface{}{"mock": true},
+			hariConfig: map[string]any{"mock": true},
 			dirOpts: []fs.PathOp{
 				fs.WithDir("DPJ/journal"),
 				fs.WithFile("DPJ/journal/avlxml.xml", "<avlxml/>"),
@@ -313,7 +313,7 @@ func TestHARIActivity(t *testing.T) {
 					Type:       nha.TransferTypeDPJ,
 				},
 			},
-			hariConfig: map[string]interface{}{},
+			hariConfig: map[string]any{},
 			dirOpts: []fs.PathOp{
 				fs.WithDir("DPJ/journal"),
 				fs.WithFile("DPJ/journal/avlxml.xml", "<avlxml/>"),
@@ -331,7 +331,7 @@ func TestHARIActivity(t *testing.T) {
 					Type:       nha.TransferTypeDPJ,
 				},
 			},
-			hariConfig: map[string]interface{}{},
+			hariConfig: map[string]any{},
 			dirOpts: []fs.PathOp{
 				fs.WithDir("DPJ/journal"),
 				fs.WithFile("DPJ/journal/avlxml.xml", "<avlxml/>"),
@@ -357,7 +357,7 @@ func TestHARIActivity(t *testing.T) {
 					Type:       nha.TransferTypeDPJ,
 				},
 			},
-			hariConfig: map[string]interface{}{},
+			hariConfig: map[string]any{},
 			dirOpts: []fs.PathOp{
 				fs.WithDir("DPJ/journal"),
 				fs.WithFile("DPJ/journal/avlxml.xml", "<avlxml/>"),
@@ -390,7 +390,7 @@ func TestHARIActivity(t *testing.T) {
 					Type:       nha.TransferTypeDPJ,
 				},
 			},
-			hariConfig: map[string]interface{}{"baseurl": "http://192.168.1.50:12345"},
+			hariConfig: map[string]any{"baseurl": "http://192.168.1.50:12345"},
 			dirOpts: []fs.PathOp{
 				fs.WithDir("DPJ/journal"),
 				fs.WithFile("DPJ/journal/_____other_name_____.xml", "<avlxml/>"),
@@ -407,7 +407,7 @@ func TestHARIActivity(t *testing.T) {
 					Type:       nha.TransferTypeDPJ,
 				},
 			},
-			hariConfig: map[string]interface{}{"baseurl": string([]byte{0x7f})},
+			hariConfig: map[string]any{"baseurl": string([]byte{0x7f})},
 			dirOpts: []fs.PathOp{
 				fs.WithDir("DPJ/journal"),
 				fs.WithFile("DPJ/journal/avlxml.xml", "<avlxml/>"),
@@ -492,11 +492,11 @@ func testError(t *testing.T, err error, wantErr string, wantNonRetryable bool) {
 	}
 }
 
-func createHariActivity(t *testing.T, hariConfig map[string]interface{}) *UpdateHARIActivity {
+func createHariActivity(t *testing.T, hariConfig map[string]any) *UpdateHARIActivity {
 	t.Helper()
 
 	hooks := hooks.NewHooks(
-		map[string]map[string]interface{}{
+		map[string]map[string]any{
 			"hari": hariConfig,
 		},
 	)
@@ -525,7 +525,7 @@ func TestHARIURL(t *testing.T) {
 		},
 	}
 	for _, tc := range tests {
-		act := createHariActivity(t, map[string]interface{}{
+		act := createHariActivity(t, map[string]any{
 			"baseurl": tc.baseURL,
 		})
 

@@ -77,8 +77,8 @@ func debug(mux goahttp.Muxer, w io.Writer) func(http.Handler) http.Handler {
 			}
 			if len(b) > 0 {
 				buf.WriteByte('\n')
-				lines := strings.Split(string(b), "\n")
-				for _, line := range lines {
+				lines := strings.SplitSeq(string(b), "\n")
+				for line := range lines {
 					fmt.Fprintf(buf, "[%s] %s\n", reqID, line)
 				}
 			}
@@ -104,8 +104,8 @@ func debug(mux goahttp.Muxer, w io.Writer) func(http.Handler) http.Handler {
 			}
 			if printResponseBody {
 				buf.WriteByte('\n')
-				lines := strings.Split(dupper.Buffer.String(), "\n")
-				for _, line := range lines {
+				lines := strings.SplitSeq(dupper.Buffer.String(), "\n")
+				for line := range lines {
 					fmt.Fprintf(buf, "[%s] %s\n", reqID, line)
 				}
 			}
