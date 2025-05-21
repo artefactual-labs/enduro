@@ -22,19 +22,19 @@ func Logger(logger logr.Logger) temporalsdk_log.Logger {
 	return logrWrapper{logger.WithCallDepth(1)}
 }
 
-func (l logrWrapper) Debug(msg string, keyvals ...interface{}) {
+func (l logrWrapper) Debug(msg string, keyvals ...any) {
 	l.logger.V(1).WithValues("level", "debug").Info(msg, keyvals...)
 }
 
-func (l logrWrapper) Info(msg string, keyvals ...interface{}) {
+func (l logrWrapper) Info(msg string, keyvals ...any) {
 	l.logger.WithValues("level", "info").Info(msg, keyvals...)
 }
 
-func (l logrWrapper) Warn(msg string, keyvals ...interface{}) {
+func (l logrWrapper) Warn(msg string, keyvals ...any) {
 	l.logger.WithValues("level", "warn").Info(msg, keyvals...)
 }
 
-func (l logrWrapper) Error(msg string, keyvals ...interface{}) {
+func (l logrWrapper) Error(msg string, keyvals ...any) {
 	l.logger.Error(errors.New(msg), "error", keyvals...)
 }
 
@@ -72,7 +72,7 @@ type contextKey struct{}
 
 var loggerContextKey = contextKey{}
 
-func (a *activityInboundInterceptor) ExecuteActivity(ctx context.Context, in *temporalsdk_interceptor.ExecuteActivityInput) (interface{}, error) {
+func (a *activityInboundInterceptor) ExecuteActivity(ctx context.Context, in *temporalsdk_interceptor.ExecuteActivityInput) (any, error) {
 	ctx = context.WithValue(ctx, loggerContextKey, a.logger)
 	return a.Next.ExecuteActivity(ctx, in)
 }

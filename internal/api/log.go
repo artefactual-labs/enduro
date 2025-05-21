@@ -18,7 +18,7 @@ func loggerAdapter(logger logr.Logger) middleware.Logger {
 }
 
 // Log implements middleware.Logger.
-func (a *adapter) Log(keyvals ...interface{}) error {
+func (a *adapter) Log(keyvals ...any) error {
 	a.logger.Info("", keyvals...)
 	return nil
 }

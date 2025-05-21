@@ -85,7 +85,7 @@ func (w *goaWrapper) Monitor(ctx context.Context, stream goacollection.MonitorSe
 // List all stored collections. It implements goacollection.Service.
 func (w *goaWrapper) List(ctx context.Context, payload *goacollection.ListPayload) (*goacollection.ListResult, error) {
 	query := "SELECT id, name, workflow_id, run_id, transfer_id, aip_id, original_id, pipeline_id, status, CONVERT_TZ(created_at, @@session.time_zone, '+00:00') AS created_at, CONVERT_TZ(started_at, @@session.time_zone, '+00:00') AS started_at, CONVERT_TZ(completed_at, @@session.time_zone, '+00:00') AS completed_at FROM collection"
-	args := []interface{}{}
+	args := []any{}
 
 	// We extract one extra item so we can tell the next cursor.
 	const limit = 20

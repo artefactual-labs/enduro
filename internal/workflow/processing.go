@@ -144,7 +144,7 @@ type TransferInfo struct {
 	// Hooks is the hook config store.
 	//
 	// It is populated by loadConfigLocalActivity.
-	Hooks map[string]map[string]interface{}
+	Hooks map[string]map[string]any
 
 	// Information about the bundle (transfer) that we submit to Archivematica.
 	// Full path, relative path...

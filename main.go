@@ -382,7 +382,7 @@ type configuration struct {
 
 	// This is a workaround for client-specific functionality.
 	// Simple mechanism to support an arbitrary number of hooks and parameters.
-	Hooks map[string]map[string]interface{}
+	Hooks map[string]map[string]any
 }
 
 type WorkerConfig struct {

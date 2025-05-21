@@ -37,7 +37,7 @@ func TestWeighted(t *testing.T) {
 	sem := semaphore.NewWeighted(int64(n))
 	var wg sync.WaitGroup
 	wg.Add(n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		i := i
 		go func() {
 			defer wg.Done()
@@ -119,8 +119,7 @@ func TestWeightedDoesntBlockIfTooBig(t *testing.T) {
 	const n = 2
 	sem := semaphore.NewWeighted(n)
 	{
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+		ctx := t.Context()
 		go sem.Acquire(ctx, n+1)
 	}
 
