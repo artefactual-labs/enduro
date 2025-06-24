@@ -23,7 +23,7 @@ func TestProdActivity(t *testing.T) {
 
 	tests := map[string]struct {
 		params                UpdateProductionSystemActivityParams
-		hookConfig            *map[string]interface{}
+		hookConfig            *map[string]any
 		dirOpts               []fs.PathOp
 		wantContent           string
 		wantNonRetryableError bool
@@ -91,7 +91,7 @@ func TestProdActivity(t *testing.T) {
 					Type:       nha.TransferTypeDPJ,
 				},
 			},
-			hookConfig:            &map[string]interface{}{},
+			hookConfig:            &map[string]any{},
 			wantErr:               "error looking up receiptPath configuration attribute: error accessing \"prod:receiptPath\"",
 			wantNonRetryableError: true,
 		},
@@ -104,7 +104,7 @@ func TestProdActivity(t *testing.T) {
 					Type:       nha.TransferTypeDPJ,
 				},
 			},
-			hookConfig: &map[string]interface{}{
+			hookConfig: &map[string]any{
 				"receiptpath": tmpdir,
 			},
 			wantErr:               "error creating receipt file",
@@ -123,7 +123,7 @@ func TestProdActivity(t *testing.T) {
 
 			tmpdir := fs.NewDir(t, "enduro")
 			defer tmpdir.Remove()
-			hookConfig := map[string]interface{}{"receiptpath": tmpdir.Path()}
+			hookConfig := map[string]any{"receiptpath": tmpdir.Path()}
 			if tc.hookConfig != nil {
 				hookConfig = *tc.hookConfig
 			}
@@ -152,11 +152,11 @@ func TestProdActivity(t *testing.T) {
 	}
 }
 
-func createProdActivity(t *testing.T, hookConfig map[string]interface{}) *UpdateProductionSystemActivity {
+func createProdActivity(t *testing.T, hookConfig map[string]any) *UpdateProductionSystemActivity {
 	t.Helper()
 
 	hooks := hooks.NewHooks(
-		map[string]map[string]interface{}{
+		map[string]map[string]any{
 			"prod": hookConfig,
 		},
 	)

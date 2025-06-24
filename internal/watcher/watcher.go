@@ -110,7 +110,6 @@ func New(ctx context.Context, c *Config) (*serviceImpl, error) {
 	watchers := map[string]Watcher{}
 
 	for _, item := range c.Minio {
-		item := item
 		w, err := NewMinioWatcher(ctx, item)
 		if err != nil {
 			return nil, err
@@ -120,7 +119,6 @@ func New(ctx context.Context, c *Config) (*serviceImpl, error) {
 	}
 
 	for _, item := range c.Filesystem {
-		item := item
 		w, err := NewFilesystemWatcher(ctx, item)
 		if err != nil {
 			return nil, err
@@ -142,7 +140,6 @@ func (svc *serviceImpl) Watchers() []Watcher {
 
 	ww := []Watcher{}
 	for _, item := range svc.watchers {
-		item := item
 		ww = append(ww, item)
 	}
 

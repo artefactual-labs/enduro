@@ -125,7 +125,7 @@ func buildHooks(t *testing.T, ctrl *gomock.Controller) *hooks.Hooks {
 	t.Helper()
 
 	return hooks.NewHooks(
-		map[string]map[string]interface{}{
+		map[string]map[string]any{
 			"prod": {"disabled": "false"},
 			"hari": {"disabled": "false"},
 		},
@@ -182,7 +182,6 @@ func TestTransferInfoProcessingConfiguration(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
-		tc := tc
 		t.Run("", func(t *testing.T) {
 			t.Parallel()
 

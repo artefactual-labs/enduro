@@ -69,12 +69,10 @@ func TestFromTransferName(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		tc := tc
 		t.Run(tc.transferName, func(t *testing.T) {
 			t.Parallel()
 
 			assert.DeepEqual(t, metadata.FromTransferName(tc.transferName, tc.isDir), tc.expected)
 		})
-
 	}
 }
