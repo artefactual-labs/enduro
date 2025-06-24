@@ -45,7 +45,6 @@ func TestStatus(t *testing.T) {
 		},
 	}
 	for _, tc := range tests {
-		tc := tc
 		t.Run(fmt.Sprintf("Status_%s", tc.str), func(t *testing.T) {
 			s := NewStatus(tc.str)
 			assert.Assert(t, s != StatusUnknown)

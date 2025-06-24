@@ -59,7 +59,7 @@ func (svc *collectionImpl) Goa() goacollection.Service {
 
 func (svc *collectionImpl) Create(ctx context.Context, col *Collection) error {
 	query := `INSERT INTO collection (name, workflow_id, run_id, transfer_id, aip_id, original_id, pipeline_id, decision_token, status) VALUES ((?), (?), (?), (?), (?), (?), (?), (?), (?))`
-	args := []interface{}{
+	args := []any{
 		col.Name,
 		col.WorkflowID,
 		col.RunID,
@@ -121,7 +121,7 @@ func (svc *collectionImpl) UpdateWorkflowStatus(ctx context.Context, ID uint, na
 	}
 
 	query := `UPDATE collection SET name = (?), workflow_id = (?), run_id = (?), transfer_id = (?), aip_id = (?), pipeline_id = (?), status = (?), completed_at = (?) WHERE id = (?)`
-	args := []interface{}{
+	args := []any{
 		name,
 		workflowID,
 		runID,
@@ -144,7 +144,7 @@ func (svc *collectionImpl) UpdateWorkflowStatus(ctx context.Context, ID uint, na
 
 func (svc *collectionImpl) SetStatus(ctx context.Context, ID uint, status Status) error {
 	query := `UPDATE collection SET status = (?) WHERE id = (?)`
-	args := []interface{}{
+	args := []any{
 		status,
 		ID,
 	}
@@ -160,7 +160,7 @@ func (svc *collectionImpl) SetStatus(ctx context.Context, ID uint, status Status
 
 func (svc *collectionImpl) SetStatusInProgress(ctx context.Context, ID uint, startedAt time.Time) error {
 	var query string
-	args := []interface{}{StatusInProgress}
+	args := []any{StatusInProgress}
 
 	if !startedAt.IsZero() {
 		query = `UPDATE collection SET status = (?), started_at = (?) WHERE id = (?)`
@@ -181,7 +181,7 @@ func (svc *collectionImpl) SetStatusInProgress(ctx context.Context, ID uint, sta
 
 func (svc *collectionImpl) SetStatusPending(ctx context.Context, ID uint, taskToken []byte) error {
 	query := `UPDATE collection SET status = (?), decision_token = (?) WHERE id = (?)`
-	args := []interface{}{
+	args := []any{
 		StatusPending,
 		taskToken,
 		ID,
@@ -198,7 +198,7 @@ func (svc *collectionImpl) SetStatusPending(ctx context.Context, ID uint, taskTo
 
 func (svc *collectionImpl) SetOriginalID(ctx context.Context, ID uint, originalID string) error {
 	query := `UPDATE collection SET original_id = (?) WHERE id = (?)`
-	args := []interface{}{
+	args := []any{
 		originalID,
 		ID,
 	}
@@ -212,7 +212,7 @@ func (svc *collectionImpl) SetOriginalID(ctx context.Context, ID uint, originalI
 	return nil
 }
 
-func (svc *collectionImpl) updateRow(ctx context.Context, query string, args []interface{}) (int64, error) {
+func (svc *collectionImpl) updateRow(ctx context.Context, query string, args []any) (int64, error) {
 	query = svc.db.Rebind(query)
 	res, err := svc.db.ExecContext(ctx, query, args...)
 	if err != nil {
@@ -229,7 +229,7 @@ func (svc *collectionImpl) updateRow(ctx context.Context, query string, args []i
 
 func (svc *collectionImpl) read(ctx context.Context, ID uint) (*Collection, error) {
 	query := "SELECT id, name, workflow_id, run_id, transfer_id, aip_id, original_id, pipeline_id, decision_token, status, CONVERT_TZ(created_at, @@session.time_zone, '+00:00') AS created_at, CONVERT_TZ(started_at, @@session.time_zone, '+00:00') AS started_at, CONVERT_TZ(completed_at, @@session.time_zone, '+00:00') AS completed_at FROM collection WHERE id = (?)"
-	args := []interface{}{ID}
+	args := []any{ID}
 	c := Collection{}
 
 	query = svc.db.Rebind(query)

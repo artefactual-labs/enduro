@@ -3,6 +3,7 @@ package bundler
 import (
 	"encoding/csv"
 	"fmt"
+	"maps"
 	"sort"
 
 	"github.com/spf13/afero"
@@ -29,9 +30,7 @@ func (m *MetadataSet) Entries() map[string][][2]string {
 
 	// Make a copy so the returned value won't race with future log requests.
 	entries := make(map[string][][2]string)
-	for k, v := range m.entries {
-		entries[k] = v
-	}
+	maps.Copy(entries, m.entries)
 	return entries
 }
 

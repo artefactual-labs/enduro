@@ -36,7 +36,6 @@ func (r *Registry) List() []*Pipeline {
 
 	pipelines := make([]*Pipeline, 0, len(r.pipelines))
 	for _, p := range r.pipelines {
-		p := p
 		pipelines = append(pipelines, p)
 	}
 

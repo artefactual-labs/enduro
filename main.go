@@ -195,7 +195,6 @@ func main() {
 	// Watchers, where each watcher is a group actor.
 	{
 		for _, w := range wsvc.Watchers() {
-			w := w
 			done := make(chan struct{})
 			g.Add(
 				func() error {
@@ -382,7 +381,7 @@ type configuration struct {
 
 	// This is a workaround for client-specific functionality.
 	// Simple mechanism to support an arbitrary number of hooks and parameters.
-	Hooks map[string]map[string]interface{}
+	Hooks map[string]map[string]any
 }
 
 type WorkerConfig struct {

@@ -31,7 +31,7 @@ var ErrAsyncCompletionAbandoned = errors.New("user abandoned")
 //
 // TODO: state changes in collection could be performed via hook functions,
 // generalize and convert into a struct.
-func executeActivityWithAsyncErrorHandling(ctx temporalsdk_workflow.Context, colsvc collection.Service, colID uint, opts temporalsdk_workflow.ActivityOptions, act interface{}, args ...interface{}) temporalsdk_workflow.Future {
+func executeActivityWithAsyncErrorHandling(ctx temporalsdk_workflow.Context, colsvc collection.Service, colID uint, opts temporalsdk_workflow.ActivityOptions, act any, args ...any) temporalsdk_workflow.Future {
 	future, settable := temporalsdk_workflow.NewFuture(ctx)
 
 	temporalsdk_workflow.Go(ctx, func(ctx temporalsdk_workflow.Context) {
