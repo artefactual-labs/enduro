@@ -78,10 +78,15 @@ List the bucket with:
 
 ## Start a transfer
 
-Uploading a file into the `sips` bucket should trigger the workflow. From the
-command-line interface, you can run the following:
+To simplify the process of pushing sample transfers to MinIO, you can use the
+`hack/push-transfer.py` script. This script sparse-clones a specified directory
+from our sampledata repository, zips it, and then uploads it to your local
+MinIO instance.
 
-    curl -s https://news.ycombinator.com/y18.gif | mc pipe enduro/sips/y18.gif
+With [uv] installed and from the root of the Enduro repository, run the
+following command to transfer the "pictures" directory as a ZIP file:
+
+    ./hack/push-transfer.py --dir-path "SampleTransfers/Images/pictures" --minio-target "sips/pictures.zip"
 
 The workflow should be triggered automatically. It is okay to start Enduro later
 since the event is buffered by Redis.
@@ -90,6 +95,8 @@ since the event is buffered by Redis.
 
 Additionally, you can visualize workflows and activities from Temporal UI. Try
 opening the following link: <http://127.0.0.1:7440/namespaces/default/workflows>.
+
+[uv]: https://astral.sh/uv
 
 ## Development workflow
 
