@@ -1,20 +1,19 @@
-version: "3"
-
 services:
 
   mysql:
-    image: "mysql:8.0"
+    image: "percona/percona-server:8.4.5-5.1"
+    restart: "on-failure"
     environment:
       MYSQL_ROOT_PASSWORD: "root123"
+      MYSQL_DATABASE: "enduro"
       MYSQL_USER: "enduro"
       MYSQL_PASSWORD: "enduro123"
-    volumes:
-      - "./hack/docker-init-mysql.sql:/docker-entrypoint-initdb.d/docker-init.sql"
     ports:
       - "127.0.0.1:7450:3306"
 
   temporal:
     image: "temporalio/auto-setup:1.21.1"
+    restart: "on-failure"
     environment:
       - "DB=mysql"
       - "DB_PORT=3306"
@@ -33,21 +32,41 @@ services:
 
   temporal-ui:
     image: "temporalio/ui:2.16.2"
+    restart: "on-failure"
     environment:
       - "TEMPORAL_ADDRESS=temporal:7233"
       - "TEMPORAL_CORS_ORIGINS=http://localhost:7440"
     ports:
       - "127.0.0.1:7440:8080"
 
-  minio:
-    image: "minio/minio:RELEASE.2020-04-28T23-56-56Z"
-    command: "server /data"
-    volumes:
-      - "./hack/minio-data:/data"
-    ports:
-      - "127.0.0.1:7460:9000"
-
   redis:
-    image: "redis:5-alpine"
+    image: "redis:8.0.2-bookworm"
+    restart: "on-failure"
     ports:
       - "127.0.0.1:7470:6379"
+
+  minio:
+    image: "minio/minio:RELEASE.2025-05-24T17-08-30Z"
+    command: "minio server --console-address=:9001 /data"
+    restart: "on-failure"
+    environment:
+      MINIO_ROOT_USER: "minio"
+      MINIO_ROOT_PASSWORD: "minio123"
+    ports:
+      - "127.0.0.1:7460:9000"
+      - "127.0.0.1:7461:9001"
+
+  minio-setup:
+    image: "minio/mc:RELEASE.2025-05-21T01-59-54Z"
+    restart: "on-failure"
+    tty: true
+    entrypoint: >
+      /bin/sh -x -c "
+      mc alias set enduro http://minio:9000 minio minio123;
+      mc mb --ignore-existing enduro/sips;
+      mc admin config set enduro/ notify_redis:sips address="redis:6379" queue_dir="/tmp/events" queue_limit=10000 enable="on" format="access" key="minio-events";
+      mc admin service restart enduro;
+      mc event add enduro/sips arn:minio:sqs::sips:redis --event put --ignore-existing;
+      mc admin config get enduro/ notify_redis;
+      exit 0;
+      "

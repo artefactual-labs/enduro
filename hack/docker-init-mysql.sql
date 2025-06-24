@@ -1,2 +1,0 @@
-CREATE DATABASE IF NOT EXISTS enduro;
-GRANT ALL PRIVILEGES ON enduro.* TO 'enduro'@'%';
