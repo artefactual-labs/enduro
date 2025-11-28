@@ -1,0 +1,76 @@
+name: SBOM (Dependency-Track)
+
+on:
+  push:
+    branches:
+      - main
+  release:
+    types: [published]
+
+concurrency:
+  group: sbom-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  generate-sbom:
+    runs-on: ubuntu-latest
+    container:
+      image: aquasec/trivy:0.67.2
+      options: --entrypoint ""
+    env:
+      TRIVY_NO_PROGRESS: "true"
+      PROJECT_NAME: ${{ github.event.repository.name }}
+      PROJECT_VERSION: ${{ (github.event_name == 'release' && github.event.release.tag_name) || github.ref_name }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.PROJECT_VERSION }}
+
+      - name: Set up cache
+        uses: actions/cache@v4
+        with:
+          path: .trivycache
+          key: ${{ runner.os }}-trivy-${{ hashFiles('**/go.sum', '**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-trivy-
+
+      - name: Generate SBOM (CycloneDX XML)
+        run: trivy fs --cache-dir .trivycache --format cyclonedx --output sbom.cdx.xml .
+
+      - name: Upload SBOM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: sbom.cdx.xml
+          retention-days: 14
+
+  upload-sbom:
+    needs: generate-sbom
+    runs-on: ubuntu-latest
+    env:
+      PROJECT_NAME: ${{ github.event.repository.name }}
+      PROJECT_VERSION: ${{ (github.event_name == 'release' && github.event.release.tag_name) || github.ref_name }}
+      DEPENDENCY_TRACK_URL: ${{ secrets.DEPENDENCY_TRACK_URL }}
+      DEPENDENCY_TRACK_API_KEY: ${{ secrets.DEPENDENCY_TRACK_API_KEY }}
+    steps:
+      - name: Download SBOM artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: sbom
+          path: .
+
+      - name: Upload to Dependency-Track
+        if: ${{ env.DEPENDENCY_TRACK_URL != '' && env.DEPENDENCY_TRACK_API_KEY != '' }}
+        run: |
+          curl --fail-with-body --silent --show-error \
+            -X POST "${DEPENDENCY_TRACK_URL%/}/api/v1/bom" \
+            -H "X-Api-Key: ${DEPENDENCY_TRACK_API_KEY}" \
+            -F "autoCreate=true" \
+            -F "projectName=${PROJECT_NAME}" \
+            -F "projectVersion=${PROJECT_VERSION}" \
+            -F "parentName=Enduro" \
+            -F "bom=@sbom.cdx.xml"
