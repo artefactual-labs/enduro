@@ -28,7 +28,7 @@
         {
             "name": "goa",
             "go_package": "goa.design/goa/v3/cmd/goa",
-            "version": "3.13.2"
+            "version": "3.24.3"
         },
         {
             "name": "hugo",
