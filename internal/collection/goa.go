@@ -40,19 +40,12 @@ var patternMatchingCharReplacer = strings.NewReplacer(
 
 // Monitor collection activity. It implements goacollection.Service.
 func (w *goaWrapper) Monitor(ctx context.Context, stream goacollection.MonitorServerStream) error {
-	defer stream.Close()
-
 	// Subscribe to the event service.
 	sub, err := w.events.Subscribe(ctx)
 	if err != nil {
 		return err
 	}
 	defer sub.Close()
-
-	// Say hello to be nice.
-	if err := stream.Send(&goacollection.EnduroMonitorUpdate{Type: "hello"}); err != nil {
-		return err
-	}
 
 	// We'll use this ticker to ping the client once in a while to detect stale
 	// connections. I'm not entirely sure this is needed, it may depend on the
@@ -64,18 +57,19 @@ func (w *goaWrapper) Monitor(ctx context.Context, stream goacollection.MonitorSe
 		select {
 		case <-ctx.Done():
 			return nil
-
 		case <-ticker.C:
-			if err := stream.Send(&goacollection.EnduroMonitorUpdate{Type: "ping"}); err != nil {
-				return nil
+			event := &goacollection.EnduroMonitorUpdate{
+				Timestamp: time.Now().UTC().Format(time.RFC3339),
+				Type:      "ping",
 			}
-
+			if err := stream.SendWithContext(ctx, event); err != nil {
+				return err
+			}
 		case event, ok := <-sub.C():
 			if !ok {
 				return nil
 			}
-
-			if err := stream.Send(event); err != nil {
+			if err := stream.SendWithContext(ctx, event); err != nil {
 				return err
 			}
 		}

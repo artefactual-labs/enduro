@@ -8,6 +8,7 @@ Name | Type
 ------------ | -------------
 `id` | number
 `item` | [EnduroStoredCollection](EnduroStoredCollection.md)
+`timestamp` | Date
 `type` | string
 
 ## Example
@@ -19,6 +20,7 @@ import type { EnduroMonitorUpdate } from ''
 const example = {
   "id": 1,
   "item": null,
+  "timestamp": 1970-01-01T00:00:01Z,
   "type": abc123,
 } satisfies EnduroMonitorUpdate
 

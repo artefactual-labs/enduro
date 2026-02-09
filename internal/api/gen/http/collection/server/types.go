@@ -25,6 +25,7 @@ type BulkRequestBody struct {
 // MonitorResponseBody is the type of the "collection" service "monitor"
 // endpoint HTTP response body.
 type MonitorResponseBody struct {
+	Timestamp string `form:"timestamp" json:"timestamp" xml:"timestamp"`
 	// Identifier of collection
 	ID uint `form:"id" json:"id" xml:"id"`
 	// Type of the event
@@ -297,13 +298,14 @@ type EnduroCollectionWorkflowHistoryResponseBody struct {
 
 // NewMonitorResponseBody builds the HTTP response body from the result of the
 // "monitor" endpoint of the "collection" service.
-func NewMonitorResponseBody(res *collectionviews.EnduroMonitorUpdateView) *MonitorResponseBody {
+func NewMonitorResponseBody(res *collection.EnduroMonitorUpdate) *MonitorResponseBody {
 	body := &MonitorResponseBody{
-		ID:   *res.ID,
-		Type: *res.Type,
+		Timestamp: res.Timestamp,
+		ID:        res.ID,
+		Type:      res.Type,
 	}
 	if res.Item != nil {
-		body.Item = marshalCollectionviewsEnduroStoredCollectionViewToEnduroStoredCollectionResponseBody(res.Item)
+		body.Item = marshalCollectionEnduroStoredCollectionToEnduroStoredCollectionResponseBody(res.Item)
 	}
 	return body
 }

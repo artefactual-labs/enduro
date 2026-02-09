@@ -12,13 +12,10 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"net/url"
 	"os"
 	"time"
-	"unicode/utf8"
 
 	"github.com/go-logr/logr"
-	"github.com/gorilla/websocket"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel/trace"
 	goahttp "goa.design/goa/v3/http"
@@ -50,11 +47,6 @@ func HTTPServer(
 	enc := goahttp.ResponseEncoder
 	var mux goahttp.Muxer = goahttp.NewMuxer()
 
-	websocketUpgrader := &websocket.Upgrader{
-		HandshakeTimeout: time.Second,
-		CheckOrigin:      sameOriginChecker(logger),
-	}
-
 	// Pipeline service.
 	pipelineEndpoints := pipeline.NewEndpoints(pipesvc)
 	pipelineErrorHandler := errorHandler(logger, "Pipeline error.")
@@ -70,7 +62,8 @@ func HTTPServer(
 	// Collection service.
 	collectionEndpoints := collection.NewEndpoints(colsvc.Goa())
 	collectionErrorHandler := errorHandler(logger, "Collection error.")
-	collectionServer := collectionsvr.New(collectionEndpoints, mux, dec, enc, collectionErrorHandler, nil, websocketUpgrader, nil)
+	collectionServer := collectionsvr.New(collectionEndpoints, mux, dec, enc, collectionErrorHandler, nil)
+	collectionServer.Monitor = writeTimeout(collectionServer.Monitor, 0)
 	collectionServer.Download = writeTimeout(collectionServer.Download, 0)
 	collectionsvr.Mount(mux, collectionServer)
 
@@ -127,47 +120,4 @@ func errorHandler(logger logr.Logger, msg string) func(context.Context, http.Res
 
 		logger.Error(err, "Service error.", "reqID", reqID, "ws", ws)
 	}
-}
-
-func sameOriginChecker(logger logr.Logger) func(r *http.Request) bool {
-	return func(r *http.Request) bool {
-		origin := r.Header["Origin"]
-		if len(origin) == 0 {
-			return true
-		}
-		u, err := url.Parse(origin[0])
-		if err != nil {
-			logger.V(1).Info("WebSocket client rejected (origin parse error)", "err", err)
-			return false
-		}
-		eq := equalASCIIFold(u.Host, r.Host)
-		if !eq {
-			logger.V(1).Info("WebSocket client rejected (origin and host not equal)", "origin-host", u.Host, "request-host", r.Host)
-		}
-		return eq
-	}
-}
-
-// equalASCIIFold returns true if s is equal to t with ASCII case folding as
-// defined in RFC 4790.
-func equalASCIIFold(s, t string) bool {
-	for s != "" && t != "" {
-		sr, size := utf8.DecodeRuneInString(s)
-		s = s[size:]
-		tr, size := utf8.DecodeRuneInString(t)
-		t = t[size:]
-		if sr == tr {
-			continue
-		}
-		if 'A' <= sr && sr <= 'Z' {
-			sr = sr + 'a' - 'A'
-		}
-		if 'A' <= tr && tr <= 'Z' {
-			tr = tr + 'a' - 'A'
-		}
-		if sr != tr {
-			return false
-		}
-	}
-	return s == t
 }

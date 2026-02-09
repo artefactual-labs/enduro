@@ -25,6 +25,7 @@ type BulkRequestBody struct {
 // MonitorResponseBody is the type of the "collection" service "monitor"
 // endpoint HTTP response body.
 type MonitorResponseBody struct {
+	Timestamp *string `form:"timestamp,omitempty" json:"timestamp,omitempty" xml:"timestamp,omitempty"`
 	// Identifier of collection
 	ID *uint `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
 	// Type of the event
@@ -314,13 +315,14 @@ func NewBulkRequestBody(p *collection.BulkPayload) *BulkRequestBody {
 
 // NewMonitorEnduroMonitorUpdateOK builds a "collection" service "monitor"
 // endpoint result from a HTTP "OK" response.
-func NewMonitorEnduroMonitorUpdateOK(body *MonitorResponseBody) *collectionviews.EnduroMonitorUpdateView {
-	v := &collectionviews.EnduroMonitorUpdateView{
-		ID:   body.ID,
-		Type: body.Type,
+func NewMonitorEnduroMonitorUpdateOK(body *MonitorResponseBody) *collection.EnduroMonitorUpdate {
+	v := &collection.EnduroMonitorUpdate{
+		Timestamp: *body.Timestamp,
+		ID:        *body.ID,
+		Type:      *body.Type,
 	}
 	if body.Item != nil {
-		v.Item = unmarshalEnduroStoredCollectionResponseBodyToCollectionviewsEnduroStoredCollectionView(body.Item)
+		v.Item = unmarshalEnduroStoredCollectionResponseBodyToCollectionEnduroStoredCollection(body.Item)
 	}
 
 	return v
@@ -569,6 +571,29 @@ func NewBulkStatusResultOK(body *BulkStatusResponseBody) *collection.BulkStatusR
 	}
 
 	return v
+}
+
+// ValidateMonitorResponseBody runs the validations defined on
+// MonitorResponseBody
+func ValidateMonitorResponseBody(body *MonitorResponseBody) (err error) {
+	if body.Timestamp == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("timestamp", "body"))
+	}
+	if body.ID == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("id", "body"))
+	}
+	if body.Type == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("type", "body"))
+	}
+	if body.Timestamp != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.timestamp", *body.Timestamp, goa.FormatDateTime))
+	}
+	if body.Item != nil {
+		if err2 := ValidateEnduroStoredCollectionResponseBody(body.Item); err2 != nil {
+			err = goa.MergeErrors(err, err2)
+		}
+	}
+	return
 }
 
 // ValidateListResponseBody runs the validations defined on ListResponseBody

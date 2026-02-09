@@ -36,18 +36,6 @@ function getPath(): string {
   return path;
 }
 
-function getWebSocketURL(): string {
-  let url = getPath();
-
-  if (url.startsWith('https')) {
-    url = 'wss' + url.slice('https'.length);
-  } else if (url.startsWith('http')) {
-    url = 'ws' + url.slice('http'.length);
-  }
-
-  return url;
-}
-
 function setUpEnduroClient(): void {
   const path = getPath();
   const config: api.Configuration = new api.Configuration({basePath: path});
@@ -60,19 +48,20 @@ function setUpEnduroClient(): void {
   console.log('Enduro client created', path);
 }
 
-function setUpEnduroMonitor(store: any) {
-  const url = getWebSocketURL() + '/collection/monitor';
-  const socket = new WebSocket(url);
-  socket.onmessage = (event) => {
+let enduroSource: EventSource | undefined;
+type Dispatch = (type: string, payload: unknown) => void;
+interface Store { dispatch: Dispatch;}
+
+function setUpEnduroMonitor(store: Store) {
+  const url = getPath() + '/collection/monitor';
+  enduroSource?.close();
+  const source = new EventSource(url);
+  enduroSource = source;
+  source.onmessage = (event: MessageEvent) => {
     store.dispatch('collection/ON_SOCKET_MESSAGE', {event});
   };
-  socket.onclose = (event) => {
-    // tslint:disable-next-line:no-console
-    console.log('Enduro WebSocket client closed', event.code);
-  };
-
   // tslint:disable-next-line:no-console
-  console.log('Enduro WebSocket client created', url);
+  console.log('Enduro SSE client created.', url);
 }
 
 window.enduro = {

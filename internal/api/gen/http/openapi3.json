@@ -381,6 +381,7 @@
             "transfer_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
             "workflow_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5"
           },
+          "timestamp": "1970-01-01T00:00:01Z",
           "type": "abc123"
         },
         "properties": {
@@ -393,6 +394,11 @@
           "item": {
             "$ref": "#/components/schemas/EnduroStoredCollection"
           },
+          "timestamp": {
+            "example": "1970-01-01T00:00:01Z",
+            "format": "date-time",
+            "type": "string"
+          },
           "type": {
             "description": "Type of the event",
             "example": "abc123",
@@ -400,6 +406,7 @@
           }
         },
         "required": [
+          "timestamp",
           "id",
           "type"
         ],
@@ -1185,6 +1192,7 @@
                     "transfer_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
                     "workflow_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5"
                   },
+                  "timestamp": "1970-01-01T00:00:01Z",
                   "type": "abc123"
                 },
                 "schema": {
