@@ -8,25 +8,26 @@
 
 # Enduro
 
-Enduro is a new application under development by Artefactual Systems. Originally created 
-as a more stable replacement for Archivematica’s [automation-tools][automation-tools] 
-library of scripts, it has since evolved into a flexible tool to be paired with 
-preservation applications like [Archivematica][archivematica] to provide initial ingest 
-activities such as content and structure validation, packaging, and more.
+Enduro is an application originally developed by Artefactual Systems. It was
+initially created as a more stable replacement for Archivematica's
+[automation-tools] library, with an emphasis on scalability and long-term
+operational qualities such as traceability, durability, observability, and
+maintainability.
 
-While still under development, Enduro is already being used in production at several large 
-cultural heritage organizations, including the [National Health Archive (NHA)] and the 
-[National Center for Truth and Reconciliation (NCTR)]. Enduro aims to cover our clients' 
-needs while exploring new and innovative ways to build durable and fault-tolerant 
-workflows suited for preservation. It is also a new space for experimentation and research 
-to build a distributed system that enables users to run failure-oblivious and durable 
-preservation workflows.
+Enduro is currently in **maintenance mode**. It continues to be supported for
+existing customers and remains in production use at a number of large cultural
+heritage organizations. Since its original release, the Enduro project has
+continued its evolution in a new repository:
+https://github.com/artefactual-sdps/enduro/. This newer iteration provides
+substantially expanded functionality and reflects ongoing research and
+development into fault-tolerant and distributed preservation workflows. Users
+looking for the most current features and active development should refer to
+that repository.
 
 ## Further reading
 
-Visit https://enduroproject.netlify.app for more details.
+Visit the [docs section] for more details.
 
-[archivematica]: https://archivematica.org
+[Archivematica]: https://archivematica.org
 [automation-tools]: https://github.com/artefactual/automation-tools
-[National Health Archive (NHA)]: https://www.piql.com/norwegians-digital-health-data-to-be-preserved-for-future-generations/
-[National Center for Truth and Reconciliation (NCTR)]: https://nctr.ca/about/about-the-nctr/our-mandate/
+[docs section]: ./docs
