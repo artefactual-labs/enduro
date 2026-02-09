@@ -4,7 +4,7 @@
         {
             "name": "golangci-lint",
             "url": "https://github.com/golangci/golangci-lint",
-            "version": "2.1.6",
+            "version": "2.8.0",
             "asset_pattern": "{name}-{version}-{goos}-{goarch}.tar.gz"
         },
         {
