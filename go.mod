@@ -1,6 +1,6 @@
 module github.com/artefactual-labs/enduro
 
-go 1.24.4
+go 1.25.7
 
 require (
 	github.com/alicebob/miniredis/v2 v2.31.0
