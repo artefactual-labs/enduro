@@ -171,6 +171,7 @@ type EnduroCollectionWorkflowStatus struct {
 // EnduroMonitorUpdate is the result type of the collection service monitor
 // method.
 type EnduroMonitorUpdate struct {
+	Timestamp string
 	// Identifier of collection
 	ID uint
 	// Type of the event
@@ -284,20 +285,6 @@ func MakeNotAvailable(err error) *goa.ServiceError {
 	return goa.NewServiceError(err, "not_available", false, false, false)
 }
 
-// NewEnduroMonitorUpdate initializes result type EnduroMonitorUpdate from
-// viewed result type EnduroMonitorUpdate.
-func NewEnduroMonitorUpdate(vres *collectionviews.EnduroMonitorUpdate) *EnduroMonitorUpdate {
-	return newEnduroMonitorUpdate(vres.Projected)
-}
-
-// NewViewedEnduroMonitorUpdate initializes viewed result type
-// EnduroMonitorUpdate from result type EnduroMonitorUpdate using the given
-// view.
-func NewViewedEnduroMonitorUpdate(res *EnduroMonitorUpdate, view string) *collectionviews.EnduroMonitorUpdate {
-	p := newEnduroMonitorUpdateView(res)
-	return &collectionviews.EnduroMonitorUpdate{Projected: p, View: "default"}
-}
-
 // NewEnduroStoredCollection initializes result type EnduroStoredCollection
 // from viewed result type EnduroStoredCollection.
 func NewEnduroStoredCollection(vres *collectionviews.EnduroStoredCollection) *EnduroStoredCollection {
@@ -325,35 +312,6 @@ func NewEnduroCollectionWorkflowStatus(vres *collectionviews.EnduroCollectionWor
 func NewViewedEnduroCollectionWorkflowStatus(res *EnduroCollectionWorkflowStatus, view string) *collectionviews.EnduroCollectionWorkflowStatus {
 	p := newEnduroCollectionWorkflowStatusView(res)
 	return &collectionviews.EnduroCollectionWorkflowStatus{Projected: p, View: "default"}
-}
-
-// newEnduroMonitorUpdate converts projected type EnduroMonitorUpdate to
-// service type EnduroMonitorUpdate.
-func newEnduroMonitorUpdate(vres *collectionviews.EnduroMonitorUpdateView) *EnduroMonitorUpdate {
-	res := &EnduroMonitorUpdate{}
-	if vres.ID != nil {
-		res.ID = *vres.ID
-	}
-	if vres.Type != nil {
-		res.Type = *vres.Type
-	}
-	if vres.Item != nil {
-		res.Item = newEnduroStoredCollection(vres.Item)
-	}
-	return res
-}
-
-// newEnduroMonitorUpdateView projects result type EnduroMonitorUpdate to
-// projected type EnduroMonitorUpdateView using the "default" view.
-func newEnduroMonitorUpdateView(res *EnduroMonitorUpdate) *collectionviews.EnduroMonitorUpdateView {
-	vres := &collectionviews.EnduroMonitorUpdateView{
-		ID:   &res.ID,
-		Type: &res.Type,
-	}
-	if res.Item != nil {
-		vres.Item = newEnduroStoredCollectionView(res.Item)
-	}
-	return vres
 }
 
 // newEnduroStoredCollection converts projected type EnduroStoredCollection to

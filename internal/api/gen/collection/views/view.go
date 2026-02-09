@@ -12,15 +12,6 @@ import (
 	goa "goa.design/goa/v3/pkg"
 )
 
-// EnduroMonitorUpdate is the viewed result type that is projected based on a
-// view.
-type EnduroMonitorUpdate struct {
-	// Type to project
-	Projected *EnduroMonitorUpdateView
-	// View to render
-	View string
-}
-
 // EnduroStoredCollection is the viewed result type that is projected based on
 // a view.
 type EnduroStoredCollection struct {
@@ -41,6 +32,7 @@ type EnduroCollectionWorkflowStatus struct {
 
 // EnduroMonitorUpdateView is a type that runs validations on a projected type.
 type EnduroMonitorUpdateView struct {
+	Timestamp *string
 	// Identifier of collection
 	ID *uint
 	// Type of the event
@@ -105,15 +97,6 @@ type EnduroCollectionWorkflowHistoryView struct {
 }
 
 var (
-	// EnduroMonitorUpdateMap is a map indexing the attribute names of
-	// EnduroMonitorUpdate by view name.
-	EnduroMonitorUpdateMap = map[string][]string{
-		"default": {
-			"id",
-			"type",
-			"item",
-		},
-	}
 	// EnduroStoredCollectionMap is a map indexing the attribute names of
 	// EnduroStoredCollection by view name.
 	EnduroStoredCollectionMap = map[string][]string{
@@ -178,18 +161,6 @@ var (
 	}
 )
 
-// ValidateEnduroMonitorUpdate runs the validations defined on the viewed
-// result type EnduroMonitorUpdate.
-func ValidateEnduroMonitorUpdate(result *EnduroMonitorUpdate) (err error) {
-	switch result.View {
-	case "default", "":
-		err = ValidateEnduroMonitorUpdateView(result.Projected)
-	default:
-		err = goa.InvalidEnumValueError("view", result.View, []any{"default"})
-	}
-	return
-}
-
 // ValidateEnduroStoredCollection runs the validations defined on the viewed
 // result type EnduroStoredCollection.
 func ValidateEnduroStoredCollection(result *EnduroStoredCollection) (err error) {
@@ -215,13 +186,19 @@ func ValidateEnduroCollectionWorkflowStatus(result *EnduroCollectionWorkflowStat
 }
 
 // ValidateEnduroMonitorUpdateView runs the validations defined on
-// EnduroMonitorUpdateView using the "default" view.
+// EnduroMonitorUpdateView.
 func ValidateEnduroMonitorUpdateView(result *EnduroMonitorUpdateView) (err error) {
+	if result.Timestamp == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("timestamp", "result"))
+	}
 	if result.ID == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("id", "result"))
 	}
 	if result.Type == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("type", "result"))
+	}
+	if result.Timestamp != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("result.timestamp", *result.Timestamp, goa.FormatDateTime))
 	}
 	if result.Item != nil {
 		if err2 := ValidateEnduroStoredCollectionView(result.Item); err2 != nil {

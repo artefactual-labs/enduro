@@ -40,6 +40,12 @@ export interface EnduroMonitorUpdate {
      */
     item?: EnduroStoredCollection;
     /**
+     * 
+     * @type {Date}
+     * @memberof EnduroMonitorUpdate
+     */
+    timestamp: Date;
+    /**
      * Type of the event
      * @type {string}
      * @memberof EnduroMonitorUpdate
@@ -52,6 +58,7 @@ export interface EnduroMonitorUpdate {
  */
 export function instanceOfEnduroMonitorUpdate(value: object): value is EnduroMonitorUpdate {
     if (!('id' in value) || value['id'] === undefined) return false;
+    if (!('timestamp' in value) || value['timestamp'] === undefined) return false;
     if (!('type' in value) || value['type'] === undefined) return false;
     return true;
 }
@@ -68,6 +75,7 @@ export function EnduroMonitorUpdateFromJSONTyped(json: any, ignoreDiscriminator:
         
         'id': json['id'],
         'item': json['item'] == null ? undefined : EnduroStoredCollectionFromJSON(json['item']),
+        'timestamp': (new Date(json['timestamp'])),
         'type': json['type'],
     };
 }
@@ -85,6 +93,7 @@ export function EnduroMonitorUpdateToJSONTyped(value?: EnduroMonitorUpdate | nul
         
         'id': value['id'],
         'item': EnduroStoredCollectionToJSON(value['item']),
+        'timestamp': value['timestamp'].toISOString(),
         'type': value['type'],
     };
 }

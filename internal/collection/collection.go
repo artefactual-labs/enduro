@@ -104,9 +104,10 @@ func publishEvent(ctx context.Context, events EventService, eventType string, id
 	var item *goacollection.EnduroStoredCollection
 
 	events.PublishEvent(&goacollection.EnduroMonitorUpdate{
-		ID:   id,
-		Type: eventType,
-		Item: item,
+		Timestamp: time.Now().UTC().Format(time.RFC3339),
+		ID:        id,
+		Type:      eventType,
+		Item:      item,
 	})
 }
 

@@ -48,8 +48,6 @@ func ParseEndpoint(
 	enc func(*http.Request) goahttp.Encoder,
 	dec func(*http.Response) goahttp.Decoder,
 	restore bool,
-	dialer goahttp.Dialer,
-	collectionConfigurer *collectionc.ConnConfigurer,
 ) (goa.Endpoint, any, error) {
 	var (
 		pipelineFlags = flag.NewFlagSet("pipeline", flag.ContinueOnError)
@@ -282,7 +280,7 @@ func ParseEndpoint(
 				endpoint = c.Hints()
 			}
 		case "collection":
-			c := collectionc.NewClient(scheme, host, doer, enc, dec, restore, dialer, collectionConfigurer)
+			c := collectionc.NewClient(scheme, host, doer, enc, dec, restore)
 			switch epn {
 			case "monitor":
 				endpoint = c.Monitor()

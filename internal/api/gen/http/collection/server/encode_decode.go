@@ -21,6 +21,18 @@ import (
 	goa "goa.design/goa/v3/pkg"
 )
 
+// EncodeMonitorResponse returns an encoder for responses returned by the
+// collection monitor endpoint.
+func EncodeMonitorResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {
+	return func(ctx context.Context, w http.ResponseWriter, v any) error {
+		res, _ := v.(*collection.EnduroMonitorUpdate)
+		enc := encoder(ctx, w)
+		body := NewMonitorResponseBody(res)
+		w.WriteHeader(http.StatusOK)
+		return enc.Encode(body)
+	}
+}
+
 // EncodeListResponse returns an encoder for responses returned by the
 // collection list endpoint.
 func EncodeListResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {
@@ -736,35 +748,13 @@ func EncodeBulkStatusResponse(encoder func(context.Context, http.ResponseWriter)
 	}
 }
 
-// marshalCollectionviewsEnduroStoredCollectionViewToEnduroStoredCollectionResponseBody
-// builds a value of type *EnduroStoredCollectionResponseBody from a value of
-// type *collectionviews.EnduroStoredCollectionView.
-func marshalCollectionviewsEnduroStoredCollectionViewToEnduroStoredCollectionResponseBody(v *collectionviews.EnduroStoredCollectionView) *EnduroStoredCollectionResponseBody {
-	if v == nil {
-		return nil
-	}
-	res := &EnduroStoredCollectionResponseBody{
-		ID:          *v.ID,
-		Name:        v.Name,
-		Status:      *v.Status,
-		WorkflowID:  v.WorkflowID,
-		RunID:       v.RunID,
-		TransferID:  v.TransferID,
-		AipID:       v.AipID,
-		OriginalID:  v.OriginalID,
-		PipelineID:  v.PipelineID,
-		CreatedAt:   *v.CreatedAt,
-		StartedAt:   v.StartedAt,
-		CompletedAt: v.CompletedAt,
-	}
-
-	return res
-}
-
 // marshalCollectionEnduroStoredCollectionToEnduroStoredCollectionResponseBody
 // builds a value of type *EnduroStoredCollectionResponseBody from a value of
 // type *collection.EnduroStoredCollection.
 func marshalCollectionEnduroStoredCollectionToEnduroStoredCollectionResponseBody(v *collection.EnduroStoredCollection) *EnduroStoredCollectionResponseBody {
+	if v == nil {
+		return nil
+	}
 	res := &EnduroStoredCollectionResponseBody{
 		ID:          v.ID,
 		Name:        v.Name,

@@ -25,14 +25,7 @@ import (
 // BuildMonitorRequest instantiates a HTTP request object with method and path
 // set to call the "collection" service "monitor" endpoint
 func (c *Client) BuildMonitorRequest(ctx context.Context, v any) (*http.Request, error) {
-	scheme := c.scheme
-	switch c.scheme {
-	case "http":
-		scheme = "ws"
-	case "https":
-		scheme = "wss"
-	}
-	u := &url.URL{Scheme: scheme, Host: c.host, Path: MonitorCollectionPath()}
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: MonitorCollectionPath()}
 	req, err := http.NewRequest("GET", u.String(), nil)
 	if err != nil {
 		return nil, goahttp.ErrInvalidURL("collection", "monitor", u.String(), err)
@@ -71,13 +64,11 @@ func DecodeMonitorResponse(decoder func(*http.Response) goahttp.Decoder, restore
 			if err != nil {
 				return nil, goahttp.ErrDecodingError("collection", "monitor", err)
 			}
-			p := NewMonitorEnduroMonitorUpdateOK(&body)
-			view := "default"
-			vres := &collectionviews.EnduroMonitorUpdate{Projected: p, View: view}
-			if err = collectionviews.ValidateEnduroMonitorUpdate(vres); err != nil {
+			err = ValidateMonitorResponseBody(&body)
+			if err != nil {
 				return nil, goahttp.ErrValidationError("collection", "monitor", err)
 			}
-			res := collection.NewEnduroMonitorUpdate(vres)
+			res := NewMonitorEnduroMonitorUpdateOK(&body)
 			return res, nil
 		default:
 			body, _ := io.ReadAll(resp.Body)
@@ -943,35 +934,13 @@ func DecodeBulkStatusResponse(decoder func(*http.Response) goahttp.Decoder, rest
 	}
 }
 
-// unmarshalEnduroStoredCollectionResponseBodyToCollectionviewsEnduroStoredCollectionView
-// builds a value of type *collectionviews.EnduroStoredCollectionView from a
-// value of type *EnduroStoredCollectionResponseBody.
-func unmarshalEnduroStoredCollectionResponseBodyToCollectionviewsEnduroStoredCollectionView(v *EnduroStoredCollectionResponseBody) *collectionviews.EnduroStoredCollectionView {
-	if v == nil {
-		return nil
-	}
-	res := &collectionviews.EnduroStoredCollectionView{
-		ID:          v.ID,
-		Name:        v.Name,
-		Status:      v.Status,
-		WorkflowID:  v.WorkflowID,
-		RunID:       v.RunID,
-		TransferID:  v.TransferID,
-		AipID:       v.AipID,
-		OriginalID:  v.OriginalID,
-		PipelineID:  v.PipelineID,
-		CreatedAt:   v.CreatedAt,
-		StartedAt:   v.StartedAt,
-		CompletedAt: v.CompletedAt,
-	}
-
-	return res
-}
-
 // unmarshalEnduroStoredCollectionResponseBodyToCollectionEnduroStoredCollection
 // builds a value of type *collection.EnduroStoredCollection from a value of
 // type *EnduroStoredCollectionResponseBody.
 func unmarshalEnduroStoredCollectionResponseBodyToCollectionEnduroStoredCollection(v *EnduroStoredCollectionResponseBody) *collection.EnduroStoredCollection {
+	if v == nil {
+		return nil
+	}
 	res := &collection.EnduroStoredCollection{
 		ID:          *v.ID,
 		Name:        v.Name,
