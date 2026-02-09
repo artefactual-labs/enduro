@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
     title: Enduro API
-    version: "1.0"
+    version: 0.0.1
 servers:
     - url: http://localhost:9000
 paths:
@@ -217,6 +217,7 @@ paths:
                     type: integer
                     description: Identifier of collection to delete
                     example: 1
+                    format: int64
                   example: 1
             responses:
                 "204":
@@ -245,6 +246,7 @@ paths:
                     type: integer
                     description: Identifier of collection to show
                     example: 1
+                    format: int64
                   example: 1
             responses:
                 "200":
@@ -291,6 +293,7 @@ paths:
                     type: integer
                     description: Identifier of collection to remove
                     example: 1
+                    format: int64
                   example: 1
             responses:
                 "200":
@@ -326,6 +329,7 @@ paths:
                     type: integer
                     description: Identifier of collection to look up
                     example: 1
+                    format: int64
                   example: 1
             requestBody:
                 required: true
@@ -376,6 +380,7 @@ paths:
                     type: integer
                     description: Identifier of collection to look up
                     example: 1
+                    format: int64
                   example: 1
             responses:
                 "200":
@@ -427,6 +432,7 @@ paths:
                     type: integer
                     description: Identifier of collection to retry
                     example: 1
+                    format: int64
                   example: 1
             responses:
                 "200":
@@ -462,6 +468,7 @@ paths:
                     type: integer
                     description: Identifier of collection to look up
                     example: 1
+                    format: int64
                   example: 1
             responses:
                 "200":
@@ -528,7 +535,7 @@ paths:
                     content:
                         application/json:
                             schema:
-                                $ref: '#/components/schemas/BatchResult'
+                                $ref: '#/components/schemas/BulkResult'
                             example:
                                 run_id: abc123
                                 workflow_id: abc123
@@ -775,6 +782,7 @@ components:
                     type: integer
                     default: 100
                     example: 1
+                    format: int64
                 status:
                     type: string
                     example: in progress
@@ -794,6 +802,21 @@ components:
             required:
                 - operation
                 - status
+        BulkResult:
+            type: object
+            properties:
+                run_id:
+                    type: string
+                    example: abc123
+                workflow_id:
+                    type: string
+                    example: abc123
+            example:
+                run_id: abc123
+                workflow_id: abc123
+            required:
+                - workflow_id
+                - run_id
         BulkStatusResult:
             type: object
             properties:
@@ -826,6 +849,88 @@ components:
                 workflow_id: abc123
             required:
                 - running
+        Collection:
+            type: object
+            properties:
+                aip_id:
+                    type: string
+                    description: Identifier of Archivematica AIP
+                    example: d1845cb6-a5ea-474a-9ab8-26f9bcd919f5
+                    format: uuid
+                completed_at:
+                    type: string
+                    description: Completion datetime
+                    example: "1970-01-01T00:00:01Z"
+                    format: date-time
+                created_at:
+                    type: string
+                    description: Creation datetime
+                    example: "1970-01-01T00:00:01Z"
+                    format: date-time
+                name:
+                    type: string
+                    description: Name of the collection
+                    example: abc123
+                original_id:
+                    type: string
+                    description: Identifier provided by the client
+                    example: abc123
+                pipeline_id:
+                    type: string
+                    description: Identifier of Archivematica pipeline
+                    example: d1845cb6-a5ea-474a-9ab8-26f9bcd919f5
+                    format: uuid
+                run_id:
+                    type: string
+                    description: Identifier of latest processing workflow run
+                    example: d1845cb6-a5ea-474a-9ab8-26f9bcd919f5
+                    format: uuid
+                started_at:
+                    type: string
+                    description: Start datetime
+                    example: "1970-01-01T00:00:01Z"
+                    format: date-time
+                status:
+                    type: string
+                    description: Status of the collection
+                    default: new
+                    example: in progress
+                    enum:
+                        - new
+                        - in progress
+                        - done
+                        - error
+                        - unknown
+                        - queued
+                        - pending
+                        - abandoned
+                transfer_id:
+                    type: string
+                    description: Identifier of Archivematica tranfser
+                    example: d1845cb6-a5ea-474a-9ab8-26f9bcd919f5
+                    format: uuid
+                workflow_id:
+                    type: string
+                    description: Identifier of processing workflow
+                    example: d1845cb6-a5ea-474a-9ab8-26f9bcd919f5
+                    format: uuid
+            description: Collection describes a collection to be stored.
+            example:
+                aip_id: d1845cb6-a5ea-474a-9ab8-26f9bcd919f5
+                completed_at: "1970-01-01T00:00:01Z"
+                created_at: "1970-01-01T00:00:01Z"
+                name: abc123
+                original_id: abc123
+                pipeline_id: d1845cb6-a5ea-474a-9ab8-26f9bcd919f5
+                run_id: d1845cb6-a5ea-474a-9ab8-26f9bcd919f5
+                started_at: "1970-01-01T00:00:01Z"
+                status: in progress
+                transfer_id: d1845cb6-a5ea-474a-9ab8-26f9bcd919f5
+                workflow_id: d1845cb6-a5ea-474a-9ab8-26f9bcd919f5
+            required:
+                - id
+                - status
+                - created_at
         CollectionNotfound:
             type: object
             properties:
@@ -833,11 +938,12 @@ components:
                     type: integer
                     description: Identifier of missing collection
                     example: 1
+                    format: int64
                 message:
                     type: string
                     description: Message of error
                     example: abc123
-            description: Collection not found
+            description: Collection not found.
             example:
                 id: 1
                 message: abc123
@@ -848,14 +954,13 @@ components:
             type: object
             properties:
                 details:
-                    type: string
                     description: Contents of the event
                     example: abc123
-                    format: binary
                 id:
                     type: integer
                     description: Identifier of collection
                     example: 1
+                    format: int64
                 type:
                     type: string
                     description: Type of the event
@@ -881,6 +986,7 @@ components:
                 status:
                     type: string
                     example: abc123
+            description: WorkflowStatus describes the processing workflow status of a collection.
             example:
                 history:
                     - details: abc123
@@ -894,6 +1000,7 @@ components:
                     type: integer
                     description: Identifier of collection
                     example: 1
+                    format: int64
                 item:
                     $ref: '#/components/schemas/EnduroStoredCollection'
                 type:
@@ -941,6 +1048,7 @@ components:
                     type: integer
                     description: Identifier of collection
                     example: 1
+                    format: int64
                 name:
                     type: string
                     description: Name of the collection
@@ -1123,6 +1231,36 @@ components:
                 next_cursor: abc123
             required:
                 - items
+        Pipeline:
+            type: object
+            properties:
+                capacity:
+                    type: integer
+                    description: Maximum concurrent transfers
+                    example: 1
+                    format: int64
+                current:
+                    type: integer
+                    description: Current transfers
+                    example: 1
+                    format: int64
+                id:
+                    type: string
+                    description: Identifier of pipeline
+                    example: d1845cb6-a5ea-474a-9ab8-26f9bcd919f5
+                    format: uuid
+                name:
+                    type: string
+                    description: Name of the pipeline
+                    example: abc123
+            description: Pipeline describes an Archivematica pipeline.
+            example:
+                capacity: 1
+                current: 1
+                id: d1845cb6-a5ea-474a-9ab8-26f9bcd919f5
+                name: abc123
+            required:
+                - name
         PipelineNotFound:
             type: object
             properties:
@@ -1134,7 +1272,7 @@ components:
                     type: string
                     description: Message of error
                     example: abc123
-            description: Pipeline not found
+            description: Pipeline not found.
             example:
                 id: abc123
                 message: abc123
@@ -1151,6 +1289,7 @@ components:
                     type: integer
                     default: 0
                     example: 1
+                    format: int64
                     minimum: 0
                 exclude_hidden_files:
                     type: boolean

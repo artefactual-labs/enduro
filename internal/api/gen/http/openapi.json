@@ -5,7 +5,7 @@
     "application/gob"
   ],
   "definitions": {
-    "BatchHintsResponseBody": {
+    "BatchHintsResult": {
       "example": {
         "completed_dirs": [
           "abc123"
@@ -24,10 +24,32 @@
           "type": "array"
         }
       },
-      "title": "BatchHintsResponseBody",
+      "title": "BatchHintsResult",
       "type": "object"
     },
-    "BatchStatusResponseBody": {
+    "BatchResult": {
+      "example": {
+        "run_id": "abc123",
+        "workflow_id": "abc123"
+      },
+      "properties": {
+        "run_id": {
+          "example": "abc123",
+          "type": "string"
+        },
+        "workflow_id": {
+          "example": "abc123",
+          "type": "string"
+        }
+      },
+      "required": [
+        "workflow_id",
+        "run_id"
+      ],
+      "title": "BatchResult",
+      "type": "object"
+    },
+    "BatchStatusResult": {
       "example": {
         "run_id": "abc123",
         "running": false,
@@ -55,7 +77,7 @@
       "required": [
         "running"
       ],
-      "title": "BatchStatusResponseBody",
+      "title": "BatchStatusResult",
       "type": "object"
     },
     "BatchSubmitNotAvailableResponseBody": {
@@ -185,6 +207,7 @@
         "depth": {
           "default": 0,
           "example": 1,
+          "format": "int64",
           "minimum": 0,
           "type": "integer"
         },
@@ -230,7 +253,7 @@
       "title": "BatchSubmitRequestBody",
       "type": "object"
     },
-    "BatchSubmitResponseBody": {
+    "BulkResult": {
       "example": {
         "run_id": "abc123",
         "workflow_id": "abc123"
@@ -249,7 +272,50 @@
         "workflow_id",
         "run_id"
       ],
-      "title": "BatchSubmitResponseBody",
+      "title": "BulkResult",
+      "type": "object"
+    },
+    "BulkStatusResult": {
+      "example": {
+        "closed_at": "1970-01-01T00:00:01Z",
+        "run_id": "abc123",
+        "running": false,
+        "started_at": "1970-01-01T00:00:01Z",
+        "status": "abc123",
+        "workflow_id": "abc123"
+      },
+      "properties": {
+        "closed_at": {
+          "example": "1970-01-01T00:00:01Z",
+          "format": "date-time",
+          "type": "string"
+        },
+        "run_id": {
+          "example": "abc123",
+          "type": "string"
+        },
+        "running": {
+          "example": false,
+          "type": "boolean"
+        },
+        "started_at": {
+          "example": "1970-01-01T00:00:01Z",
+          "format": "date-time",
+          "type": "string"
+        },
+        "status": {
+          "example": "abc123",
+          "type": "string"
+        },
+        "workflow_id": {
+          "example": "abc123",
+          "type": "string"
+        }
+      },
+      "required": [
+        "running"
+      ],
+      "title": "BulkStatusResult",
       "type": "object"
     },
     "CollectionBulkNotAvailableResponseBody": {
@@ -402,97 +468,6 @@
       "title": "CollectionBulkRequestBody",
       "type": "object"
     },
-    "CollectionBulkResponseBody": {
-      "example": {
-        "run_id": "abc123",
-        "workflow_id": "abc123"
-      },
-      "properties": {
-        "run_id": {
-          "example": "abc123",
-          "type": "string"
-        },
-        "workflow_id": {
-          "example": "abc123",
-          "type": "string"
-        }
-      },
-      "required": [
-        "workflow_id",
-        "run_id"
-      ],
-      "title": "CollectionBulkResponseBody",
-      "type": "object"
-    },
-    "CollectionBulkStatusResponseBody": {
-      "example": {
-        "closed_at": "1970-01-01T00:00:01Z",
-        "run_id": "abc123",
-        "running": false,
-        "started_at": "1970-01-01T00:00:01Z",
-        "status": "abc123",
-        "workflow_id": "abc123"
-      },
-      "properties": {
-        "closed_at": {
-          "example": "1970-01-01T00:00:01Z",
-          "format": "date-time",
-          "type": "string"
-        },
-        "run_id": {
-          "example": "abc123",
-          "type": "string"
-        },
-        "running": {
-          "example": false,
-          "type": "boolean"
-        },
-        "started_at": {
-          "example": "1970-01-01T00:00:01Z",
-          "format": "date-time",
-          "type": "string"
-        },
-        "status": {
-          "example": "abc123",
-          "type": "string"
-        },
-        "workflow_id": {
-          "example": "abc123",
-          "type": "string"
-        }
-      },
-      "required": [
-        "running"
-      ],
-      "title": "CollectionBulkStatusResponseBody",
-      "type": "object"
-    },
-    "CollectionCancelNotFoundResponseBody": {
-      "description": "Collection not found",
-      "example": {
-        "id": 1,
-        "message": "abc123"
-      },
-      "properties": {
-        "id": {
-          "description": "Identifier of missing collection",
-          "example": 1,
-          "format": "int64",
-          "type": "integer"
-        },
-        "message": {
-          "description": "Message of error",
-          "example": "abc123",
-          "type": "string"
-        }
-      },
-      "required": [
-        "message",
-        "id"
-      ],
-      "title": "CollectionCancelNotFoundResponseBody",
-      "type": "object"
-    },
     "CollectionCancelNotRunningResponseBody": {
       "description": "cancel_not_running_response_body result type (default view)",
       "example": {
@@ -544,32 +519,6 @@
         "fault"
       ],
       "title": "Mediatype identifier: application/vnd.goa.error; view=default",
-      "type": "object"
-    },
-    "CollectionDecideNotFoundResponseBody": {
-      "description": "Collection not found",
-      "example": {
-        "id": 1,
-        "message": "abc123"
-      },
-      "properties": {
-        "id": {
-          "description": "Identifier of missing collection",
-          "example": 1,
-          "format": "int64",
-          "type": "integer"
-        },
-        "message": {
-          "description": "Message of error",
-          "example": "abc123",
-          "type": "string"
-        }
-      },
-      "required": [
-        "message",
-        "id"
-      ],
-      "title": "CollectionDecideNotFoundResponseBody",
       "type": "object"
     },
     "CollectionDecideNotValidResponseBody": {
@@ -625,58 +574,6 @@
       "title": "Mediatype identifier: application/vnd.goa.error; view=default",
       "type": "object"
     },
-    "CollectionDeleteNotFoundResponseBody": {
-      "description": "Collection not found",
-      "example": {
-        "id": 1,
-        "message": "abc123"
-      },
-      "properties": {
-        "id": {
-          "description": "Identifier of missing collection",
-          "example": 1,
-          "format": "int64",
-          "type": "integer"
-        },
-        "message": {
-          "description": "Message of error",
-          "example": "abc123",
-          "type": "string"
-        }
-      },
-      "required": [
-        "message",
-        "id"
-      ],
-      "title": "CollectionDeleteNotFoundResponseBody",
-      "type": "object"
-    },
-    "CollectionDownloadNotFoundResponseBody": {
-      "description": "Collection not found",
-      "example": {
-        "id": 1,
-        "message": "abc123"
-      },
-      "properties": {
-        "id": {
-          "description": "Identifier of missing collection",
-          "example": 1,
-          "format": "int64",
-          "type": "integer"
-        },
-        "message": {
-          "description": "Message of error",
-          "example": "abc123",
-          "type": "string"
-        }
-      },
-      "required": [
-        "message",
-        "id"
-      ],
-      "title": "CollectionDownloadNotFoundResponseBody",
-      "type": "object"
-    },
     "CollectionListResponseBody": {
       "example": {
         "items": [
@@ -712,50 +609,7 @@
       "title": "CollectionListResponseBody",
       "type": "object"
     },
-    "CollectionMonitorResponseBody": {
-      "description": "MonitorResponseBody result type (default view)",
-      "example": {
-        "id": 1,
-        "item": {
-          "aip_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
-          "completed_at": "1970-01-01T00:00:01Z",
-          "created_at": "1970-01-01T00:00:01Z",
-          "id": 1,
-          "name": "abc123",
-          "original_id": "abc123",
-          "pipeline_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
-          "run_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
-          "started_at": "1970-01-01T00:00:01Z",
-          "status": "in progress",
-          "transfer_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
-          "workflow_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5"
-        },
-        "type": "abc123"
-      },
-      "properties": {
-        "id": {
-          "description": "Identifier of collection",
-          "example": 1,
-          "format": "int64",
-          "type": "integer"
-        },
-        "item": {
-          "$ref": "#/definitions/EnduroStoredCollectionResponseBody"
-        },
-        "type": {
-          "description": "Type of the event",
-          "example": "abc123",
-          "type": "string"
-        }
-      },
-      "required": [
-        "id",
-        "type"
-      ],
-      "title": "Mediatype identifier: application/vnd.enduro.monitor-update; view=default",
-      "type": "object"
-    },
-    "CollectionRetryNotFoundResponseBody": {
+    "CollectionNotfound": {
       "description": "Collection not found",
       "example": {
         "id": 1,
@@ -778,7 +632,7 @@
         "message",
         "id"
       ],
-      "title": "CollectionRetryNotFoundResponseBody",
+      "title": "CollectionNotfound",
       "type": "object"
     },
     "CollectionRetryNotRunningResponseBody": {
@@ -834,33 +688,116 @@
       "title": "Mediatype identifier: application/vnd.goa.error; view=default",
       "type": "object"
     },
-    "CollectionShowNotFoundResponseBody": {
-      "description": "Collection not found",
+    "EnduroCollectionWorkflowHistoryResponseBody": {
+      "description": "WorkflowHistoryEvent describes a history event in Temporal. (default view)",
       "example": {
+        "details": "abc123",
         "id": 1,
-        "message": "abc123"
+        "type": "abc123"
       },
       "properties": {
+        "details": {
+          "description": "Contents of the event",
+          "example": "abc123"
+        },
         "id": {
-          "description": "Identifier of missing collection",
+          "description": "Identifier of collection",
           "example": 1,
           "format": "int64",
           "type": "integer"
         },
-        "message": {
-          "description": "Message of error",
+        "type": {
+          "description": "Type of the event",
+          "example": "abc123",
+          "type": "string"
+        }
+      },
+      "title": "Mediatype identifier: application/vnd.enduro.collection-workflow-history; view=default",
+      "type": "object"
+    },
+    "EnduroCollectionWorkflowHistoryResponseBodyCollection": {
+      "description": "EnduroCollection-Workflow-HistoryCollectionResponseBody is the result type for an array of EnduroCollection-Workflow-HistoryResponseBody (default view)",
+      "example": [
+        {
+          "details": "abc123",
+          "id": 1,
+          "type": "abc123"
+        }
+      ],
+      "items": {
+        "$ref": "#/definitions/EnduroCollectionWorkflowHistoryResponseBody"
+      },
+      "title": "Mediatype identifier: application/vnd.enduro.collection-workflow-history; type=collection; view=default",
+      "type": "array"
+    },
+    "EnduroCollectionWorkflowStatus": {
+      "description": "WorkflowResponseBody result type (default view)",
+      "example": {
+        "history": [
+          {
+            "details": "abc123",
+            "id": 1,
+            "type": "abc123"
+          }
+        ],
+        "status": "abc123"
+      },
+      "properties": {
+        "history": {
+          "$ref": "#/definitions/EnduroCollectionWorkflowHistoryResponseBodyCollection"
+        },
+        "status": {
+          "example": "abc123",
+          "type": "string"
+        }
+      },
+      "title": "Mediatype identifier: application/vnd.enduro.collection-workflow-status; view=default",
+      "type": "object"
+    },
+    "EnduroMonitorUpdate": {
+      "description": "MonitorResponseBody result type (default view)",
+      "example": {
+        "id": 1,
+        "item": {
+          "aip_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
+          "completed_at": "1970-01-01T00:00:01Z",
+          "created_at": "1970-01-01T00:00:01Z",
+          "id": 1,
+          "name": "abc123",
+          "original_id": "abc123",
+          "pipeline_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
+          "run_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
+          "started_at": "1970-01-01T00:00:01Z",
+          "status": "in progress",
+          "transfer_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
+          "workflow_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5"
+        },
+        "type": "abc123"
+      },
+      "properties": {
+        "id": {
+          "description": "Identifier of collection",
+          "example": 1,
+          "format": "int64",
+          "type": "integer"
+        },
+        "item": {
+          "$ref": "#/definitions/EnduroStoredCollectionResponseBody"
+        },
+        "type": {
+          "description": "Type of the event",
           "example": "abc123",
           "type": "string"
         }
       },
       "required": [
-        "message",
-        "id"
+        "id",
+        "type"
       ],
-      "title": "CollectionShowNotFoundResponseBody",
+      "title": "Mediatype identifier: application/vnd.enduro.monitor-update; view=default",
       "type": "object"
     },
-    "CollectionShowResponseBody": {
+    "EnduroStoredCollection": {
       "description": "ShowResponseBody result type (default view)",
       "example": {
         "aip_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
@@ -965,100 +902,6 @@
       ],
       "title": "Mediatype identifier: application/vnd.enduro.stored-collection; view=default",
       "type": "object"
-    },
-    "CollectionWorkflowNotFoundResponseBody": {
-      "description": "Collection not found",
-      "example": {
-        "id": 1,
-        "message": "abc123"
-      },
-      "properties": {
-        "id": {
-          "description": "Identifier of missing collection",
-          "example": 1,
-          "format": "int64",
-          "type": "integer"
-        },
-        "message": {
-          "description": "Message of error",
-          "example": "abc123",
-          "type": "string"
-        }
-      },
-      "required": [
-        "message",
-        "id"
-      ],
-      "title": "CollectionWorkflowNotFoundResponseBody",
-      "type": "object"
-    },
-    "CollectionWorkflowResponseBody": {
-      "description": "WorkflowResponseBody result type (default view)",
-      "example": {
-        "history": [
-          {
-            "details": "abc123",
-            "id": 1,
-            "type": "abc123"
-          }
-        ],
-        "status": "abc123"
-      },
-      "properties": {
-        "history": {
-          "$ref": "#/definitions/EnduroCollectionWorkflowHistoryResponseBodyCollection"
-        },
-        "status": {
-          "example": "abc123",
-          "type": "string"
-        }
-      },
-      "title": "Mediatype identifier: application/vnd.enduro.collection-workflow-status; view=default",
-      "type": "object"
-    },
-    "EnduroCollectionWorkflowHistoryResponseBody": {
-      "description": "WorkflowHistoryEvent describes a history event in Temporal. (default view)",
-      "example": {
-        "details": "abc123",
-        "id": 1,
-        "type": "abc123"
-      },
-      "properties": {
-        "details": {
-          "description": "Contents of the event",
-          "example": "abc123",
-          "format": "binary",
-          "type": "string"
-        },
-        "id": {
-          "description": "Identifier of collection",
-          "example": 1,
-          "format": "int64",
-          "type": "integer"
-        },
-        "type": {
-          "description": "Type of the event",
-          "example": "abc123",
-          "type": "string"
-        }
-      },
-      "title": "Mediatype identifier: application/vnd.enduro.collection-workflow-history; view=default",
-      "type": "object"
-    },
-    "EnduroCollectionWorkflowHistoryResponseBodyCollection": {
-      "description": "EnduroCollection-Workflow-HistoryCollectionResponseBody is the result type for an array of EnduroCollection-Workflow-HistoryResponseBody (default view)",
-      "example": [
-        {
-          "details": "abc123",
-          "id": 1,
-          "type": "abc123"
-        }
-      ],
-      "items": {
-        "$ref": "#/definitions/EnduroCollectionWorkflowHistoryResponseBody"
-      },
-      "title": "Mediatype identifier: application/vnd.enduro.collection-workflow-history; type=collection; view=default",
-      "type": "array"
     },
     "EnduroStoredCollectionResponseBody": {
       "description": "StoredCollection describes a collection retrieved by the service. (default view)",
@@ -1190,7 +1033,7 @@
       "title": "Mediatype identifier: application/vnd.enduro.stored-collection; type=collection; view=default",
       "type": "array"
     },
-    "EnduroStoredPipelineResponse": {
+    "EnduroStoredPipeline": {
       "description": "StoredPipeline describes a pipeline retrieved by this service. (default view)",
       "example": {
         "capacity": 1,
@@ -1234,7 +1077,7 @@
       "title": "Mediatype identifier: application/vnd.enduro.stored-pipeline; view=default",
       "type": "object"
     },
-    "PipelineProcessingNotFoundResponseBody": {
+    "PipelineNotFound": {
       "description": "Pipeline not found",
       "example": {
         "id": "abc123",
@@ -1256,83 +1099,14 @@
         "message",
         "id"
       ],
-      "title": "PipelineProcessingNotFoundResponseBody",
-      "type": "object"
-    },
-    "PipelineShowNotFoundResponseBody": {
-      "description": "Pipeline not found",
-      "example": {
-        "id": "abc123",
-        "message": "abc123"
-      },
-      "properties": {
-        "id": {
-          "description": "Identifier of missing pipeline",
-          "example": "abc123",
-          "type": "string"
-        },
-        "message": {
-          "description": "Message of error",
-          "example": "abc123",
-          "type": "string"
-        }
-      },
-      "required": [
-        "message",
-        "id"
-      ],
-      "title": "PipelineShowNotFoundResponseBody",
-      "type": "object"
-    },
-    "PipelineShowResponseBody": {
-      "description": "ShowResponseBody result type (default view)",
-      "example": {
-        "capacity": 1,
-        "current": 1,
-        "id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
-        "name": "abc123",
-        "status": "abc123"
-      },
-      "properties": {
-        "capacity": {
-          "description": "Maximum concurrent transfers",
-          "example": 1,
-          "format": "int64",
-          "type": "integer"
-        },
-        "current": {
-          "description": "Current transfers",
-          "example": 1,
-          "format": "int64",
-          "type": "integer"
-        },
-        "id": {
-          "description": "Identifier of pipeline",
-          "example": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
-          "format": "uuid",
-          "type": "string"
-        },
-        "name": {
-          "description": "Name of the pipeline",
-          "example": "abc123",
-          "type": "string"
-        },
-        "status": {
-          "example": "abc123",
-          "type": "string"
-        }
-      },
-      "required": [
-        "name"
-      ],
-      "title": "Mediatype identifier: application/vnd.enduro.stored-pipeline; view=default",
+      "title": "PipelineNotFound",
       "type": "object"
     }
   },
   "host": "localhost:9000",
   "info": {
     "title": "Enduro API",
-    "version": ""
+    "version": "0.0.1"
   },
   "paths": {
     "/batch": {
@@ -1343,7 +1117,7 @@
           "200": {
             "description": "OK response.",
             "schema": {
-              "$ref": "#/definitions/BatchStatusResponseBody",
+              "$ref": "#/definitions/BatchStatusResult",
               "required": [
                 "running"
               ]
@@ -1378,7 +1152,7 @@
           "202": {
             "description": "Accepted response.",
             "schema": {
-              "$ref": "#/definitions/BatchSubmitResponseBody",
+              "$ref": "#/definitions/BatchResult",
               "required": [
                 "workflow_id",
                 "run_id"
@@ -1415,7 +1189,7 @@
           "200": {
             "description": "OK response.",
             "schema": {
-              "$ref": "#/definitions/BatchHintsResponseBody"
+              "$ref": "#/definitions/BatchHintsResult"
             }
           }
         },
@@ -1535,7 +1309,7 @@
           "200": {
             "description": "OK response.",
             "schema": {
-              "$ref": "#/definitions/CollectionBulkStatusResponseBody",
+              "$ref": "#/definitions/BulkStatusResult",
               "required": [
                 "running"
               ]
@@ -1571,7 +1345,7 @@
           "202": {
             "description": "Accepted response.",
             "schema": {
-              "$ref": "#/definitions/CollectionBulkResponseBody",
+              "$ref": "#/definitions/BulkResult",
               "required": [
                 "workflow_id",
                 "run_id"
@@ -1607,7 +1381,7 @@
           "101": {
             "description": "Switching Protocols response.",
             "schema": {
-              "$ref": "#/definitions/CollectionMonitorResponseBody"
+              "$ref": "#/definitions/EnduroMonitorUpdate"
             }
           }
         },
@@ -1640,7 +1414,7 @@
           "404": {
             "description": "Not Found response.",
             "schema": {
-              "$ref": "#/definitions/CollectionDeleteNotFoundResponseBody",
+              "$ref": "#/definitions/CollectionNotfound",
               "required": [
                 "message",
                 "id"
@@ -1672,13 +1446,13 @@
           "200": {
             "description": "OK response.",
             "schema": {
-              "$ref": "#/definitions/CollectionShowResponseBody"
+              "$ref": "#/definitions/EnduroStoredCollection"
             }
           },
           "404": {
             "description": "Not Found response.",
             "schema": {
-              "$ref": "#/definitions/CollectionShowNotFoundResponseBody",
+              "$ref": "#/definitions/CollectionNotfound",
               "required": [
                 "message",
                 "id"
@@ -1721,7 +1495,7 @@
           "404": {
             "description": "Not Found response.",
             "schema": {
-              "$ref": "#/definitions/CollectionCancelNotFoundResponseBody",
+              "$ref": "#/definitions/CollectionNotfound",
               "required": [
                 "message",
                 "id"
@@ -1779,7 +1553,7 @@
           "404": {
             "description": "Not Found response.",
             "schema": {
-              "$ref": "#/definitions/CollectionDecideNotFoundResponseBody",
+              "$ref": "#/definitions/CollectionNotfound",
               "required": [
                 "message",
                 "id"
@@ -1827,7 +1601,7 @@
           "404": {
             "description": "Not Found response.",
             "schema": {
-              "$ref": "#/definitions/CollectionDownloadNotFoundResponseBody",
+              "$ref": "#/definitions/CollectionNotfound",
               "required": [
                 "message",
                 "id"
@@ -1870,7 +1644,7 @@
           "404": {
             "description": "Not Found response.",
             "schema": {
-              "$ref": "#/definitions/CollectionRetryNotFoundResponseBody",
+              "$ref": "#/definitions/CollectionNotfound",
               "required": [
                 "message",
                 "id"
@@ -1904,13 +1678,13 @@
           "200": {
             "description": "OK response.",
             "schema": {
-              "$ref": "#/definitions/CollectionWorkflowResponseBody"
+              "$ref": "#/definitions/EnduroCollectionWorkflowStatus"
             }
           },
           "404": {
             "description": "Not Found response.",
             "schema": {
-              "$ref": "#/definitions/CollectionWorkflowNotFoundResponseBody",
+              "$ref": "#/definitions/CollectionNotfound",
               "required": [
                 "message",
                 "id"
@@ -1951,7 +1725,7 @@
             "description": "OK response.",
             "schema": {
               "items": {
-                "$ref": "#/definitions/EnduroStoredPipelineResponse"
+                "$ref": "#/definitions/EnduroStoredPipeline"
               },
               "type": "array"
             }
@@ -1984,13 +1758,13 @@
           "200": {
             "description": "OK response.",
             "schema": {
-              "$ref": "#/definitions/PipelineShowResponseBody"
+              "$ref": "#/definitions/EnduroStoredPipeline"
             }
           },
           "404": {
             "description": "Not Found response.",
             "schema": {
-              "$ref": "#/definitions/PipelineShowNotFoundResponseBody",
+              "$ref": "#/definitions/PipelineNotFound",
               "required": [
                 "message",
                 "id"
@@ -2035,7 +1809,7 @@
           "404": {
             "description": "Not Found response.",
             "schema": {
-              "$ref": "#/definitions/PipelineProcessingNotFoundResponseBody",
+              "$ref": "#/definitions/PipelineNotFound",
               "required": [
                 "message",
                 "id"

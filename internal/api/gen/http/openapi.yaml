@@ -1,7 +1,7 @@
 swagger: "2.0"
 info:
     title: Enduro API
-    version: ""
+    version: 0.0.1
 host: localhost:9000
 consumes:
     - application/json
@@ -23,7 +23,7 @@ paths:
                 "200":
                     description: OK response.
                     schema:
-                        $ref: '#/definitions/BatchStatusResponseBody'
+                        $ref: '#/definitions/BatchStatusResult'
                         required:
                             - running
             schemes:
@@ -46,7 +46,7 @@ paths:
                 "202":
                     description: Accepted response.
                     schema:
-                        $ref: '#/definitions/BatchSubmitResponseBody'
+                        $ref: '#/definitions/BatchResult'
                         required:
                             - workflow_id
                             - run_id
@@ -71,7 +71,7 @@ paths:
                 "200":
                     description: OK response.
                     schema:
-                        $ref: '#/definitions/BatchHintsResponseBody'
+                        $ref: '#/definitions/BatchHintsResult'
             schemes:
                 - http
     /collection:
@@ -162,11 +162,11 @@ paths:
                 "200":
                     description: OK response.
                     schema:
-                        $ref: '#/definitions/CollectionShowResponseBody'
+                        $ref: '#/definitions/EnduroStoredCollection'
                 "404":
                     description: Not Found response.
                     schema:
-                        $ref: '#/definitions/CollectionShowNotFoundResponseBody'
+                        $ref: '#/definitions/CollectionNotfound'
                         required:
                             - message
                             - id
@@ -190,7 +190,7 @@ paths:
                 "404":
                     description: Not Found response.
                     schema:
-                        $ref: '#/definitions/CollectionDeleteNotFoundResponseBody'
+                        $ref: '#/definitions/CollectionNotfound'
                         required:
                             - message
                             - id
@@ -219,7 +219,7 @@ paths:
                 "404":
                     description: Not Found response.
                     schema:
-                        $ref: '#/definitions/CollectionCancelNotFoundResponseBody'
+                        $ref: '#/definitions/CollectionNotfound'
                         required:
                             - message
                             - id
@@ -258,7 +258,7 @@ paths:
                 "404":
                     description: Not Found response.
                     schema:
-                        $ref: '#/definitions/CollectionDecideNotFoundResponseBody'
+                        $ref: '#/definitions/CollectionNotfound'
                         required:
                             - message
                             - id
@@ -290,7 +290,7 @@ paths:
                 "404":
                     description: Not Found response.
                     schema:
-                        $ref: '#/definitions/CollectionDownloadNotFoundResponseBody'
+                        $ref: '#/definitions/CollectionNotfound'
                         required:
                             - message
                             - id
@@ -319,7 +319,7 @@ paths:
                 "404":
                     description: Not Found response.
                     schema:
-                        $ref: '#/definitions/CollectionRetryNotFoundResponseBody'
+                        $ref: '#/definitions/CollectionNotfound'
                         required:
                             - message
                             - id
@@ -342,11 +342,11 @@ paths:
                 "200":
                     description: OK response.
                     schema:
-                        $ref: '#/definitions/CollectionWorkflowResponseBody'
+                        $ref: '#/definitions/EnduroCollectionWorkflowStatus'
                 "404":
                     description: Not Found response.
                     schema:
-                        $ref: '#/definitions/CollectionWorkflowNotFoundResponseBody'
+                        $ref: '#/definitions/CollectionNotfound'
                         required:
                             - message
                             - id
@@ -363,7 +363,7 @@ paths:
                 "200":
                     description: OK response.
                     schema:
-                        $ref: '#/definitions/CollectionBulkStatusResponseBody'
+                        $ref: '#/definitions/BulkStatusResult'
                         required:
                             - running
             schemes:
@@ -387,7 +387,7 @@ paths:
                 "202":
                     description: Accepted response.
                     schema:
-                        $ref: '#/definitions/CollectionBulkResponseBody'
+                        $ref: '#/definitions/BulkResult'
                         required:
                             - workflow_id
                             - run_id
@@ -411,7 +411,7 @@ paths:
                 "101":
                     description: Switching Protocols response.
                     schema:
-                        $ref: '#/definitions/CollectionMonitorResponseBody'
+                        $ref: '#/definitions/EnduroMonitorUpdate'
             schemes:
                 - ws
     /pipeline:
@@ -437,7 +437,7 @@ paths:
                     schema:
                         type: array
                         items:
-                            $ref: '#/definitions/EnduroStoredPipelineResponse'
+                            $ref: '#/definitions/EnduroStoredPipeline'
             schemes:
                 - http
     /pipeline/{id}:
@@ -458,11 +458,11 @@ paths:
                 "200":
                     description: OK response.
                     schema:
-                        $ref: '#/definitions/PipelineShowResponseBody'
+                        $ref: '#/definitions/EnduroStoredPipeline'
                 "404":
                     description: Not Found response.
                     schema:
-                        $ref: '#/definitions/PipelineShowNotFoundResponseBody'
+                        $ref: '#/definitions/PipelineNotFound'
                         required:
                             - message
                             - id
@@ -493,7 +493,7 @@ paths:
                 "404":
                     description: Not Found response.
                     schema:
-                        $ref: '#/definitions/PipelineProcessingNotFoundResponseBody'
+                        $ref: '#/definitions/PipelineNotFound'
                         required:
                             - message
                             - id
@@ -514,8 +514,8 @@ paths:
             schemes:
                 - http
 definitions:
-    BatchHintsResponseBody:
-        title: BatchHintsResponseBody
+    BatchHintsResult:
+        title: BatchHintsResult
         type: object
         properties:
             completed_dirs:
@@ -529,8 +529,24 @@ definitions:
         example:
             completed_dirs:
                 - abc123
-    BatchStatusResponseBody:
-        title: BatchStatusResponseBody
+    BatchResult:
+        title: BatchResult
+        type: object
+        properties:
+            run_id:
+                type: string
+                example: abc123
+            workflow_id:
+                type: string
+                example: abc123
+        example:
+            run_id: abc123
+            workflow_id: abc123
+        required:
+            - workflow_id
+            - run_id
+    BatchStatusResult:
+        title: BatchStatusResult
         type: object
         properties:
             run_id:
@@ -649,6 +665,7 @@ definitions:
                 type: integer
                 default: 0
                 example: 1
+                format: int64
                 minimum: 0
             exclude_hidden_files:
                 type: boolean
@@ -690,8 +707,8 @@ definitions:
             transfer_type: abc123
         required:
             - path
-    BatchSubmitResponseBody:
-        title: BatchSubmitResponseBody
+    BulkResult:
+        title: BulkResult
         type: object
         properties:
             run_id:
@@ -706,6 +723,39 @@ definitions:
         required:
             - workflow_id
             - run_id
+    BulkStatusResult:
+        title: BulkStatusResult
+        type: object
+        properties:
+            closed_at:
+                type: string
+                example: "1970-01-01T00:00:01Z"
+                format: date-time
+            run_id:
+                type: string
+                example: abc123
+            running:
+                type: boolean
+                example: false
+            started_at:
+                type: string
+                example: "1970-01-01T00:00:01Z"
+                format: date-time
+            status:
+                type: string
+                example: abc123
+            workflow_id:
+                type: string
+                example: abc123
+        example:
+            closed_at: "1970-01-01T00:00:01Z"
+            run_id: abc123
+            running: false
+            started_at: "1970-01-01T00:00:01Z"
+            status: abc123
+            workflow_id: abc123
+        required:
+            - running
     CollectionBulkNotAvailableResponseBody:
         title: 'Mediatype identifier: application/vnd.goa.error; view=default'
         type: object
@@ -827,75 +877,6 @@ definitions:
         required:
             - operation
             - status
-    CollectionBulkResponseBody:
-        title: CollectionBulkResponseBody
-        type: object
-        properties:
-            run_id:
-                type: string
-                example: abc123
-            workflow_id:
-                type: string
-                example: abc123
-        example:
-            run_id: abc123
-            workflow_id: abc123
-        required:
-            - workflow_id
-            - run_id
-    CollectionBulkStatusResponseBody:
-        title: CollectionBulkStatusResponseBody
-        type: object
-        properties:
-            closed_at:
-                type: string
-                example: "1970-01-01T00:00:01Z"
-                format: date-time
-            run_id:
-                type: string
-                example: abc123
-            running:
-                type: boolean
-                example: false
-            started_at:
-                type: string
-                example: "1970-01-01T00:00:01Z"
-                format: date-time
-            status:
-                type: string
-                example: abc123
-            workflow_id:
-                type: string
-                example: abc123
-        example:
-            closed_at: "1970-01-01T00:00:01Z"
-            run_id: abc123
-            running: false
-            started_at: "1970-01-01T00:00:01Z"
-            status: abc123
-            workflow_id: abc123
-        required:
-            - running
-    CollectionCancelNotFoundResponseBody:
-        title: CollectionCancelNotFoundResponseBody
-        type: object
-        properties:
-            id:
-                type: integer
-                description: Identifier of missing collection
-                example: 1
-                format: int64
-            message:
-                type: string
-                description: Message of error
-                example: abc123
-        description: Collection not found
-        example:
-            id: 1
-            message: abc123
-        required:
-            - message
-            - id
     CollectionCancelNotRunningResponseBody:
         title: 'Mediatype identifier: application/vnd.goa.error; view=default'
         type: object
@@ -939,26 +920,6 @@ definitions:
             - temporary
             - timeout
             - fault
-    CollectionDecideNotFoundResponseBody:
-        title: CollectionDecideNotFoundResponseBody
-        type: object
-        properties:
-            id:
-                type: integer
-                description: Identifier of missing collection
-                example: 1
-                format: int64
-            message:
-                type: string
-                description: Message of error
-                example: abc123
-        description: Collection not found
-        example:
-            id: 1
-            message: abc123
-        required:
-            - message
-            - id
     CollectionDecideNotValidResponseBody:
         title: 'Mediatype identifier: application/vnd.goa.error; view=default'
         type: object
@@ -1002,46 +963,6 @@ definitions:
             - temporary
             - timeout
             - fault
-    CollectionDeleteNotFoundResponseBody:
-        title: CollectionDeleteNotFoundResponseBody
-        type: object
-        properties:
-            id:
-                type: integer
-                description: Identifier of missing collection
-                example: 1
-                format: int64
-            message:
-                type: string
-                description: Message of error
-                example: abc123
-        description: Collection not found
-        example:
-            id: 1
-            message: abc123
-        required:
-            - message
-            - id
-    CollectionDownloadNotFoundResponseBody:
-        title: CollectionDownloadNotFoundResponseBody
-        type: object
-        properties:
-            id:
-                type: integer
-                description: Identifier of missing collection
-                example: 1
-                format: int64
-            message:
-                type: string
-                description: Message of error
-                example: abc123
-        description: Collection not found
-        example:
-            id: 1
-            message: abc123
-        required:
-            - message
-            - id
     CollectionListResponseBody:
         title: CollectionListResponseBody
         type: object
@@ -1068,43 +989,8 @@ definitions:
             next_cursor: abc123
         required:
             - items
-    CollectionMonitorResponseBody:
-        title: 'Mediatype identifier: application/vnd.enduro.monitor-update; view=default'
-        type: object
-        properties:
-            id:
-                type: integer
-                description: Identifier of collection
-                example: 1
-                format: int64
-            item:
-                $ref: '#/definitions/EnduroStoredCollectionResponseBody'
-            type:
-                type: string
-                description: Type of the event
-                example: abc123
-        description: MonitorResponseBody result type (default view)
-        example:
-            id: 1
-            item:
-                aip_id: d1845cb6-a5ea-474a-9ab8-26f9bcd919f5
-                completed_at: "1970-01-01T00:00:01Z"
-                created_at: "1970-01-01T00:00:01Z"
-                id: 1
-                name: abc123
-                original_id: abc123
-                pipeline_id: d1845cb6-a5ea-474a-9ab8-26f9bcd919f5
-                run_id: d1845cb6-a5ea-474a-9ab8-26f9bcd919f5
-                started_at: "1970-01-01T00:00:01Z"
-                status: in progress
-                transfer_id: d1845cb6-a5ea-474a-9ab8-26f9bcd919f5
-                workflow_id: d1845cb6-a5ea-474a-9ab8-26f9bcd919f5
-            type: abc123
-        required:
-            - id
-            - type
-    CollectionRetryNotFoundResponseBody:
-        title: CollectionRetryNotFoundResponseBody
+    CollectionNotfound:
+        title: CollectionNotfound
         type: object
         properties:
             id:
@@ -1166,27 +1052,89 @@ definitions:
             - temporary
             - timeout
             - fault
-    CollectionShowNotFoundResponseBody:
-        title: CollectionShowNotFoundResponseBody
+    EnduroCollectionWorkflowHistoryResponseBody:
+        title: 'Mediatype identifier: application/vnd.enduro.collection-workflow-history; view=default'
+        type: object
+        properties:
+            details:
+                description: Contents of the event
+                example: abc123
+            id:
+                type: integer
+                description: Identifier of collection
+                example: 1
+                format: int64
+            type:
+                type: string
+                description: Type of the event
+                example: abc123
+        description: WorkflowHistoryEvent describes a history event in Temporal. (default view)
+        example:
+            details: abc123
+            id: 1
+            type: abc123
+    EnduroCollectionWorkflowHistoryResponseBodyCollection:
+        title: 'Mediatype identifier: application/vnd.enduro.collection-workflow-history; type=collection; view=default'
+        type: array
+        items:
+            $ref: '#/definitions/EnduroCollectionWorkflowHistoryResponseBody'
+        description: EnduroCollection-Workflow-HistoryCollectionResponseBody is the result type for an array of EnduroCollection-Workflow-HistoryResponseBody (default view)
+        example:
+            - details: abc123
+              id: 1
+              type: abc123
+    EnduroCollectionWorkflowStatus:
+        title: 'Mediatype identifier: application/vnd.enduro.collection-workflow-status; view=default'
+        type: object
+        properties:
+            history:
+                $ref: '#/definitions/EnduroCollectionWorkflowHistoryResponseBodyCollection'
+            status:
+                type: string
+                example: abc123
+        description: WorkflowResponseBody result type (default view)
+        example:
+            history:
+                - details: abc123
+                  id: 1
+                  type: abc123
+            status: abc123
+    EnduroMonitorUpdate:
+        title: 'Mediatype identifier: application/vnd.enduro.monitor-update; view=default'
         type: object
         properties:
             id:
                 type: integer
-                description: Identifier of missing collection
+                description: Identifier of collection
                 example: 1
                 format: int64
-            message:
+            item:
+                $ref: '#/definitions/EnduroStoredCollectionResponseBody'
+            type:
                 type: string
-                description: Message of error
+                description: Type of the event
                 example: abc123
-        description: Collection not found
+        description: MonitorResponseBody result type (default view)
         example:
             id: 1
-            message: abc123
+            item:
+                aip_id: d1845cb6-a5ea-474a-9ab8-26f9bcd919f5
+                completed_at: "1970-01-01T00:00:01Z"
+                created_at: "1970-01-01T00:00:01Z"
+                id: 1
+                name: abc123
+                original_id: abc123
+                pipeline_id: d1845cb6-a5ea-474a-9ab8-26f9bcd919f5
+                run_id: d1845cb6-a5ea-474a-9ab8-26f9bcd919f5
+                started_at: "1970-01-01T00:00:01Z"
+                status: in progress
+                transfer_id: d1845cb6-a5ea-474a-9ab8-26f9bcd919f5
+                workflow_id: d1845cb6-a5ea-474a-9ab8-26f9bcd919f5
+            type: abc123
         required:
-            - message
             - id
-    CollectionShowResponseBody:
+            - type
+    EnduroStoredCollection:
         title: 'Mediatype identifier: application/vnd.enduro.stored-collection; view=default'
         type: object
         properties:
@@ -1275,75 +1223,6 @@ definitions:
             - id
             - status
             - created_at
-    CollectionWorkflowNotFoundResponseBody:
-        title: CollectionWorkflowNotFoundResponseBody
-        type: object
-        properties:
-            id:
-                type: integer
-                description: Identifier of missing collection
-                example: 1
-                format: int64
-            message:
-                type: string
-                description: Message of error
-                example: abc123
-        description: Collection not found
-        example:
-            id: 1
-            message: abc123
-        required:
-            - message
-            - id
-    CollectionWorkflowResponseBody:
-        title: 'Mediatype identifier: application/vnd.enduro.collection-workflow-status; view=default'
-        type: object
-        properties:
-            history:
-                $ref: '#/definitions/EnduroCollectionWorkflowHistoryResponseBodyCollection'
-            status:
-                type: string
-                example: abc123
-        description: WorkflowResponseBody result type (default view)
-        example:
-            history:
-                - details: abc123
-                  id: 1
-                  type: abc123
-            status: abc123
-    EnduroCollectionWorkflowHistoryResponseBody:
-        title: 'Mediatype identifier: application/vnd.enduro.collection-workflow-history; view=default'
-        type: object
-        properties:
-            details:
-                type: string
-                description: Contents of the event
-                example: abc123
-                format: binary
-            id:
-                type: integer
-                description: Identifier of collection
-                example: 1
-                format: int64
-            type:
-                type: string
-                description: Type of the event
-                example: abc123
-        description: WorkflowHistoryEvent describes a history event in Temporal. (default view)
-        example:
-            details: abc123
-            id: 1
-            type: abc123
-    EnduroCollectionWorkflowHistoryResponseBodyCollection:
-        title: 'Mediatype identifier: application/vnd.enduro.collection-workflow-history; type=collection; view=default'
-        type: array
-        items:
-            $ref: '#/definitions/EnduroCollectionWorkflowHistoryResponseBody'
-        description: EnduroCollection-Workflow-HistoryCollectionResponseBody is the result type for an array of EnduroCollection-Workflow-HistoryResponseBody (default view)
-        example:
-            - details: abc123
-              id: 1
-              type: abc123
     EnduroStoredCollectionResponseBody:
         title: 'Mediatype identifier: application/vnd.enduro.stored-collection; view=default'
         type: object
@@ -1452,7 +1331,7 @@ definitions:
               status: in progress
               transfer_id: d1845cb6-a5ea-474a-9ab8-26f9bcd919f5
               workflow_id: d1845cb6-a5ea-474a-9ab8-26f9bcd919f5
-    EnduroStoredPipelineResponse:
+    EnduroStoredPipeline:
         title: 'Mediatype identifier: application/vnd.enduro.stored-pipeline; view=default'
         type: object
         properties:
@@ -1487,8 +1366,8 @@ definitions:
             status: abc123
         required:
             - name
-    PipelineProcessingNotFoundResponseBody:
-        title: PipelineProcessingNotFoundResponseBody
+    PipelineNotFound:
+        title: PipelineNotFound
         type: object
         properties:
             id:
@@ -1506,57 +1385,3 @@ definitions:
         required:
             - message
             - id
-    PipelineShowNotFoundResponseBody:
-        title: PipelineShowNotFoundResponseBody
-        type: object
-        properties:
-            id:
-                type: string
-                description: Identifier of missing pipeline
-                example: abc123
-            message:
-                type: string
-                description: Message of error
-                example: abc123
-        description: Pipeline not found
-        example:
-            id: abc123
-            message: abc123
-        required:
-            - message
-            - id
-    PipelineShowResponseBody:
-        title: 'Mediatype identifier: application/vnd.enduro.stored-pipeline; view=default'
-        type: object
-        properties:
-            capacity:
-                type: integer
-                description: Maximum concurrent transfers
-                example: 1
-                format: int64
-            current:
-                type: integer
-                description: Current transfers
-                example: 1
-                format: int64
-            id:
-                type: string
-                description: Identifier of pipeline
-                example: d1845cb6-a5ea-474a-9ab8-26f9bcd919f5
-                format: uuid
-            name:
-                type: string
-                description: Name of the pipeline
-                example: abc123
-            status:
-                type: string
-                example: abc123
-        description: ShowResponseBody result type (default view)
-        example:
-            capacity: 1
-            current: 1
-            id: d1845cb6-a5ea-474a-9ab8-26f9bcd919f5
-            name: abc123
-            status: abc123
-        required:
-            - name

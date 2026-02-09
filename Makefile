@@ -94,7 +94,7 @@ gen-goa: tool-goa
 
 gen-goa-json-pretty: goa_http_dir = "internal/api/gen/http"
 gen-goa-json-pretty: json_files = $(shell find $(goa_http_dir) -type f -name "*.json" | sort -u)
-gen-goa-json-pretty: tool-jq
+gen-goa-json-pretty:
 	@for f in $(json_files); \
 		do (cat "$$f" | jq -S '.' >> "$$f".sorted && mv "$$f".sorted "$$f") \
 			&& echo "Formatting $$f with jq" || exit 1; \
@@ -124,7 +124,7 @@ ui-dev: # @HELP Serves the UI for development.
 ui-client: # @HELP Generates the UI client using openapi-generator-cli.
 ui-client:
 	rm -rf $(CURDIR)/ui/src/client
-	docker container run --rm --user $(shell id -u):$(shell id -g) --volume $(CURDIR):/local openapitools/openapi-generator-cli:v6.6.0 \
+	docker container run --rm --user $(shell id -u):$(shell id -g) --volume $(CURDIR):/local openapitools/openapi-generator-cli:v7.19.0 \
 		generate \
 			--input-spec /local/internal/api/gen/http/openapi3.json \
 			--generator-name typescript-fetch \

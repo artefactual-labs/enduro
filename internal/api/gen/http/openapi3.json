@@ -92,6 +92,7 @@
           "size": {
             "default": 100,
             "example": 1,
+            "format": "int64",
             "type": "integer"
           },
           "status": {
@@ -112,6 +113,27 @@
         "required": [
           "operation",
           "status"
+        ],
+        "type": "object"
+      },
+      "BulkResult": {
+        "example": {
+          "run_id": "abc123",
+          "workflow_id": "abc123"
+        },
+        "properties": {
+          "run_id": {
+            "example": "abc123",
+            "type": "string"
+          },
+          "workflow_id": {
+            "example": "abc123",
+            "type": "string"
+          }
+        },
+        "required": [
+          "workflow_id",
+          "run_id"
         ],
         "type": "object"
       },
@@ -157,8 +179,106 @@
         ],
         "type": "object"
       },
+      "Collection": {
+        "description": "Collection describes a collection to be stored.",
+        "example": {
+          "aip_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
+          "completed_at": "1970-01-01T00:00:01Z",
+          "created_at": "1970-01-01T00:00:01Z",
+          "name": "abc123",
+          "original_id": "abc123",
+          "pipeline_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
+          "run_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
+          "started_at": "1970-01-01T00:00:01Z",
+          "status": "in progress",
+          "transfer_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
+          "workflow_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5"
+        },
+        "properties": {
+          "aip_id": {
+            "description": "Identifier of Archivematica AIP",
+            "example": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
+            "format": "uuid",
+            "type": "string"
+          },
+          "completed_at": {
+            "description": "Completion datetime",
+            "example": "1970-01-01T00:00:01Z",
+            "format": "date-time",
+            "type": "string"
+          },
+          "created_at": {
+            "description": "Creation datetime",
+            "example": "1970-01-01T00:00:01Z",
+            "format": "date-time",
+            "type": "string"
+          },
+          "name": {
+            "description": "Name of the collection",
+            "example": "abc123",
+            "type": "string"
+          },
+          "original_id": {
+            "description": "Identifier provided by the client",
+            "example": "abc123",
+            "type": "string"
+          },
+          "pipeline_id": {
+            "description": "Identifier of Archivematica pipeline",
+            "example": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
+            "format": "uuid",
+            "type": "string"
+          },
+          "run_id": {
+            "description": "Identifier of latest processing workflow run",
+            "example": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
+            "format": "uuid",
+            "type": "string"
+          },
+          "started_at": {
+            "description": "Start datetime",
+            "example": "1970-01-01T00:00:01Z",
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "default": "new",
+            "description": "Status of the collection",
+            "enum": [
+              "new",
+              "in progress",
+              "done",
+              "error",
+              "unknown",
+              "queued",
+              "pending",
+              "abandoned"
+            ],
+            "example": "in progress",
+            "type": "string"
+          },
+          "transfer_id": {
+            "description": "Identifier of Archivematica tranfser",
+            "example": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
+            "format": "uuid",
+            "type": "string"
+          },
+          "workflow_id": {
+            "description": "Identifier of processing workflow",
+            "example": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "created_at"
+        ],
+        "type": "object"
+      },
       "CollectionNotfound": {
-        "description": "Collection not found",
+        "description": "Collection not found.",
         "example": {
           "id": 1,
           "message": "abc123"
@@ -167,6 +287,7 @@
           "id": {
             "description": "Identifier of missing collection",
             "example": 1,
+            "format": "int64",
             "type": "integer"
           },
           "message": {
@@ -191,13 +312,12 @@
         "properties": {
           "details": {
             "description": "Contents of the event",
-            "example": "abc123",
-            "format": "binary",
-            "type": "string"
+            "example": "abc123"
           },
           "id": {
             "description": "Identifier of collection",
             "example": 1,
+            "format": "int64",
             "type": "integer"
           },
           "type": {
@@ -222,6 +342,7 @@
         "type": "array"
       },
       "EnduroCollectionWorkflowStatus": {
+        "description": "WorkflowStatus describes the processing workflow status of a collection.",
         "example": {
           "history": [
             {
@@ -266,6 +387,7 @@
           "id": {
             "description": "Identifier of collection",
             "example": 1,
+            "format": "int64",
             "type": "integer"
           },
           "item": {
@@ -321,6 +443,7 @@
           "id": {
             "description": "Identifier of collection",
             "example": 1,
+            "format": "int64",
             "type": "integer"
           },
           "name": {
@@ -537,8 +660,46 @@
         ],
         "type": "object"
       },
+      "Pipeline": {
+        "description": "Pipeline describes an Archivematica pipeline.",
+        "example": {
+          "capacity": 1,
+          "current": 1,
+          "id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
+          "name": "abc123"
+        },
+        "properties": {
+          "capacity": {
+            "description": "Maximum concurrent transfers",
+            "example": 1,
+            "format": "int64",
+            "type": "integer"
+          },
+          "current": {
+            "description": "Current transfers",
+            "example": 1,
+            "format": "int64",
+            "type": "integer"
+          },
+          "id": {
+            "description": "Identifier of pipeline",
+            "example": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "description": "Name of the pipeline",
+            "example": "abc123",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "type": "object"
+      },
       "PipelineNotFound": {
-        "description": "Pipeline not found",
+        "description": "Pipeline not found.",
         "example": {
           "id": "abc123",
           "message": "abc123"
@@ -582,6 +743,7 @@
           "depth": {
             "default": 0,
             "example": 1,
+            "format": "int64",
             "minimum": 0,
             "type": "integer"
           },
@@ -630,7 +792,7 @@
   },
   "info": {
     "title": "Enduro API",
-    "version": "1.0"
+    "version": "0.0.1"
   },
   "openapi": "3.0.3",
   "paths": {
@@ -967,7 +1129,7 @@
                   "workflow_id": "abc123"
                 },
                 "schema": {
-                  "$ref": "#/components/schemas/BatchResult"
+                  "$ref": "#/components/schemas/BulkResult"
                 }
               }
             },
@@ -1053,6 +1215,7 @@
             "schema": {
               "description": "Identifier of collection to delete",
               "example": 1,
+              "format": "int64",
               "type": "integer"
             }
           }
@@ -1094,6 +1257,7 @@
             "schema": {
               "description": "Identifier of collection to show",
               "example": 1,
+              "format": "int64",
               "type": "integer"
             }
           }
@@ -1158,6 +1322,7 @@
             "schema": {
               "description": "Identifier of collection to remove",
               "example": 1,
+              "format": "int64",
               "type": "integer"
             }
           }
@@ -1211,6 +1376,7 @@
             "schema": {
               "description": "Identifier of collection to look up",
               "example": 1,
+              "format": "int64",
               "type": "integer"
             }
           }
@@ -1287,6 +1453,7 @@
             "schema": {
               "description": "Identifier of collection to look up",
               "example": 1,
+              "format": "int64",
               "type": "integer"
             }
           }
@@ -1362,6 +1529,7 @@
             "schema": {
               "description": "Identifier of collection to retry",
               "example": 1,
+              "format": "int64",
               "type": "integer"
             }
           }
@@ -1415,6 +1583,7 @@
             "schema": {
               "description": "Identifier of collection to look up",
               "example": 1,
+              "format": "int64",
               "type": "integer"
             }
           }
