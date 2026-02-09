@@ -345,9 +345,10 @@ func main() {
 				case <-cancelInterrupt:
 				}
 
+				logger.Info("Quitting...")
+
 				return nil
 			}, func(err error) {
-				logger.Info("Quitting...")
 				close(cancelInterrupt)
 				cancel()
 				signal.Stop(ch)
