@@ -108,10 +108,6 @@ release-build: # @HELP Generate the release build with GoReleaser.
 release-build: tool-goreleaser
 	goreleaser build --clean --auto-snapshot
 
-website: # @HELP Serves the website for development.
-website: tool-hugo
-	hugo serve --source=website/
-
 ui: # @HELP Builds the UI.
 ui:
 	npm --prefix=ui install
