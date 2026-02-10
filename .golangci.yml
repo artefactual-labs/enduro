@@ -36,6 +36,7 @@ linters:
         path: internal/api/design
         text: "ST1001: " # dot imports are allowed in goa design files.
       - linters: [staticcheck]
+        path: internal/api/api.go
         text: "SA1019: " # should be addressed
 formatters:
   enable:

@@ -30,10 +30,10 @@ import (
 	"go.opentelemetry.io/otel/trace/noop"
 	temporalsdk_activity "go.temporal.io/sdk/activity"
 	temporalsdk_client "go.temporal.io/sdk/client"
+	temporalsdk_contrib_opentelemetry "go.temporal.io/sdk/contrib/opentelemetry"
+	temporalsdk_interceptor "go.temporal.io/sdk/interceptor"
 	temporalsdk_worker "go.temporal.io/sdk/worker"
 	temporalsdk_workflow "go.temporal.io/sdk/workflow"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/artefactual-labs/enduro/internal/api"
 	"github.com/artefactual-labs/enduro/internal/batch"
@@ -114,6 +114,16 @@ func main() {
 	defer func() { _ = shutdown(ctx) }()
 	tracer := tp.Tracer("enduro")
 
+	tracingInterceptor, err := temporalsdk_contrib_opentelemetry.NewTracingInterceptor(
+		temporalsdk_contrib_opentelemetry.TracerOptions{
+			Tracer: tp.Tracer("temporal-sdk-go"),
+		},
+	)
+	if err != nil {
+		logger.Error(err, "Unable to create OpenTelemetry interceptor.")
+		os.Exit(1)
+	}
+
 	database, err := db.Connect(config.Database.DSN)
 	if err != nil {
 		logger.Error(err, "Database configuration failed.")
@@ -129,9 +139,10 @@ func main() {
 	span.End()
 
 	temporalClient, err := temporalsdk_client.Dial(temporalsdk_client.Options{
-		Namespace: config.Temporal.Namespace,
-		HostPort:  config.Temporal.Address,
-		Logger:    temporal.Logger(logger.WithName("temporal-client")),
+		Namespace:    config.Temporal.Namespace,
+		HostPort:     config.Temporal.Address,
+		Logger:       temporal.Logger(logger.WithName("temporal-client")),
+		Interceptors: []temporalsdk_interceptor.ClientInterceptor{tracingInterceptor},
 	})
 	if err != nil {
 		logger.Error(err, "Error creating Temporal client.")
@@ -448,17 +459,11 @@ func initTracerProvider(ctx context.Context, logger logr.Logger, cfg TelemetryCo
 		return noop.NewTracerProvider(), shutdown, nil
 	}
 
-	conn, err := grpc.DialContext(
+	exporter, err := otlptracegrpc.New(
 		ctx,
-		cfg.Traces.Address,
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithBlock(),
+		otlptracegrpc.WithEndpoint(cfg.Traces.Address),
+		otlptracegrpc.WithInsecure(),
 	)
-	if err != nil {
-		return nil, nil, fmt.Errorf("can't connect to telemetry data collector: %v", err)
-	}
-
-	exporter, err := otlptracegrpc.New(ctx, otlptracegrpc.WithGRPCConn(conn))
 	if err != nil {
 		return nil, nil, fmt.Errorf("can't create gRPC telemetry data exporter: %v", err)
 	}

@@ -1,9 +1,6 @@
-version: "3"
-
 services:
-
   mysql:
-    image: "mysql:8.0"
+    image: "mysql:8.4.8-oraclelinux9"
     environment:
       MYSQL_ROOT_PASSWORD: "root123"
       MYSQL_USER: "enduro"
@@ -12,27 +9,71 @@ services:
       - "./hack/docker-init-mysql.sql:/docker-entrypoint-initdb.d/docker-init.sql"
     ports:
       - "127.0.0.1:7450:3306"
-
-  temporal:
-    image: "temporalio/auto-setup:1.21.1"
-    environment:
-      - "DB=mysql"
-      - "DB_PORT=3306"
-      - "MYSQL_USER=root"
-      - "MYSQL_PWD=root123"
-      - "MYSQL_SEEDS=mysql"
-    ports:
-      - "127.0.0.1:7233:7233"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot123"]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+      start_period: 30s
 
   temporal-admin-tools:
+    image: "temporalio/admin-tools:1.29.1-tctl-1.18.4-cli-1.5.0"
+    restart: "on-failure:6"
+    depends_on:
+      mysql:
+        condition: service_healthy
     environment:
-      - "TEMPORAL_CLI_ADDRESS=temporal:7233"
-    image: "temporalio/admin-tools:1.21.1"
-    stdin_open: true
-    tty: true
+      - "DB=mysql8"
+      - "DB_PORT=3306"
+      - "MYSQL_USER=enduro"
+      - "MYSQL_PWD=enduro123"
+      - "MYSQL_SEEDS=mysql"
+      - "SQL_PASSWORD=enduro123"
+    volumes:
+      - "./hack/compose:/compose"
+    entrypoint: ["/bin/sh"]
+    command: "/compose/setup-mysql.sh"
+
+  temporal:
+    image: "temporalio/server:1.29.3"
+    depends_on:
+      temporal-admin-tools:
+        condition: service_completed_successfully
+    environment:
+      - "DB=mysql8"
+      - "DB_PORT=3306"
+      - "MYSQL_USER=enduro"
+      - "MYSQL_PWD=enduro123"
+      - "MYSQL_SEEDS=mysql"
+      - "BIND_ON_IP=0.0.0.0"
+    ports:
+      - "127.0.0.1:7233:7233"
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "7233"]
+      interval: 5s
+      timeout: 3s
+      start_period: 30s
+      retries: 60
+
+  temporal-create-namespace:
+    image: "temporalio/admin-tools:1.29.1-tctl-1.18.4-cli-1.5.0"
+    restart: "on-failure:5"
+    depends_on:
+      temporal:
+        condition: service_healthy
+    environment:
+      - "TEMPORAL_ADDRESS=temporal:7233"
+      - "DEFAULT_NAMESPACE=default"
+    volumes:
+      - "./hack/compose:/compose"
+    entrypoint: ["/bin/sh"]
+    command: "/compose/create-namespace.sh"
 
   temporal-ui:
-    image: "temporalio/ui:2.16.2"
+    image: "temporalio/ui:2.45.2"
+    depends_on:
+      temporal:
+        condition: service_healthy
     environment:
       - "TEMPORAL_ADDRESS=temporal:7233"
       - "TEMPORAL_CORS_ORIGINS=http://localhost:7440"
@@ -48,6 +89,6 @@ services:
       - "127.0.0.1:7460:9000"
 
   redis:
-    image: "redis:5-alpine"
+    image: "redis:6.2.21-alpine3.21"
     ports:
       - "127.0.0.1:7470:6379"
