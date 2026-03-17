@@ -68,6 +68,21 @@ type ShowResponseBody struct {
 	StartedAt *string `form:"started_at,omitempty" json:"started_at,omitempty" xml:"started_at,omitempty"`
 	// Completion datetime
 	CompletedAt *string `form:"completed_at,omitempty" json:"completed_at,omitempty" xml:"completed_at,omitempty"`
+	// Datetime when the primary AIP was confirmed in storage
+	AipStoredAt *string `form:"aip_stored_at,omitempty" json:"aip_stored_at,omitempty" xml:"aip_stored_at,omitempty"`
+	// Latest storage reconciliation status
+	ReconciliationStatus *string `form:"reconciliation_status,omitempty" json:"reconciliation_status,omitempty" xml:"reconciliation_status,omitempty"`
+	// Datetime when storage was last reconciled
+	ReconciliationCheckedAt *string `form:"reconciliation_checked_at,omitempty" json:"reconciliation_checked_at,omitempty" xml:"reconciliation_checked_at,omitempty"`
+	// Last storage reconciliation error
+	ReconciliationError *string `form:"reconciliation_error,omitempty" json:"reconciliation_error,omitempty" xml:"reconciliation_error,omitempty"`
+}
+
+// RetryResponseBody is the type of the "collection" service "retry" endpoint
+// HTTP response body.
+type RetryResponseBody struct {
+	// Selected retry mode
+	Mode string `form:"mode" json:"mode" xml:"mode"`
 }
 
 // WorkflowResponseBody is the type of the "collection" service "workflow"
@@ -333,20 +348,33 @@ func NewListResponseBody(res *collection.ListResult) *ListResponseBody {
 
 // NewShowResponseBody builds the HTTP response body from the result of the
 // "show" endpoint of the "collection" service.
-func NewShowResponseBody(res *collectionviews.EnduroStoredCollectionView) *ShowResponseBody {
+func NewShowResponseBody(res *collectionviews.EnduroDetailedStoredCollectionView) *ShowResponseBody {
 	body := &ShowResponseBody{
-		ID:          *res.ID,
-		Name:        res.Name,
-		Status:      *res.Status,
-		WorkflowID:  res.WorkflowID,
-		RunID:       res.RunID,
-		TransferID:  res.TransferID,
-		AipID:       res.AipID,
-		OriginalID:  res.OriginalID,
-		PipelineID:  res.PipelineID,
-		CreatedAt:   *res.CreatedAt,
-		StartedAt:   res.StartedAt,
-		CompletedAt: res.CompletedAt,
+		ID:                      *res.ID,
+		Name:                    res.Name,
+		Status:                  *res.Status,
+		WorkflowID:              res.WorkflowID,
+		RunID:                   res.RunID,
+		TransferID:              res.TransferID,
+		AipID:                   res.AipID,
+		OriginalID:              res.OriginalID,
+		PipelineID:              res.PipelineID,
+		CreatedAt:               *res.CreatedAt,
+		StartedAt:               res.StartedAt,
+		CompletedAt:             res.CompletedAt,
+		AipStoredAt:             res.AipStoredAt,
+		ReconciliationStatus:    res.ReconciliationStatus,
+		ReconciliationCheckedAt: res.ReconciliationCheckedAt,
+		ReconciliationError:     res.ReconciliationError,
+	}
+	return body
+}
+
+// NewRetryResponseBody builds the HTTP response body from the result of the
+// "retry" endpoint of the "collection" service.
+func NewRetryResponseBody(res *collection.RetryResult) *RetryResponseBody {
+	body := &RetryResponseBody{
+		Mode: res.Mode,
 	}
 	return body
 }

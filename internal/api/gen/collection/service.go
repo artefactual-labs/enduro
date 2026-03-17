@@ -23,13 +23,13 @@ type Service interface {
 	// List all stored collections
 	List(context.Context, *ListPayload) (res *ListResult, err error)
 	// Show collection by ID
-	Show(context.Context, *ShowPayload) (res *EnduroStoredCollection, err error)
+	Show(context.Context, *ShowPayload) (res *EnduroDetailedStoredCollection, err error)
 	// Delete collection by ID
 	Delete(context.Context, *DeletePayload) (err error)
 	// Cancel collection processing by ID
 	Cancel(context.Context, *CancelPayload) (err error)
 	// Retry collection processing by ID
-	Retry(context.Context, *RetryPayload) (err error)
+	Retry(context.Context, *RetryPayload) (res *RetryResult, err error)
 	// Retrieve workflow status by ID
 	Workflow(context.Context, *WorkflowPayload) (res *EnduroCollectionWorkflowStatus, err error)
 	// Download collection by ID
@@ -168,6 +168,43 @@ type EnduroCollectionWorkflowStatus struct {
 	History EnduroCollectionWorkflowHistoryCollection
 }
 
+// EnduroDetailedStoredCollection is the result type of the collection service
+// show method.
+type EnduroDetailedStoredCollection struct {
+	// Identifier of collection
+	ID uint
+	// Name of the collection
+	Name *string
+	// Status of the collection
+	Status string
+	// Identifier of processing workflow
+	WorkflowID *string
+	// Identifier of latest processing workflow run
+	RunID *string
+	// Identifier of Archivematica tranfser
+	TransferID *string
+	// Identifier of Archivematica AIP
+	AipID *string
+	// Identifier provided by the client
+	OriginalID *string
+	// Identifier of Archivematica pipeline
+	PipelineID *string
+	// Creation datetime
+	CreatedAt string
+	// Start datetime
+	StartedAt *string
+	// Completion datetime
+	CompletedAt *string
+	// Datetime when the primary AIP was confirmed in storage
+	AipStoredAt *string
+	// Latest storage reconciliation status
+	ReconciliationStatus *string
+	// Datetime when storage was last reconciled
+	ReconciliationCheckedAt *string
+	// Last storage reconciliation error
+	ReconciliationError *string
+}
+
 // EnduroMonitorUpdate is the result type of the collection service monitor
 // method.
 type EnduroMonitorUpdate struct {
@@ -180,8 +217,7 @@ type EnduroMonitorUpdate struct {
 	Item *EnduroStoredCollection
 }
 
-// EnduroStoredCollection is the result type of the collection service show
-// method.
+// StoredCollection describes a collection retrieved by the service.
 type EnduroStoredCollection struct {
 	// Identifier of collection
 	ID uint
@@ -240,6 +276,12 @@ type RetryPayload struct {
 	ID uint
 }
 
+// RetryResult is the result type of the collection service retry method.
+type RetryResult struct {
+	// Selected retry mode
+	Mode string
+}
+
 // ShowPayload is the payload type of the collection service show method.
 type ShowPayload struct {
 	// Identifier of collection to show
@@ -285,18 +327,19 @@ func MakeNotAvailable(err error) *goa.ServiceError {
 	return goa.NewServiceError(err, "not_available", false, false, false)
 }
 
-// NewEnduroStoredCollection initializes result type EnduroStoredCollection
-// from viewed result type EnduroStoredCollection.
-func NewEnduroStoredCollection(vres *collectionviews.EnduroStoredCollection) *EnduroStoredCollection {
-	return newEnduroStoredCollection(vres.Projected)
+// NewEnduroDetailedStoredCollection initializes result type
+// EnduroDetailedStoredCollection from viewed result type
+// EnduroDetailedStoredCollection.
+func NewEnduroDetailedStoredCollection(vres *collectionviews.EnduroDetailedStoredCollection) *EnduroDetailedStoredCollection {
+	return newEnduroDetailedStoredCollection(vres.Projected)
 }
 
-// NewViewedEnduroStoredCollection initializes viewed result type
-// EnduroStoredCollection from result type EnduroStoredCollection using the
-// given view.
-func NewViewedEnduroStoredCollection(res *EnduroStoredCollection, view string) *collectionviews.EnduroStoredCollection {
-	p := newEnduroStoredCollectionView(res)
-	return &collectionviews.EnduroStoredCollection{Projected: p, View: "default"}
+// NewViewedEnduroDetailedStoredCollection initializes viewed result type
+// EnduroDetailedStoredCollection from result type
+// EnduroDetailedStoredCollection using the given view.
+func NewViewedEnduroDetailedStoredCollection(res *EnduroDetailedStoredCollection, view string) *collectionviews.EnduroDetailedStoredCollection {
+	p := newEnduroDetailedStoredCollectionView(res)
+	return &collectionviews.EnduroDetailedStoredCollection{Projected: p, View: "default"}
 }
 
 // NewEnduroCollectionWorkflowStatus initializes result type
@@ -381,6 +424,65 @@ func newEnduroStoredCollectionCollectionView(res EnduroStoredCollectionCollectio
 	vres := make(collectionviews.EnduroStoredCollectionCollectionView, len(res))
 	for i, n := range res {
 		vres[i] = newEnduroStoredCollectionView(n)
+	}
+	return vres
+}
+
+// newEnduroDetailedStoredCollection converts projected type
+// EnduroDetailedStoredCollection to service type
+// EnduroDetailedStoredCollection.
+func newEnduroDetailedStoredCollection(vres *collectionviews.EnduroDetailedStoredCollectionView) *EnduroDetailedStoredCollection {
+	res := &EnduroDetailedStoredCollection{
+		Name:                    vres.Name,
+		WorkflowID:              vres.WorkflowID,
+		RunID:                   vres.RunID,
+		TransferID:              vres.TransferID,
+		AipID:                   vres.AipID,
+		OriginalID:              vres.OriginalID,
+		PipelineID:              vres.PipelineID,
+		StartedAt:               vres.StartedAt,
+		CompletedAt:             vres.CompletedAt,
+		AipStoredAt:             vres.AipStoredAt,
+		ReconciliationStatus:    vres.ReconciliationStatus,
+		ReconciliationCheckedAt: vres.ReconciliationCheckedAt,
+		ReconciliationError:     vres.ReconciliationError,
+	}
+	if vres.ID != nil {
+		res.ID = *vres.ID
+	}
+	if vres.Status != nil {
+		res.Status = *vres.Status
+	}
+	if vres.CreatedAt != nil {
+		res.CreatedAt = *vres.CreatedAt
+	}
+	if vres.Status == nil {
+		res.Status = "new"
+	}
+	return res
+}
+
+// newEnduroDetailedStoredCollectionView projects result type
+// EnduroDetailedStoredCollection to projected type
+// EnduroDetailedStoredCollectionView using the "default" view.
+func newEnduroDetailedStoredCollectionView(res *EnduroDetailedStoredCollection) *collectionviews.EnduroDetailedStoredCollectionView {
+	vres := &collectionviews.EnduroDetailedStoredCollectionView{
+		ID:                      &res.ID,
+		Name:                    res.Name,
+		Status:                  &res.Status,
+		WorkflowID:              res.WorkflowID,
+		RunID:                   res.RunID,
+		TransferID:              res.TransferID,
+		AipID:                   res.AipID,
+		OriginalID:              res.OriginalID,
+		PipelineID:              res.PipelineID,
+		CreatedAt:               &res.CreatedAt,
+		StartedAt:               res.StartedAt,
+		CompletedAt:             res.CompletedAt,
+		AipStoredAt:             res.AipStoredAt,
+		ReconciliationStatus:    res.ReconciliationStatus,
+		ReconciliationCheckedAt: res.ReconciliationCheckedAt,
+		ReconciliationError:     res.ReconciliationError,
 	}
 	return vres
 }

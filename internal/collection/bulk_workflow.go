@@ -177,7 +177,7 @@ func (a *BulkActivity) Retry(ctx context.Context, ID uint) error {
 	ctx, cancel := context.WithTimeout(ctx, time.Second)
 	defer cancel()
 
-	err := a.colsvc.Goa().Retry(ctx, &collection.RetryPayload{ID: ID})
+	_, err := a.colsvc.Goa().Retry(ctx, &collection.RetryPayload{ID: ID})
 
 	// User may have already started it manually.
 	if temporalsdk_temporal.IsWorkflowExecutionAlreadyStartedError(err) {

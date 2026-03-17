@@ -18,7 +18,7 @@ import (
 
 func TestPollTransferActivity(t *testing.T) {
 	t.Run("Fails when the pipeline isn't found", func(t *testing.T) {
-		pipelineRegistry, _ := pipeline.NewPipelineRegistry(logr.Discard(), []pipeline.Config{})
+		pipelineRegistry, _ := pipeline.NewPipelineRegistry(logr.Discard(), []pipeline.Config{}, nil, nil)
 		activity := NewPollTransferActivity(pipelineRegistry)
 
 		s := temporalsdk_testsuite.WorkflowTestSuite{}

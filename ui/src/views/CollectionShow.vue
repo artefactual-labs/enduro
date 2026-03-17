@@ -14,6 +14,10 @@
         </b-button-group>
       </b-alert>
 
+      <b-alert variant="info" v-if="retryModeMessage" dismissible show @dismissed="retryModeMessage = ''">
+        {{ retryModeMessage }}
+      </b-alert>
+
       <dl>
 
         <dt>Status</dt>
@@ -137,10 +141,10 @@ const pipelineStoreNs = namespace('pipeline');
 export default class CollectionShow extends Vue {
 
   @collectionStoreNs.Getter(CollectionStore.GET_SEARCH_RESULT)
-  private collection: api.CollectionShowResponseBody | undefined;
+  private collection: api.EnduroDetailedStoredCollection | undefined;
 
   @pipelineStoreNs.Getter(PipelineStore.GET_PIPELINE_RESULT)
-  private pipeline: api.PipelineShowResponseBody | undefined;
+  private pipeline: api.EnduroStoredPipeline | undefined;
 
   @collectionStoreNs.Action(CollectionStore.SEARCH_COLLECTION)
   private search: any;
@@ -148,8 +152,23 @@ export default class CollectionShow extends Vue {
   @collectionStoreNs.Action(CollectionStore.MAKE_WORKFLOW_DECISION)
   private decide: any;
 
+  private retryModeMessage: string = '';
+
   private retry(id: number): Promise<any> {
-    return EnduroCollectionClient.collectionRetry({id});
+    return EnduroCollectionClient.collectionRetry({id}).then((result) => {
+      switch (result.mode) {
+        case 'reconcile_existing_aip':
+          this.retryModeMessage = 'Retry started in storage reconciliation mode.';
+          break;
+        default:
+          this.retryModeMessage = 'Retry started in full reprocess mode.';
+          break;
+      }
+      return result;
+    }).catch(() => {
+      this.retryModeMessage = '';
+      alert('Retry request failed!');
+    });
   }
 
   private cancel(id: number): Promise<any> {

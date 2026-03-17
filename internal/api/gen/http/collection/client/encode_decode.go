@@ -228,13 +228,13 @@ func DecodeShowResponse(decoder func(*http.Response) goahttp.Decoder, restoreBod
 			if err != nil {
 				return nil, goahttp.ErrDecodingError("collection", "show", err)
 			}
-			p := NewShowEnduroStoredCollectionOK(&body)
+			p := NewShowEnduroDetailedStoredCollectionOK(&body)
 			view := "default"
-			vres := &collectionviews.EnduroStoredCollection{Projected: p, View: view}
-			if err = collectionviews.ValidateEnduroStoredCollection(vres); err != nil {
+			vres := &collectionviews.EnduroDetailedStoredCollection{Projected: p, View: view}
+			if err = collectionviews.ValidateEnduroDetailedStoredCollection(vres); err != nil {
 				return nil, goahttp.ErrValidationError("collection", "show", err)
 			}
-			res := collection.NewEnduroStoredCollection(vres)
+			res := collection.NewEnduroDetailedStoredCollection(vres)
 			return res, nil
 		case http.StatusNotFound:
 			var (
@@ -458,7 +458,20 @@ func DecodeRetryResponse(decoder func(*http.Response) goahttp.Decoder, restoreBo
 		}
 		switch resp.StatusCode {
 		case http.StatusOK:
-			return nil, nil
+			var (
+				body RetryResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("collection", "retry", err)
+			}
+			err = ValidateRetryResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("collection", "retry", err)
+			}
+			res := NewRetryResultOK(&body)
+			return res, nil
 		case http.StatusNotFound:
 			var (
 				body RetryNotFoundResponseBody

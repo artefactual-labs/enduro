@@ -162,7 +162,7 @@ paths:
                 "200":
                     description: OK response.
                     schema:
-                        $ref: '#/definitions/EnduroStoredCollection'
+                        $ref: '#/definitions/EnduroDetailedStoredCollection'
                 "404":
                     description: Not Found response.
                     schema:
@@ -312,6 +312,10 @@ paths:
             responses:
                 "200":
                     description: OK response.
+                    schema:
+                        $ref: '#/definitions/RetryResult'
+                        required:
+                            - mode
                 "400":
                     description: Bad Request response.
                     schema:
@@ -1103,6 +1107,122 @@ definitions:
                   id: 1
                   type: abc123
             status: abc123
+    EnduroDetailedStoredCollection:
+        title: 'Mediatype identifier: application/vnd.enduro.detailed-stored-collection; view=default'
+        type: object
+        properties:
+            aip_id:
+                type: string
+                description: Identifier of Archivematica AIP
+                example: d1845cb6-a5ea-474a-9ab8-26f9bcd919f5
+                format: uuid
+            aip_stored_at:
+                type: string
+                description: Datetime when the primary AIP was confirmed in storage
+                example: "1970-01-01T00:00:01Z"
+                format: date-time
+            completed_at:
+                type: string
+                description: Completion datetime
+                example: "1970-01-01T00:00:01Z"
+                format: date-time
+            created_at:
+                type: string
+                description: Creation datetime
+                example: "1970-01-01T00:00:01Z"
+                format: date-time
+            id:
+                type: integer
+                description: Identifier of collection
+                example: 1
+                format: int64
+            name:
+                type: string
+                description: Name of the collection
+                example: abc123
+            original_id:
+                type: string
+                description: Identifier provided by the client
+                example: abc123
+            pipeline_id:
+                type: string
+                description: Identifier of Archivematica pipeline
+                example: d1845cb6-a5ea-474a-9ab8-26f9bcd919f5
+                format: uuid
+            reconciliation_checked_at:
+                type: string
+                description: Datetime when storage was last reconciled
+                example: "1970-01-01T00:00:01Z"
+                format: date-time
+            reconciliation_error:
+                type: string
+                description: Last storage reconciliation error
+                example: abc123
+            reconciliation_status:
+                type: string
+                description: Latest storage reconciliation status
+                example: partial
+                enum:
+                    - pending
+                    - partial
+                    - complete
+                    - unknown
+            run_id:
+                type: string
+                description: Identifier of latest processing workflow run
+                example: d1845cb6-a5ea-474a-9ab8-26f9bcd919f5
+                format: uuid
+            started_at:
+                type: string
+                description: Start datetime
+                example: "1970-01-01T00:00:01Z"
+                format: date-time
+            status:
+                type: string
+                description: Status of the collection
+                default: new
+                example: in progress
+                enum:
+                    - new
+                    - in progress
+                    - done
+                    - error
+                    - unknown
+                    - queued
+                    - pending
+                    - abandoned
+            transfer_id:
+                type: string
+                description: Identifier of Archivematica tranfser
+                example: d1845cb6-a5ea-474a-9ab8-26f9bcd919f5
+                format: uuid
+            workflow_id:
+                type: string
+                description: Identifier of processing workflow
+                example: d1845cb6-a5ea-474a-9ab8-26f9bcd919f5
+                format: uuid
+        description: ShowResponseBody result type (default view)
+        example:
+            aip_id: d1845cb6-a5ea-474a-9ab8-26f9bcd919f5
+            aip_stored_at: "1970-01-01T00:00:01Z"
+            completed_at: "1970-01-01T00:00:01Z"
+            created_at: "1970-01-01T00:00:01Z"
+            id: 1
+            name: abc123
+            original_id: abc123
+            pipeline_id: d1845cb6-a5ea-474a-9ab8-26f9bcd919f5
+            reconciliation_checked_at: "1970-01-01T00:00:01Z"
+            reconciliation_error: abc123
+            reconciliation_status: partial
+            run_id: d1845cb6-a5ea-474a-9ab8-26f9bcd919f5
+            started_at: "1970-01-01T00:00:01Z"
+            status: in progress
+            transfer_id: d1845cb6-a5ea-474a-9ab8-26f9bcd919f5
+            workflow_id: d1845cb6-a5ea-474a-9ab8-26f9bcd919f5
+        required:
+            - id
+            - status
+            - created_at
     EnduroMonitorUpdate:
         title: EnduroMonitorUpdate
         type: object
@@ -1394,3 +1514,18 @@ definitions:
         required:
             - message
             - id
+    RetryResult:
+        title: RetryResult
+        type: object
+        properties:
+            mode:
+                type: string
+                description: Selected retry mode
+                example: reconcile_existing_aip
+                enum:
+                    - full_reprocess
+                    - reconcile_existing_aip
+        example:
+            mode: reconcile_existing_aip
+        required:
+            - mode

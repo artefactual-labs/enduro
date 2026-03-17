@@ -33,6 +33,8 @@ func TestService(t *testing.T) {
 				Name: "am2",
 			},
 		},
+		nil,
+		nil,
 	)
 
 	svc := NewService(logger, registry)
@@ -53,7 +55,7 @@ func TestService(t *testing.T) {
 	assert.Error(t, err, "Pipeline not found.")
 	assert.Assert(t, processingresp == nil)
 
-	registry.pipelines["am1"].client = ams.Client()
+	registry.pipelines["am1"].archivematicaHTTPClient = ams.Client()
 	processingresp, err = svc.Processing(ctx, &goapipeline.ProcessingPayload{ID: "0e395063-b859-45a3-8999-8f4116bb62e9"})
 	assert.NilError(t, err)
 	assert.DeepEqual(t, processingresp, []string{"automated", "default"})

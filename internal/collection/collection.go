@@ -20,6 +20,9 @@ type Service interface {
 	Create(context.Context, *Collection) error
 	CheckDuplicate(ctx context.Context, id uint) (bool, error)
 	UpdateWorkflowStatus(ctx context.Context, ID uint, name, workflowID, runID, transferID, aipID, pipelineID string, status Status, storedAt time.Time) error
+	// UpdateReconciliationState replaces the stored reconciliation columns. Nil
+	// values clear the corresponding database fields.
+	UpdateReconciliationState(ctx context.Context, ID uint, aipStoredAt, checkedAt *time.Time, status, errMsg *string) error
 	SetStatus(ctx context.Context, ID uint, status Status) error
 	SetStatusInProgress(ctx context.Context, ID uint, startedAt time.Time) error
 	SetStatusPending(ctx context.Context, ID uint, taskToken []byte) error
@@ -159,6 +162,25 @@ func (svc *collectionImpl) SetStatus(ctx context.Context, ID uint, status Status
 	return nil
 }
 
+func (svc *collectionImpl) UpdateReconciliationState(ctx context.Context, ID uint, aipStoredAt, checkedAt *time.Time, status, errMsg *string) error {
+	query := `UPDATE collection SET aip_stored_at = (?), reconciliation_checked_at = (?), reconciliation_status = (?), reconciliation_error = (?) WHERE id = (?)`
+	args := []any{
+		aipStoredAt,
+		checkedAt,
+		status,
+		errMsg,
+		ID,
+	}
+
+	if _, err := svc.updateRow(ctx, query, args); err != nil {
+		return err
+	}
+
+	publishEvent(ctx, svc.events, EventTypeCollectionUpdated, ID)
+
+	return nil
+}
+
 func (svc *collectionImpl) SetStatusInProgress(ctx context.Context, ID uint, startedAt time.Time) error {
 	var query string
 	args := []any{StatusInProgress}
@@ -229,7 +251,7 @@ func (svc *collectionImpl) updateRow(ctx context.Context, query string, args []a
 }
 
 func (svc *collectionImpl) read(ctx context.Context, ID uint) (*Collection, error) {
-	query := "SELECT id, name, workflow_id, run_id, transfer_id, aip_id, original_id, pipeline_id, decision_token, status, CONVERT_TZ(created_at, @@session.time_zone, '+00:00') AS created_at, CONVERT_TZ(started_at, @@session.time_zone, '+00:00') AS started_at, CONVERT_TZ(completed_at, @@session.time_zone, '+00:00') AS completed_at FROM collection WHERE id = (?)"
+	query := "SELECT id, name, workflow_id, run_id, transfer_id, aip_id, original_id, pipeline_id, decision_token, status, CONVERT_TZ(created_at, @@session.time_zone, '+00:00') AS created_at, CONVERT_TZ(started_at, @@session.time_zone, '+00:00') AS started_at, CONVERT_TZ(completed_at, @@session.time_zone, '+00:00') AS completed_at, CONVERT_TZ(aip_stored_at, @@session.time_zone, '+00:00') AS aip_stored_at, reconciliation_status, CONVERT_TZ(reconciliation_checked_at, @@session.time_zone, '+00:00') AS reconciliation_checked_at, reconciliation_error FROM collection WHERE id = (?)"
 	args := []any{ID}
 	c := Collection{}
 

@@ -8,6 +8,7 @@ const (
 	TransferActivityName         = "transfer-activity"
 	PollTransferActivityName     = "poll-transfer-activity"
 	PollIngestActivityName       = "poll-ingest-activity"
+	ReconcileStorageActivityName = "reconcile-storage-activity"
 	CleanUpActivityName          = "clean-up-activity"
 	HidePackageActivityName      = "hide-package-activity"
 	DeleteOriginalActivityName   = "delete-original-activity"

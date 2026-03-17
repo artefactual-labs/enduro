@@ -347,3 +347,41 @@ func (c *MockServiceUpdateWorkflowStatusCall) DoAndReturn(f func(context.Context
 	c.Call = c.Call.DoAndReturn(f)
 	return c
 }
+
+// UpdateReconciliationState mocks base method.
+func (m *MockService) UpdateReconciliationState(ctx context.Context, ID uint, aipStoredAt, checkedAt *time.Time, status, errMsg *string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateReconciliationState", ctx, ID, aipStoredAt, checkedAt, status, errMsg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateReconciliationState indicates an expected call of UpdateReconciliationState.
+func (mr *MockServiceMockRecorder) UpdateReconciliationState(ctx, ID, aipStoredAt, checkedAt, status, errMsg any) *MockServiceUpdateReconciliationStateCall {
+	mr.mock.ctrl.T.Helper()
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateReconciliationState", reflect.TypeOf((*MockService)(nil).UpdateReconciliationState), ctx, ID, aipStoredAt, checkedAt, status, errMsg)
+	return &MockServiceUpdateReconciliationStateCall{Call: call}
+}
+
+// MockServiceUpdateReconciliationStateCall wrap *gomock.Call
+type MockServiceUpdateReconciliationStateCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *MockServiceUpdateReconciliationStateCall) Return(arg0 error) *MockServiceUpdateReconciliationStateCall {
+	c.Call = c.Call.Return(arg0)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *MockServiceUpdateReconciliationStateCall) Do(f func(context.Context, uint, *time.Time, *time.Time, *string, *string) error) *MockServiceUpdateReconciliationStateCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *MockServiceUpdateReconciliationStateCall) DoAndReturn(f func(context.Context, uint, *time.Time, *time.Time, *string, *string) error) *MockServiceUpdateReconciliationStateCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
+}

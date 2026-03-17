@@ -21,6 +21,7 @@ import (
 	"github.com/artefactual-labs/enduro/internal/nha"
 	nha_activities "github.com/artefactual-labs/enduro/internal/nha/activities"
 	"github.com/artefactual-labs/enduro/internal/pipeline"
+	"github.com/artefactual-labs/enduro/internal/reconciliation"
 	"github.com/artefactual-labs/enduro/internal/temporal"
 	"github.com/artefactual-labs/enduro/internal/validation"
 	"github.com/artefactual-labs/enduro/internal/workflow/activities"
@@ -38,6 +39,11 @@ type ProcessingWorkflow struct {
 type Config struct {
 	ActivityHeartbeatTimeout time.Duration
 }
+
+const (
+	postIngestReconciliationRetryWindow   = 5 * time.Minute
+	postIngestReconciliationRetryInterval = 15 * time.Second
+)
 
 func NewProcessingWorkflow(h *hooks.Hooks, colsvc collection.Service, pipelineRegistry *pipeline.Registry, l logr.Logger, c Config) *ProcessingWorkflow {
 	return &ProcessingWorkflow{hooks: h, colsvc: colsvc, pipelineRegistry: pipelineRegistry, logger: l, config: c}
@@ -183,6 +189,8 @@ func (w *ProcessingWorkflow) Execute(ctx temporalsdk_workflow.Context, req *coll
 
 		tinfo = &TransferInfo{
 			CollectionID:       req.CollectionID,
+			TransferID:         req.ExistingTransferID,
+			SIPID:              req.ExistingAIPID,
 			WatcherName:        req.WatcherName,
 			RetentionPeriod:    req.RetentionPeriod,
 			CompletedDir:       req.CompletedDir,
@@ -192,6 +200,7 @@ func (w *ProcessingWorkflow) Execute(ctx temporalsdk_workflow.Context, req *coll
 			IsDir:              req.IsDir,
 			BatchDir:           req.BatchDir,
 			ProcessingConfig:   req.ProcessingConfig,
+			PipelineID:         req.ExistingPipelineID,
 			TransferType:       req.TransferType,
 			MetadataConfig:     req.MetadataConfig,
 		}
@@ -214,16 +223,30 @@ func (w *ProcessingWorkflow) Execute(ctx temporalsdk_workflow.Context, req *coll
 				Status: status,
 			}).Get(activityOpts, &tinfo.CollectionID)
 		} else {
-			// TODO: investigate better way to reset the collection.
-			err = temporalsdk_workflow.ExecuteLocalActivity(activityOpts, updatePackageLocalActivity, w.logger, w.colsvc, &updatePackageLocalActivityParams{
+			params := &updatePackageLocalActivityParams{
 				CollectionID: req.CollectionID,
 				Key:          req.Key,
-				PipelineID:   "",
-				TransferID:   "",
-				SIPID:        "",
 				StoredAt:     time.Time{},
 				Status:       status,
-			}).Get(activityOpts, nil)
+			}
+			if req.RetryMode == collection.RetryModeReconcileExistingAIP {
+				params.PipelineID = req.ExistingPipelineID
+				params.TransferID = req.ExistingTransferID
+				params.SIPID = req.ExistingAIPID
+			} else {
+				params.PipelineID = ""
+				params.TransferID = ""
+				params.SIPID = ""
+				tinfo.PipelineID = ""
+				tinfo.TransferID = ""
+				tinfo.SIPID = ""
+			}
+			err = temporalsdk_workflow.ExecuteLocalActivity(activityOpts, updatePackageLocalActivity, w.logger, w.colsvc, params).Get(activityOpts, nil)
+			if err == nil && req.RetryMode == collection.RetryModeFullReprocess {
+				err = temporalsdk_workflow.ExecuteLocalActivity(activityOpts, updateReconciliationLocalActivity, w.logger, w.colsvc, &updateReconciliationLocalActivityParams{
+					CollectionID: req.CollectionID,
+				}).Get(activityOpts, nil)
+			}
 		}
 
 		if err != nil {
@@ -242,7 +265,7 @@ func (w *ProcessingWorkflow) Execute(ctx temporalsdk_workflow.Context, req *coll
 		// Use disconnected context so it also runs after cancellation.
 		dctx, _ := temporalsdk_workflow.NewDisconnectedContext(ctx)
 		activityOpts := withLocalActivityOpts(dctx)
-		_ = temporalsdk_workflow.ExecuteLocalActivity(activityOpts, updatePackageLocalActivity, w.logger, w.colsvc, &updatePackageLocalActivityParams{
+		err := temporalsdk_workflow.ExecuteLocalActivity(activityOpts, updatePackageLocalActivity, w.logger, w.colsvc, &updatePackageLocalActivityParams{
 			CollectionID: tinfo.CollectionID,
 			Key:          tinfo.Key,
 			PipelineID:   tinfo.PipelineID,
@@ -251,6 +274,13 @@ func (w *ProcessingWorkflow) Execute(ctx temporalsdk_workflow.Context, req *coll
 			StoredAt:     tinfo.StoredAt,
 			Status:       status,
 		}).Get(activityOpts, nil)
+		if err != nil {
+			logger.Error("Failed to persist final workflow status",
+				"collectionID", tinfo.CollectionID,
+				"status", status.String(),
+				"error", err,
+			)
+		}
 	}()
 
 	// Reject duplicate collection if applicable.
@@ -321,7 +351,7 @@ func (w *ProcessingWorkflow) Execute(ctx temporalsdk_workflow.Context, req *coll
 			// error is seen when the session worker dies.
 			timer := NewTimer()
 
-			sessErr = w.SessionHandler(sessCtx, attempt, tinfo, nameInfo, req.ValidationConfig, timer)
+			sessErr = w.SessionHandler(sessCtx, attempt, tinfo, nameInfo, req.ValidationConfig, timer, req.RetryMode)
 
 			// We want to retry the session if it has been canceled as a result
 			// of losing the worker but not otherwise. This scenario seems to be
@@ -368,8 +398,12 @@ func (w *ProcessingWorkflow) Execute(ctx temporalsdk_workflow.Context, req *coll
 		if status == collection.StatusDone {
 			futures := []temporalsdk_workflow.Future{}
 			activityOpts := withActivityOptsForRequest(ctx)
-			futures = append(futures, temporalsdk_workflow.ExecuteActivity(activityOpts, activities.HidePackageActivityName, tinfo.TransferID, "transfer", tinfo.PipelineName))
-			futures = append(futures, temporalsdk_workflow.ExecuteActivity(activityOpts, activities.HidePackageActivityName, tinfo.SIPID, "ingest", tinfo.PipelineName))
+			if tinfo.TransferID != "" {
+				futures = append(futures, temporalsdk_workflow.ExecuteActivity(activityOpts, activities.HidePackageActivityName, tinfo.TransferID, "transfer", tinfo.PipelineName))
+			}
+			if tinfo.SIPID != "" {
+				futures = append(futures, temporalsdk_workflow.ExecuteActivity(activityOpts, activities.HidePackageActivityName, tinfo.SIPID, "ingest", tinfo.PipelineName))
+			}
 			for _, f := range futures {
 				_ = f.Get(activityOpts, nil)
 			}
@@ -411,7 +445,7 @@ func (w *ProcessingWorkflow) Execute(ctx temporalsdk_workflow.Context, req *coll
 }
 
 // SessionHandler runs activities that belong to the same session.
-func (w *ProcessingWorkflow) SessionHandler(sessCtx temporalsdk_workflow.Context, attempt int, tinfo *TransferInfo, nameInfo nha.NameInfo, validationConfig validation.Config, timer *Timer) error {
+func (w *ProcessingWorkflow) SessionHandler(sessCtx temporalsdk_workflow.Context, attempt int, tinfo *TransferInfo, nameInfo nha.NameInfo, validationConfig validation.Config, timer *Timer, retryMode collection.RetryMode) error {
 	defer temporalsdk_workflow.CompleteSession(sessCtx)
 
 	var release releaser
@@ -432,102 +466,51 @@ func (w *ProcessingWorkflow) SessionHandler(sessCtx temporalsdk_workflow.Context
 		}
 	}
 
-	// Download.
-	{
-		if tinfo.WatcherName != "" && !tinfo.IsDir {
-			// TODO: even if TempFile is defined, we should confirm that the file is
-			// locally available in disk, just in case we're in the context of a
-			// session retry where a different worker is doing the work. In that
-			// case, the activity would be executed again.
-			if tinfo.TempFile == "" {
-				activityOpts := withActivityOptsForLongLivedRequest(sessCtx)
-				err := temporalsdk_workflow.ExecuteActivity(
-					activityOpts,
-					activities.DownloadActivityName,
-					tinfo.PipelineName,
-					tinfo.WatcherName,
-					tinfo.Key,
-				).Get(activityOpts, &tinfo.TempFile)
-				if err != nil {
-					return err
-				}
-			}
+	if retryMode == collection.RetryModeReconcileExistingAIP {
+		fullReprocess, err := w.reconcile(sessCtx, tinfo)
+		if err != nil {
+			return err
 		}
-	}
-
-	// Both of these values relate to temporary files on Enduro's processing Dir that never get cleaned-up.
-	var tempBlob, tempExtracted string
-	tempBlob = tinfo.TempFile
-	// Extract downloaded archive file contents.
-	{
-		if tinfo.WatcherName != "" && !tinfo.IsDir {
-			activityOpts := withActivityOptsForLocalAction(sessCtx)
-			var result archiveextract.Result
-			err := temporalsdk_workflow.ExecuteActivity(
-				activityOpts,
-				archiveextract.Name,
-				&archiveextract.Params{SourcePath: tinfo.TempFile},
-			).Get(activityOpts, &result)
-			if err != nil {
-				switch err {
-				case archiveextract.ErrInvalidArchive:
-					// Not an archive file, bundle it as-is (no error).
-				default:
-					return temporal.NewNonRetryableError(err)
-				}
-			} else {
-				// Continue with the extracted archive contents.
-				tinfo.TempFile = result.ExtractPath
-				tinfo.StripTopLevelDir = false
-				tinfo.IsDir = true
-				tempExtracted = result.ExtractPath
+		if fullReprocess {
+			if err := w.resetForFullReprocess(sessCtx, tinfo); err != nil {
+				return err
 			}
-		}
-	}
+		} else {
+			if !w.receiptsEnabled() {
+				return nil
+			}
 
-	// Bundle.
-	{
-		if tinfo.Bundle == (activities.BundleActivityResult{}) {
-			activityOpts := withActivityOptsForLongLivedRequest(sessCtx)
-			err := temporalsdk_workflow.ExecuteActivity(activityOpts, activities.BundleActivityName, &activities.BundleActivityParams{
-				TransferDir:        tinfo.PipelineConfig.TransferDir,
-				Key:                tinfo.Key,
-				IsDir:              tinfo.IsDir,
-				TempFile:           tinfo.TempFile,
-				StripTopLevelDir:   tinfo.StripTopLevelDir,
-				ExcludeHiddenFiles: tinfo.ExcludeHiddenFiles,
-				BatchDir:           tinfo.BatchDir,
-				Unbag:              tinfo.PipelineConfig.Unbag,
-			}).Get(activityOpts, &tinfo.Bundle)
+			// A reconciliation-only retry still needs the bundle contents to
+			// deliver receipts, but it no longer needs exclusive pipeline access.
+			_ = release(sessCtx)
+
+			cleanupPreparedFiles, err := w.prepareBundle(sessCtx, tinfo)
 			if err != nil {
 				return err
 			}
+			defer cleanupPreparedFiles()
+
+			err = w.sendReceipts(sessCtx, &sendReceiptsParams{
+				SIPID:        tinfo.SIPID,
+				StoredAt:     tinfo.StoredAt,
+				FullPath:     tinfo.Bundle.FullPath,
+				PipelineName: tinfo.PipelineName,
+				NameInfo:     nameInfo,
+				CollectionID: tinfo.CollectionID,
+			})
+			if err != nil {
+				return fmt.Errorf("error delivering receipt(s): %w", err)
+			}
+
+			return nil
 		}
 	}
 
-	// Delete local temporary files.
-	defer func() {
-		// We need disconnected context here because when session gets released the cleanup
-		// activities get scheduled and then immediately canceled.
-		var filesToRemove []string
-		if tinfo.Bundle.FullPathBeforeStrip != "" {
-			filesToRemove = append(filesToRemove, tinfo.Bundle.FullPathBeforeStrip)
-		}
-		if tempBlob != "" {
-			filesToRemove = append(filesToRemove, tempBlob)
-		}
-		if tempExtracted != "" {
-			filesToRemove = append(filesToRemove, tempExtracted)
-		}
-		cleanUpCtx, cancel := temporalsdk_workflow.NewDisconnectedContext(sessCtx)
-		defer cancel()
-		activityOpts := withActivityOptsForLocalAction(cleanUpCtx)
-		if err := temporalsdk_workflow.ExecuteActivity(activityOpts, activities.CleanUpActivityName, &activities.CleanUpActivityParams{
-			Paths: filesToRemove,
-		}).Get(activityOpts, nil); err != nil {
-			w.logger.Error(err, "failed to clean up temporary files", "path", tempExtracted)
-		}
-	}()
+	cleanupPreparedFiles, err := w.prepareBundle(sessCtx, tinfo)
+	if err != nil {
+		return err
+	}
+	defer cleanupPreparedFiles()
 
 	// Validate transfer.
 	{
@@ -607,6 +590,98 @@ func (w *ProcessingWorkflow) SessionHandler(sessCtx temporalsdk_workflow.Context
 	return nil
 }
 
+func (w *ProcessingWorkflow) prepareBundle(sessCtx temporalsdk_workflow.Context, tinfo *TransferInfo) (func(), error) {
+	// These paths live in Enduro's processing area and must be cleaned up even
+	// when the workflow later short-circuits into receipt delivery only.
+	tempBlob := tinfo.TempFile
+	tempExtracted := ""
+
+	if tinfo.WatcherName != "" && !tinfo.IsDir {
+		// TODO: even if TempFile is defined, we should confirm that the file is
+		// locally available in disk, just in case we're in the context of a
+		// session retry where a different worker is doing the work. In that
+		// case, the activity would be executed again.
+		if tinfo.TempFile == "" {
+			activityOpts := withActivityOptsForLongLivedRequest(sessCtx)
+			err := temporalsdk_workflow.ExecuteActivity(
+				activityOpts,
+				activities.DownloadActivityName,
+				tinfo.PipelineName,
+				tinfo.WatcherName,
+				tinfo.Key,
+			).Get(activityOpts, &tinfo.TempFile)
+			if err != nil {
+				return nil, err
+			}
+			tempBlob = tinfo.TempFile
+		}
+	}
+
+	if tinfo.WatcherName != "" && !tinfo.IsDir {
+		activityOpts := withActivityOptsForLocalAction(sessCtx)
+		var result archiveextract.Result
+		err := temporalsdk_workflow.ExecuteActivity(
+			activityOpts,
+			archiveextract.Name,
+			&archiveextract.Params{SourcePath: tinfo.TempFile},
+		).Get(activityOpts, &result)
+		if err != nil {
+			switch err {
+			case archiveextract.ErrInvalidArchive:
+				// Not an archive file, bundle it as-is (no error).
+			default:
+				return nil, temporal.NewNonRetryableError(err)
+			}
+		} else {
+			// Continue with the extracted archive contents.
+			tinfo.TempFile = result.ExtractPath
+			tinfo.StripTopLevelDir = false
+			tinfo.IsDir = true
+			tempExtracted = result.ExtractPath
+		}
+	}
+
+	if tinfo.Bundle == (activities.BundleActivityResult{}) {
+		activityOpts := withActivityOptsForLongLivedRequest(sessCtx)
+		err := temporalsdk_workflow.ExecuteActivity(activityOpts, activities.BundleActivityName, &activities.BundleActivityParams{
+			TransferDir:        tinfo.PipelineConfig.TransferDir,
+			Key:                tinfo.Key,
+			IsDir:              tinfo.IsDir,
+			TempFile:           tinfo.TempFile,
+			StripTopLevelDir:   tinfo.StripTopLevelDir,
+			ExcludeHiddenFiles: tinfo.ExcludeHiddenFiles,
+			BatchDir:           tinfo.BatchDir,
+			Unbag:              tinfo.PipelineConfig.Unbag,
+		}).Get(activityOpts, &tinfo.Bundle)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return func() {
+		// We need disconnected context here because when session gets released the
+		// cleanup activities get scheduled and then immediately canceled.
+		var filesToRemove []string
+		if tinfo.Bundle.FullPathBeforeStrip != "" {
+			filesToRemove = append(filesToRemove, tinfo.Bundle.FullPathBeforeStrip)
+		}
+		if tempBlob != "" {
+			filesToRemove = append(filesToRemove, tempBlob)
+		}
+		if tempExtracted != "" {
+			filesToRemove = append(filesToRemove, tempExtracted)
+		}
+		cleanUpCtx, cancel := temporalsdk_workflow.NewDisconnectedContext(sessCtx)
+		defer cancel()
+		activityOpts := withActivityOptsForLocalAction(cleanUpCtx)
+		if err := temporalsdk_workflow.ExecuteActivity(activityOpts, activities.CleanUpActivityName, &activities.CleanUpActivityParams{
+			Paths: filesToRemove,
+		}).Get(activityOpts, nil); err != nil {
+			w.logger.Error(err, "failed to clean up temporary files", "path", tempExtracted)
+		}
+	}, nil
+}
+
 func (w *ProcessingWorkflow) transfer(sessCtx temporalsdk_workflow.Context, tinfo *TransferInfo, nameMetadata metadata.TransferName) error {
 	// Transfer.
 	{
@@ -672,19 +747,233 @@ func (w *ProcessingWorkflow) transfer(sessCtx temporalsdk_workflow.Context, tinf
 
 	// Poll ingest.
 	{
+		var ingestErr error
 		if tinfo.StoredAt.IsZero() {
 			activityOpts := withActivityOptsForHeartbeatedRequest(sessCtx, w.config.ActivityHeartbeatTimeout)
-			err := temporalsdk_workflow.ExecuteActivity(activityOpts, activities.PollIngestActivityName, &activities.PollIngestActivityParams{
+			ingestErr = temporalsdk_workflow.ExecuteActivity(activityOpts, activities.PollIngestActivityName, &activities.PollIngestActivityParams{
 				PipelineName: tinfo.PipelineName,
 				SIPID:        tinfo.SIPID,
 			}).Get(activityOpts, &tinfo.StoredAt)
-			if err != nil {
-				return err
-			}
+		}
+
+		if tinfo.PipelineConfig != nil && tinfo.PipelineConfig.Recovery.ReconcileExistingAIP && tinfo.SIPID != "" {
+			return w.reconcileAfterIngest(sessCtx, tinfo, ingestErr)
+		}
+
+		if ingestErr != nil {
+			return ingestErr
 		}
 	}
 
 	return nil
+}
+
+func (w *ProcessingWorkflow) resetForFullReprocess(sessCtx temporalsdk_workflow.Context, tinfo *TransferInfo) error {
+	tinfo.TempFile = ""
+	tinfo.TransferID = ""
+	tinfo.SIPID = ""
+	tinfo.PipelineID = ""
+	tinfo.StoredAt = time.Time{}
+	tinfo.Bundle = activities.BundleActivityResult{}
+
+	activityOpts := withLocalActivityOpts(sessCtx)
+	// The zero-value identifiers in these params intentionally clear the
+	// persisted workflow state before a fresh transfer starts.
+	if err := temporalsdk_workflow.ExecuteLocalActivity(activityOpts, updatePackageLocalActivity, w.logger, w.colsvc, &updatePackageLocalActivityParams{
+		CollectionID: tinfo.CollectionID,
+		Key:          tinfo.Key,
+		Status:       collection.StatusInProgress,
+	}).Get(activityOpts, nil); err != nil {
+		return err
+	}
+
+	return temporalsdk_workflow.ExecuteLocalActivity(activityOpts, updateReconciliationLocalActivity, w.logger, w.colsvc, &updateReconciliationLocalActivityParams{
+		CollectionID: tinfo.CollectionID,
+	}).Get(activityOpts, nil)
+}
+
+func (w *ProcessingWorkflow) reconcile(sessCtx temporalsdk_workflow.Context, tinfo *TransferInfo) (bool, error) {
+	if tinfo.SIPID == "" {
+		return false, temporal.NewNonRetryableError(fmt.Errorf("reconciliation retry requires an existing AIP identifier"))
+	}
+
+	response, err := w.reconcileStorage(sessCtx, tinfo)
+	if persistErr := w.persistReconciliationState(sessCtx, tinfo, response, nil, err); persistErr != nil {
+		return false, persistErr
+	}
+	if err != nil {
+		return false, err
+	}
+
+	switch response.Classification {
+	case reconciliation.ClassificationLocalComplete, reconciliation.ClassificationReplicatedComplete:
+		if err := setStoredAtFromReconciliation(tinfo, response); err != nil {
+			return false, err
+		}
+		return false, nil
+	case reconciliation.ClassificationNotFound:
+		return true, nil
+	default:
+		return false, temporal.NewNonRetryableError(fmt.Errorf("storage reconciliation incomplete: %s", response.Classification))
+	}
+}
+
+func (w *ProcessingWorkflow) reconcileStorage(sessCtx temporalsdk_workflow.Context, tinfo *TransferInfo) (*activities.ReconcileStorageActivityResponse, error) {
+	var response activities.ReconcileStorageActivityResponse
+	activityOpts := withActivityOptsForRequest(sessCtx)
+	err := temporalsdk_workflow.ExecuteActivity(activityOpts, activities.ReconcileStorageActivityName, &activities.ReconcileStorageActivityParams{
+		PipelineName: tinfo.PipelineName,
+		AIPID:        tinfo.SIPID,
+	}).Get(activityOpts, &response)
+	if err != nil {
+		return nil, err
+	}
+
+	return &response, nil
+}
+
+func (w *ProcessingWorkflow) persistReconciliationState(sessCtx temporalsdk_workflow.Context, tinfo *TransferInfo, response *activities.ReconcileStorageActivityResponse, ingestErr, recErr error) error {
+	checkedAt := temporalsdk_workflow.Now(sessCtx).UTC()
+	params := &updateReconciliationLocalActivityParams{
+		CollectionID: tinfo.CollectionID,
+		CheckedAt:    &checkedAt,
+	}
+
+	if response != nil {
+		aipStoredAt, err := parseOptionalRFC3339Time(response.AIPStoredAt)
+		if err != nil {
+			return err
+		}
+		params.AIPStoredAt = aipStoredAt
+		status := string(response.Status)
+		params.Status = &status
+		if message := reconciliationMessage(response.Classification, ingestErr); message != nil {
+			params.Error = message
+		}
+	}
+
+	if recErr != nil {
+		status := string(reconciliation.StatusUnknown)
+		params.Status = &status
+		message := recErr.Error()
+		params.Error = &message
+	}
+
+	activityOpts := withLocalActivityOpts(sessCtx)
+	return temporalsdk_workflow.ExecuteLocalActivity(activityOpts, updateReconciliationLocalActivity, w.logger, w.colsvc, params).Get(activityOpts, nil)
+}
+
+// reconcileAfterIngest runs once Archivematica ingest has reached a terminal
+// outcome and Enduro already knows the AIP UUID.
+//
+// This is a distinct post-ingest path because Archivematica and Storage
+// Service do not always converge at the same moment. Archivematica may report
+// failure while Storage Service is still exposing a new package, and
+// Archivematica success does not by itself prove that Storage Service now
+// satisfies the pipeline's storage rule.
+//
+// For that reason, the workflow performs a short reconciliation loop here. It
+// persists each reconciliation result, accepts storage-complete outcomes even
+// after an ingest error, and gives only the states that may still settle on
+// their own, such as not_found and indeterminate, a brief window to resolve
+// before failing the workflow. A replicated_partial result already proves that
+// a required location is still missing, so the workflow stops immediately
+// instead of waiting for replica repair to happen implicitly.
+func (w *ProcessingWorkflow) reconcileAfterIngest(sessCtx temporalsdk_workflow.Context, tinfo *TransferInfo, ingestErr error) error {
+	deadline := temporalsdk_workflow.Now(sessCtx).UTC().Add(postIngestReconciliationRetryWindow)
+
+	for {
+		response, recErr := w.reconcileStorage(sessCtx, tinfo)
+		if persistErr := w.persistReconciliationState(sessCtx, tinfo, response, ingestErr, recErr); persistErr != nil {
+			return persistErr
+		}
+		if recErr != nil {
+			tinfo.StoredAt = time.Time{}
+			if ingestErr != nil {
+				return fmt.Errorf("ingest failed and storage reconciliation failed: %w", recErr)
+			}
+			return recErr
+		}
+
+		switch response.Classification {
+		case reconciliation.ClassificationLocalComplete, reconciliation.ClassificationReplicatedComplete:
+			return setStoredAtFromReconciliation(tinfo, response)
+		default:
+			// not_found and indeterminate can still reflect a short visibility
+			// gap after Archivematica ingest has ended, so give only those
+			// states a brief retry window. replicated_partial already means a
+			// required location is missing, so treat it as final here.
+			if shouldRetryPostIngestReconciliation(response.Classification) && temporalsdk_workflow.Now(sessCtx).UTC().Before(deadline) {
+				if err := temporalsdk_workflow.Sleep(sessCtx, postIngestReconciliationRetryInterval); err != nil {
+					return err
+				}
+				continue
+			}
+			tinfo.StoredAt = time.Time{}
+			return temporal.NewNonRetryableError(reconciliationOutcomeError(response.Classification, ingestErr))
+		}
+	}
+}
+
+func shouldRetryPostIngestReconciliation(classification reconciliation.Classification) bool {
+	switch classification {
+	case reconciliation.ClassificationNotFound, reconciliation.ClassificationIndeterminate:
+		return true
+	default:
+		return false
+	}
+}
+
+func reconciliationOutcomeError(classification reconciliation.Classification, ingestErr error) error {
+	if ingestErr != nil {
+		return fmt.Errorf("ingest failed and storage reconciliation returned %s: %w", classification, ingestErr)
+	}
+
+	return fmt.Errorf("storage reconciliation returned %s", classification)
+}
+
+func reconciliationMessage(classification reconciliation.Classification, ingestErr error) *string {
+	switch classification {
+	case reconciliation.ClassificationLocalComplete, reconciliation.ClassificationReplicatedComplete:
+		return nil
+	default:
+		msg := reconciliationOutcomeError(classification, ingestErr).Error()
+		return &msg
+	}
+}
+
+func (w *ProcessingWorkflow) receiptsEnabled() bool {
+	hariDisabled, _ := hooks.HookAttrBool(w.hooks.Hooks, "hari", "disabled")
+	prodDisabled, _ := hooks.HookAttrBool(w.hooks.Hooks, "prod", "disabled")
+
+	return !hariDisabled || !prodDisabled
+}
+
+func setStoredAtFromReconciliation(tinfo *TransferInfo, response *activities.ReconcileStorageActivityResponse) error {
+	completedAt, err := parseOptionalRFC3339Time(response.CompletedAt)
+	if err != nil {
+		return err
+	}
+	if completedAt == nil {
+		return fmt.Errorf("storage reconciliation completed without a completion timestamp")
+	}
+
+	tinfo.StoredAt = *completedAt
+
+	return nil
+}
+
+func parseOptionalRFC3339Time(value *string) (*time.Time, error) {
+	if value == nil {
+		return nil, nil
+	}
+
+	parsed, err := time.Parse(time.RFC3339, *value)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing reconciliation time %q: %w", *value, err)
+	}
+
+	return &parsed, nil
 }
 
 // RandomPipeline will randomly choose the pipeline from the list of names provided. If the

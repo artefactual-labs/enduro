@@ -132,7 +132,7 @@ func DecodeListRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.De
 // collection show endpoint.
 func EncodeShowResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {
 	return func(ctx context.Context, w http.ResponseWriter, v any) error {
-		res := v.(*collectionviews.EnduroStoredCollection)
+		res := v.(*collectionviews.EnduroDetailedStoredCollection)
 		enc := encoder(ctx, w)
 		body := NewShowResponseBody(res.Projected)
 		w.WriteHeader(http.StatusOK)
@@ -346,8 +346,11 @@ func EncodeCancelError(encoder func(context.Context, http.ResponseWriter) goahtt
 // collection retry endpoint.
 func EncodeRetryResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {
 	return func(ctx context.Context, w http.ResponseWriter, v any) error {
+		res, _ := v.(*collection.RetryResult)
+		enc := encoder(ctx, w)
+		body := NewRetryResponseBody(res)
 		w.WriteHeader(http.StatusOK)
-		return nil
+		return enc.Encode(body)
 	}
 }
 

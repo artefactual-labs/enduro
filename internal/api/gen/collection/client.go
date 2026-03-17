@@ -71,13 +71,13 @@ func (c *Client) List(ctx context.Context, p *ListPayload) (res *ListResult, err
 // Show may return the following errors:
 //   - "not_found" (type *CollectionNotfound): Collection not found
 //   - error: internal error
-func (c *Client) Show(ctx context.Context, p *ShowPayload) (res *EnduroStoredCollection, err error) {
+func (c *Client) Show(ctx context.Context, p *ShowPayload) (res *EnduroDetailedStoredCollection, err error) {
 	var ires any
 	ires, err = c.ShowEndpoint(ctx, p)
 	if err != nil {
 		return
 	}
-	return ires.(*EnduroStoredCollection), nil
+	return ires.(*EnduroDetailedStoredCollection), nil
 }
 
 // Delete calls the "delete" endpoint of the "collection" service.
@@ -104,9 +104,13 @@ func (c *Client) Cancel(ctx context.Context, p *CancelPayload) (err error) {
 //   - "not_found" (type *CollectionNotfound): Collection not found
 //   - "not_running" (type *goa.ServiceError)
 //   - error: internal error
-func (c *Client) Retry(ctx context.Context, p *RetryPayload) (err error) {
-	_, err = c.RetryEndpoint(ctx, p)
-	return
+func (c *Client) Retry(ctx context.Context, p *RetryPayload) (res *RetryResult, err error) {
+	var ires any
+	ires, err = c.RetryEndpoint(ctx, p)
+	if err != nil {
+		return
+	}
+	return ires.(*RetryResult), nil
 }
 
 // Workflow calls the "workflow" endpoint of the "collection" service.

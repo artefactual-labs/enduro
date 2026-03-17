@@ -20,10 +20,12 @@ import type {
   BulkStatusResult,
   CollectionDecideRequest,
   CollectionNotfound,
+  EnduroDetailedStoredCollection,
   EnduroCollectionWorkflowStatus,
   EnduroMonitorUpdate,
   EnduroStoredCollection,
   ListResponseBody,
+  RetryResult,
 } from '../models/index';
 import {
     BulkRequestBodyFromJSON,
@@ -36,6 +38,8 @@ import {
     CollectionDecideRequestToJSON,
     CollectionNotfoundFromJSON,
     CollectionNotfoundToJSON,
+    EnduroDetailedStoredCollectionFromJSON,
+    EnduroDetailedStoredCollectionToJSON,
     EnduroCollectionWorkflowStatusFromJSON,
     EnduroCollectionWorkflowStatusToJSON,
     EnduroMonitorUpdateFromJSON,
@@ -44,6 +48,8 @@ import {
     EnduroStoredCollectionToJSON,
     ListResponseBodyFromJSON,
     ListResponseBodyToJSON,
+    RetryResultFromJSON,
+    RetryResultToJSON,
 } from '../models/index';
 
 export interface CollectionBulkRequest {
@@ -240,13 +246,13 @@ export interface CollectionApiInterface {
      * @throws {RequiredError}
      * @memberof CollectionApiInterface
      */
-    collectionRetryRaw(requestParameters: CollectionRetryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>>;
+    collectionRetryRaw(requestParameters: CollectionRetryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RetryResult>>;
 
     /**
      * Retry collection processing by ID
      * retry collection
      */
-    collectionRetry(requestParameters: CollectionRetryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void>;
+    collectionRetry(requestParameters: CollectionRetryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RetryResult>;
 
     /**
      * Show collection by ID
@@ -256,13 +262,13 @@ export interface CollectionApiInterface {
      * @throws {RequiredError}
      * @memberof CollectionApiInterface
      */
-    collectionShowRaw(requestParameters: CollectionShowRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EnduroStoredCollection>>;
+    collectionShowRaw(requestParameters: CollectionShowRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EnduroDetailedStoredCollection>>;
 
     /**
      * Show collection by ID
      * show collection
      */
-    collectionShow(requestParameters: CollectionShowRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EnduroStoredCollection>;
+    collectionShow(requestParameters: CollectionShowRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EnduroDetailedStoredCollection>;
 
     /**
      * Retrieve workflow status by ID
@@ -621,7 +627,7 @@ export class CollectionApi extends runtime.BaseAPI implements CollectionApiInter
      * Retry collection processing by ID
      * retry collection
      */
-    async collectionRetryRaw(requestParameters: CollectionRetryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async collectionRetryRaw(requestParameters: CollectionRetryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RetryResult>> {
         if (requestParameters['id'] == null) {
             throw new runtime.RequiredError(
                 'id',
@@ -644,22 +650,23 @@ export class CollectionApi extends runtime.BaseAPI implements CollectionApiInter
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.VoidApiResponse(response);
+        return new runtime.JSONApiResponse(response, (jsonValue) => RetryResultFromJSON(jsonValue));
     }
 
     /**
      * Retry collection processing by ID
      * retry collection
      */
-    async collectionRetry(requestParameters: CollectionRetryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.collectionRetryRaw(requestParameters, initOverrides);
+    async collectionRetry(requestParameters: CollectionRetryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RetryResult> {
+        const response = await this.collectionRetryRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 
     /**
      * Show collection by ID
      * show collection
      */
-    async collectionShowRaw(requestParameters: CollectionShowRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EnduroStoredCollection>> {
+    async collectionShowRaw(requestParameters: CollectionShowRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EnduroDetailedStoredCollection>> {
         if (requestParameters['id'] == null) {
             throw new runtime.RequiredError(
                 'id',
@@ -682,14 +689,14 @@ export class CollectionApi extends runtime.BaseAPI implements CollectionApiInter
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => EnduroStoredCollectionFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => EnduroDetailedStoredCollectionFromJSON(jsonValue));
     }
 
     /**
      * Show collection by ID
      * show collection
      */
-    async collectionShow(requestParameters: CollectionShowRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EnduroStoredCollection> {
+    async collectionShow(requestParameters: CollectionShowRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EnduroDetailedStoredCollection> {
         const response = await this.collectionShowRaw(requestParameters, initOverrides);
         return await response.value();
     }

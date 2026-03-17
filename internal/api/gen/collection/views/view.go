@@ -12,11 +12,11 @@ import (
 	goa "goa.design/goa/v3/pkg"
 )
 
-// EnduroStoredCollection is the viewed result type that is projected based on
-// a view.
-type EnduroStoredCollection struct {
+// EnduroDetailedStoredCollection is the viewed result type that is projected
+// based on a view.
+type EnduroDetailedStoredCollection struct {
 	// Type to project
-	Projected *EnduroStoredCollectionView
+	Projected *EnduroDetailedStoredCollectionView
 	// View to render
 	View string
 }
@@ -74,6 +74,43 @@ type EnduroStoredCollectionView struct {
 // projected type.
 type EnduroStoredCollectionCollectionView []*EnduroStoredCollectionView
 
+// EnduroDetailedStoredCollectionView is a type that runs validations on a
+// projected type.
+type EnduroDetailedStoredCollectionView struct {
+	// Identifier of collection
+	ID *uint
+	// Name of the collection
+	Name *string
+	// Status of the collection
+	Status *string
+	// Identifier of processing workflow
+	WorkflowID *string
+	// Identifier of latest processing workflow run
+	RunID *string
+	// Identifier of Archivematica tranfser
+	TransferID *string
+	// Identifier of Archivematica AIP
+	AipID *string
+	// Identifier provided by the client
+	OriginalID *string
+	// Identifier of Archivematica pipeline
+	PipelineID *string
+	// Creation datetime
+	CreatedAt *string
+	// Start datetime
+	StartedAt *string
+	// Completion datetime
+	CompletedAt *string
+	// Datetime when the primary AIP was confirmed in storage
+	AipStoredAt *string
+	// Latest storage reconciliation status
+	ReconciliationStatus *string
+	// Datetime when storage was last reconciled
+	ReconciliationCheckedAt *string
+	// Last storage reconciliation error
+	ReconciliationError *string
+}
+
 // EnduroCollectionWorkflowStatusView is a type that runs validations on a
 // projected type.
 type EnduroCollectionWorkflowStatusView struct {
@@ -97,6 +134,36 @@ type EnduroCollectionWorkflowHistoryView struct {
 }
 
 var (
+	// EnduroDetailedStoredCollectionMap is a map indexing the attribute names of
+	// EnduroDetailedStoredCollection by view name.
+	EnduroDetailedStoredCollectionMap = map[string][]string{
+		"default": {
+			"id",
+			"name",
+			"status",
+			"workflow_id",
+			"run_id",
+			"transfer_id",
+			"aip_id",
+			"original_id",
+			"pipeline_id",
+			"created_at",
+			"started_at",
+			"completed_at",
+			"aip_stored_at",
+			"reconciliation_status",
+			"reconciliation_checked_at",
+			"reconciliation_error",
+		},
+	}
+	// EnduroCollectionWorkflowStatusMap is a map indexing the attribute names of
+	// EnduroCollectionWorkflowStatus by view name.
+	EnduroCollectionWorkflowStatusMap = map[string][]string{
+		"default": {
+			"status",
+			"history",
+		},
+	}
 	// EnduroStoredCollectionMap is a map indexing the attribute names of
 	// EnduroStoredCollection by view name.
 	EnduroStoredCollectionMap = map[string][]string{
@@ -113,14 +180,6 @@ var (
 			"created_at",
 			"started_at",
 			"completed_at",
-		},
-	}
-	// EnduroCollectionWorkflowStatusMap is a map indexing the attribute names of
-	// EnduroCollectionWorkflowStatus by view name.
-	EnduroCollectionWorkflowStatusMap = map[string][]string{
-		"default": {
-			"status",
-			"history",
 		},
 	}
 	// EnduroStoredCollectionCollectionMap is a map indexing the attribute names of
@@ -161,12 +220,12 @@ var (
 	}
 )
 
-// ValidateEnduroStoredCollection runs the validations defined on the viewed
-// result type EnduroStoredCollection.
-func ValidateEnduroStoredCollection(result *EnduroStoredCollection) (err error) {
+// ValidateEnduroDetailedStoredCollection runs the validations defined on the
+// viewed result type EnduroDetailedStoredCollection.
+func ValidateEnduroDetailedStoredCollection(result *EnduroDetailedStoredCollection) (err error) {
 	switch result.View {
 	case "default", "":
-		err = ValidateEnduroStoredCollectionView(result.Projected)
+		err = ValidateEnduroDetailedStoredCollectionView(result.Projected)
 	default:
 		err = goa.InvalidEnumValueError("view", result.View, []any{"default"})
 	}
@@ -259,6 +318,61 @@ func ValidateEnduroStoredCollectionCollectionView(result EnduroStoredCollectionC
 		if err2 := ValidateEnduroStoredCollectionView(item); err2 != nil {
 			err = goa.MergeErrors(err, err2)
 		}
+	}
+	return
+}
+
+// ValidateEnduroDetailedStoredCollectionView runs the validations defined on
+// EnduroDetailedStoredCollectionView using the "default" view.
+func ValidateEnduroDetailedStoredCollectionView(result *EnduroDetailedStoredCollectionView) (err error) {
+	if result.ID == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("id", "result"))
+	}
+	if result.Status == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("status", "result"))
+	}
+	if result.CreatedAt == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("created_at", "result"))
+	}
+	if result.Status != nil {
+		if !(*result.Status == "new" || *result.Status == "in progress" || *result.Status == "done" || *result.Status == "error" || *result.Status == "unknown" || *result.Status == "queued" || *result.Status == "pending" || *result.Status == "abandoned") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("result.status", *result.Status, []any{"new", "in progress", "done", "error", "unknown", "queued", "pending", "abandoned"}))
+		}
+	}
+	if result.WorkflowID != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("result.workflow_id", *result.WorkflowID, goa.FormatUUID))
+	}
+	if result.RunID != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("result.run_id", *result.RunID, goa.FormatUUID))
+	}
+	if result.TransferID != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("result.transfer_id", *result.TransferID, goa.FormatUUID))
+	}
+	if result.AipID != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("result.aip_id", *result.AipID, goa.FormatUUID))
+	}
+	if result.PipelineID != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("result.pipeline_id", *result.PipelineID, goa.FormatUUID))
+	}
+	if result.CreatedAt != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("result.created_at", *result.CreatedAt, goa.FormatDateTime))
+	}
+	if result.StartedAt != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("result.started_at", *result.StartedAt, goa.FormatDateTime))
+	}
+	if result.CompletedAt != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("result.completed_at", *result.CompletedAt, goa.FormatDateTime))
+	}
+	if result.AipStoredAt != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("result.aip_stored_at", *result.AipStoredAt, goa.FormatDateTime))
+	}
+	if result.ReconciliationStatus != nil {
+		if !(*result.ReconciliationStatus == "pending" || *result.ReconciliationStatus == "partial" || *result.ReconciliationStatus == "complete" || *result.ReconciliationStatus == "unknown") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("result.reconciliation_status", *result.ReconciliationStatus, []any{"pending", "partial", "complete", "unknown"}))
+		}
+	}
+	if result.ReconciliationCheckedAt != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("result.reconciliation_checked_at", *result.ReconciliationCheckedAt, goa.FormatDateTime))
 	}
 	return
 }

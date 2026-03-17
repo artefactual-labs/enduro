@@ -123,7 +123,7 @@ export default class CollectionShowWorkflow extends Vue {
   }
 
   private async loadHistory() {
-    return EnduroCollectionClient.collectionWorkflow({id: +this.$route.params.id}).then((response: api.CollectionWorkflowResponseBody) => {
+    return EnduroCollectionClient.collectionWorkflow({id: +this.$route.params.id}).then((response: api.EnduroCollectionWorkflowStatus) => {
       this.history = response;
       this.processHistory();
     }).catch((err) => {

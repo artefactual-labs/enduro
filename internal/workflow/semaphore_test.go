@@ -33,7 +33,7 @@ func TestSemaphoreAcquireRelease(t *testing.T) {
 	config := []pipeline.Config{
 		{Name: "am1", Capacity: 1},
 	}
-	registry, _ := pipeline.NewPipelineRegistry(logr.Discard(), config)
+	registry, _ := pipeline.NewPipelineRegistry(logr.Discard(), config, nil, nil)
 	a := activities.NewAcquirePipelineActivity(registry)
 	env.RegisterActivityWithOptions(
 		a.Execute,
