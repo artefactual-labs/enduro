@@ -105,7 +105,7 @@ func NewShowEndpoint(s Service) goa.Endpoint {
 		if err != nil {
 			return nil, err
 		}
-		vres := NewViewedEnduroStoredCollection(res, "default")
+		vres := NewViewedEnduroDetailedStoredCollection(res, "default")
 		return vres, nil
 	}
 }
@@ -133,7 +133,7 @@ func NewCancelEndpoint(s Service) goa.Endpoint {
 func NewRetryEndpoint(s Service) goa.Endpoint {
 	return func(ctx context.Context, req any) (any, error) {
 		p := req.(*RetryPayload)
-		return nil, s.Retry(ctx, p)
+		return s.Retry(ctx, p)
 	}
 }
 

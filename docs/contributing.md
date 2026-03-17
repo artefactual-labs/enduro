@@ -74,10 +74,10 @@ List the bucket with:
 
 ### Start a transfer
 
-Uploading a file into the `sips` bucket should trigger the workflow. From the
-command-line interface, you can run the following:
+Uploading a zipped transfer into the `sips` bucket should trigger the
+workflow. From the command-line interface, you can run the following:
 
-    curl -s https://news.ycombinator.com/y18.gif | mc pipe enduro/sips/y18.gif
+    mc cp ~/Documents/transfer.zip enduro/sips
 
 The workflow should be triggered automatically. It is okay to start Enduro later
 since the event is buffered by Redis.

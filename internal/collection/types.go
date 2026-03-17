@@ -28,10 +28,22 @@ type Collection struct {
 
 	// Nullable, populated as soon as ingest completes.
 	CompletedAt sql.NullTime `db:"completed_at"`
+
+	// Nullable, populated when Enduro confirms the AIP exists in storage.
+	AIPStoredAt sql.NullTime `db:"aip_stored_at"`
+
+	// Nullable, populated when Enduro reconciles storage state.
+	ReconciliationStatus sql.NullString `db:"reconciliation_status"`
+
+	// Nullable, populated whenever Enduro checks storage state.
+	ReconciliationCheckedAt sql.NullTime `db:"reconciliation_checked_at"`
+
+	// Nullable, populated when reconciliation cannot complete cleanly.
+	ReconciliationError sql.NullString `db:"reconciliation_error"`
 }
 
-// Goa returns the API representation of the collection.
-func (c Collection) Goa() *goacollection.EnduroStoredCollection {
+// GoaSummary returns the API representation used by collection lists.
+func (c Collection) GoaSummary() *goacollection.EnduroStoredCollection {
 	col := goacollection.EnduroStoredCollection{
 		ID:          c.ID,
 		Name:        formatOptionalString(c.Name),
@@ -45,6 +57,30 @@ func (c Collection) Goa() *goacollection.EnduroStoredCollection {
 		CreatedAt:   formatTime(c.CreatedAt),
 		StartedAt:   formatOptionalTime(c.StartedAt),
 		CompletedAt: formatOptionalTime(c.CompletedAt),
+	}
+
+	return &col
+}
+
+// GoaDetail returns the API representation used by the collection detail view.
+func (c Collection) GoaDetail() *goacollection.EnduroDetailedStoredCollection {
+	col := goacollection.EnduroDetailedStoredCollection{
+		ID:                      c.ID,
+		Name:                    formatOptionalString(c.Name),
+		WorkflowID:              formatOptionalString(c.WorkflowID),
+		RunID:                   formatOptionalString(c.RunID),
+		TransferID:              formatOptionalString(c.TransferID),
+		AipID:                   formatOptionalString(c.AIPID),
+		OriginalID:              formatOptionalString(c.OriginalID),
+		PipelineID:              formatOptionalString(c.PipelineID),
+		Status:                  c.Status.String(),
+		CreatedAt:               formatTime(c.CreatedAt),
+		StartedAt:               formatOptionalTime(c.StartedAt),
+		CompletedAt:             formatOptionalTime(c.CompletedAt),
+		AipStoredAt:             formatOptionalTime(c.AIPStoredAt),
+		ReconciliationStatus:    formatOptionalNullString(c.ReconciliationStatus),
+		ReconciliationCheckedAt: formatOptionalTime(c.ReconciliationCheckedAt),
+		ReconciliationError:     formatOptionalNullString(c.ReconciliationError),
 	}
 
 	return &col
@@ -66,6 +102,14 @@ func formatOptionalTime(nt sql.NullTime) *string {
 		res = &f
 	}
 	return res
+}
+
+// formatOptionalNullString returns the nil value when the value is NULL in the db.
+func formatOptionalNullString(ns sql.NullString) *string {
+	if !ns.Valid {
+		return nil
+	}
+	return &ns.String
 }
 
 // formatTime returns an empty string when t has the zero value.

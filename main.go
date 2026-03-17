@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/http/httptrace"
 	"net/http/pprof"
 	"os"
 	"os/signal"
@@ -15,11 +16,14 @@ import (
 
 	"github.com/artefactual-sdps/temporal-activities/archiveextract"
 	"github.com/go-logr/logr"
+	"github.com/hashicorp/go-cleanhttp"
 	"github.com/oklog/run"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"go.artefactual.dev/tools/log"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
@@ -149,8 +153,16 @@ func main() {
 		os.Exit(1)
 	}
 
+	archivematicaHTTPClient := newInstrumentedHTTPClient(tp, 10*time.Second)
+	storageServiceHTTPClient := newInstrumentedHTTPClient(tp, 30*time.Second)
+
 	// Set up the pipeline registry.
-	pipelineRegistry, err := pipeline.NewPipelineRegistry(logger.WithName("registry"), config.Pipeline)
+	pipelineRegistry, err := pipeline.NewPipelineRegistry(
+		logger.WithName("registry"),
+		config.Pipeline,
+		archivematicaHTTPClient,
+		storageServiceHTTPClient,
+	)
 	if err != nil {
 		logger.Error(err, "Pipeline registry cannot be initialized.")
 		os.Exit(1)
@@ -527,6 +539,7 @@ func registerWorker(
 	w.RegisterActivityWithOptions(activities.NewTransferActivity(pipelineRegistry).Execute, temporalsdk_activity.RegisterOptions{Name: activities.TransferActivityName})
 	w.RegisterActivityWithOptions(activities.NewPollTransferActivity(pipelineRegistry).Execute, temporalsdk_activity.RegisterOptions{Name: activities.PollTransferActivityName})
 	w.RegisterActivityWithOptions(activities.NewPollIngestActivity(pipelineRegistry).Execute, temporalsdk_activity.RegisterOptions{Name: activities.PollIngestActivityName})
+	w.RegisterActivityWithOptions(activities.NewReconcileStorageActivity(pipelineRegistry).Execute, temporalsdk_activity.RegisterOptions{Name: activities.ReconcileStorageActivityName})
 	w.RegisterActivityWithOptions(activities.NewCleanUpActivity().Execute, temporalsdk_activity.RegisterOptions{Name: activities.CleanUpActivityName})
 	w.RegisterActivityWithOptions(activities.NewHidePackageActivity(pipelineRegistry).Execute, temporalsdk_activity.RegisterOptions{Name: activities.HidePackageActivityName})
 	w.RegisterActivityWithOptions(activities.NewDeleteOriginalActivity(wsvc).Execute, temporalsdk_activity.RegisterOptions{Name: activities.DeleteOriginalActivityName})
@@ -556,4 +569,18 @@ func registerWorker(
 			close(done)
 		},
 	)
+}
+
+func newInstrumentedHTTPClient(tp trace.TracerProvider, timeout time.Duration) *http.Client {
+	client := cleanhttp.DefaultPooledClient()
+	client.Timeout = timeout
+	client.Transport = otelhttp.NewTransport(
+		client.Transport,
+		otelhttp.WithTracerProvider(tp),
+		otelhttp.WithClientTrace(func(ctx context.Context) *httptrace.ClientTrace {
+			return otelhttptrace.NewClientTrace(ctx)
+		}),
+	)
+
+	return client
 }

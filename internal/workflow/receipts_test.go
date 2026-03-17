@@ -27,7 +27,7 @@ func TestSendReceiptsSequentialBehavior(t *testing.T) {
 	h := buildHooks(t, gomock.NewController(t))
 	ctrl := gomock.NewController(t)
 	colsvc := collectionfake.NewMockService(ctrl)
-	pipelineRegistry, _ := pipeline.NewPipelineRegistry(logr.Discard(), []pipeline.Config{})
+	pipelineRegistry, _ := pipeline.NewPipelineRegistry(logr.Discard(), []pipeline.Config{}, nil, nil)
 
 	AsyncCompletionActivityName = uuid.New().String() + "-async-completion"
 	env.RegisterActivityWithOptions(NewAsyncCompletionActivity(colsvc).Execute, temporalsdk_activity.RegisterOptions{Name: AsyncCompletionActivityName})
@@ -76,7 +76,7 @@ func TestSendReceipts(t *testing.T) {
 	h := buildHooks(t, gomock.NewController(t))
 	ctrl := gomock.NewController(t)
 	colsvc := collectionfake.NewMockService(ctrl)
-	pipelineRegistry, _ := pipeline.NewPipelineRegistry(logr.Discard(), []pipeline.Config{})
+	pipelineRegistry, _ := pipeline.NewPipelineRegistry(logr.Discard(), []pipeline.Config{}, nil, nil)
 
 	nha_activities.UpdateHARIActivityName = uuid.New().String()
 	env.RegisterActivityWithOptions(nha_activities.NewUpdateHARIActivity(h).Execute, temporalsdk_activity.RegisterOptions{Name: nha_activities.UpdateHARIActivityName})

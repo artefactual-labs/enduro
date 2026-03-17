@@ -16,6 +16,7 @@
       <b-container>
         <b-nav tabs>
           <b-nav-item v-bind:active="$route.name == 'collection'" :to="{ name: 'collection', params: {id: $route.params.id} }">Overview</b-nav-item>
+          <b-nav-item v-bind:active="$route.name == 'collection-storage'" :to="{ name: 'collection-storage', params: {id: $route.params.id} }">Storage</b-nav-item>
           <b-nav-item v-bind:active="$route.name == 'collection-workflow'" :to="{ name: 'collection-workflow', params: {id: $route.params.id} }">Workflow</b-nav-item>
         </b-nav>
       </b-container>
@@ -46,7 +47,7 @@ const pipelineStoreNs = namespace('pipeline');
 export default class Collection extends Vue {
 
   @collectionStoreNs.Getter(CollectionStore.GET_SEARCH_RESULT)
-  private result: api.CollectionShowResponseBody | undefined;
+  private result: api.EnduroDetailedStoredCollection | undefined;
 
   @collectionStoreNs.Getter(CollectionStore.GET_SEARCH_ERROR)
   private error: any;
@@ -58,7 +59,7 @@ export default class Collection extends Vue {
   private reset: any;
 
   @pipelineStoreNs.Getter(PipelineStore.GET_PIPELINE_RESULT)
-  private pipelineResult: any;
+  private pipelineResult: api.EnduroStoredPipeline | undefined;
 
   @pipelineStoreNs.Getter(PipelineStore.GET_PIPELINE_ERROR)
   private pipelineError: any;

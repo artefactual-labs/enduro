@@ -7,8 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net/http"
-	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -20,6 +18,7 @@ import (
 	temporalsdk_client "go.temporal.io/sdk/client"
 
 	goacollection "github.com/artefactual-labs/enduro/internal/api/gen/collection"
+	"github.com/artefactual-labs/enduro/internal/pipeline"
 	"github.com/artefactual-labs/enduro/internal/temporal"
 )
 
@@ -78,7 +77,7 @@ func (w *goaWrapper) Monitor(ctx context.Context, stream goacollection.MonitorSe
 
 // List all stored collections. It implements goacollection.Service.
 func (w *goaWrapper) List(ctx context.Context, payload *goacollection.ListPayload) (*goacollection.ListResult, error) {
-	query := "SELECT id, name, workflow_id, run_id, transfer_id, aip_id, original_id, pipeline_id, status, CONVERT_TZ(created_at, @@session.time_zone, '+00:00') AS created_at, CONVERT_TZ(started_at, @@session.time_zone, '+00:00') AS started_at, CONVERT_TZ(completed_at, @@session.time_zone, '+00:00') AS completed_at FROM collection"
+	query := "SELECT id, name, workflow_id, run_id, transfer_id, aip_id, original_id, pipeline_id, status, CONVERT_TZ(created_at, @@session.time_zone, '+00:00') AS created_at, CONVERT_TZ(started_at, @@session.time_zone, '+00:00') AS started_at, CONVERT_TZ(completed_at, @@session.time_zone, '+00:00') AS completed_at, CONVERT_TZ(aip_stored_at, @@session.time_zone, '+00:00') AS aip_stored_at, reconciliation_status, CONVERT_TZ(reconciliation_checked_at, @@session.time_zone, '+00:00') AS reconciliation_checked_at, reconciliation_error FROM collection"
 	args := []any{}
 
 	// We extract one extra item so we can tell the next cursor.
@@ -150,7 +149,7 @@ func (w *goaWrapper) List(ctx context.Context, payload *goacollection.ListPayloa
 		if err := rows.StructScan(&c); err != nil {
 			return nil, fmt.Errorf("error scanning database result: %w", err)
 		}
-		cols = append(cols, c.Goa())
+		cols = append(cols, c.GoaSummary())
 	}
 
 	res := &goacollection.ListResult{
@@ -169,7 +168,7 @@ func (w *goaWrapper) List(ctx context.Context, payload *goacollection.ListPayloa
 }
 
 // Show collection by ID. It implements goacollection.Service.
-func (w *goaWrapper) Show(ctx context.Context, payload *goacollection.ShowPayload) (*goacollection.EnduroStoredCollection, error) {
+func (w *goaWrapper) Show(ctx context.Context, payload *goacollection.ShowPayload) (*goacollection.EnduroDetailedStoredCollection, error) {
 	c, err := w.read(ctx, payload.ID)
 	if err == sql.ErrNoRows {
 		return nil, &goacollection.CollectionNotfound{ID: payload.ID, Message: "not_found"}
@@ -177,7 +176,7 @@ func (w *goaWrapper) Show(ctx context.Context, payload *goacollection.ShowPayloa
 		return nil, err
 	}
 
-	return c.Goa(), nil
+	return c.GoaDetail(), nil
 }
 
 // Delete collection by ID. It implements goacollection.Service.
@@ -207,7 +206,7 @@ func (w *goaWrapper) Delete(ctx context.Context, payload *goacollection.DeletePa
 // Cancel collection processing by ID. It implements goacollection.Service.
 func (w *goaWrapper) Cancel(ctx context.Context, payload *goacollection.CancelPayload) error {
 	var err error
-	var goacol *goacollection.EnduroStoredCollection
+	var goacol *goacollection.EnduroDetailedStoredCollection
 	if goacol, err = w.Show(ctx, &goacollection.ShowPayload{ID: payload.ID}); err != nil {
 		return err
 	}
@@ -225,11 +224,18 @@ func (w *goaWrapper) Cancel(ctx context.Context, payload *goacollection.CancelPa
 // Retry collection processing by ID. It implements goacollection.Service.
 //
 // TODO: conceptually Temporal workflows should handle retries, i.e. retry could be part of workflow code too (e.g. signals, children, etc).
-func (w *goaWrapper) Retry(ctx context.Context, payload *goacollection.RetryPayload) error {
+func (w *goaWrapper) Retry(ctx context.Context, payload *goacollection.RetryPayload) (*goacollection.RetryResult, error) {
 	var err error
-	var goacol *goacollection.EnduroStoredCollection
+	var col *Collection
+	if col, err = w.read(ctx, payload.ID); err == sql.ErrNoRows {
+		return nil, &goacollection.CollectionNotfound{ID: payload.ID, Message: "not_found"}
+	} else if err != nil {
+		return nil, err
+	}
+
+	var goacol *goacollection.EnduroDetailedStoredCollection
 	if goacol, err = w.Show(ctx, &goacollection.ShowPayload{ID: payload.ID}); err != nil {
-		return err
+		return nil, err
 	}
 
 	execution := &temporalapi_common.WorkflowExecution{
@@ -239,39 +245,68 @@ func (w *goaWrapper) Retry(ctx context.Context, payload *goacollection.RetryPayl
 
 	historyEvent, err := temporal.FirstHistoryEvent(ctx, w.cc, execution)
 	if err != nil {
-		return fmt.Errorf("error loading history of the previous workflow run: %w", err)
+		return nil, fmt.Errorf("error loading history of the previous workflow run: %w", err)
 	}
 
 	if historyEvent.GetEventType() != temporalapi_enums.EVENT_TYPE_WORKFLOW_EXECUTION_STARTED {
-		return fmt.Errorf("error loading history of the previous workflow run: initiator state not found")
+		return nil, fmt.Errorf("error loading history of the previous workflow run: initiator state not found")
 	}
 
 	input := historyEvent.GetWorkflowExecutionStartedEventAttributes().Input
 	if len(input.Payloads) == 0 {
-		return errors.New("error loading state of the previous workflow run")
+		return nil, errors.New("error loading state of the previous workflow run")
 	}
 	eventPayload := input.Payloads[0]
 	eventAttrs := eventPayload.GetData()
 
 	req := &ProcessingWorkflowRequest{}
 	if err := json.Unmarshal(eventAttrs, req); err != nil {
-		return fmt.Errorf("error loading state of the previous workflow run: %w", err)
+		return nil, fmt.Errorf("error loading state of the previous workflow run: %w", err)
 	}
 
 	req.WorkflowID = *goacol.WorkflowID
 	req.CollectionID = goacol.ID
+	retryMode := retryModeForCollection(w.registry, req.PipelineName, col)
+	req.RetryMode = retryMode
+	req.ExistingTransferID = col.TransferID
+	req.ExistingAIPID = col.AIPID
+	req.ExistingPipelineID = col.PipelineID
 	tr := noop.NewTracerProvider().Tracer("")
 	if err := InitProcessingWorkflow(ctx, tr, w.cc, req); err != nil {
-		return fmt.Errorf("error starting the new workflow instance: %w", err)
+		return nil, fmt.Errorf("error starting the new workflow instance: %w", err)
 	}
 
 	publishEvent(ctx, w.events, EventTypeCollectionUpdated, payload.ID)
 
-	return nil
+	return newRetryResult(retryMode), nil
+}
+
+func newRetryResult(mode RetryMode) *goacollection.RetryResult {
+	return &goacollection.RetryResult{Mode: string(mode)}
+}
+
+func retryModeForCollection(registry *pipeline.Registry, pipelineName string, col *Collection) RetryMode {
+	if col == nil || col.AIPID == "" {
+		return RetryModeFullReprocess
+	}
+
+	if col.PipelineID != "" {
+		if p, err := registry.ByID(col.PipelineID); err == nil && p.Config().Recovery.ReconcileExistingAIP {
+			return RetryModeReconcileExistingAIP
+		}
+	}
+
+	if pipelineName != "" {
+		if p, err := registry.ByName(pipelineName); err == nil && p.Config().Recovery.ReconcileExistingAIP {
+			return RetryModeReconcileExistingAIP
+		}
+	}
+
+	return RetryModeFullReprocess
 }
 
 func (w *goaWrapper) Workflow(ctx context.Context, payload *goacollection.WorkflowPayload) (res *goacollection.EnduroCollectionWorkflowStatus, err error) {
-	var goacol *goacollection.EnduroStoredCollection
+	var goacol *goacollection.EnduroDetailedStoredCollection
 	if goacol, err = w.Show(ctx, &goacollection.ShowPayload{ID: payload.ID}); err != nil {
 		return nil, err
 	}
@@ -333,48 +368,20 @@ func (w *goaWrapper) Download(ctx context.Context, p *goacollection.DownloadPayl
 		return nil, nil, &goacollection.CollectionNotfound{ID: p.ID, Message: "not_found"}
 	}
 
-	bu, auth, err := pipeline.SSAccess()
+	resp, err := pipeline.DownloadStoragePackage(ctx, c.AIPID)
 	if err != nil {
 		return nil, nil, &goacollection.CollectionNotfound{ID: p.ID, Message: "not_found"}
 	}
 
-	path := fmt.Sprintf("api/v2/file/%s/download/", c.AIPID)
-	rel, err := url.Parse(path)
-	if err != nil {
-		return nil, nil, &goacollection.CollectionNotfound{ID: p.ID, Message: "not_found"}
-	}
-
-	loc := bu.ResolveReference(rel).String()
-	w.logger.V(1).Info("Sending request to Archivematica Storage Service.", "loc", loc)
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, loc, nil)
-	if err != nil {
-		return nil, nil, &goacollection.CollectionNotfound{ID: p.ID, Message: "not_found"}
-	}
-	req.Header.Set("User-Agent", "Enduro (ssclient)")
-	req.Header.Set("Authorization", fmt.Sprintf("ApiKey %s", auth))
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return nil, nil, &goacollection.CollectionNotfound{ID: p.ID, Message: "not_found"}
-	}
-	if resp.StatusCode != http.StatusOK {
-		return nil, nil, &goacollection.CollectionNotfound{ID: p.ID, Message: "not_found"}
-	}
-
-	var contentLength int64
-	if cl := resp.Header.Get("Content-Length"); cl != "" {
-		if clv, err := strconv.ParseInt(cl, 10, 64); err == nil {
-			contentLength = clv
-		}
-	}
-	if contentLength == 0 {
+	if resp.ContentLength <= 0 {
+		resp.Body.Close()
 		return nil, nil, errors.New("content length is unavailable")
 	}
 
 	res := &goacollection.DownloadResult{
-		ContentType:        resp.Header.Get("Content-Type"),
-		ContentDisposition: resp.Header.Get("Content-Disposition"),
-		ContentLength:      contentLength,
+		ContentType:        resp.ContentType,
+		ContentDisposition: resp.ContentDisposition,
+		ContentLength:      resp.ContentLength,
 	}
 
 	return res, resp.Body, nil

@@ -21,15 +21,21 @@ linters:
       excludes:
         - G104
         - G115
+        - G117
         - G301
         - G302
         - G304
+        - G704
+        - G705
   exclusions:
     warn-unused: true
     generated: lax
     presets:
       - std-error-handling
     rules:
+      - linters: [gosec]
+        path: _test\.go
+        text: "G101: " # hardcoded credentials in tests are allowed fixtures
       - linters: [errcheck]
         path: _test\.go
       - linters: [staticcheck]

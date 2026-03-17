@@ -2,6 +2,8 @@ package pipeline
 
 import (
 	"errors"
+	"fmt"
+	"net/http"
 	"sync"
 
 	"github.com/go-logr/logr"
@@ -15,12 +17,18 @@ type Registry struct {
 	mu        sync.Mutex
 }
 
-func NewPipelineRegistry(logger logr.Logger, configs []Config) (*Registry, error) {
-	var err error
+func NewPipelineRegistry(logger logr.Logger, configs []Config, archivematicaHTTPClient, storageServiceHTTPClient *http.Client) (*Registry, error) {
 	pipelines := map[string]*Pipeline{}
 	for _, config := range configs {
+		if err := config.Validate(); err != nil {
+			return nil, fmt.Errorf("pipeline %q: %w", config.Name, err)
+		}
+
 		logger := logger.WithValues("pipeline", config.Name)
-		pipelines[config.Name], err = NewPipeline(logger, config)
+		pipeline, err := NewPipeline(logger, config, archivematicaHTTPClient, storageServiceHTTPClient)
+		if pipeline != nil {
+			pipelines[config.Name] = pipeline
+		}
 		if err != nil {
 			logger.Error(err, "Error connecting to pipeline", "name", config.Name)
 		}

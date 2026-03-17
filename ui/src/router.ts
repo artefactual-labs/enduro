@@ -7,6 +7,7 @@ import Collections from './views/Collections.vue';
 import CollectionList from './views/CollectionList.vue';
 import Collection from './views/Collection.vue';
 import CollectionShow from './views/CollectionShow.vue';
+import CollectionShowStorage from './views/CollectionShowStorage.vue';
 import CollectionShowWorkflow from './views/CollectionShowWorkflow.vue';
 import CollectionBulk from './views/CollectionBulk.vue';
 
@@ -56,6 +57,11 @@ export default new Router({
               path: '/collections/:id/workflow',
               name: 'collection-workflow',
               component: CollectionShowWorkflow,
+            },
+            {
+              path: '/collections/:id/storage',
+              name: 'collection-storage',
+              component: CollectionShowStorage,
             },
           ],
         },

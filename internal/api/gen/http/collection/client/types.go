@@ -68,6 +68,21 @@ type ShowResponseBody struct {
 	StartedAt *string `form:"started_at,omitempty" json:"started_at,omitempty" xml:"started_at,omitempty"`
 	// Completion datetime
 	CompletedAt *string `form:"completed_at,omitempty" json:"completed_at,omitempty" xml:"completed_at,omitempty"`
+	// Datetime when the primary AIP was confirmed in storage
+	AipStoredAt *string `form:"aip_stored_at,omitempty" json:"aip_stored_at,omitempty" xml:"aip_stored_at,omitempty"`
+	// Latest storage reconciliation status
+	ReconciliationStatus *string `form:"reconciliation_status,omitempty" json:"reconciliation_status,omitempty" xml:"reconciliation_status,omitempty"`
+	// Datetime when storage was last reconciled
+	ReconciliationCheckedAt *string `form:"reconciliation_checked_at,omitempty" json:"reconciliation_checked_at,omitempty" xml:"reconciliation_checked_at,omitempty"`
+	// Last storage reconciliation error
+	ReconciliationError *string `form:"reconciliation_error,omitempty" json:"reconciliation_error,omitempty" xml:"reconciliation_error,omitempty"`
+}
+
+// RetryResponseBody is the type of the "collection" service "retry" endpoint
+// HTTP response body.
+type RetryResponseBody struct {
+	// Selected retry mode
+	Mode *string `form:"mode,omitempty" json:"mode,omitempty" xml:"mode,omitempty"`
 }
 
 // WorkflowResponseBody is the type of the "collection" service "workflow"
@@ -346,22 +361,26 @@ func NewListResultOK(body *ListResponseBody) *collection.ListResult {
 	return v
 }
 
-// NewShowEnduroStoredCollectionOK builds a "collection" service "show"
+// NewShowEnduroDetailedStoredCollectionOK builds a "collection" service "show"
 // endpoint result from a HTTP "OK" response.
-func NewShowEnduroStoredCollectionOK(body *ShowResponseBody) *collectionviews.EnduroStoredCollectionView {
-	v := &collectionviews.EnduroStoredCollectionView{
-		ID:          body.ID,
-		Name:        body.Name,
-		Status:      body.Status,
-		WorkflowID:  body.WorkflowID,
-		RunID:       body.RunID,
-		TransferID:  body.TransferID,
-		AipID:       body.AipID,
-		OriginalID:  body.OriginalID,
-		PipelineID:  body.PipelineID,
-		CreatedAt:   body.CreatedAt,
-		StartedAt:   body.StartedAt,
-		CompletedAt: body.CompletedAt,
+func NewShowEnduroDetailedStoredCollectionOK(body *ShowResponseBody) *collectionviews.EnduroDetailedStoredCollectionView {
+	v := &collectionviews.EnduroDetailedStoredCollectionView{
+		ID:                      body.ID,
+		Name:                    body.Name,
+		Status:                  body.Status,
+		WorkflowID:              body.WorkflowID,
+		RunID:                   body.RunID,
+		TransferID:              body.TransferID,
+		AipID:                   body.AipID,
+		OriginalID:              body.OriginalID,
+		PipelineID:              body.PipelineID,
+		CreatedAt:               body.CreatedAt,
+		StartedAt:               body.StartedAt,
+		CompletedAt:             body.CompletedAt,
+		AipStoredAt:             body.AipStoredAt,
+		ReconciliationStatus:    body.ReconciliationStatus,
+		ReconciliationCheckedAt: body.ReconciliationCheckedAt,
+		ReconciliationError:     body.ReconciliationError,
 	}
 
 	return v
@@ -409,6 +428,16 @@ func NewCancelNotRunning(body *CancelNotRunningResponseBody) *goa.ServiceError {
 		Temporary: *body.Temporary,
 		Timeout:   *body.Timeout,
 		Fault:     *body.Fault,
+	}
+
+	return v
+}
+
+// NewRetryResultOK builds a "collection" service "retry" endpoint result from
+// a HTTP "OK" response.
+func NewRetryResultOK(body *RetryResponseBody) *collection.RetryResult {
+	v := &collection.RetryResult{
+		Mode: *body.Mode,
 	}
 
 	return v
@@ -604,6 +633,19 @@ func ValidateListResponseBody(body *ListResponseBody) (err error) {
 	if body.Items != nil {
 		if err2 := ValidateEnduroStoredCollectionCollectionResponseBody(body.Items); err2 != nil {
 			err = goa.MergeErrors(err, err2)
+		}
+	}
+	return
+}
+
+// ValidateRetryResponseBody runs the validations defined on RetryResponseBody
+func ValidateRetryResponseBody(body *RetryResponseBody) (err error) {
+	if body.Mode == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("mode", "body"))
+	}
+	if body.Mode != nil {
+		if !(*body.Mode == "full_reprocess" || *body.Mode == "reconcile_existing_aip") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.mode", *body.Mode, []any{"full_reprocess", "reconcile_existing_aip"}))
 		}
 	}
 	return

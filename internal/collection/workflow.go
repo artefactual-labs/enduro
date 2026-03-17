@@ -16,8 +16,15 @@ import (
 	"github.com/artefactual-labs/enduro/internal/validation"
 )
 
-// Name of the collection processing workflow.
+// ProcessingWorkflowName is the name of the collection processing workflow.
 const ProcessingWorkflowName = "processing-workflow"
+
+type RetryMode string
+
+const (
+	RetryModeFullReprocess        RetryMode = "full_reprocess"
+	RetryModeReconcileExistingAIP RetryMode = "reconcile_existing_aip"
+)
 
 type ProcessingWorkflowRequest struct {
 	WorkflowID string `json:"-"`
@@ -25,6 +32,14 @@ type ProcessingWorkflowRequest struct {
 	// The zero value represents a new collection. It can be used to indicate
 	// an existing collection in retries.
 	CollectionID uint
+
+	// RetryMode controls how retries resume existing collections.
+	RetryMode RetryMode
+
+	// Existing identifiers loaded from the current collection row when retrying.
+	ExistingTransferID string
+	ExistingAIPID      string
+	ExistingPipelineID string
 
 	// Name of the watcher that received this blob.
 	WatcherName string

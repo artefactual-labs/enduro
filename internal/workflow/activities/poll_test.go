@@ -46,7 +46,7 @@ func newPipelineRegistry(t *testing.T, h http.HandlerFunc) *pipeline.Registry {
 			BaseURL:       pipelineURL.String(),
 			RetryDeadline: &retryDeadline,
 		},
-	})
+	}, nil, nil)
 	assert.NilError(t, err)
 
 	return pipelineRegistry

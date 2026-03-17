@@ -78,6 +78,9 @@ func (a *PollIngestActivity) Execute(ctx context.Context, params *PollIngestActi
 			temporalsdk_activity.RecordHeartbeat(ctx, err.Error())
 		},
 	)
+	if err != nil {
+		return time.Time{}, err
+	}
 
 	return clock.Now().UTC(), err
 }

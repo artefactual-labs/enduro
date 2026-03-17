@@ -61,6 +61,24 @@ func updatePackageLocalActivity(ctx context.Context, logger logr.Logger, colsvc 
 	return nil
 }
 
+type updateReconciliationLocalActivityParams struct {
+	CollectionID uint
+	AIPStoredAt  *time.Time
+	CheckedAt    *time.Time
+	Status       *string
+	Error        *string
+}
+
+func updateReconciliationLocalActivity(ctx context.Context, logger logr.Logger, colsvc collection.Service, params *updateReconciliationLocalActivityParams) error {
+	err := colsvc.UpdateReconciliationState(ctx, params.CollectionID, params.AIPStoredAt, params.CheckedAt, params.Status, params.Error)
+	if err != nil {
+		logger.Error(err, "Error updating collection reconciliation state")
+		return err
+	}
+
+	return nil
+}
+
 func checkDuplicatePackageLocalActivity(ctx context.Context, logger logr.Logger, colsvc collection.Service, id uint) (bool, error) {
 	return colsvc.CheckDuplicate(ctx, id)
 }

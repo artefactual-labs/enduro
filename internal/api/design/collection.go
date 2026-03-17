@@ -60,7 +60,7 @@ var _ = Service("collection", func() {
 			Attribute("id", UInt, "Identifier of collection to show")
 			Required("id")
 		})
-		Result(StoredCollection)
+		Result(DetailedStoredCollection)
 		Error("not_found", CollectionNotFound, "Collection not found")
 		HTTP(func() {
 			GET("/{id}")
@@ -102,6 +102,7 @@ var _ = Service("collection", func() {
 			Attribute("id", UInt, "Identifier of collection to retry")
 			Required("id")
 		})
+		Result(RetryResult)
 		Error("not_found", CollectionNotFound, "Collection not found")
 		Error("not_running")
 		HTTP(func() {
@@ -265,6 +266,54 @@ var StoredCollection = ResultType("application/vnd.enduro.stored-collection", fu
 	Required("id", "status", "created_at")
 })
 
+var DetailedStoredCollection = ResultType("application/vnd.enduro.detailed-stored-collection", func() {
+	Description("DetailedStoredCollection describes a collection retrieved by the service detail view.")
+	Reference(Collection)
+	Attributes(func() {
+		Attribute("id", UInt, "Identifier of collection")
+		Attribute("name")
+		Attribute("status")
+		Attribute("workflow_id")
+		Attribute("run_id")
+		Attribute("transfer_id")
+		Attribute("aip_id")
+		Attribute("original_id")
+		Attribute("pipeline_id")
+		Attribute("created_at")
+		Attribute("started_at")
+		Attribute("completed_at")
+		Attribute("aip_stored_at", String, "Datetime when the primary AIP was confirmed in storage", func() {
+			Format(FormatDateTime)
+		})
+		Attribute("reconciliation_status", String, "Latest storage reconciliation status", func() {
+			Enum("pending", "partial", "complete", "unknown")
+		})
+		Attribute("reconciliation_checked_at", String, "Datetime when storage was last reconciled", func() {
+			Format(FormatDateTime)
+		})
+		Attribute("reconciliation_error", String, "Last storage reconciliation error")
+	})
+	View("default", func() {
+		Attribute("id")
+		Attribute("name")
+		Attribute("status")
+		Attribute("workflow_id")
+		Attribute("run_id")
+		Attribute("transfer_id")
+		Attribute("aip_id")
+		Attribute("original_id")
+		Attribute("pipeline_id")
+		Attribute("created_at")
+		Attribute("started_at")
+		Attribute("completed_at")
+		Attribute("aip_stored_at")
+		Attribute("reconciliation_status")
+		Attribute("reconciliation_checked_at")
+		Attribute("reconciliation_error")
+	})
+	Required("id", "status", "created_at")
+})
+
 var MonitorUpdate = Type("EnduroMonitorUpdate", func() {
 	Attribute("timestamp", String, func() {
 		Format(FormatDateTime)
@@ -279,6 +328,14 @@ var WorkflowStatus = ResultType("application/vnd.enduro.collection-workflow-stat
 	Description("WorkflowStatus describes the processing workflow status of a collection.")
 	Attribute("status", String) // TODO
 	Attribute("history", CollectionOf(WorkflowHistoryEvent))
+})
+
+var RetryResult = Type("RetryResult", func() {
+	Description("RetryResult describes how retry processing was restarted.")
+	Attribute("mode", String, "Selected retry mode", func() {
+		Enum("full_reprocess", "reconcile_existing_aip")
+	})
+	Required("mode")
 })
 
 var WorkflowHistoryEvent = ResultType("application/vnd.enduro.collection-workflow-history", func() {

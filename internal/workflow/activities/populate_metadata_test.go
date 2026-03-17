@@ -12,7 +12,7 @@ import (
 )
 
 func TestPopulateMetadataActivity(t *testing.T) {
-	pipelineRegistry, _ := pipeline.NewPipelineRegistry(logr.Discard(), []pipeline.Config{})
+	pipelineRegistry, _ := pipeline.NewPipelineRegistry(logr.Discard(), []pipeline.Config{}, nil, nil)
 	activity := NewPopulateMetadataActivity(pipelineRegistry)
 	tempdir := fs.NewDir(t, "enduro")
 

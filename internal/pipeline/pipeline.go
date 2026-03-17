@@ -16,9 +16,12 @@ import (
 
 	"github.com/go-logr/logr"
 	"go.artefactual.dev/amclient"
+	ssclient "go.artefactual.dev/ssclient"
 
 	"github.com/artefactual-labs/enduro/internal/pipeline/sync/semaphore"
 )
+
+var ErrRecoveryConfigInvalid = errors.New("invalid recovery configuration")
 
 type Config struct {
 	ID                 string
@@ -35,6 +38,24 @@ type Config struct {
 	RetryDeadline      *time.Duration
 	TransferDeadline   *time.Duration
 	Unbag              bool
+	Recovery           RecoveryConfig
+}
+
+type RecoveryConfig struct {
+	ReconcileExistingAIP bool
+	RequiredLocations    []string
+}
+
+func (c Config) Validate() error {
+	if !c.Recovery.ReconcileExistingAIP {
+		return nil
+	}
+
+	if c.StorageServiceURL == "" {
+		return fmt.Errorf("%w: storageServiceURL is required when reconcileExistingAIP is enabled", ErrRecoveryConfigInvalid)
+	}
+
+	return nil
 }
 
 type Pipeline struct {
@@ -51,7 +72,13 @@ type Pipeline struct {
 	config *Config
 
 	// The underlying HTTP client used by amclient.
-	client *http.Client
+	archivematicaHTTPClient *http.Client
+
+	// The underlying HTTP client used by Storage Service requests.
+	storageServiceHTTPClient *http.Client
+
+	// The Storage Service SDK client bound to this pipeline configuration.
+	storageServiceClient *ssclient.Client
 
 	// Pipeline status.
 	status          string
@@ -60,16 +87,29 @@ type Pipeline struct {
 	TaskQueue       string
 }
 
-func NewPipeline(logger logr.Logger, config Config) (*Pipeline, error) {
+func NewPipeline(logger logr.Logger, config Config, archivematicaHTTPClient, storageServiceHTTPClient *http.Client) (*Pipeline, error) {
+	if err := config.Validate(); err != nil {
+		return nil, err
+	}
+
 	config.TransferDir = expandPath(config.TransferDir)
 	config.ProcessingDir = expandPath(config.ProcessingDir)
+	archivematicaHTTPClient = defaultArchivematicaHTTPClient(archivematicaHTTPClient)
+	storageServiceHTTPClient = defaultStorageServiceHTTPClient(storageServiceHTTPClient)
+
+	storageServiceClient, err := newStorageServiceClient(config, storageServiceHTTPClient)
+	if err != nil {
+		return nil, err
+	}
 
 	p := &Pipeline{
-		logger:    logger,
-		sem:       semaphore.NewWeighted(int64(config.Capacity)),
-		config:    &config,
-		client:    httpClient(),
-		TaskQueue: TaskQueueName(config.Name),
+		logger:                   logger,
+		sem:                      semaphore.NewWeighted(int64(config.Capacity)),
+		config:                   &config,
+		archivematicaHTTPClient:  archivematicaHTTPClient,
+		storageServiceHTTPClient: storageServiceHTTPClient,
+		storageServiceClient:     storageServiceClient,
+		TaskQueue:                TaskQueueName(config.Name),
 	}
 
 	if config.ID != "" {
@@ -122,27 +162,7 @@ func (p *Pipeline) init() error {
 
 // Client returns the Archivematica API client ready for use.
 func (p *Pipeline) Client() *amclient.Client {
-	return amclient.NewClient(p.client, p.config.BaseURL, p.config.User, p.config.Key)
-}
-
-// SSAccess returns the URL and user:key pair needed to access Storage Service.
-func (p *Pipeline) SSAccess() (*url.URL, string, error) {
-	if p.config.StorageServiceURL == "" {
-		return nil, "", errors.New("error parsing storageServiceURL: it is empty")
-	}
-
-	u, err := url.Parse(p.config.StorageServiceURL)
-	if err != nil {
-		return nil, "", fmt.Errorf("error parsing storageServiceURL: %v", err)
-	}
-
-	bu := &url.URL{
-		Scheme: u.Scheme,
-		Host:   u.Host,
-		Path:   u.Path,
-	}
-
-	return bu, u.User.String(), nil
+	return amclient.NewClient(p.archivematicaHTTPClient, p.config.BaseURL, p.config.User, p.config.Key)
 }
 
 // TempFile creates a temporary file in the processing directory.
@@ -206,11 +226,24 @@ func (p *Pipeline) Status(ctx context.Context) string {
 	return p.status
 }
 
-func httpClient() *http.Client {
+func defaultArchivematicaHTTPClient(client *http.Client) *http.Client {
+	if client == nil {
+		return newHTTPClient(10 * time.Second)
+	}
+	return client
+}
+
+func defaultStorageServiceHTTPClient(client *http.Client) *http.Client {
+	if client == nil {
+		return newHTTPClient(30 * time.Second)
+	}
+	return client
+}
+
+func newHTTPClient(timeout time.Duration) *http.Client {
 	const (
 		dialTimeout      = 5 * time.Second
 		handshakeTimeout = 5 * time.Second
-		timeout          = 10 * time.Second
 	)
 	dialer := &net.Dialer{
 		Timeout: dialTimeout,
@@ -223,6 +256,58 @@ func httpClient() *http.Client {
 		Timeout:   timeout,
 		Transport: transport,
 	}
+}
+
+func newStorageServiceClient(config Config, httpClient *http.Client) (*ssclient.Client, error) {
+	if strings.TrimSpace(config.StorageServiceURL) == "" {
+		return nil, nil
+	}
+
+	baseURL, username, key, err := parseStorageServiceURL(config.StorageServiceURL)
+	if err != nil {
+		return nil, err
+	}
+
+	client, err := ssclient.New(ssclient.Config{
+		BaseURL:    strings.TrimRight(baseURL.String(), "/"),
+		Username:   username,
+		Key:        key,
+		HTTPClient: httpClient,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("create storage service client: %w", err)
+	}
+
+	return client, nil
+}
+
+func parseStorageServiceURL(raw string) (*url.URL, string, string, error) {
+	if raw == "" {
+		return nil, "", "", errors.New("error parsing storageServiceURL: it is empty")
+	}
+
+	u, err := url.Parse(raw)
+	if err != nil {
+		return nil, "", "", fmt.Errorf("error parsing storageServiceURL: %v", err)
+	}
+
+	baseURL := &url.URL{
+		Scheme: u.Scheme,
+		Host:   u.Host,
+		Path:   u.Path,
+	}
+
+	password, _ := u.User.Password()
+	return cloneURL(baseURL), u.User.Username(), password, nil
+}
+
+func cloneURL(u *url.URL) *url.URL {
+	if u == nil {
+		return &url.URL{}
+	}
+
+	clone := *u
+	return &clone
 }
 
 func expandPath(path string) string {

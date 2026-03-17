@@ -55,7 +55,8 @@ the HTTP server from which the metrics are served. E.g. use
 ## Enduro
 
 Enduro binaries can be found at the [release page][enduro-release-page]. Learn
-more about the configuration details [here](./user-manual.md#configuration).
+more about the configuration details
+[here](./configuration-reference.md).
 
 ### API server
 
