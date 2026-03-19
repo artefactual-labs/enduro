@@ -66,7 +66,7 @@ func (a *PollTransferActivity) Execute(ctx context.Context, params *PollTransfer
 			}
 
 			if err != nil {
-				logger.Error("Failed to look up Transfer status.", "error", err)
+				logger.Info("Failed to look up Transfer status.", "error", err)
 			}
 
 			// Retry unless the deadline was exceeded.
