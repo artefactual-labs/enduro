@@ -13,7 +13,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/artefactual-sdps/temporal-activities/archive"
+	"github.com/artefactual-sdps/temporal-activities/archiveextract"
 	"github.com/go-logr/logr"
 	"github.com/oklog/run"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -380,7 +380,7 @@ type configuration struct {
 	Debug           bool
 	DebugListen     string
 	API             api.Config
-	ExtractActivity archive.Config
+	ExtractActivity archiveextract.Config
 	Database        db.Config
 	Temporal        temporal.Config
 	Watcher         watcher.Config
@@ -521,7 +521,7 @@ func registerWorker(
 	w.RegisterWorkflowWithOptions(workflow.NewProcessingWorkflow(h, colsvc, pipelineRegistry, logger, config.Workflow).Execute, temporalsdk_workflow.RegisterOptions{Name: collection.ProcessingWorkflowName})
 	w.RegisterActivityWithOptions(activities.NewAcquirePipelineActivity(pipelineRegistry).Execute, temporalsdk_activity.RegisterOptions{Name: activities.AcquirePipelineActivityName})
 	w.RegisterActivityWithOptions(activities.NewDownloadActivity(h, pipelineRegistry, wsvc).Execute, temporalsdk_activity.RegisterOptions{Name: activities.DownloadActivityName})
-	w.RegisterActivityWithOptions(archive.NewExtractActivity(config.ExtractActivity).Execute, temporalsdk_activity.RegisterOptions{Name: archive.ExtractActivityName})
+	w.RegisterActivityWithOptions(archiveextract.New(config.ExtractActivity).Execute, temporalsdk_activity.RegisterOptions{Name: archiveextract.Name})
 	w.RegisterActivityWithOptions(activities.NewBundleActivity().Execute, temporalsdk_activity.RegisterOptions{Name: activities.BundleActivityName})
 	w.RegisterActivityWithOptions(activities.NewValidateTransferActivity().Execute, temporalsdk_activity.RegisterOptions{Name: activities.ValidateTransferActivityName})
 	w.RegisterActivityWithOptions(activities.NewTransferActivity(pipelineRegistry).Execute, temporalsdk_activity.RegisterOptions{Name: activities.TransferActivityName})

@@ -320,16 +320,27 @@ func unbag(path string) error {
 }
 
 func removeHiddenFiles(path string) error {
-	return filepath.WalkDir(path, func(path string, d fs.DirEntry, err error) error {
+	root, err := os.OpenRoot(path)
+	if err != nil {
+		return err
+	}
+	defer root.Close()
+
+	return fs.WalkDir(root.FS(), ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
-		info, err := d.Info()
-		if err != nil {
-			return err
+		if path == "." {
+			return nil
 		}
-		if strings.HasPrefix(info.Name(), ".") {
-			return os.Remove(path)
+		if strings.HasPrefix(d.Name(), ".") {
+			if d.IsDir() {
+				if err := root.RemoveAll(path); err != nil {
+					return err
+				}
+				return fs.SkipDir
+			}
+			return root.Remove(path)
 		}
 		return nil
 	})

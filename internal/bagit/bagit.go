@@ -5,9 +5,19 @@ import (
 )
 
 func Complete(path string) error {
-	return go_bagit.ValidateBag(path, false, false)
+	bag, err := go_bagit.GetExistingBag(path)
+	if err != nil {
+		return err
+	}
+
+	return bag.ValidateBag(false, false)
 }
 
 func Valid(path string) error {
-	return go_bagit.ValidateBag(path, false, true)
+	bag, err := go_bagit.GetExistingBag(path)
+	if err != nil {
+		return err
+	}
+
+	return bag.ValidateBag(false, true)
 }

@@ -11,7 +11,7 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/artefactual-sdps/temporal-activities/archive"
+	"github.com/artefactual-sdps/temporal-activities/archiveextract"
 	"github.com/go-logr/logr"
 	temporalsdk_temporal "go.temporal.io/sdk/temporal"
 	temporalsdk_workflow "go.temporal.io/sdk/workflow"
@@ -462,15 +462,15 @@ func (w *ProcessingWorkflow) SessionHandler(sessCtx temporalsdk_workflow.Context
 	{
 		if tinfo.WatcherName != "" && !tinfo.IsDir {
 			activityOpts := withActivityOptsForLocalAction(sessCtx)
-			var result archive.ExtractActivityResult
+			var result archiveextract.Result
 			err := temporalsdk_workflow.ExecuteActivity(
 				activityOpts,
-				archive.ExtractActivityName,
-				&archive.ExtractActivityParams{SourcePath: tinfo.TempFile},
+				archiveextract.Name,
+				&archiveextract.Params{SourcePath: tinfo.TempFile},
 			).Get(activityOpts, &result)
 			if err != nil {
 				switch err {
-				case archive.ErrInvalidArchive:
+				case archiveextract.ErrInvalidArchive:
 					// Not an archive file, bundle it as-is (no error).
 				default:
 					return temporal.NewNonRetryableError(err)

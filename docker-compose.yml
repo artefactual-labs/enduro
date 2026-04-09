@@ -10,14 +10,24 @@ services:
     ports:
       - "127.0.0.1:7450:3306"
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot123"]
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "localhost",
+          "-u",
+          "root",
+          "-proot123",
+        ]
       interval: 5s
       timeout: 5s
       retries: 60
       start_period: 30s
 
   temporal-admin-tools:
-    image: "temporalio/admin-tools:1.29.1-tctl-1.18.4-cli-1.5.0"
+    image: "temporalio/admin-tools:1.30.3"
     restart: "on-failure:6"
     depends_on:
       mysql:
@@ -35,7 +45,7 @@ services:
     command: "/compose/setup-mysql.sh"
 
   temporal:
-    image: "temporalio/server:1.29.3"
+    image: "temporalio/server:1.30.3"
     depends_on:
       temporal-admin-tools:
         condition: service_completed_successfully
@@ -46,6 +56,9 @@ services:
       - "MYSQL_PWD=enduro123"
       - "MYSQL_SEEDS=mysql"
       - "BIND_ON_IP=0.0.0.0"
+      - "DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/development-sql.yaml"
+    volumes:
+      - ./hack/etc/temporal/dynamicconfig:/etc/temporal/config/dynamicconfig
     ports:
       - "127.0.0.1:7233:7233"
     healthcheck:
@@ -56,7 +69,7 @@ services:
       retries: 60
 
   temporal-create-namespace:
-    image: "temporalio/admin-tools:1.29.1-tctl-1.18.4-cli-1.5.0"
+    image: "temporalio/admin-tools:1.30.3"
     restart: "on-failure:5"
     depends_on:
       temporal:
@@ -70,7 +83,7 @@ services:
     command: "/compose/create-namespace.sh"
 
   temporal-ui:
-    image: "temporalio/ui:2.45.2"
+    image: "temporalio/ui:2.48.1"
     depends_on:
       temporal:
         condition: service_healthy
@@ -89,6 +102,9 @@ services:
       - "127.0.0.1:7460:9000"
 
   redis:
-    image: "redis:6.2.21-alpine3.21"
+    # Redis 8.2 is the current Redis 8 LTS line. Redis policy marks the
+    # second and last minor releases in a major version as LTS; newer interim
+    # minors, such as 8.4, are STS.
+    image: "redis:8.2.5-alpine3.22"
     ports:
       - "127.0.0.1:7470:6379"

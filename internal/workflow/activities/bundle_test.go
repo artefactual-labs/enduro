@@ -106,6 +106,49 @@ func TestBundleActivity(t *testing.T) {
 		assert.NilError(t, err)
 		assert.DeepEqual(t, res.RelPath, rePath)
 	})
+
+	t.Run("Removes hidden directories recursively", func(t *testing.T) {
+		activity := NewBundleActivity()
+		ts := &temporalsdk_testsuite.WorkflowTestSuite{}
+		env := ts.NewTestActivityEnvironment()
+		env.RegisterActivity(activity.Execute)
+
+		transferDir := fs.NewDir(t, "enduro",
+			fs.WithDir("batch-folder",
+				fs.WithDir(
+					"sip",
+					fs.WithFile("foobar.txt", "Hello world!\n"),
+					fs.WithDir(".hidden",
+						fs.WithFile("secret.txt", "shh\n"),
+					),
+				),
+			),
+		)
+		batchDir := transferDir.Join("batch-folder")
+		sipSourceDir := transferDir.Join("batch-folder", "sip")
+
+		fut, err := env.ExecuteActivity(activity.Execute, &BundleActivityParams{
+			ExcludeHiddenFiles: true,
+			IsDir:              true,
+			TransferDir:        transferDir.Path(),
+			BatchDir:           batchDir,
+			Key:                "sip",
+		})
+		assert.NilError(t, err)
+
+		res := BundleActivityResult{}
+		assert.NilError(t, fut.Get(&res))
+		assert.Assert(t,
+			fs.Equal(
+				sipSourceDir,
+				fs.Expected(t,
+					fs.WithFile("foobar.txt", "Hello world!\n"),
+					fs.MatchAnyFileMode,
+				),
+			),
+		)
+		assert.DeepEqual(t, res.FullPath, sipSourceDir)
+	})
 }
 
 func TestUnbag(t *testing.T) {

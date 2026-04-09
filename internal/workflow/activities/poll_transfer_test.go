@@ -123,11 +123,12 @@ func TestPollTransferActivity(t *testing.T) {
 	t.Run("Retries on retry-able errors until the deadline is exceeded", func(t *testing.T) {
 		ctx := context.Background()
 		backoffStrategy = &ZeroBackOff{}
-		clock = clockwork.NewFakeClock()
+		fakeClock := clockwork.NewFakeClock()
+		clock = fakeClock
 		attempts := 0
 		pipelineRegistry := newPipelineRegistry(t, func(w http.ResponseWriter, r *http.Request) {
 			attempts++
-			clock.(clockwork.FakeClock).Advance(time.Minute)
+			fakeClock.Advance(time.Minute)
 			w.WriteHeader(http.StatusBadGateway)
 		})
 		activity := NewPollTransferActivity(pipelineRegistry)
