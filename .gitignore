@@ -4,6 +4,8 @@
 /junit.xml
 /dist
 /enduro
+/.playwright-cli/
+/.pnpm-store/
 
 /hack/minio-data/sips/*
 !/hack/minio-data/sips/archivematica.png

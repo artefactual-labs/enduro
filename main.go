@@ -200,19 +200,33 @@ func main() {
 
 	// API server.
 	{
-		var srv *http.Server
+		addServer := func(cfg api.Config, uiMode api.UIMode) {
+			var srv *http.Server
 
-		g.Add(
-			func() error {
-				srv = api.HTTPServer(logger, tp, &config.API, pipesvc, batchsvc, colsvc)
-				return srv.ListenAndServe()
-			},
-			func(err error) {
-				ctx, cancel := context.WithTimeout(ctx, time.Second*5)
-				defer cancel()
-				_ = srv.Shutdown(ctx)
-			},
-		)
+			g.Add(
+				func() error {
+					srv = api.HTTPServer(logger, tp, &cfg, pipesvc, batchsvc, colsvc, uiMode)
+					return srv.ListenAndServe()
+				},
+				func(err error) {
+					if srv == nil {
+						return
+					}
+					ctx, cancel := context.WithTimeout(ctx, time.Second*5)
+					defer cancel()
+					_ = srv.Shutdown(ctx)
+				},
+			)
+		}
+
+		addServer(config.API, api.UIModeNuxt)
+
+		if config.API.LegacyListen != "" {
+			legacyConfig := config.API
+			legacyConfig.Listen = config.API.LegacyListen
+			legacyConfig.LegacyListen = ""
+			addServer(legacyConfig, api.UIModeLegacy)
+		}
 	}
 
 	// Watchers, where each watcher is a group actor.
@@ -425,6 +439,7 @@ func configureViper(v *viper.Viper) {
 	v.SetConfigName(appName)
 	v.SetDefault("debugListen", "127.0.0.1:9001")
 	v.SetDefault("api.listen", "127.0.0.1:9000")
+	v.SetDefault("api.legacyListen", "")
 	v.Set("api.appVersion", version)
 
 	temporal.SetDefaults(v)

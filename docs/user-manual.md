@@ -123,6 +123,7 @@ material.
 
 Common entry points:
 
+- [API server configuration](./configuration-reference.md#api)
 - [Watcher configuration](./configuration-reference.md#watcher)
 - [Pipeline configuration](./configuration-reference.md#pipeline)
 - [Worker configuration](./configuration-reference.md#worker)

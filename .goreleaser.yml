@@ -4,6 +4,7 @@ project_name: enduro
 before:
   hooks:
     - make ui
+    - make frontend
 release:
   github:
     owner: artefactual-labs
