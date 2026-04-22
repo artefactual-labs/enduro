@@ -22,6 +22,7 @@ import (
 	goahttpmwr "goa.design/goa/v3/http/middleware"
 	"goa.design/goa/v3/middleware"
 
+	frontendui "github.com/artefactual-labs/enduro/frontend"
 	"github.com/artefactual-labs/enduro/internal/api/gen/batch"
 	"github.com/artefactual-labs/enduro/internal/api/gen/collection"
 	batchsvr "github.com/artefactual-labs/enduro/internal/api/gen/http/batch/server"
@@ -35,6 +36,13 @@ import (
 	"github.com/artefactual-labs/enduro/ui"
 )
 
+type UIMode int
+
+const (
+	UIModeLegacy UIMode = iota
+	UIModeNuxt
+)
+
 func HTTPServer(
 	logger logr.Logger,
 	tp trace.TracerProvider,
@@ -42,6 +50,7 @@ func HTTPServer(
 	pipesvc intpipe.Service,
 	batchsvc intbatch.Service,
 	colsvc intcol.Service,
+	uiMode UIMode,
 ) *http.Server {
 	dec := goahttp.RequestDecoder
 	enc := goahttp.ResponseEncoder
@@ -71,10 +80,16 @@ func HTTPServer(
 	swaggerService := swaggersvr.New(nil, nil, nil, nil, nil, nil, nil)
 	swaggersvr.Mount(mux, swaggerService)
 
-	// Web handler.
-	web := ui.SPAHandler()
-	mux.Handle("GET", "/", web)
-	mux.Handle("GET", "/{*filename}", web)
+	switch uiMode {
+	case UIModeNuxt:
+		nuxt := frontendui.SPAHandler("/")
+		mux.Handle("GET", "/", nuxt)
+		mux.Handle("GET", "/{*filename}", nuxt)
+	case UIModeLegacy:
+		legacy := ui.SPAHandler()
+		mux.Handle("GET", "/", legacy)
+		mux.Handle("GET", "/{*filename}", legacy)
+	}
 
 	// Global middlewares.
 	var handler http.Handler = mux

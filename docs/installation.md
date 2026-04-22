@@ -61,7 +61,12 @@ more about the configuration details
 ### API server
 
 The configuration attribute `api.listen` determines the address where Enduro
-sets up the server to listen.
+sets up the primary server to listen. This server exposes the API and the new
+Nuxt web interface.
+
+Optionally, set `api.legacyListen` to expose a second server for the legacy web
+interface. This server exposes the same API together with the old UI for
+operators who still need it during the transition.
 
 Assuming that `api.listen=127.0.0.1:9000`, opening <http://127.0.0.1:9000> from
 your browser will bring you to the web interface. An example on how to consume

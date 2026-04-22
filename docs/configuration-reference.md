@@ -100,9 +100,17 @@ Configuration of the Enduro API server.
 
 #### `listen` (String)
 
-Address of the Enduro API server.
+Address of the primary Enduro server. It serves the API and the new Nuxt web UI.
 
 E.g.: `"127.0.0.1:9000"`
+
+#### `legacyListen` (String)
+
+Optional address of a second Enduro server that serves the API and the legacy
+web UI. Leave this unset unless operators still need access to the old
+interface alongside the new default frontend.
+
+E.g.: `"127.0.0.1:9002"`
 
 #### `debug` (Boolean)
 

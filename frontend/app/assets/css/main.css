@@ -1,0 +1,68 @@
+@import "tailwindcss";
+@import "@nuxt/ui";
+
+:root {
+  --ui-container: 1180px;
+  --ui-primary: var(--ui-color-primary-600);
+  /* App-level brand tokens keep component CSS independent from the current hue. */
+  --app-brand-strong: var(--ui-primary);
+  --app-brand-soft: color-mix(in srgb, var(--ui-primary) 8%, var(--ui-bg));
+  --app-brand-soft-hover: color-mix(in srgb, var(--ui-primary) 14%, var(--ui-bg));
+  --app-on-brand: var(--ui-text-inverted);
+  --app-on-brand-muted: color-mix(in srgb, var(--app-on-brand) 72%, transparent);
+  --app-on-brand-hover: color-mix(in srgb, var(--app-on-brand) 15%, transparent);
+  --app-table-row-hover: var(--app-brand-soft);
+}
+
+.dark {
+  --ui-primary: var(--ui-color-primary-500);
+  --app-brand-soft: color-mix(in srgb, var(--ui-primary) 18%, var(--ui-bg));
+  --app-brand-soft-hover: color-mix(in srgb, var(--ui-primary) 24%, var(--ui-bg));
+  --app-on-brand-muted: color-mix(in srgb, var(--app-on-brand) 80%, transparent);
+  --app-on-brand-hover: color-mix(in srgb, var(--app-on-brand) 18%, transparent);
+}
+
+html {
+  font-size: 17px;
+}
+
+@theme static {
+  --font-sans: 'Public Sans', sans-serif;
+
+  /*
+  Previous brand palette: purple scale.
+  --color-brand-50: #fcf3f9;
+  --color-brand-100: #f7e3f2;
+  --color-brand-200: #eec9e4;
+  --color-brand-300: #e0a3d1;
+  --color-brand-400: #d279bc;
+  --color-brand-500: #bf4aa1;
+  --color-brand-600: #9e3d85;
+  --color-brand-700: #7a3368;
+  --color-brand-800: #5e2750;
+  --color-brand-900: #401736;
+  --color-brand-950: #280b20;
+  */
+
+  /* Current brand palette: copper / rust scale. */
+  --color-brand-50: #fdf6f0;
+  --color-brand-100: #f8e7d8;
+  --color-brand-200: #efc9ab;
+  --color-brand-300: #e1a06f;
+  --color-brand-400: #d17a43;
+  --color-brand-500: #bf6211;
+  --color-brand-600: #a84d0f;
+  --color-brand-700: #8c3d2b;
+  --color-brand-800: #6f301f;
+  --color-brand-900: #522317;
+  --color-brand-950: #2e120b;
+}
+
+.app-table-row {
+  transition: background-color 150ms ease;
+}
+
+.app-table-row:hover,
+.app-table-row:focus-within {
+  background-color: var(--app-table-row-hover);
+}

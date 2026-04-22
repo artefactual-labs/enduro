@@ -46,6 +46,7 @@ func TestService(t *testing.T) {
 	showresp, err := svc.Show(ctx, &goapipeline.ShowPayload{ID: "0e395063-b859-45a3-8999-8f4116bb62e9"})
 	assert.NilError(t, err)
 	assert.Equal(t, showresp.Name, "am1")
+	assert.Equal(t, *showresp.Status, "active")
 
 	showresp, err = svc.Show(ctx, &goapipeline.ShowPayload{ID: "12345"})
 	assert.Error(t, err, "unknown pipeline")

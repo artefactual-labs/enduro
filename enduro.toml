@@ -16,6 +16,7 @@ taskQueue = "global"
 
 [api]
 listen = "127.0.0.1:9000"
+legacyListen = "127.0.0.1:9002"
 debug = false
 
 [database]
