@@ -43,7 +43,7 @@ func TestGoaMonitor(t *testing.T) {
 		}
 		w.events.PublishEvent(want)
 
-		got := stream.waitEvent(t)
+		got := stream.waitEventByType(t, want.Type)
 		assert.Equal(t, got.ID, want.ID)
 		assert.Equal(t, got.Type, want.Type)
 
@@ -239,4 +239,26 @@ func (s *monitorTestStream) waitEvent(t *testing.T) *goacollection.EnduroMonitor
 		assert.Assert(t, false, "timed out waiting for monitor event")
 		return nil
 	}
+}
+
+func (s *monitorTestStream) waitEventByType(t *testing.T, eventType string) *goacollection.EnduroMonitorUpdate {
+	t.Helper()
+
+	var matched *goacollection.EnduroMonitorUpdate
+
+	poll.WaitOn(t, func(log poll.LogT) poll.Result {
+		for {
+			select {
+			case ev := <-s.events:
+				if ev.Type == eventType {
+					matched = ev
+					return poll.Success()
+				}
+			default:
+				return poll.Continue("waiting for monitor event type %q", eventType)
+			}
+		}
+	}, poll.WithTimeout(time.Second), poll.WithDelay(time.Millisecond*5))
+
+	return matched
 }

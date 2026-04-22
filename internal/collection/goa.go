@@ -46,6 +46,14 @@ func (w *goaWrapper) Monitor(ctx context.Context, stream goacollection.MonitorSe
 	}
 	defer sub.Close()
 
+	// Flush headers immediately so clients can transition to "connected" fast.
+	if err := stream.SendWithContext(ctx, &goacollection.EnduroMonitorUpdate{
+		Timestamp: time.Now().UTC().Format(time.RFC3339),
+		Type:      "hello",
+	}); err != nil {
+		return err
+	}
+
 	// We'll use this ticker to ping the client once in a while to detect stale
 	// connections. I'm not entirely sure this is needed, it may depend on the
 	// client or the various middlewares.

@@ -102,7 +102,9 @@ func (a *BatchActivity) Execute(ctx context.Context, params BatchWorkflowInput) 
 			MetadataConfig:     params.MetadataConfig,
 		}
 
-		_ = a.batchsvc.InitProcessingWorkflow(ctx, &req)
+		if err := a.batchsvc.InitProcessingWorkflow(ctx, &req); err != nil {
+			return err
+		}
 
 		return fs.SkipDir
 	})

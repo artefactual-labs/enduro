@@ -2,6 +2,7 @@ package batch
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"go.uber.org/mock/gomock"
@@ -70,4 +71,35 @@ func TestBatchActivityFailsWithBogusBatchPath(t *testing.T) {
 		PipelineName: "am",
 	})
 	assert.ErrorContains(t, err, "no such file or directory")
+}
+
+func TestBatchActivityFailsWhenProcessingWorkflowInitFails(t *testing.T) {
+	opts := []fs.PathOp{
+		fs.WithDir("transfer1",
+			fs.WithFile("transfer1.txt", ""),
+		),
+	}
+	tmpDir := fs.NewDir(t, "batch", opts...)
+	batchPath := tmpDir.Path()
+	defer tmpDir.Remove()
+
+	ctrl := gomock.NewController(t)
+	ctx := context.Background()
+	serviceMock := batchfake.NewMockService(ctrl)
+	a := NewBatchActivity(serviceMock)
+
+	serviceMock.EXPECT().InitProcessingWorkflow(ctx, &collection.ProcessingWorkflowRequest{
+		BatchDir:         batchPath,
+		Key:              "transfer1",
+		IsDir:            true,
+		PipelineName:     "am",
+		ProcessingConfig: "automated",
+	}).Return(errors.New("workflow start failed"))
+
+	err := a.Execute(ctx, BatchWorkflowInput{
+		Path:             batchPath,
+		PipelineName:     "am",
+		ProcessingConfig: "automated",
+	})
+	assert.ErrorContains(t, err, "workflow start failed")
 }

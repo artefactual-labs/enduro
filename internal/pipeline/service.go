@@ -37,24 +37,12 @@ func (w *pipelineImpl) List(ctx context.Context, payload *goapipeline.ListPayloa
 	var wg sync.WaitGroup
 
 	for _, p := range pipelines {
-		c := p.Config()
-		size, cur := p.Capacity()
-		r := &goapipeline.EnduroStoredPipeline{
-			Name:     c.Name,
-			Capacity: &size,
-			Current:  &cur,
-		}
-		if p.ID != "" {
-			r.ID = &p.ID
-		}
+		r := buildStoredPipeline(p)
 		if payload.Status {
 			wg.Add(1)
 			go func(p *Pipeline, r *goapipeline.EnduroStoredPipeline) {
 				defer wg.Done()
-				ctx, cancel := context.WithTimeout(ctx, time.Second)
-				defer cancel()
-				status := p.Status(ctx)
-				r.Status = &status
+				setStoredPipelineStatus(ctx, p, r)
 			}(p, r)
 		}
 		results = append(results, r)
@@ -71,15 +59,31 @@ func (w *pipelineImpl) Show(ctx context.Context, payload *goapipeline.ShowPayloa
 		return nil, err
 	}
 
+	result := buildStoredPipeline(pipeline)
+	setStoredPipelineStatus(ctx, pipeline, result)
+
+	return result, nil
+}
+
+func buildStoredPipeline(pipeline *Pipeline) *goapipeline.EnduroStoredPipeline {
 	c := pipeline.Config()
 	size, cur := pipeline.Capacity()
-
-	return &goapipeline.EnduroStoredPipeline{
-		ID:       &pipeline.ID,
+	result := &goapipeline.EnduroStoredPipeline{
 		Name:     c.Name,
 		Capacity: &size,
 		Current:  &cur,
-	}, nil
+	}
+	if pipeline.ID != "" {
+		result.ID = &pipeline.ID
+	}
+	return result
+}
+
+func setStoredPipelineStatus(ctx context.Context, pipeline *Pipeline, result *goapipeline.EnduroStoredPipeline) {
+	ctx, cancel := context.WithTimeout(ctx, time.Second)
+	defer cancel()
+	status := pipeline.Status(ctx)
+	result.Status = &status
 }
 
 func (w *pipelineImpl) Processing(ctx context.Context, payload *goapipeline.ProcessingPayload) ([]string, error) {
