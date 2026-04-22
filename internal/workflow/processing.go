@@ -398,11 +398,12 @@ func (w *ProcessingWorkflow) Execute(ctx temporalsdk_workflow.Context, req *coll
 		if status == collection.StatusDone {
 			futures := []temporalsdk_workflow.Future{}
 			activityOpts := withActivityOptsForRequest(ctx)
+			ignoreHideConflict := req.RetryMode == collection.RetryModeReconcileExistingAIP
 			if tinfo.TransferID != "" {
-				futures = append(futures, temporalsdk_workflow.ExecuteActivity(activityOpts, activities.HidePackageActivityName, tinfo.TransferID, "transfer", tinfo.PipelineName))
+				futures = append(futures, temporalsdk_workflow.ExecuteActivity(activityOpts, activities.HidePackageActivityName, tinfo.TransferID, "transfer", tinfo.PipelineName, ignoreHideConflict))
 			}
 			if tinfo.SIPID != "" {
-				futures = append(futures, temporalsdk_workflow.ExecuteActivity(activityOpts, activities.HidePackageActivityName, tinfo.SIPID, "ingest", tinfo.PipelineName))
+				futures = append(futures, temporalsdk_workflow.ExecuteActivity(activityOpts, activities.HidePackageActivityName, tinfo.SIPID, "ingest", tinfo.PipelineName, ignoreHideConflict))
 			}
 			for _, f := range futures {
 				_ = f.Get(activityOpts, nil)

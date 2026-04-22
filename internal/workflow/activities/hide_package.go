@@ -3,6 +3,9 @@ package activities
 import (
 	"context"
 	"fmt"
+	"net/http"
+
+	"go.artefactual.dev/amclient"
 
 	"github.com/artefactual-labs/enduro/internal/pipeline"
 	"github.com/artefactual-labs/enduro/internal/temporal"
@@ -16,7 +19,7 @@ func NewHidePackageActivity(pipelineRegistry *pipeline.Registry) *HidePackageAct
 	return &HidePackageActivity{pipelineRegistry: pipelineRegistry}
 }
 
-func (a *HidePackageActivity) Execute(ctx context.Context, unitID, unitType, pipelineName string) error {
+func (a *HidePackageActivity) Execute(ctx context.Context, unitID, unitType, pipelineName string, ignoreConflict bool) error {
 	p, err := a.pipelineRegistry.ByName(pipelineName)
 	if err != nil {
 		return temporal.NewNonRetryableError(err)
@@ -30,6 +33,9 @@ func (a *HidePackageActivity) Execute(ctx context.Context, unitID, unitType, pip
 	if unitType == "transfer" {
 		resp, _, err := amc.Transfer.Hide(ctx, unitID)
 		if err != nil {
+			if ignoreConflict && hideConflict(err) {
+				return nil
+			}
 			return fmt.Errorf("error hiding transfer: %v", err)
 		}
 		if !resp.Removed {
@@ -40,6 +46,9 @@ func (a *HidePackageActivity) Execute(ctx context.Context, unitID, unitType, pip
 	if unitType == "ingest" {
 		resp, _, err := amc.Ingest.Hide(ctx, unitID)
 		if err != nil {
+			if ignoreConflict && hideConflict(err) {
+				return nil
+			}
 			return fmt.Errorf("error hiding sip: %v", err)
 		}
 		if !resp.Removed {
@@ -48,4 +57,9 @@ func (a *HidePackageActivity) Execute(ctx context.Context, unitID, unitType, pip
 	}
 
 	return nil
+}
+
+func hideConflict(err error) bool {
+	amErr, ok := err.(*amclient.ErrorResponse)
+	return ok && amErr.Response != nil && amErr.Response.StatusCode == http.StatusConflict
 }

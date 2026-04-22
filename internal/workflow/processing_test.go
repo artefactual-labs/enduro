@@ -251,7 +251,7 @@ func (s *ProcessingWorkflowTestSuite) TestReconciliationRetryNotFoundFallsBackTo
 		return time.Time{}, nil
 	}, temporalsdk_activity.RegisterOptions{Name: activities.PollIngestActivityName})
 	s.env.RegisterActivityWithOptions(func(*activities.CleanUpActivityParams) error { return nil }, temporalsdk_activity.RegisterOptions{Name: activities.CleanUpActivityName})
-	s.env.RegisterActivityWithOptions(func(string, string, string) error { return nil }, temporalsdk_activity.RegisterOptions{Name: activities.HidePackageActivityName})
+	s.env.RegisterActivityWithOptions(func(string, string, string, bool) error { return nil }, temporalsdk_activity.RegisterOptions{Name: activities.HidePackageActivityName})
 
 	storedAt := time.Date(2026, time.March, 17, 9, 0, 0, 0, time.UTC)
 
@@ -358,8 +358,8 @@ func (s *ProcessingWorkflowTestSuite) TestReconciliationRetryNotFoundFallsBackTo
 		SIPID:        "new-aip-id",
 	}).Return(storedAt, nil).Once()
 	s.env.OnActivity(releasePipelineLocalActivity, mock.Anything, mock.Anything, "pipeline").Return(nil).Once()
-	s.env.OnActivity(activities.HidePackageActivityName, "new-transfer-id", "transfer", "pipeline").Return(nil).Once()
-	s.env.OnActivity(activities.HidePackageActivityName, "new-aip-id", "ingest", "pipeline").Return(nil).Once()
+	s.env.OnActivity(activities.HidePackageActivityName, "new-transfer-id", "transfer", "pipeline", true).Return(nil).Once()
+	s.env.OnActivity(activities.HidePackageActivityName, "new-aip-id", "ingest", "pipeline", true).Return(nil).Once()
 	s.env.OnActivity(updatePackageLocalActivity, mock.Anything, mock.Anything, mock.Anything, &updatePackageLocalActivityParams{
 		CollectionID: uint(12345),
 		Key:          "key",
@@ -477,8 +477,8 @@ func (s *ProcessingWorkflowTestSuite) TestReconciliationRetryCompleteDeliversRec
 		NameInfo:     nha.NameInfo{},
 		FullPath:     "/transfer-dir/key",
 	}).Return(nil).Once()
-	s.env.OnActivity(activities.HidePackageActivityName, "transfer-id", "transfer", "pipeline").Return(nil).Once()
-	s.env.OnActivity(activities.HidePackageActivityName, "aip-id", "ingest", "pipeline").Return(nil).Once()
+	s.env.OnActivity(activities.HidePackageActivityName, "transfer-id", "transfer", "pipeline", true).Return(nil).Once()
+	s.env.OnActivity(activities.HidePackageActivityName, "aip-id", "ingest", "pipeline", true).Return(nil).Once()
 	s.env.OnActivity(updatePackageLocalActivity, mock.Anything, mock.Anything, mock.Anything, &updatePackageLocalActivityParams{
 		CollectionID: uint(12345),
 		Key:          "key",
@@ -936,8 +936,8 @@ func (s *ProcessingWorkflowTestSuite) TestRecoveryEnabledReconcilesAfterSuccessf
 			params.AIPStoredAt.Equal(pollStoredAt)
 	})).Return(nil).Once()
 	s.env.OnActivity(releasePipelineLocalActivity, mock.Anything, mock.Anything, "pipeline").Return(nil).Once()
-	s.env.OnActivity(activities.HidePackageActivityName, "transfer-id", "transfer", "pipeline").Return(nil).Once()
-	s.env.OnActivity(activities.HidePackageActivityName, "aip-id", "ingest", "pipeline").Return(nil).Once()
+	s.env.OnActivity(activities.HidePackageActivityName, "transfer-id", "transfer", "pipeline", false).Return(nil).Once()
+	s.env.OnActivity(activities.HidePackageActivityName, "aip-id", "ingest", "pipeline", false).Return(nil).Once()
 	s.env.OnActivity(updatePackageLocalActivity, mock.Anything, mock.Anything, mock.Anything, &updatePackageLocalActivityParams{
 		CollectionID: uint(12345),
 		Key:          "key",
@@ -1093,8 +1093,8 @@ func (s *ProcessingWorkflowTestSuite) TestRecoveryEnabledRetriesIndeterminateAft
 	})).Return(nil).Once()
 
 	s.env.OnActivity(releasePipelineLocalActivity, mock.Anything, mock.Anything, "pipeline").Return(nil).Once()
-	s.env.OnActivity(activities.HidePackageActivityName, "transfer-id", "transfer", "pipeline").Return(nil).Once()
-	s.env.OnActivity(activities.HidePackageActivityName, "aip-id", "ingest", "pipeline").Return(nil).Once()
+	s.env.OnActivity(activities.HidePackageActivityName, "transfer-id", "transfer", "pipeline", false).Return(nil).Once()
+	s.env.OnActivity(activities.HidePackageActivityName, "aip-id", "ingest", "pipeline", false).Return(nil).Once()
 	s.env.OnActivity(updatePackageLocalActivity, mock.Anything, mock.Anything, mock.Anything, &updatePackageLocalActivityParams{
 		CollectionID: uint(12345),
 		Key:          "key",
@@ -1245,8 +1245,8 @@ func (s *ProcessingWorkflowTestSuite) TestRecoveryEnabledRetriesNotFoundAfterSuc
 			params.AIPStoredAt.Equal(pollStoredAt)
 	})).Return(nil).Once()
 	s.env.OnActivity(releasePipelineLocalActivity, mock.Anything, mock.Anything, "pipeline").Return(nil).Once()
-	s.env.OnActivity(activities.HidePackageActivityName, "transfer-id", "transfer", "pipeline").Return(nil).Once()
-	s.env.OnActivity(activities.HidePackageActivityName, "aip-id", "ingest", "pipeline").Return(nil).Once()
+	s.env.OnActivity(activities.HidePackageActivityName, "transfer-id", "transfer", "pipeline", false).Return(nil).Once()
+	s.env.OnActivity(activities.HidePackageActivityName, "aip-id", "ingest", "pipeline", false).Return(nil).Once()
 	s.env.OnActivity(updatePackageLocalActivity, mock.Anything, mock.Anything, mock.Anything, &updatePackageLocalActivityParams{
 		CollectionID: uint(12345),
 		Key:          "key",
@@ -1516,8 +1516,8 @@ func (s *ProcessingWorkflowTestSuite) TestRecoveryEnabledPromotesIngestFailureWh
 			params.AIPStoredAt.Format(time.RFC3339) == "2026-03-17T07:00:00Z"
 	})).Return(nil).Once()
 	s.env.OnActivity(releasePipelineLocalActivity, mock.Anything, mock.Anything, "pipeline").Return(nil).Once()
-	s.env.OnActivity(activities.HidePackageActivityName, "transfer-id", "transfer", "pipeline").Return(nil).Once()
-	s.env.OnActivity(activities.HidePackageActivityName, "aip-id", "ingest", "pipeline").Return(nil).Once()
+	s.env.OnActivity(activities.HidePackageActivityName, "transfer-id", "transfer", "pipeline", false).Return(nil).Once()
+	s.env.OnActivity(activities.HidePackageActivityName, "aip-id", "ingest", "pipeline", false).Return(nil).Once()
 	s.env.OnActivity(updatePackageLocalActivity, mock.Anything, mock.Anything, mock.Anything, &updatePackageLocalActivityParams{
 		CollectionID: uint(12345),
 		Key:          "key",
@@ -1669,8 +1669,8 @@ func (s *ProcessingWorkflowTestSuite) TestRecoveryEnabledRetriesNotFoundAfterIng
 			params.AIPStoredAt.Format(time.RFC3339) == "2026-03-17T07:00:00Z"
 	})).Return(nil).Once()
 	s.env.OnActivity(releasePipelineLocalActivity, mock.Anything, mock.Anything, "pipeline").Return(nil).Once()
-	s.env.OnActivity(activities.HidePackageActivityName, "transfer-id", "transfer", "pipeline").Return(nil).Once()
-	s.env.OnActivity(activities.HidePackageActivityName, "aip-id", "ingest", "pipeline").Return(nil).Once()
+	s.env.OnActivity(activities.HidePackageActivityName, "transfer-id", "transfer", "pipeline", false).Return(nil).Once()
+	s.env.OnActivity(activities.HidePackageActivityName, "aip-id", "ingest", "pipeline", false).Return(nil).Once()
 	s.env.OnActivity(updatePackageLocalActivity, mock.Anything, mock.Anything, mock.Anything, &updatePackageLocalActivityParams{
 		CollectionID: uint(12345),
 		Key:          "key",
@@ -1852,7 +1852,7 @@ func registerWorkflowActivityStubs(env *temporalsdk_testsuite.TestWorkflowEnviro
 		return time.Time{}, nil
 	}, temporalsdk_activity.RegisterOptions{Name: activities.PollIngestActivityName})
 	env.RegisterActivityWithOptions(func(*activities.CleanUpActivityParams) error { return nil }, temporalsdk_activity.RegisterOptions{Name: activities.CleanUpActivityName})
-	env.RegisterActivityWithOptions(func(string, string, string) error { return nil }, temporalsdk_activity.RegisterOptions{Name: activities.HidePackageActivityName})
+	env.RegisterActivityWithOptions(func(string, string, string, bool) error { return nil }, temporalsdk_activity.RegisterOptions{Name: activities.HidePackageActivityName})
 	env.RegisterActivityWithOptions(func(*nha_activities.UpdateHARIActivityParams) error { return nil }, temporalsdk_activity.RegisterOptions{Name: nha_activities.UpdateHARIActivityName})
 	env.RegisterActivityWithOptions(func(*nha_activities.UpdateProductionSystemActivityParams) error { return nil }, temporalsdk_activity.RegisterOptions{Name: nha_activities.UpdateProductionSystemActivityName})
 }
