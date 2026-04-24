@@ -32,7 +32,7 @@ require (
 	github.com/stretchr/testify v1.11.1
 	go.artefactual.dev/amclient v0.4.0
 	go.artefactual.dev/ssclient v0.11.0
-	go.artefactual.dev/tools v0.24.0
+	go.artefactual.dev/tools v0.25.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace v0.49.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.68.0
 	go.opentelemetry.io/otel v1.43.0
