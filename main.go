@@ -429,6 +429,10 @@ type WorkerConfig struct {
 }
 
 func (c configuration) Validate() error {
+	if err := c.API.Validate(); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -440,6 +444,8 @@ func configureViper(v *viper.Viper) {
 	v.SetDefault("debugListen", "127.0.0.1:9001")
 	v.SetDefault("api.listen", "127.0.0.1:9000")
 	v.SetDefault("api.legacyListen", "")
+	v.SetDefault("api.allowedOrigins", []string{"*"})
+	v.SetDefault("api.contentSecurityPolicy", "")
 	v.Set("api.appVersion", version)
 
 	temporal.SetDefaults(v)

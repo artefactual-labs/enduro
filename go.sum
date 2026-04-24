@@ -246,6 +246,8 @@ github.com/googleapis/gax-go/v2 v2.0.4/go.mod h1:0Wqv26UfaUD9n4G6kQubkQ+KchISgw+
 github.com/googleapis/gax-go/v2 v2.0.5/go.mod h1:DWXyrwAJ9X0FpwwEdw+IPEYBICEFu5mhpdKc/us6bOk=
 github.com/googleapis/gax-go/v2 v2.15.0 h1:SyjDc1mGgZU5LncH8gimWo9lW1DtIfPibOG81vgd/bo=
 github.com/googleapis/gax-go/v2 v2.15.0/go.mod h1:zVVkkxAQHa1RQpg9z2AUCMnKhi0Qld9rcmyfL1OZhoc=
+github.com/gorilla/mux v1.8.1 h1:TuBL49tXwgrFYWhqrNgrUNEY92u81SPhu7sTdzQEiWY=
+github.com/gorilla/mux v1.8.1/go.mod h1:AKf9I4AEqPTmMytcMc0KkNouC66V3BtZ4qD5fmWSiMQ=
 github.com/gorilla/schema v1.4.1 h1:jUg5hUjCSDZpNGLuXQOgIWGdlgrIdYvgQ0wZtdK1M3E=
 github.com/gorilla/schema v1.4.1/go.mod h1:Dg5SSm5PV60mhF2NFaTV1xuYYj8tV8NOPRo4FggUMnM=
 github.com/gorilla/websocket v1.5.3 h1:saDtZ6Pbx/0u+bgYQ3q96pZgCzfhKXGPqt7kZ72aNNg=
@@ -446,8 +448,8 @@ go.artefactual.dev/amclient v0.4.0 h1:B/VeBJ72R5zTzcSk5ErrQnrcUYkUd+M30I5ga+YZkj
 go.artefactual.dev/amclient v0.4.0/go.mod h1:oAOlZHC78IWjWDCqRM1/8K1x/WYmRUL3peujKCdoXaA=
 go.artefactual.dev/ssclient v0.11.0 h1:mRjB8J0IQ+gjg6ICtZxJm+whG56tvIyxT+x4bO6CQGc=
 go.artefactual.dev/ssclient v0.11.0/go.mod h1:0tO5nOwQ8naw+GcPBi2A7lXzPt4HUn7MPXqQwi7H3jY=
-go.artefactual.dev/tools v0.24.0 h1:zLhNZN6oHrwc+iZHILw0Vwz8MsvtE4msy6vSGCw/j3k=
-go.artefactual.dev/tools v0.24.0/go.mod h1:1SVnTLe0LupMoOtla5MnFLiKQ/edXzVyc7ZZAhwLLLk=
+go.artefactual.dev/tools v0.25.0 h1:vBPSN/iSUATGit5oMJj/S4ZyOvRVkj/+4lhZYxgPQqA=
+go.artefactual.dev/tools v0.25.0/go.mod h1:tW9DHZzeQO6H3Fjp0NCaRPqzGNLsDpDWELR4rssyels=
 go.opencensus.io v0.21.0/go.mod h1:mSImk1erAIZhrmZN+AvHh14ztQfjbGwt4TtuofqLduU=
 go.opencensus.io v0.22.0/go.mod h1:+kGneAE2xo2IficOXnaByMWTGM9T73dGwxeWcUqIpI8=
 go.opencensus.io v0.22.2/go.mod h1:yxeiOL68Rb0Xd1ddK5vPZ/oVn4vY4Ynel7k9FzqtOIw=
