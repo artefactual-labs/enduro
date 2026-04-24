@@ -230,17 +230,6 @@ func (*monitorTestStream) Close() error {
 	return nil
 }
 
-func (s *monitorTestStream) waitEvent(t *testing.T) *goacollection.EnduroMonitorUpdate {
-	t.Helper()
-	select {
-	case ev := <-s.events:
-		return ev
-	case <-time.After(time.Second):
-		assert.Assert(t, false, "timed out waiting for monitor event")
-		return nil
-	}
-}
-
 func (s *monitorTestStream) waitEventByType(t *testing.T, eventType string) *goacollection.EnduroMonitorUpdate {
 	t.Helper()
 

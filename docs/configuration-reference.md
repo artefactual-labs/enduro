@@ -120,6 +120,83 @@ parameters and bodies.
 
 E.g.: `false`
 
+#### `allowedOrigins` (Array of strings)
+
+Additional origins allowed by CORS and Go's
+`net/http.CrossOriginProtection` CSRF defense. Unsafe cross-origin browser
+requests from other origins are denied. Safe methods such as `GET`, `HEAD`, and
+`OPTIONS` are still allowed through the CSRF defense, but CORS response headers
+are removed for origins that are not same-origin or listed here. Requests
+without browser origin signals and requests whose origin matches the request
+host are allowed.
+
+Origins must match the browser `Origin` header exactly, including scheme and
+port when present, for example `https://dashboard.example.org` or
+`http://localhost:3000`.
+
+The supported modes are:
+
+```toml
+# Backward-compatible default when allowedOrigins is omitted.
+# This preserves the previous permissive cross-origin behavior.
+allowedOrigins = ["*"]
+```
+
+```toml
+# Hardened same-origin deployment.
+# Use this when Enduro serves the dashboard and API from the same origin.
+allowedOrigins = []
+```
+
+```toml
+# Hardened split-origin deployment.
+# Use this when the dashboard and API are intentionally served from different
+# origins.
+allowedOrigins = ["https://dashboard.example.org"]
+```
+
+Migration guidance:
+
+1. Leave `allowedOrigins` unset, or set it to `["*"]`, to avoid behavior changes
+   during upgrade.
+2. If the dashboard and API are served from the same origin, change it to `[]`.
+3. If the dashboard and API are served from different origins, replace `["*"]`
+   with the explicit dashboard origin or origins.
+4. Test browser workflows that perform state-changing actions, such as batch
+   submission, retry, cancellation, deletion, and collection decisions.
+
+#### `contentSecurityPolicy` (String)
+
+Value of the `Content-Security-Policy` response header. When set, Enduro also
+sends `X-Content-Type-Options`, `Referrer-Policy`, and `X-Frame-Options`.
+
+The supported modes are:
+
+```toml
+# Backward-compatible default when contentSecurityPolicy is omitted.
+# This preserves the previous behavior without CSP or extra browser hardening
+# headers.
+contentSecurityPolicy = ""
+```
+
+```toml
+# Recommended starting point for same-origin dashboard/API deployments.
+contentSecurityPolicy = "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; connect-src 'self'; img-src 'self' data:; font-src 'self' data:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'"
+```
+
+The example policy is compatible with the bundled dashboard and legacy UI while
+limiting resource loading to the same origin. Deployments that intentionally
+load assets or connect to APIs on other origins should extend the relevant CSP
+directives before enabling it.
+
+Enduro does not enable a default CSP yet because the policy must remain
+compatible with both the new dashboard and the legacy Vue 2 UI. We intend to
+define and enable stronger default browser security headers after the legacy UI
+is phased out and the new dashboard can be validated against the stricter
+policy.
+
+E.g.: `"default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; connect-src 'self'; img-src 'self' data:; font-src 'self' data:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'"`
+
 ## `[database]`
 
 Database connection details.

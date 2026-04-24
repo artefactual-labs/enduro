@@ -16,11 +16,12 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
+	"go.artefactual.dev/tools/middleware"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel/trace"
 	goahttp "goa.design/goa/v3/http"
 	goahttpmwr "goa.design/goa/v3/http/middleware"
-	"goa.design/goa/v3/middleware"
+	goamiddleware "goa.design/goa/v3/middleware"
 
 	frontendui "github.com/artefactual-labs/enduro/frontend"
 	"github.com/artefactual-labs/enduro/internal/api/gen/batch"
@@ -72,8 +73,8 @@ func HTTPServer(
 	collectionEndpoints := collection.NewEndpoints(colsvc.Goa())
 	collectionErrorHandler := errorHandler(logger, "Collection error.")
 	collectionServer := collectionsvr.New(collectionEndpoints, mux, dec, enc, collectionErrorHandler, nil)
-	collectionServer.Monitor = writeTimeout(collectionServer.Monitor, 0)
-	collectionServer.Download = writeTimeout(collectionServer.Download, 0)
+	collectionServer.Monitor = middleware.WriteTimeout(0)(collectionServer.Monitor)
+	collectionServer.Download = middleware.WriteTimeout(0)(collectionServer.Download)
 	collectionsvr.Mount(mux, collectionServer)
 
 	// Swagger service.
@@ -95,7 +96,10 @@ func HTTPServer(
 	var handler http.Handler = mux
 	handler = otelhttp.NewHandler(handler, "enduro/internal/api", otelhttp.WithTracerProvider(tp))
 	handler = goahttpmwr.RequestID()(handler)
-	handler = versionHeaderMiddleware(config.AppVersion)(handler)
+	handler = corsResponseHeaderMiddleware(config.AllowedOrigins)(handler)
+	handler = crossOriginProtectionMiddleware(config.AllowedOrigins)(handler)
+	handler = middleware.VersionHeader("X-Enduro-Version", config.AppVersion)(handler)
+	handler = securityHeadersMiddleware(config.ContentSecurityPolicy)(handler)
 	if config.Debug {
 		handler = goahttpmwr.Log(loggerAdapter(logger))(handler)
 		handler = debug(mux, os.Stdout)(handler)
@@ -120,7 +124,7 @@ type errorMessage struct {
 // to correlate.
 func errorHandler(logger logr.Logger, msg string) func(context.Context, http.ResponseWriter, error) {
 	return func(ctx context.Context, w http.ResponseWriter, err error) {
-		reqID, ok := ctx.Value(middleware.RequestIDKey).(string)
+		reqID, ok := ctx.Value(goamiddleware.RequestIDKey).(string)
 		if !ok {
 			reqID = "unknown"
 		}
