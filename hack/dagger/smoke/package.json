@@ -1,0 +1,9 @@
+{
+  "private": true,
+  "scripts": {
+    "test": "playwright test --reporter=line"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.1"
+  }
+}

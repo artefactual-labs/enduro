@@ -6,6 +6,7 @@ import (
 	"github.com/artefactual-labs/enduro/internal/validation"
 )
 
+// ValidateTransferActivity validates staged transfer content before ingest.
 type ValidateTransferActivity struct{}
 
 func NewValidateTransferActivity() *ValidateTransferActivity {

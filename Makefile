@@ -71,6 +71,10 @@ test-ci: # @HELP Run all tests in CI with coverage and the race detector.
 test-ci:
 	$(MAKE) test GOTESTSUM_FLAGS="--junitfile=junit.xml" GOTEST_FLAGS="-race -coverprofile=covreport -covermode=atomic"
 
+test-smoke: # @HELP Run the Dagger smoke tests against ambox.
+test-smoke:
+	dagger -m hack/dagger call smoke-tests --source . export --path hack/dagger/runtime/artifacts
+
 list-tested-packages: # @HELP Print a list of packages being tested.
 list-tested-packages:
 	$(foreach PACKAGE,$(TEST_PACKAGES),@echo $(PACKAGE)$(NEWLINE))

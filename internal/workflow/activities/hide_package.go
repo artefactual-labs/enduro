@@ -11,6 +11,7 @@ import (
 	"github.com/artefactual-labs/enduro/internal/temporal"
 )
 
+// HidePackageActivity hides processed packages from Archivematica dashboards.
 type HidePackageActivity struct {
 	pipelineRegistry *pipeline.Registry
 }

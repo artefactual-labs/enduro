@@ -17,6 +17,7 @@ import (
 	"github.com/artefactual-labs/enduro/internal/temporal"
 )
 
+// BundleActivity stages transfer content in the pipeline transfer directory.
 type BundleActivity struct{}
 
 func NewBundleActivity() *BundleActivity {

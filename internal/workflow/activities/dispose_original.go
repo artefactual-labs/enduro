@@ -8,6 +8,7 @@ import (
 	"github.com/artefactual-labs/enduro/internal/watcher"
 )
 
+// DisposeOriginalActivity moves the original package to completed storage.
 type DisposeOriginalActivity struct {
 	wsvc watcher.Service
 }

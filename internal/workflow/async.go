@@ -99,6 +99,7 @@ func executeActivityWithAsyncErrorHandling(ctx temporalsdk_workflow.Context, col
 
 var AsyncCompletionActivityName = "async-completion-activity"
 
+// AsyncCompletionActivity stores task tokens for out-of-band completion.
 type AsyncCompletionActivity struct {
 	colsvc collection.Service
 }

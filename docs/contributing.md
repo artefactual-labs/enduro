@@ -113,6 +113,24 @@ You can enable it in Visual Studio Code as follows:
 }
 ```
 
+### Dagger smoke harness
+
+Enduro also has an experimental Dagger-based smoke harness under
+`hack/dagger`. The same harness runs in the dedicated `smoke-tests` job in the
+`Test` GitHub Actions workflow. It can also be run manually before pushing
+changes that affect transfer publishing or Archivematica integration.
+
+Install a recent version of Dagger and make sure Docker is available. From the
+repository root, run:
+
+    make test-smoke
+
+Because this harness starts real services and Archivematica workers, it is
+slower and heavier than `make test`. Treat it as an end-to-end smoke check for
+the transfer publishing workaround rather than a replacement for unit or
+workflow tests. The harness also exports Go coverage from the Enduro process;
+CI uploads that profile to Codecov under the `go-smoke` flag.
+
 ### Enable tracing
 
 Enable the observability services by editing the root `.env` file as follows:
