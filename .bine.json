@@ -28,7 +28,7 @@
         {
             "name": "goa",
             "go_package": "goa.design/goa/v3/cmd/goa",
-            "version": "3.25.3"
+            "version": "3.26.0"
         },
         {
             "name": "mockgen",

@@ -55,7 +55,8 @@ func HTTPServer(
 ) *http.Server {
 	dec := goahttp.RequestDecoder
 	enc := goahttp.ResponseEncoder
-	var mux goahttp.Muxer = goahttp.NewMuxer()
+	mux := goahttp.NewMuxer()
+	mux.Use(otelhttp.NewMiddleware("enduro/internal/api", otelhttp.WithTracerProvider(tp)))
 
 	// Pipeline service.
 	pipelineEndpoints := pipeline.NewEndpoints(pipesvc)
@@ -94,7 +95,6 @@ func HTTPServer(
 
 	// Global middlewares.
 	var handler http.Handler = mux
-	handler = otelhttp.NewHandler(handler, "enduro/internal/api", otelhttp.WithTracerProvider(tp))
 	handler = goahttpmwr.RequestID()(handler)
 	handler = corsResponseHeaderMiddleware(config.AllowedOrigins)(handler)
 	handler = crossOriginProtectionMiddleware(config.AllowedOrigins)(handler)
