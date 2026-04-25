@@ -5,6 +5,8 @@ const (
 	AcquirePipelineActivityName  = "acquire-pipeline-activity"
 	DownloadActivityName         = "download-activity"
 	BundleActivityName           = "bundle-activity"
+	PublishTransferActivityName  = "publish-transfer-activity"
+	CleanUpPublishedActivityName = "clean-up-published-transfer-activity"
 	TransferActivityName         = "transfer-activity"
 	PollTransferActivityName     = "poll-transfer-activity"
 	PollIngestActivityName       = "poll-ingest-activity"

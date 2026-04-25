@@ -23,6 +23,7 @@ require (
 	github.com/nyudlts/go-bagit v0.3.1-alpha
 	github.com/oklog/run v1.2.0
 	github.com/otiai10/copy v1.14.1
+	github.com/pkg/sftp v1.13.10
 	github.com/prometheus/client_golang v1.23.2
 	github.com/radovskyb/watcher v1.0.7
 	github.com/redis/go-redis/v9 v9.18.0
@@ -45,9 +46,12 @@ require (
 	goa.design/goa/v3 v3.26.0
 	goa.design/plugins/v3 v3.26.0
 	gocloud.dev v0.45.0
+	golang.org/x/crypto v0.49.0
 	golang.org/x/sync v0.20.0
 	gotest.tools/v3 v3.5.2
 )
+
+require github.com/kr/fs v0.1.0 // indirect
 
 require (
 	filippo.io/edwards25519 v1.1.1 // indirect

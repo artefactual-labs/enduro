@@ -3,6 +3,7 @@ package workflow
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -13,6 +14,7 @@ import (
 	temporalsdk_activity "go.temporal.io/sdk/activity"
 	temporalsdk_testsuite "go.temporal.io/sdk/testsuite"
 	temporalsdk_worker "go.temporal.io/sdk/worker"
+	temporalsdk_workflow "go.temporal.io/sdk/workflow"
 	"go.uber.org/mock/gomock"
 	"gotest.tools/v3/assert"
 
@@ -21,6 +23,7 @@ import (
 	"github.com/artefactual-labs/enduro/internal/nha"
 	nha_activities "github.com/artefactual-labs/enduro/internal/nha/activities"
 	"github.com/artefactual-labs/enduro/internal/pipeline"
+	"github.com/artefactual-labs/enduro/internal/publisher"
 	"github.com/artefactual-labs/enduro/internal/reconciliation"
 	"github.com/artefactual-labs/enduro/internal/temporal"
 	"github.com/artefactual-labs/enduro/internal/workflow/activities"
@@ -858,6 +861,9 @@ func (s *ProcessingWorkflowTestSuite) TestRecoveryEnabledReconcilesAfterSuccessf
 				ID:                 "pipeline-id",
 				TransferDir:        "/transfer-dir",
 				TransferLocationID: "transfer-location-id",
+				TransferPublisher: publisher.Config{
+					Type: "sftp",
+				},
 				Recovery: pipeline.RecoveryConfig{
 					ReconcileExistingAIP: true,
 				},
@@ -879,10 +885,19 @@ func (s *ProcessingWorkflowTestSuite) TestRecoveryEnabledReconcilesAfterSuccessf
 		RelPath:  "key",
 		FullPath: "/transfer-dir/key",
 	}, nil).Once()
+	s.env.OnActivity(localTransferPathExistsLocalActivity, "/transfer-dir/key").Return(true, nil).Once()
+	s.env.OnActivity(activities.PublishTransferActivityName, &activities.PublishTransferActivityParams{
+		PipelineName: "pipeline",
+		FullPath:     "/transfer-dir/key",
+		RelPath:      "key",
+	}).Return(&activities.PublishTransferActivityResult{
+		RelPath:    "archivematica/transfers/key",
+		RemotePath: "/key",
+	}, nil).Once()
 	s.env.OnActivity(activities.TransferActivityName, &activities.TransferActivityParams{
 		PipelineName:       "pipeline",
 		TransferLocationID: "transfer-location-id",
-		RelPath:            "key",
+		RelPath:            "archivematica/transfers/key",
 		Name:               "key",
 		ProcessingConfig:   "",
 		TransferType:       "",
@@ -953,6 +968,63 @@ func (s *ProcessingWorkflowTestSuite) TestRecoveryEnabledReconcilesAfterSuccessf
 		PipelineName: "pipeline",
 		Key:          "key",
 		BatchDir:     "/batch-dir",
+	})
+
+	s.True(s.env.IsWorkflowCompleted())
+	s.NoError(s.env.GetWorkflowError())
+}
+
+func (s *ProcessingWorkflowTestSuite) TestRebuildsBundleWhenPublishingSourceIsMissing() {
+	s.env.RegisterActivityWithOptions(func(*activities.BundleActivityParams) (*activities.BundleActivityResult, error) {
+		return nil, nil
+	}, temporalsdk_activity.RegisterOptions{Name: activities.BundleActivityName})
+
+	s.env.OnActivity(localTransferPathExistsLocalActivity, "/transfer-dir/stale-key").Return(false, nil).Once()
+	s.env.OnActivity(activities.BundleActivityName, &activities.BundleActivityParams{
+		TransferDir:        "/transfer-dir",
+		Key:                "key",
+		TempFile:           "",
+		StripTopLevelDir:   false,
+		ExcludeHiddenFiles: false,
+		IsDir:              false,
+		BatchDir:           "/batch-dir",
+		Unbag:              false,
+	}).Return(&activities.BundleActivityResult{
+		RelPath:  "rebuilt-key",
+		FullPath: "/transfer-dir/rebuilt-key",
+	}, nil).Once()
+
+	s.env.ExecuteWorkflow(func(ctx temporalsdk_workflow.Context) error {
+		tinfo := &TransferInfo{
+			Key:      "key",
+			BatchDir: "/batch-dir",
+			PipelineConfig: &pipeline.Config{
+				TransferDir: "/transfer-dir",
+				TransferPublisher: publisher.Config{
+					Type: "sftp",
+				},
+			},
+			Bundle: activities.BundleActivityResult{
+				RelPath:  "stale-key",
+				FullPath: "/transfer-dir/stale-key",
+			},
+		}
+
+		cleanup, err := s.workflow.rebuildBundleWhenPublishedSourceMissing(ctx, tinfo, &collection.ProcessingWorkflowRequest{
+			Key:      "key",
+			BatchDir: "/batch-dir",
+		})
+		if err != nil {
+			return err
+		}
+		if cleanup == nil {
+			return errors.New("expected rebuilt bundle cleanup")
+		}
+		if tinfo.Bundle.FullPath != "/transfer-dir/rebuilt-key" {
+			return fmt.Errorf("unexpected rebuilt bundle path: %s", tinfo.Bundle.FullPath)
+		}
+
+		return nil
 	})
 
 	s.True(s.env.IsWorkflowCompleted())
@@ -1842,6 +1914,12 @@ func registerWorkflowActivityStubs(env *temporalsdk_testsuite.TestWorkflowEnviro
 	env.RegisterActivityWithOptions(func(*activities.BundleActivityParams) (*activities.BundleActivityResult, error) {
 		return nil, nil
 	}, temporalsdk_activity.RegisterOptions{Name: activities.BundleActivityName})
+	env.RegisterActivityWithOptions(func(*activities.PublishTransferActivityParams) (*activities.PublishTransferActivityResult, error) {
+		return nil, nil
+	}, temporalsdk_activity.RegisterOptions{Name: activities.PublishTransferActivityName})
+	env.RegisterActivityWithOptions(func(*activities.CleanUpPublishedTransferActivityParams) error {
+		return nil
+	}, temporalsdk_activity.RegisterOptions{Name: activities.CleanUpPublishedActivityName})
 	env.RegisterActivityWithOptions(func(*activities.TransferActivityParams) (*activities.TransferActivityResponse, error) {
 		return nil, nil
 	}, temporalsdk_activity.RegisterOptions{Name: activities.TransferActivityName})

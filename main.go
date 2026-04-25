@@ -557,6 +557,8 @@ func registerWorker(
 	w.RegisterActivityWithOptions(archiveextract.New(config.ExtractActivity).Execute, temporalsdk_activity.RegisterOptions{Name: archiveextract.Name})
 	w.RegisterActivityWithOptions(activities.NewBundleActivity().Execute, temporalsdk_activity.RegisterOptions{Name: activities.BundleActivityName})
 	w.RegisterActivityWithOptions(activities.NewValidateTransferActivity().Execute, temporalsdk_activity.RegisterOptions{Name: activities.ValidateTransferActivityName})
+	w.RegisterActivityWithOptions(activities.NewPublishTransferActivity(pipelineRegistry).Execute, temporalsdk_activity.RegisterOptions{Name: activities.PublishTransferActivityName})
+	w.RegisterActivityWithOptions(activities.NewCleanUpPublishedTransferActivity(pipelineRegistry).Execute, temporalsdk_activity.RegisterOptions{Name: activities.CleanUpPublishedActivityName})
 	w.RegisterActivityWithOptions(activities.NewTransferActivity(pipelineRegistry).Execute, temporalsdk_activity.RegisterOptions{Name: activities.TransferActivityName})
 	w.RegisterActivityWithOptions(activities.NewPollTransferActivity(pipelineRegistry).Execute, temporalsdk_activity.RegisterOptions{Name: activities.PollTransferActivityName})
 	w.RegisterActivityWithOptions(activities.NewPollIngestActivity(pipelineRegistry).Execute, temporalsdk_activity.RegisterOptions{Name: activities.PollIngestActivityName})

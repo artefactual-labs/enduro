@@ -8,6 +8,7 @@ import (
 	"github.com/artefactual-labs/enduro/internal/watcher"
 )
 
+// DeleteOriginalActivity removes the original package from its source watcher.
 type DeleteOriginalActivity struct {
 	wsvc watcher.Service
 }

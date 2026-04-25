@@ -19,6 +19,7 @@ import (
 	ssclient "go.artefactual.dev/ssclient"
 
 	"github.com/artefactual-labs/enduro/internal/pipeline/sync/semaphore"
+	"github.com/artefactual-labs/enduro/internal/publisher"
 )
 
 var ErrRecoveryConfigInvalid = errors.New("invalid recovery configuration")
@@ -30,6 +31,7 @@ type Config struct {
 	User               string
 	Key                string
 	TransferDir        string
+	TransferPublisher  publisher.Config
 	TransferLocationID string
 	ProcessingDir      string
 	ProcessingConfig   string
@@ -47,6 +49,10 @@ type RecoveryConfig struct {
 }
 
 func (c Config) Validate() error {
+	if err := c.TransferPublisher.Validate(); err != nil {
+		return err
+	}
+
 	if !c.Recovery.ReconcileExistingAIP {
 		return nil
 	}

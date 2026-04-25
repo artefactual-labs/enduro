@@ -51,6 +51,36 @@ jobs:
         uses: codecov/test-results-action@0fa95f0e1eeaafde2c782583b36b28ad0d8c77d3 # v1.2.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+  smoke-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Run smoke tests
+        uses: dagger/dagger-for-github@27b130bf0f79a7f6fbbbe0fbca6760dc9bb40a77 # v8.4.1
+        env:
+          DAGGER_NO_NAG: "1"
+        with:
+          verb: call
+          module: hack/dagger
+          args: smoke-tests --source . export --path hack/dagger/runtime/artifacts
+      - name: Upload smoke coverage to Codecov
+        uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2 # v6.0.0
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        with:
+          file: hack/dagger/runtime/artifacts/enduro-smoke.coverprofile
+          flags: go-smoke
+      - name: Upload smoke test artifacts
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: smoke-test-artifacts
+          path: hack/dagger/runtime/artifacts
+          if-no-files-found: ignore
   frontend:
     runs-on: ubuntu-latest
     steps:

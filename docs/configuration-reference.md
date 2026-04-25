@@ -470,9 +470,118 @@ E.g.: `"test"`
 
 #### `transferDir` (String)
 
-Path of the transfer source directory (must be locally accessible).
+Path where Enduro prepares transfers before submitting them to Archivematica.
+Without a transfer publisher, this must be the Archivematica transfer source
+directory and must be locally accessible to Enduro. With a transfer publisher,
+this is a local staging directory used by Enduro before the transfer is copied
+to the external transfer source.
 
 E.g.: `"~/.am/ss-location-data"`
+
+#### `[pipeline.transferPublisher]`
+
+Optional settings that publish prepared transfers to an Archivematica-visible
+transfer source before Enduro submits the transfer to Archivematica. When this
+section is omitted, Enduro keeps the existing behavior: it submits the path
+created inside `transferDir` directly.
+
+The initial publisher type is `sftp`. This is useful when Enduro can prepare
+transfers locally but Archivematica reads transfers from a filesystem that is
+only available through SFTP, such as ambox's SFTPGo transfer source.
+
+```toml
+[[pipeline]]
+name = "ambox"
+baseURL = "http://ambox:64080"
+user = "test"
+key = "test"
+transferDir = "/var/lib/enduro/transfers"
+processingConfig = "automated"
+storageServiceURL = "http://test:test@ambox:64081"
+
+[pipeline.transferPublisher]
+type = "sftp"
+host = "ambox"
+port = 64022
+user = "archivematica"
+password = "12345"
+remoteDir = "/"
+submittedPathPrefix = "archivematica/transfers"
+insecureIgnoreHostKey = true
+```
+
+For this ambox example, Enduro uploads the prepared transfer to the SFTP user's
+root directory. ambox maps that SFTP root to
+`/home/archivematica/transfers`, while Archivematica's default transfer source
+is `/home`. The `submittedPathPrefix` therefore makes Enduro submit paths such
+as `archivematica/transfers/<transfer>` to Archivematica. After the workflow
+finishes or fails, Enduro attempts to clean up the published SFTP transfer just
+as it cleans up locally prepared transfers.
+
+##### `type` (String)
+
+Publisher implementation. Supported value: `"sftp"`.
+
+##### `host` (String)
+
+SFTP server hostname or IP address.
+
+##### `port` (Integer)
+
+SFTP server port. Defaults to `22` when omitted or set to `0`.
+
+##### `user` (String)
+
+SFTP username.
+
+##### `password` (String)
+
+SFTP password. Either `password` or `privateKey.path` must be configured.
+
+##### `[pipeline.transferPublisher.privateKey]`
+
+Optional private key authentication settings. When `privateKey.path` is set,
+Enduro uses SSH public key authentication instead of password authentication.
+
+```toml
+[pipeline.transferPublisher.privateKey]
+path = "/var/lib/enduro/ssh/id_ed25519"
+passphrase = ""
+```
+
+##### `path` (String)
+
+Path to the SSH private key used to authenticate with the SFTP server.
+
+##### `passphrase` (String)
+
+Optional passphrase used to decrypt the private key.
+
+##### `remoteDir` (String)
+
+Remote directory where Enduro uploads transfers. Defaults to `"/"`. The
+transfer path created under `transferDir` is appended to this directory.
+
+##### `submittedPathPrefix` (String)
+
+Path prefix to prepend to the transfer path submitted to Archivematica. Use
+this when the SFTP-visible path differs from the path visible from
+Archivematica's Transfer Source location.
+
+##### `hostKey` (String)
+
+Expected SSH host public key in authorized-key format. Use this in production
+when the SFTP server host key is stable.
+
+##### `knownHostsFile` (String)
+
+Path to an OpenSSH `known_hosts` file. This can be used instead of `hostKey`.
+
+##### `insecureIgnoreHostKey` (Boolean)
+
+Disable SSH host key verification. This is convenient for disposable local or
+CI environments with ephemeral SFTP host keys, but it should not be used for
+production deployments.
 
 #### `processingDir` (String)
 

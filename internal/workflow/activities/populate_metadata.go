@@ -11,7 +11,7 @@ import (
 	"github.com/artefactual-labs/enduro/internal/pipeline"
 )
 
-// PopulateMetadataActivity populates the DC identifier in the transfer metadata CSV document.
+// PopulateMetadataActivity writes transfer metadata for Archivematica ingest.
 type PopulateMetadataActivity struct {
 	pipelineRegistry *pipeline.Registry
 }

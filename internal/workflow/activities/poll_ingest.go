@@ -12,6 +12,7 @@ import (
 	"github.com/artefactual-labs/enduro/internal/temporal"
 )
 
+// PollIngestActivity waits until Archivematica finishes ingest processing.
 type PollIngestActivity struct {
 	pipelineRegistry *pipeline.Registry
 }

@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
+	"os"
 	"time"
 
 	"github.com/artefactual-sdps/temporal-activities/archiveextract"
@@ -158,6 +159,12 @@ type TransferInfo struct {
 	// It is populated by BundleActivity.
 	Bundle activities.BundleActivityResult
 
+	// Information about the published transfer path that Archivematica can
+	// access when the pipeline uses a transfer publisher.
+	//
+	// It is populated by PublishTransferActivity.
+	PublishedTransfer activities.PublishTransferActivityResult
+
 	// Archivematica transfer type.
 	//
 	// It is populated via the workflow request.
@@ -223,6 +230,8 @@ func (w *ProcessingWorkflow) Execute(ctx temporalsdk_workflow.Context, req *coll
 				Status: status,
 			}).Get(activityOpts, &tinfo.CollectionID)
 		} else {
+			// A retry starts from the existing collection row, but the stored
+			// Archivematica IDs only remain authoritative for reconciliation.
 			params := &updatePackageLocalActivityParams{
 				CollectionID: req.CollectionID,
 				Key:          req.Key,
@@ -332,6 +341,8 @@ func (w *ProcessingWorkflow) Execute(ctx temporalsdk_workflow.Context, req *coll
 		var sessErr error
 		maxAttempts := 5
 
+		// The session pins local filesystem work to a single worker while the
+		// transfer is staged, published, submitted, and tracked in Archivematica.
 		for attempt := 1; attempt <= maxAttempts; attempt++ {
 			activityOpts := temporalsdk_workflow.WithActivityOptions(ctx, temporalsdk_workflow.ActivityOptions{
 				ScheduleToStartTimeout: forever,
@@ -351,7 +362,7 @@ func (w *ProcessingWorkflow) Execute(ctx temporalsdk_workflow.Context, req *coll
 			// error is seen when the session worker dies.
 			timer := NewTimer()
 
-			sessErr = w.SessionHandler(sessCtx, attempt, tinfo, nameInfo, req.ValidationConfig, timer, req.RetryMode)
+			sessErr = w.SessionHandler(sessCtx, attempt, tinfo, nameInfo, req.ValidationConfig, timer, req)
 
 			// We want to retry the session if it has been canceled as a result
 			// of losing the worker but not otherwise. This scenario seems to be
@@ -446,7 +457,7 @@ func (w *ProcessingWorkflow) Execute(ctx temporalsdk_workflow.Context, req *coll
 }
 
 // SessionHandler runs activities that belong to the same session.
-func (w *ProcessingWorkflow) SessionHandler(sessCtx temporalsdk_workflow.Context, attempt int, tinfo *TransferInfo, nameInfo nha.NameInfo, validationConfig validation.Config, timer *Timer, retryMode collection.RetryMode) error {
+func (w *ProcessingWorkflow) SessionHandler(sessCtx temporalsdk_workflow.Context, attempt int, tinfo *TransferInfo, nameInfo nha.NameInfo, validationConfig validation.Config, timer *Timer, req *collection.ProcessingWorkflowRequest) error {
 	defer temporalsdk_workflow.CompleteSession(sessCtx)
 
 	var release releaser
@@ -467,7 +478,10 @@ func (w *ProcessingWorkflow) SessionHandler(sessCtx temporalsdk_workflow.Context
 		}
 	}
 
-	if retryMode == collection.RetryModeReconcileExistingAIP {
+	if req.RetryMode == collection.RetryModeReconcileExistingAIP {
+		// Reconciliation retries first ask Storage Service whether the known AIP
+		// already satisfies the pipeline's recovery policy. Only a missing AIP
+		// falls through to the normal full processing path.
 		fullReprocess, err := w.reconcile(sessCtx, tinfo)
 		if err != nil {
 			return err
@@ -511,6 +525,18 @@ func (w *ProcessingWorkflow) SessionHandler(sessCtx temporalsdk_workflow.Context
 	if err != nil {
 		return err
 	}
+	// On a session retry, tinfo.Bundle may point at files created on a worker
+	// that is no longer running this workflow. Rebuild before publishing when
+	// the publisher still needs that local source path.
+	if cleanupRebuiltFiles, err := w.rebuildBundleWhenPublishedSourceMissing(sessCtx, tinfo, req); err != nil {
+		return err
+	} else if cleanupRebuiltFiles != nil {
+		cleanupOriginalFiles := cleanupPreparedFiles
+		cleanupPreparedFiles = func() {
+			cleanupRebuiltFiles()
+			cleanupOriginalFiles()
+		}
+	}
 	defer cleanupPreparedFiles()
 
 	// Validate transfer.
@@ -550,6 +576,32 @@ func (w *ProcessingWorkflow) SessionHandler(sessCtx temporalsdk_workflow.Context
 			if err != nil {
 				return err
 			}
+		}
+	}
+
+	// Publish transfer.
+	{
+		if tinfo.PipelineConfig.TransferPublisher.Enabled() && tinfo.PublishedTransfer == (activities.PublishTransferActivityResult{}) {
+			// Pipelines with a publisher hand Archivematica a reachable remote
+			// path instead of the worker-local path produced by BundleActivity.
+			heartbeatTimeout := w.config.ActivityHeartbeatTimeout
+			if heartbeatTimeout == 0 {
+				heartbeatTimeout = time.Minute
+			}
+			activityOpts := withActivityOptsForHeartbeatedRequest(sessCtx, heartbeatTimeout)
+			err := temporalsdk_workflow.ExecuteActivity(activityOpts, activities.PublishTransferActivityName, &activities.PublishTransferActivityParams{
+				PipelineName: tinfo.PipelineName,
+				FullPath:     tinfo.Bundle.FullPath,
+				RelPath:      tinfo.Bundle.RelPath,
+			}).Get(activityOpts, &tinfo.PublishedTransfer)
+			if err != nil {
+				return err
+			}
+		}
+		if tinfo.PublishedTransfer.RelPath != "" {
+			// From this point on, the workflow talks to Archivematica using the
+			// publisher path, while cleanup still remembers the local bundle.
+			tinfo.Bundle.RelPath = tinfo.PublishedTransfer.RelPath
 		}
 	}
 
@@ -643,6 +695,8 @@ func (w *ProcessingWorkflow) prepareBundle(sessCtx temporalsdk_workflow.Context,
 	}
 
 	if tinfo.Bundle == (activities.BundleActivityResult{}) {
+		// BundleActivity normalizes watcher and batch inputs into a transfer
+		// directory layout that the rest of the workflow can treat uniformly.
 		activityOpts := withActivityOptsForLongLivedRequest(sessCtx)
 		err := temporalsdk_workflow.ExecuteActivity(activityOpts, activities.BundleActivityName, &activities.BundleActivityParams{
 			TransferDir:        tinfo.PipelineConfig.TransferDir,
@@ -659,12 +713,13 @@ func (w *ProcessingWorkflow) prepareBundle(sessCtx temporalsdk_workflow.Context,
 		}
 	}
 
+	bundleFullPathBeforeStrip := tinfo.Bundle.FullPathBeforeStrip
 	return func() {
 		// We need disconnected context here because when session gets released the
 		// cleanup activities get scheduled and then immediately canceled.
 		var filesToRemove []string
-		if tinfo.Bundle.FullPathBeforeStrip != "" {
-			filesToRemove = append(filesToRemove, tinfo.Bundle.FullPathBeforeStrip)
+		if bundleFullPathBeforeStrip != "" {
+			filesToRemove = append(filesToRemove, bundleFullPathBeforeStrip)
 		}
 		if tempBlob != "" {
 			filesToRemove = append(filesToRemove, tempBlob)
@@ -675,12 +730,76 @@ func (w *ProcessingWorkflow) prepareBundle(sessCtx temporalsdk_workflow.Context,
 		cleanUpCtx, cancel := temporalsdk_workflow.NewDisconnectedContext(sessCtx)
 		defer cancel()
 		activityOpts := withActivityOptsForLocalAction(cleanUpCtx)
+		if tinfo.PublishedTransfer.RemotePath != "" {
+			// Published transfer cleanup is best-effort: failures should be
+			// visible in logs but must not mask the workflow's real outcome.
+			if err := temporalsdk_workflow.ExecuteActivity(activityOpts, activities.CleanUpPublishedActivityName, &activities.CleanUpPublishedTransferActivityParams{
+				PipelineName: tinfo.PipelineName,
+				RemotePath:   tinfo.PublishedTransfer.RemotePath,
+			}).Get(activityOpts, nil); err != nil {
+				w.logger.Error(err, "failed to clean up published transfer", "path", tinfo.PublishedTransfer.RemotePath)
+			}
+		}
 		if err := temporalsdk_workflow.ExecuteActivity(activityOpts, activities.CleanUpActivityName, &activities.CleanUpActivityParams{
 			Paths: filesToRemove,
 		}).Get(activityOpts, nil); err != nil {
 			w.logger.Error(err, "failed to clean up temporary files", "path", tempExtracted)
 		}
 	}, nil
+}
+
+// rebuildBundleWhenPublishedSourceMissing repairs stale session-local bundle
+// paths before the transfer publisher needs to read them.
+func (w *ProcessingWorkflow) rebuildBundleWhenPublishedSourceMissing(
+	sessCtx temporalsdk_workflow.Context,
+	tinfo *TransferInfo,
+	req *collection.ProcessingWorkflowRequest,
+) (func(), error) {
+	if !tinfo.PipelineConfig.TransferPublisher.Enabled() ||
+		tinfo.PublishedTransfer != (activities.PublishTransferActivityResult{}) ||
+		tinfo.Bundle.FullPath == "" {
+		return nil, nil
+	}
+
+	activityOpts := withLocalActivityWithoutRetriesOpts(sessCtx)
+	var exists bool
+	err := temporalsdk_workflow.ExecuteLocalActivity(
+		activityOpts,
+		localTransferPathExistsLocalActivity,
+		tinfo.Bundle.FullPath,
+	).Get(activityOpts, &exists)
+	if err != nil {
+		return nil, temporal.NewNonRetryableError(err)
+	}
+	if exists {
+		return nil, nil
+	}
+
+	resetPreparedTransferForPublisherRetry(tinfo, req)
+	return w.prepareBundle(sessCtx, tinfo)
+}
+
+// resetPreparedTransferForPublisherRetry rewinds only derived staging state.
+func resetPreparedTransferForPublisherRetry(tinfo *TransferInfo, req *collection.ProcessingWorkflowRequest) {
+	tinfo.Bundle = activities.BundleActivityResult{}
+	tinfo.PublishedTransfer = activities.PublishTransferActivityResult{}
+	tinfo.IsDir = req.IsDir
+	tinfo.StripTopLevelDir = req.StripTopLevelDir
+
+	if tinfo.WatcherName != "" && !req.IsDir {
+		tinfo.TempFile = ""
+	}
+}
+
+func localTransferPathExistsLocalActivity(path string) (bool, error) {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true, nil
+	}
+	if errors.Is(err, os.ErrNotExist) {
+		return false, nil
+	}
+	return false, err
 }
 
 func (w *ProcessingWorkflow) transfer(sessCtx temporalsdk_workflow.Context, tinfo *TransferInfo, nameMetadata metadata.TransferName) error {
@@ -776,6 +895,7 @@ func (w *ProcessingWorkflow) resetForFullReprocess(sessCtx temporalsdk_workflow.
 	tinfo.PipelineID = ""
 	tinfo.StoredAt = time.Time{}
 	tinfo.Bundle = activities.BundleActivityResult{}
+	tinfo.PublishedTransfer = activities.PublishTransferActivityResult{}
 
 	activityOpts := withLocalActivityOpts(sessCtx)
 	// The zero-value identifiers in these params intentionally clear the

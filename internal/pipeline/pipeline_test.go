@@ -5,6 +5,8 @@ import (
 
 	"github.com/go-logr/logr"
 	"gotest.tools/v3/assert"
+
+	"github.com/artefactual-labs/enduro/internal/publisher"
 )
 
 func TestPipelineSemaphore(t *testing.T) {
@@ -91,6 +93,71 @@ func TestPipelineConfigValidate(t *testing.T) {
 				},
 			},
 			errContains: "storageServiceURL is required",
+		},
+		"SFTP transfer publisher accepts explicit insecure host key mode": {
+			cfg: Config{
+				TransferPublisher: publisher.Config{
+					Type:                  "sftp",
+					Host:                  "ambox",
+					User:                  "archivematica",
+					Password:              "12345",
+					InsecureIgnoreHostKey: true,
+				},
+			},
+		},
+		"SFTP transfer publisher requires host": {
+			cfg: Config{
+				TransferPublisher: publisher.Config{
+					Type:                  "sftp",
+					User:                  "archivematica",
+					Password:              "12345",
+					InsecureIgnoreHostKey: true,
+				},
+			},
+			errContains: "host is required",
+		},
+		"SFTP transfer publisher accepts private key authentication": {
+			cfg: Config{
+				TransferPublisher: publisher.Config{
+					Type: "sftp",
+					Host: "ambox",
+					User: "archivematica",
+					PrivateKey: publisher.PrivateKeyConfig{
+						Path: "/keys/id_ed25519",
+					},
+					InsecureIgnoreHostKey: true,
+				},
+			},
+		},
+		"SFTP transfer publisher requires authentication": {
+			cfg: Config{
+				TransferPublisher: publisher.Config{
+					Type:                  "sftp",
+					Host:                  "ambox",
+					User:                  "archivematica",
+					InsecureIgnoreHostKey: true,
+				},
+			},
+			errContains: "password or privateKey.path is required",
+		},
+		"SFTP transfer publisher requires host key policy": {
+			cfg: Config{
+				TransferPublisher: publisher.Config{
+					Type:     "sftp",
+					Host:     "ambox",
+					User:     "archivematica",
+					Password: "12345",
+				},
+			},
+			errContains: "hostKey or knownHostsFile is required",
+		},
+		"Unsupported transfer publisher type is rejected": {
+			cfg: Config{
+				TransferPublisher: publisher.Config{
+					Type: "nfs",
+				},
+			},
+			errContains: `invalid transfer publisher type "nfs"`,
 		},
 	}
 
