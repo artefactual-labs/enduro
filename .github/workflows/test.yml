@@ -45,11 +45,17 @@ jobs:
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
-          file: covreport
+          disable_search: true
+          fail_ci_if_error: true
+          files: covreport
           flags: go
       - name: Upload test results to Codecov
-        uses: codecov/test-results-action@0fa95f0e1eeaafde2c782583b36b28ad0d8c77d3 # v1.2.1
+        uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2 # v6.0.0
         with:
+          disable_search: true
+          fail_ci_if_error: true
+          files: junit.xml
+          report_type: test_results
           token: ${{ secrets.CODECOV_TOKEN }}
   smoke-tests:
     runs-on: ubuntu-latest
@@ -72,7 +78,9 @@ jobs:
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
-          file: hack/dagger/runtime/artifacts/enduro-smoke.coverprofile
+          disable_search: true
+          fail_ci_if_error: true
+          files: hack/dagger/runtime/artifacts/enduro-smoke.coverprofile
           flags: go-smoke
       - name: Upload smoke test artifacts
         if: always()
@@ -109,5 +117,7 @@ jobs:
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
+          disable_search: true
+          fail_ci_if_error: true
           files: frontend/coverage/lcov.info
           flags: frontend
