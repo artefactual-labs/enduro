@@ -1,3 +1,5 @@
+import { codecovVitePlugin } from '@codecov/vite-plugin'
+
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   modules: [
@@ -44,7 +46,14 @@ export default defineNuxtConfig({
   vite: {
     resolve: {
       dedupe: ['vue', '@vue/runtime-core', '@vue/runtime-dom']
-    }
+    },
+    plugins: [
+      codecovVitePlugin({
+        enableBundleAnalysis: process.env.CODECOV_TOKEN !== undefined,
+        bundleName: 'enduro-frontend',
+        uploadToken: process.env.CODECOV_TOKEN
+      })
+    ]
   },
 
   eslint: {
