@@ -52,8 +52,8 @@ github.com/alicebob/miniredis/v2 v2.37.0 h1:RheObYW32G1aiJIj81XVt78ZHJpHonHLHW7O
 github.com/alicebob/miniredis/v2 v2.37.0/go.mod h1:TcL7YfarKPGDAthEtl5NBeHZfeUQj6OXMm/+iu5cLMM=
 github.com/andybalholm/brotli v1.2.0 h1:ukwgCxwYrmACq68yiUqwIWnGY0cTPox/M94sVwToPjQ=
 github.com/andybalholm/brotli v1.2.0/go.mod h1:rzTDkvFWvIrjDXZHkuS16NPggd91W3kUSvPlQ1pLaKY=
-github.com/artefactual-labs/bine v0.28.1 h1:KCSxMQE3vBmMaLV3eypCLY2kJOkz3OK2H1o3u1JDDLQ=
-github.com/artefactual-labs/bine v0.28.1/go.mod h1:FQYycLEjOL/2RRzcOXawU5pIdAGAyD8oiWAPhleVNxo=
+github.com/artefactual-labs/bine v0.28.2 h1:Va5BerHvf7CIhHnkvdx9uZGHh6NbqO6gzDNg0LW9kMs=
+github.com/artefactual-labs/bine v0.28.2/go.mod h1:FQYycLEjOL/2RRzcOXawU5pIdAGAyD8oiWAPhleVNxo=
 github.com/artefactual-sdps/temporal-activities v0.0.0-20260410210614-2a1273b0bd3a h1:hqfQS7rxRnrbwSgKplBbVCAHvjrHDoYS6fQT9CCxAWw=
 github.com/artefactual-sdps/temporal-activities v0.0.0-20260410210614-2a1273b0bd3a/go.mod h1:peQMMxomvFb29F9JTnnNx7QwjNvuOybOFI8CLzOsjBA=
 github.com/aws/aws-sdk-go-v2 v1.41.5 h1:dj5kopbwUsVUVFgO4Fi5BIT3t4WyqIDjGKCangnV/yY=
