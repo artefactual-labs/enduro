@@ -313,7 +313,7 @@ export function parseWorkflowStatus(input: EnduroCollectionWorkflowStatus | null
     }
   }
 
-  const parsedActivities = Array.from(activities.values()).sort((left, right) => left.id - right.id)
+  const parsedActivities = Array.from(activities.values()).sort((left, right) => right.id - left.id)
   const parsedEvents = history
     .slice()
     .reverse()

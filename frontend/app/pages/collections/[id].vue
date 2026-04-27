@@ -8,6 +8,7 @@ export const useCollectionPageData = collectionPageDataLoader
 const route = useRoute()
 const { collectionName } = useCollectionDetails()
 const backToCollectionsRoute = useCollectionsListLocation()
+const autoReload = useCollectionWorkflowAutoReload()
 
 const collectionId = computed(() => String(route.params.id ?? '0'))
 
@@ -70,7 +71,30 @@ const activeTab = computed({
           :items="tabs"
           variant="link"
           :content="false"
-        />
+          class="w-full"
+          :ui="{
+            list: 'px-0 sm:p-1',
+            trigger: 'shrink-0 px-1.5 sm:px-3'
+          }"
+        >
+          <template #list-trailing>
+            <div
+              v-if="activeTab === 'workflow'"
+              class="ml-auto flex min-w-0 items-center gap-1.5"
+            >
+              <USwitch
+                v-model="autoReload"
+                aria-label="Auto-reload"
+                color="primary"
+                size="sm"
+                class="shrink-0"
+              />
+              <span class="hidden min-w-0 truncate text-sm text-toned min-[400px]:inline">
+                Auto-reload
+              </span>
+            </div>
+          </template>
+        </UTabs>
       </UContainer>
     </div>
 

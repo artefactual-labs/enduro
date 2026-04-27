@@ -15,7 +15,7 @@ const {
   loadWorkflow
 } = useCollectionWorkflow()
 const backToCollectionsRoute = useCollectionsListLocation()
-const autoReload = ref(true)
+const autoReload = useCollectionWorkflowAutoReload()
 const selectedHistoryEvent = ref<ParsedWorkflowHistoryEvent | null>(null)
 const historyDetailOpen = ref(false)
 
@@ -173,15 +173,6 @@ export { useCollectionWorkflowData } from '~/loaders/collection-workflow'
     v-else
     class="space-y-4"
   >
-    <div class="flex justify-end">
-      <USwitch
-        v-model="autoReload"
-        label="Auto-reload"
-        color="primary"
-        size="sm"
-      />
-    </div>
-
     <UAlert
       color="neutral"
       variant="subtle"
