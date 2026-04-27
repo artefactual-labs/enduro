@@ -17,7 +17,7 @@ const (
 	goImage           = "golang:1.26.2-bookworm"
 	nodeImage         = "node:24-bookworm"
 	amboxImage        = "ghcr.io/sevein/ambox:latest"
-	playwrightImage   = "mcr.microsoft.com/playwright:v1.56.1-noble"
+	playwrightImage   = "mcr.microsoft.com/playwright:v1.59.1-noble"
 )
 
 type EnduroE2E struct{}
@@ -332,10 +332,9 @@ func (m *EnduroE2E) frontendAssets(source *dagger.Directory) *dagger.Directory {
 			},
 		}).
 		WithWorkdir("/src/frontend").
-		WithMountedCache("/root/.local/share/pnpm/store", dag.CacheVolume("enduro-e2e-pnpm-store")).
-		WithExec([]string{"corepack", "enable", "pnpm"}).
-		WithExec([]string{"pnpm", "install", "--frozen-lockfile"}).
-		WithExec([]string{"pnpm", "run", "build"}).
+		WithMountedCache("/root/.npm", dag.CacheVolume("enduro-e2e-npm-cache")).
+		WithExec([]string{"npm", "ci"}).
+		WithExec([]string{"npm", "run", "build"}).
 		Directory("/src/frontend/.output/public")
 }
 

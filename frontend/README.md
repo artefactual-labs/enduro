@@ -7,22 +7,22 @@ Nuxt 4 frontend for the new Enduro UI.
 Install dependencies:
 
 ```bash
-pnpm install
+npm install
 ```
 
 Start the dev server:
 
 ```bash
-pnpm dev
+npm run dev
 ```
 
 Useful commands:
 
 ```bash
-pnpm typecheck
-pnpm lint
-pnpm test
-pnpm build
+npm run typecheck
+npm run lint
+npm test
+npm run build
 ```
 
 ## Application structure

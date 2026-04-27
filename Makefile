@@ -123,12 +123,12 @@ ui-dev: # @HELP Serves the UI for development.
 
 frontend: # @HELP Builds the frontend app.
 frontend:
-	pnpm --dir frontend install --frozen-lockfile
-	pnpm --dir frontend run build
+	npm ci --prefix frontend
+	npm run build --prefix frontend
 
 frontend-dev:
 frontend-dev: # @HELP Serves the frontend app for development.
-	pnpm --dir frontend run dev
+	npm run dev --prefix frontend
 
 ui-client: # @HELP Generates the UI client using openapi-generator-cli.
 ui-client:

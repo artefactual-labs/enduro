@@ -17,9 +17,9 @@
   },
   "dependencies": {
     "@iconify-json/entypo": "^1.2.1",
-    "@iconify-json/lucide": "^1.2.102",
-    "@iconify-json/simple-icons": "^1.2.79",
-    "@nuxt/ui": "^4.6.1",
+    "@iconify-json/lucide": "^1.2.104",
+    "@iconify-json/simple-icons": "^1.2.80",
+    "@nuxt/ui": "^4.7.0",
     "nuxt": "^4.4.2",
     "tailwindcss": "^4.2.4",
     "vue-router": "^5.0.6"
@@ -28,7 +28,7 @@
     "@nuxt/eslint": "^1.15.2",
     "@nuxt/test-utils": "^4.0.2",
     "@vitest/coverage-v8": "^4.1.5",
-    "@vue/test-utils": "^2.4.6",
+    "@vue/test-utils": "^2.4.9",
     "eslint": "^10.2.1",
     "happy-dom": "^20.9.0",
     "typescript": "^5.9.3",
@@ -36,8 +36,49 @@
     "vue-tsc": "^3.2.7"
   },
   "overrides": {
+    "@mapbox/node-pre-gyp": {
+      "tar": "^7.5.8"
+    },
     "@rollup/plugin-terser": {
-      "serialize-javascript": "^7.0.3"
-    }
+      "serialize-javascript": "^7.0.5"
+    },
+    "anymatch": {
+      "picomatch": "^2.3.2"
+    },
+    "archiver-utils": {
+      "lodash": "^4.18.0"
+    },
+    "editorconfig": {
+      "minimatch": "^9.0.6"
+    },
+    "eslint-plugin-import-x": {
+      "minimatch": "^10.2.1"
+    },
+    "minimatch@5": {
+      "brace-expansion": "^2.0.3"
+    },
+    "minimatch@9": {
+      "brace-expansion": "^2.0.3"
+    },
+    "minimatch@10": {
+      "@isaacs/brace-expansion": "^5.0.1"
+    },
+    "micromatch": {
+      "picomatch": "^2.3.2"
+    },
+    "postcss": "^8.5.10",
+    "readdir-glob": {
+      "minimatch": "^5.1.8"
+    },
+    "rollup": "^4.59.0",
+    "tinyglobby": {
+      "picomatch": "^4.0.4"
+    },
+    "unhead": "^2.1.13",
+    "unplugin": {
+      "picomatch": "^4.0.4"
+    },
+    "vite": "^7.3.2",
+    "yaml": "^2.8.3"
   }
 }
