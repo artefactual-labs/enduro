@@ -6,8 +6,7 @@
     "enabled": true
   },
   "packageRules": [{
-    "matchDepTypes": ["resolutions"],
+    "matchDepTypes": ["overrides"],
     "enabled": false
-  }],
-  "postUpdateOptions": ["pnpmDedupe"]
+  }]
 }
