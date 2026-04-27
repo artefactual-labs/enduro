@@ -1,9 +1,11 @@
 # Validate this file:
-#   curl --data-binary @codecov.yml https://codecov.io/validate
+#   curl --data-binary @.codecov.yml https://codecov.io/validate
 
 # Threshold should not be as high once all packages are being tracked.
 
-comment: off
+comment:
+  behavior: default
+  layout: "diff, flags, files"
 
 coverage:
   precision: 2
@@ -18,6 +20,17 @@ coverage:
       default:
         threshold: 25%
         if_not_found: success
+
+flags:
+  go:
+    paths:
+    - "**/*.go"
+  go-smoke:
+    paths:
+    - "**/*.go"
+  frontend:
+    paths:
+    - "frontend/"
 
 ignore:
 - "build"
