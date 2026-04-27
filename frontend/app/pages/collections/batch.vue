@@ -164,7 +164,7 @@ export { useBatchPageData, useBatchStatusData } from '~/loaders/batch-page'
         <div class="grid grid-cols-1 gap-4">
           <UFormField
             label="Path"
-            description="Select the path for the batch."
+            description="Select the path for the batch"
             required
           >
             <UInput
@@ -176,7 +176,7 @@ export { useBatchPageData, useBatchStatusData } from '~/loaders/batch-page'
 
           <UFormField
             label="Pipeline"
-            description="Optional. Choose one of the configured pipelines."
+            description="Optional. Choose one of the configured pipelines"
           >
             <USelect
               v-model="selectedPipelineId"
@@ -197,7 +197,7 @@ export { useBatchPageData, useBatchStatusData } from '~/loaders/batch-page'
           <UFormField
             v-if="selectedPipelineId"
             label="Processing configuration"
-            description="Optional. Choose one of the processing configurations available."
+            description="Optional. Choose one of the processing configurations available"
           >
             <USelect
               v-model="selectedProcessingConfig"
@@ -217,7 +217,7 @@ export { useBatchPageData, useBatchStatusData } from '~/loaders/batch-page'
 
           <UFormField
             label="Transfer type"
-            description="Optional. Choose the transfer type, with the default being standard."
+            description="Optional. Choose the transfer type, with the default being standard"
           >
             <USelect
               v-model="selectedTransferType"
@@ -227,24 +227,24 @@ export { useBatchPageData, useBatchStatusData } from '~/loaders/batch-page'
             />
           </UFormField>
 
-          <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+          <div class="flex flex-col gap-3 md:flex-row md:flex-wrap md:items-center md:gap-x-6">
             <UCheckbox
               v-model="rejectDuplicates"
-              label="Reject transfers with duplicate names."
+              label="Reject transfers with duplicate names"
             />
             <UCheckbox
               v-model="excludeHiddenFiles"
-              label="Exclude hidden files."
+              label="Exclude hidden files"
             />
             <UCheckbox
               v-model="processNameMetadata"
-              label="Process transfer name metadata."
+              label="Process transfer name metadata"
             />
           </div>
 
           <UFormField
             label="Depth"
-            description="Depth where SIPs reside in the hierarchy."
+            description="Depth where SIPs reside in the hierarchy"
           >
             <UInput
               v-model.number="depth"
@@ -257,7 +257,7 @@ export { useBatchPageData, useBatchStatusData } from '~/loaders/batch-page'
 
           <UFormField
             label="Destination behavior"
-            description="Choose how processed transfers are handled after completion."
+            description="Choose how processed transfers are handled after completion"
           >
             <USelect
               v-model="destinationMode"
@@ -269,7 +269,7 @@ export { useBatchPageData, useBatchStatusData } from '~/loaders/batch-page'
           <UFormField
             v-if="destinationMode === 'completed-dir'"
             label="Completed directory"
-            description="Optional. The path where transfers are moved when processing completes successfully."
+            description="Optional. The path where transfers are moved when processing completes successfully"
           >
             <UInput
               v-model="completedDir"
@@ -301,7 +301,7 @@ export { useBatchPageData, useBatchStatusData } from '~/loaders/batch-page'
           <UFormField
             v-if="destinationMode === 'retention-period'"
             label="Retention period"
-            description="Optional. Use Go-style durations such as 30m, 24h, or 2h30m."
+            description="Optional. Use Go-style durations such as 30m, 24h, or 2h30m"
           >
             <UInput
               v-model="retentionPeriod"
