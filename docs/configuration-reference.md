@@ -9,8 +9,9 @@ file using the optional argument `--config=example.toml`.
 
 This page is the schema-style reference for configuration attributes and
 examples. For operator workflows and concepts, see the
-[User Manual](./user-manual.md). For recovery behavior and limitations, see the
-[Recovery Guide](./user-manual-recovery.md).
+[User Manual](./user-manual.md). For secure deployment guidance, see the
+[Security Configuration](./security-configuration.md) guide. For recovery
+behavior and limitations, see the [Recovery Guide](./user-manual-recovery.md).
 
 ## Root
 
@@ -122,13 +123,15 @@ E.g.: `false`
 
 #### `allowedOrigins` (Array of strings)
 
-Additional origins allowed by CORS and Go's
-`net/http.CrossOriginProtection` CSRF defense. Unsafe cross-origin browser
-requests from other origins are denied. Safe methods such as `GET`, `HEAD`, and
-`OPTIONS` are still allowed through the CSRF defense, but CORS response headers
-are removed for origins that are not same-origin or listed here. Requests
-without browser origin signals and requests whose origin matches the request
-host are allowed.
+Additional origins allowed by CORS and by Enduro's browser cross-origin write
+protection, which uses Go's `net/http.CrossOriginProtection`. This CSRF-style
+control rejects unsafe cross-origin browser requests before they can reach
+state-changing API handlers.
+
+Safe methods such as `GET`, `HEAD`, and `OPTIONS` are always allowed through
+this protection, but CORS response headers are removed for origins that are not
+same-origin or listed here. Requests without browser origin signals and requests
+whose origin matches the request host are allowed.
 
 Origins must match the browser `Origin` header exactly, including scheme and
 port when present, for example `https://dashboard.example.org` or
@@ -137,33 +140,29 @@ port when present, for example `https://dashboard.example.org` or
 The supported modes are:
 
 ```toml
-# Backward-compatible default when allowedOrigins is omitted.
-# This preserves the previous permissive cross-origin behavior.
+# Default open CORS mode.
+# This permits CORS responses for any origin and disables Enduro's browser
+# cross-origin write protection. Avoid this mode when browsers authenticate to
+# Enduro with cookies or other automatically attached credentials.
 allowedOrigins = ["*"]
 ```
 
 ```toml
-# Hardened same-origin deployment.
-# Use this when Enduro serves the dashboard and API from the same origin.
+# Recommended same-origin deployment.
+# Use this when Enduro serves the dashboard and API from the same origin,
+# including when both are protected by the same external access-control layer.
 allowedOrigins = []
 ```
 
 ```toml
-# Hardened split-origin deployment.
+# Split-origin deployment.
 # Use this when the dashboard and API are intentionally served from different
 # origins.
 allowedOrigins = ["https://dashboard.example.org"]
 ```
 
-Migration guidance:
-
-1. Leave `allowedOrigins` unset, or set it to `["*"]`, to avoid behavior changes
-   during upgrade.
-2. If the dashboard and API are served from the same origin, change it to `[]`.
-3. If the dashboard and API are served from different origins, replace `["*"]`
-   with the explicit dashboard origin or origins.
-4. Test browser workflows that perform state-changing actions, such as batch
-   submission, retry, cancellation, deletion, and collection decisions.
+See [Security Configuration](./security-configuration.md) for deployment
+guidance and the CSRF rationale for browser-accessible APIs.
 
 #### `contentSecurityPolicy` (String)
 
@@ -173,9 +172,7 @@ sends `X-Content-Type-Options`, `Referrer-Policy`, and `X-Frame-Options`.
 The supported modes are:
 
 ```toml
-# Backward-compatible default when contentSecurityPolicy is omitted.
-# This preserves the previous behavior without CSP or extra browser hardening
-# headers.
+# Default when contentSecurityPolicy is omitted.
 contentSecurityPolicy = ""
 ```
 

@@ -6,6 +6,8 @@ import (
 	"testing"
 
 	"gotest.tools/v3/assert"
+
+	batchsvr "github.com/artefactual-labs/enduro/internal/api/gen/http/batch/server"
 )
 
 func TestSecurityHeadersMiddleware(t *testing.T) {
@@ -225,6 +227,29 @@ func TestCORSResponseHeaderMiddleware(t *testing.T) {
 			assertHeaders(t, rec.Header(), tc.wantHeaders)
 		})
 	}
+}
+
+func TestGeneratedCORSPreflightHeaders(t *testing.T) {
+	t.Parallel()
+
+	h := batchsvr.HandleBatchOrigin(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	req := httptest.NewRequest(http.MethodOptions, "http://api.example.org/batch", nil)
+	req.Header.Set("Origin", "https://dashboard.example.org")
+	req.Header.Set("Access-Control-Request-Method", http.MethodPost)
+	req.Header.Set("Access-Control-Request-Headers", "content-type")
+	rec := httptest.NewRecorder()
+
+	h.ServeHTTP(rec, req)
+
+	assert.Equal(t, rec.Code, http.StatusNoContent)
+	assertHeaders(t, rec.Header(), map[string]string{
+		"Access-Control-Allow-Origin":   "https://dashboard.example.org",
+		"Access-Control-Allow-Methods":  "GET, HEAD, POST, PUT, DELETE, OPTIONS",
+		"Access-Control-Allow-Headers":  "Content-Type",
+		"Access-Control-Expose-Headers": "X-Enduro-Version",
+	})
 }
 
 func setHeaders(h http.Header, headers map[string]string) {

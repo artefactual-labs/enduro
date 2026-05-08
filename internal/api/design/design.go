@@ -25,5 +25,7 @@ var _ = API("enduro", func() {
 	})
 	cors.Origin("*", func() {
 		cors.Methods("GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS")
+		cors.Headers("Content-Type")
+		cors.Expose("X-Enduro-Version")
 	})
 })
