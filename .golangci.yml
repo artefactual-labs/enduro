@@ -30,6 +30,9 @@ linters:
   exclusions:
     warn-unused: true
     generated: lax
+    paths:
+      - '(^|/)node_modules/'
+      - '(^|/)vendor/'
     presets:
       - std-error-handling
     rules:
@@ -61,3 +64,6 @@ formatters:
   exclusions:
     warn-unused: true
     generated: lax
+    paths:
+      - '(^|/)node_modules/'
+      - '(^|/)vendor/'
