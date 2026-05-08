@@ -55,6 +55,10 @@ build:
 deps: tool-go-mod-outdated # @HELP Lists available module dependency updates.
 	go list -u -m -json all | go-mod-outdated -update -direct
 
+deps-upgrade-direct: # @HELP Upgrades direct module dependencies.
+	go list -m -u -f '{{if and .Update (not .Indirect)}}{{.Path}}@{{.Update.Version}}{{end}}' all | xargs go get
+	go mod tidy
+
 test: # @HELP Run all tests and output a summary using gotestsum.
 test: TFORMAT ?= testdox
 test: GOTESTSUM_FLAGS ?=
