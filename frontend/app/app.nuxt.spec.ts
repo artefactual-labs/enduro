@@ -30,6 +30,15 @@ mockComponent('AppFooter', async () => {
   })
 })
 
+mockComponent('NuxtPage', async () => {
+  const { defineComponent, h } = await import('vue')
+  return defineComponent({
+    setup() {
+      return () => h('div', 'Page outlet stub')
+    }
+  })
+})
+
 describe('App shell', () => {
   it('renders the banner, header, page outlet, and footer', async () => {
     const wrapper = await mountSuspended(App, {
@@ -38,6 +47,7 @@ describe('App shell', () => {
 
     expect(wrapper.text()).toContain('Banner stub')
     expect(wrapper.text()).toContain('Header stub')
+    expect(wrapper.text()).toContain('Page outlet stub')
     expect(wrapper.text()).toContain('Footer stub')
   })
 })
