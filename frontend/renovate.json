@@ -4,9 +4,5 @@
   ],
   "lockFileMaintenance": {
     "enabled": true
-  },
-  "packageRules": [{
-    "matchDepTypes": ["overrides"],
-    "enabled": false
-  }]
+  }
 }
