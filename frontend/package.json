@@ -17,11 +17,11 @@
   },
   "dependencies": {
     "@iconify-json/entypo": "^1.2.1",
-    "@iconify-json/lucide": "^1.2.105",
+    "@iconify-json/lucide": "^1.2.106",
     "@iconify-json/simple-icons": "^1.2.81",
     "@nuxt/ui": "^4.7.1",
     "nuxt": "^4.4.4",
-    "tailwindcss": "^4.2.4",
+    "tailwindcss": "^4.3.0",
     "vue-router": "^5.0.6"
   },
   "devDependencies": {
