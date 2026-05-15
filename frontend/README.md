@@ -25,6 +25,26 @@ npm test
 npm run build
 ```
 
+## Package management
+
+This project uses npm and commits `package-lock.json`.
+
+Useful upgrade commands:
+
+```bash
+npm run upgrade:nuxt
+npm run upgrade:deps
+npm run upgrade:deps:latest
+```
+
+Use `npm run upgrade:deps` for routine dependency updates within the current
+semver ranges. Use `npm run upgrade:deps:latest` when intentionally reviewing
+new major versions interactively.
+
+When updating Nuxt-related packages, start with `npm run upgrade:nuxt` so Nuxt
+can apply its own coordinated upgrade and deduplication logic before reviewing
+the remaining dependencies with npm-check-updates.
+
 ## Application structure
 
 This is a Nuxt 4 single-page application. Server-side rendering is disabled in

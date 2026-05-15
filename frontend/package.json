@@ -6,6 +6,9 @@
     "build": "nuxt generate",
     "dev": "nuxt dev",
     "preview": "nuxt preview",
+    "upgrade:nuxt": "nuxt upgrade --dedupe",
+    "upgrade:deps": "npx npm-check-updates --target=semver --interactive",
+    "upgrade:deps:latest": "npx npm-check-updates --target=latest --interactive",
     "postinstall": "nuxt prepare",
     "lint": "eslint .",
     "test": "vitest run",
@@ -20,7 +23,7 @@
     "@iconify-json/lucide": "^1.2.105",
     "@iconify-json/simple-icons": "^1.2.81",
     "@nuxt/ui": "^4.7.1",
-    "nuxt": "^4.4.4",
+    "nuxt": "^4.4.5",
     "tailwindcss": "^4.2.4",
     "vue-router": "^5.0.6"
   },
