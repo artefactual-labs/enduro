@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "nuxt generate",
+    "build": "nuxt generate && printf '\\n' > .output/public/.keep",
     "dev": "nuxt dev",
     "preview": "nuxt preview",
     "upgrade:nuxt": "nuxt upgrade --dedupe",
