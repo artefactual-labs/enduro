@@ -14,7 +14,7 @@ const (
 	mysqlImage        = "mysql:8.4.8-oraclelinux9"
 	temporalImage     = "temporalio/server:1.30.3"
 	temporalToolImage = "temporalio/admin-tools:1.30.3"
-	goImage           = "golang:1.26.2-bookworm"
+	goImage           = "golang:1.26.3-bookworm"
 	nodeImage         = "node:24-bookworm"
 	amboxImage        = "ghcr.io/sevein/ambox:latest"
 	playwrightImage   = "mcr.microsoft.com/playwright:v1.59.1-noble"
