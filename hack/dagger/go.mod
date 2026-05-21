@@ -1,6 +1,9 @@
 module dagger/enduro-e-2-e
 
-go 1.26.3
+// Dagger v0.28.0 still says highest supported is 1.26.2.
+go 1.26.2
+
+toolchain go1.26.3
 
 require (
 	dagger.io/dagger v0.20.6

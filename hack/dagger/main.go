@@ -17,7 +17,7 @@ const (
 	goImage           = "golang:1.26.3-bookworm"
 	nodeImage         = "node:24-bookworm"
 	amboxImage        = "ghcr.io/sevein/ambox:latest"
-	playwrightImage   = "mcr.microsoft.com/playwright:v1.59.1-noble"
+	playwrightImage   = "mcr.microsoft.com/playwright:v1.60.0-noble"
 )
 
 type EnduroE2E struct{}
