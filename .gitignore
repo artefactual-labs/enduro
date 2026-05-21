@@ -6,6 +6,7 @@
 /enduro
 /.playwright-cli/
 /.pnpm-store/
+node_modules
 
 /hack/minio-data/sips/*
 !/hack/minio-data/sips/archivematica.png
