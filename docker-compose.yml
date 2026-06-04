@@ -1,6 +1,6 @@
 services:
   mysql:
-    image: "mysql:8.4.8-oraclelinux9"
+    image: "mysql:8.4.9-oraclelinux9"
     environment:
       MYSQL_ROOT_PASSWORD: "root123"
       MYSQL_USER: "enduro"
@@ -27,7 +27,7 @@ services:
       start_period: 30s
 
   temporal-admin-tools:
-    image: "temporalio/admin-tools:1.30.3"
+    image: "temporalio/admin-tools:1.30.4.1"
     restart: "on-failure:6"
     depends_on:
       mysql:
@@ -45,7 +45,7 @@ services:
     command: "/compose/setup-mysql.sh"
 
   temporal:
-    image: "temporalio/server:1.30.3"
+    image: "temporalio/server:1.30.4.1"
     depends_on:
       temporal-admin-tools:
         condition: service_completed_successfully
@@ -69,7 +69,7 @@ services:
       retries: 60
 
   temporal-create-namespace:
-    image: "temporalio/admin-tools:1.30.3"
+    image: "temporalio/admin-tools:1.30.4.1"
     restart: "on-failure:5"
     depends_on:
       temporal:
@@ -83,7 +83,7 @@ services:
     command: "/compose/create-namespace.sh"
 
   temporal-ui:
-    image: "temporalio/ui:2.48.1"
+    image: "temporalio/ui:2.50.0"
     depends_on:
       temporal:
         condition: service_healthy
@@ -105,6 +105,6 @@ services:
     # Redis 8.2 is the current Redis 8 LTS line. Redis policy marks the
     # second and last minor releases in a major version as LTS; newer interim
     # minors, such as 8.4, are STS.
-    image: "redis:8.2.5-alpine3.22"
+    image: "redis:8.2.6-alpine3.22"
     ports:
       - "127.0.0.1:7470:6379"
