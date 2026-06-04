@@ -41,6 +41,7 @@ jobs:
       - name: Test
         run: make test-ci
       - name: Upload coverage to Codecov
+        if: github.actor != 'dependabot[bot]'
         uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
@@ -50,6 +51,7 @@ jobs:
           files: covreport
           flags: go
       - name: Upload test results to Codecov
+        if: github.actor != 'dependabot[bot]'
         uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
         with:
           disable_search: true
@@ -74,6 +76,7 @@ jobs:
           module: hack/dagger
           args: smoke-tests --source . export --path hack/dagger/runtime/artifacts
       - name: Upload smoke coverage to Codecov
+        if: github.actor != 'dependabot[bot]'
         uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
@@ -108,11 +111,10 @@ jobs:
         run: npm run typecheck --prefix frontend
       - name: Test frontend with coverage
         run: npm run test:coverage --prefix frontend
-      - name: Build frontend and upload bundle analysis
+      - name: Build frontend
         run: npm run build --prefix frontend
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       - name: Upload frontend coverage to Codecov
+        if: github.actor != 'dependabot[bot]'
         uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
