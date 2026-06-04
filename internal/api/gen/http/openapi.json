@@ -1571,6 +1571,7 @@
         "parameters": [
           {
             "description": "Identifier of collection to delete",
+            "format": "int64",
             "in": "path",
             "name": "id",
             "required": true,
@@ -1606,6 +1607,7 @@
         "parameters": [
           {
             "description": "Identifier of collection to show",
+            "format": "int64",
             "in": "path",
             "name": "id",
             "required": true,
@@ -1646,6 +1648,7 @@
         "parameters": [
           {
             "description": "Identifier of collection to remove",
+            "format": "int64",
             "in": "path",
             "name": "id",
             "required": true,
@@ -1689,6 +1692,7 @@
         "parameters": [
           {
             "description": "Identifier of collection to look up",
+            "format": "int64",
             "in": "path",
             "name": "id",
             "required": true,
@@ -1747,6 +1751,7 @@
         "parameters": [
           {
             "description": "Identifier of collection to look up",
+            "format": "int64",
             "in": "path",
             "name": "id",
             "required": true,
@@ -1761,7 +1766,8 @@
                 "type": "string"
               },
               "Content-Length": {
-                "type": "int64"
+                "format": "int64",
+                "type": "integer"
               },
               "Content-Type": {
                 "type": "string"
@@ -1795,6 +1801,7 @@
         "parameters": [
           {
             "description": "Identifier of collection to retry",
+            "format": "int64",
             "in": "path",
             "name": "id",
             "required": true,
@@ -1844,6 +1851,7 @@
         "parameters": [
           {
             "description": "Identifier of collection to look up",
+            "format": "int64",
             "in": "path",
             "name": "id",
             "required": true,

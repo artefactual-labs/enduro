@@ -23,7 +23,7 @@ version = "1.13.0"
 [[bins]]
 name = "goa"
 go_package = "goa.design/goa/v3/cmd/goa"
-version = "3.26.0"
+version = "3.28.0"
 
 [[bins]]
 name = "mockgen"
