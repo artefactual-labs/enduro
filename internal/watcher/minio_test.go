@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/alicebob/miniredis/v2"
+	"gotest.tools/v3/assert"
 	"gotest.tools/v3/poll"
 
 	"github.com/artefactual-labs/enduro/internal/watcher"
@@ -48,8 +49,63 @@ func newWatcher(t *testing.T) (*miniredis.Miniredis, watcher.Watcher) {
 	return m, w
 }
 
+func newS3Watcher(t *testing.T) (*miniredis.Miniredis, watcher.Watcher) {
+	t.Helper()
+
+	m, err := miniredis.Run()
+	if err != nil {
+		t.Fatalf("Couldn't start miniredis: %v\n", err)
+	}
+
+	dur := time.Duration(time.Second)
+	config := watcher.S3Config{
+		Name:               "s3-watcher",
+		RedisAddress:       fmt.Sprintf("redis://%s", m.Addr()),
+		RedisList:          "minio-events",
+		Region:             "eu-south-1",
+		Endpoint:           "endpoint",
+		PathStyle:          true,
+		Key:                "key",
+		Secret:             "secret",
+		Token:              "token",
+		Bucket:             "bucket",
+		EventSource:        watcher.S3EventSourceRedis,
+		EventFormat:        watcher.S3EventFormatMinio,
+		Pipeline:           []string{"am1"},
+		RetentionPeriod:    &dur,
+		StripTopLevelDir:   true,
+		RejectDuplicates:   false,
+		ExcludeHiddenFiles: false,
+		TransferType:       "standard",
+	}
+
+	var w watcher.Watcher
+	w, err = watcher.NewS3Watcher(context.Background(), &config)
+	if err != nil {
+		t.Fatalf("Couldn't start watcher: %v\n", err)
+	}
+
+	return m, w
+}
+
 func cleanup(t *testing.T, m *miniredis.Miniredis) {
 	m.Close()
+}
+
+func TestS3WatcherRejectsUnsupportedEventSource(t *testing.T) {
+	_, err := watcher.NewS3Watcher(context.Background(), &watcher.S3Config{
+		EventSource: "webhook",
+		EventFormat: watcher.S3EventFormatMinio,
+	})
+	assert.ErrorContains(t, err, `unsupported S3 watcher event source "webhook"`)
+}
+
+func TestS3WatcherRejectsUnsupportedEventFormat(t *testing.T) {
+	_, err := watcher.NewS3Watcher(context.Background(), &watcher.S3Config{
+		EventSource: watcher.S3EventSourceRedis,
+		EventFormat: "s3",
+	})
+	assert.ErrorContains(t, err, `unsupported S3 watcher event format "s3"`)
 }
 
 func TestWatcherReturnsErrWhenNoMessages(t *testing.T) {
@@ -227,6 +283,43 @@ func TestWatcherReturnsOnValidMessage(t *testing.T) {
 				},
 				"userIdentity": {
 					"principalId": "36J9X8EZI4KEV1G7EHXA"
+				}
+			}
+		],
+		"EventTime": "2020-04-29T01:00:32Z"
+	}
+]`)
+
+	check := func(t poll.LogT) poll.Result {
+		event, err := w.Watch(context.Background())
+		if err != nil {
+			return poll.Error(fmt.Errorf("watcher return an error unexpectedly: %w", err))
+		}
+		if event.Bucket != "bucket" || event.Key != "list-email-draft.txt" {
+			return poll.Error(fmt.Errorf("received unexpected event attributes (bucket %s, key %s)", event.Bucket, event.Key))
+		}
+
+		return poll.Success()
+	}
+
+	poll.WaitOn(t, check, poll.WithTimeout(time.Second*3))
+}
+
+func TestS3WatcherReturnsOnValidMinioMessage(t *testing.T) {
+	m, w := newS3Watcher(t)
+	defer cleanup(t, m)
+
+	m.Lpush("minio-events", `[
+	{
+		"Event": [
+			{
+				"s3": {
+					"bucket": {
+						"name": "bucket"
+					},
+					"object": {
+						"key": "list-email-draft.txt"
+					}
 				}
 			}
 		],

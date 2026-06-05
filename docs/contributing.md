@@ -67,6 +67,10 @@ Redis instance. Validate the configuration with:
     $ mc event list enduro/sips
     arn:minio:sqs::1:redis   s3:ObjectCreated:*   Filter:
 
+Enduro consumes those events with the `[[watcher.s3]]` entry in `enduro.toml`.
+The watcher uses `eventSource = "redis"` and `eventFormat = "minio"` to remain
+compatible with MinIO's Redis notification payload.
+
 List the bucket with:
 
     $ mc ls enduro/sips

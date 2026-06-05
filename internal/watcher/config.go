@@ -8,6 +8,7 @@ import (
 type Config struct {
 	Filesystem []*FilesystemConfig
 	Minio      []*MinioConfig
+	S3         []*S3Config
 }
 
 func (c Config) CompletedDirs() []string {
@@ -55,6 +56,31 @@ type MinioConfig struct {
 	Secret       string
 	Token        string
 	Bucket       string
+
+	Pipeline           []string
+	RetentionPeriod    *time.Duration
+	StripTopLevelDir   bool
+	RejectDuplicates   bool
+	ExcludeHiddenFiles bool
+	TransferType       string
+}
+
+// See minio.go for more.
+type S3Config struct {
+	Name      string
+	Region    string
+	Endpoint  string
+	PathStyle bool
+	Profile   string
+	Key       string
+	Secret    string
+	Token     string
+	Bucket    string
+
+	EventSource  string
+	EventFormat  string
+	RedisAddress string
+	RedisList    string
 
 	Pipeline           []string
 	RetentionPeriod    *time.Duration
