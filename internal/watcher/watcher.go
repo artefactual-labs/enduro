@@ -118,6 +118,15 @@ func New(ctx context.Context, c *Config) (*serviceImpl, error) {
 		watchers[item.Name] = w
 	}
 
+	for _, item := range c.S3 {
+		w, err := NewS3Watcher(ctx, item)
+		if err != nil {
+			return nil, err
+		}
+
+		watchers[item.Name] = w
+	}
+
 	for _, item := range c.Filesystem {
 		w, err := NewFilesystemWatcher(ctx, item)
 		if err != nil {

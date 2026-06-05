@@ -324,21 +324,25 @@ is provided, the name will be chosen randomly from its values.
 
 E.g.: `"am"`, `["am1", "am2"]`
 
-### `[[watcher.minio]]`
+### `[[watcher.s3]]`
 
-The following monitor watches a MinIO bucket:
+The following monitor watches an S3-compatible object storage bucket. This
+example uses MinIO as the storage service and consumes MinIO-format object
+events from a Redis list:
 
 ```toml
-[[watcher.minio]]
+[[watcher.s3]]
 
 # Name of the watcher.
 name = "dev-minio"
 
-# Redis server and list used by MinIO to deliver events.
+# Event delivery configuration. This matches the legacy MinIO + Redis setup.
+eventSource = "redis"
+eventFormat = "minio"
 redisAddress = "redis://127.0.0.1:7470"
 redisList = "minio-events"
 
-# MinIO server endpoint and other connection details, e.g. name of the bucket.
+# S3-compatible endpoint and connection details, e.g. name of the bucket.
 endpoint = "http://127.0.0.1:7460"
 pathStyle = true
 key = "minio"
@@ -368,10 +372,15 @@ transferType = "standard"
 MinIO will deliver new events to us via a Redis instance at
 `redis://127.0.0.1:7470` using a list named `minio-events`. When a new event is
 received, the object will be downloaded from `http://127.0.0.1:7460`, the
-MinIO server, using path-style URLs and region `us-west-1`, bucket `sips`.
+S3-compatible object storage endpoint, using path-style URLs and region
+`us-west-1`, bucket `sips`.
 Attributes `key` and `secret` are for authentication. After extraction of the
 object, the top-level directory will be omitted. All objects will be processed
 using the `am` pipeline.
+
+The legacy `[[watcher.minio]]` configuration remains supported. It is
+equivalent to `[[watcher.s3]]` with `eventSource = "redis"` and
+`eventFormat = "minio"`.
 
 #### `retentionPeriod` (String)
 

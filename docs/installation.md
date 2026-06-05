@@ -28,11 +28,14 @@ guide][temporal-deployment].
 
 ### Other dependencies
 
-#### MinIO + Redis
+#### S3-compatible storage + Redis
 
-Enduro can consume objects uploaded to MinIO by listening to [MinIO events via
-Redis][minio-redis-access]. MinIO and Redis can be considered dependencies only
-when Enduro is set up with at least one `watcher.minio` entry.
+Enduro can consume objects uploaded to S3-compatible object storage. The bundled
+development environment still uses MinIO, with [MinIO events via
+Redis][minio-redis-access], but the preferred configuration entry is now
+`watcher.s3` with `eventSource = "redis"` and `eventFormat = "minio"`.
+Object storage and Redis can be considered dependencies only when Enduro is set
+up with at least one S3 watcher entry.
 
 #### Temporal Web UI
 

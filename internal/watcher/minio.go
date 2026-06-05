@@ -17,8 +17,13 @@ import (
 	"gocloud.dev/blob/s3blob"
 )
 
-// minioWatcher implements a Watcher for watching lists in Redis.
-type minioWatcher struct {
+const (
+	S3EventSourceRedis = "redis"
+	S3EventFormatMinio = "minio"
+)
+
+// s3Watcher implements a Watcher for S3-compatible object storage.
+type s3Watcher struct {
 	redisClient redis.UniversalClient
 	s3Client    *s3.Client
 	listName    string
@@ -31,11 +36,53 @@ type MinioEventSet struct {
 	EventTime string
 }
 
-var _ Watcher = (*minioWatcher)(nil)
+var _ Watcher = (*s3Watcher)(nil)
 
 const redisPopTimeout = time.Second * 2
 
-func NewMinioWatcher(ctx context.Context, config *MinioConfig) (*minioWatcher, error) {
+func NewMinioWatcher(ctx context.Context, config *MinioConfig) (*s3Watcher, error) {
+	return NewS3Watcher(ctx, s3ConfigFromMinio(config))
+}
+
+func s3ConfigFromMinio(config *MinioConfig) *S3Config {
+	if config == nil {
+		return nil
+	}
+
+	return &S3Config{
+		Name:               config.Name,
+		Region:             config.Region,
+		Endpoint:           config.Endpoint,
+		PathStyle:          config.PathStyle,
+		Profile:            config.Profile,
+		Key:                config.Key,
+		Secret:             config.Secret,
+		Token:              config.Token,
+		Bucket:             config.Bucket,
+		EventSource:        S3EventSourceRedis,
+		EventFormat:        S3EventFormatMinio,
+		RedisAddress:       config.RedisAddress,
+		RedisList:          config.RedisList,
+		Pipeline:           config.Pipeline,
+		RetentionPeriod:    config.RetentionPeriod,
+		StripTopLevelDir:   config.StripTopLevelDir,
+		RejectDuplicates:   config.RejectDuplicates,
+		ExcludeHiddenFiles: config.ExcludeHiddenFiles,
+		TransferType:       config.TransferType,
+	}
+}
+
+func NewS3Watcher(ctx context.Context, config *S3Config) (*s3Watcher, error) {
+	if config == nil {
+		return nil, errors.New("missing S3 watcher config")
+	}
+	if config.EventSource != S3EventSourceRedis {
+		return nil, fmt.Errorf("unsupported S3 watcher event source %q", config.EventSource)
+	}
+	if config.EventFormat != S3EventFormatMinio {
+		return nil, fmt.Errorf("unsupported S3 watcher event format %q", config.EventFormat)
+	}
+
 	opts, err := redis.ParseURL(config.RedisAddress)
 	if err != nil {
 		return nil, err
@@ -71,7 +118,7 @@ func NewMinioWatcher(ctx context.Context, config *MinioConfig) (*minioWatcher, e
 		}
 	})
 
-	return &minioWatcher{
+	return &s3Watcher{
 		redisClient: client,
 		listName:    config.RedisList,
 		s3Client:    s3Client,
@@ -88,7 +135,7 @@ func NewMinioWatcher(ctx context.Context, config *MinioConfig) (*minioWatcher, e
 	}, nil
 }
 
-func (w *minioWatcher) Watch(ctx context.Context) (*BlobEvent, error) {
+func (w *s3Watcher) Watch(ctx context.Context) (*BlobEvent, error) {
 	event, err := w.blpop(ctx)
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
@@ -102,11 +149,11 @@ func (w *minioWatcher) Watch(ctx context.Context) (*BlobEvent, error) {
 	return event, nil
 }
 
-func (w *minioWatcher) Path() string {
+func (w *s3Watcher) Path() string {
 	return ""
 }
 
-func (w *minioWatcher) blpop(ctx context.Context) (*BlobEvent, error) {
+func (w *s3Watcher) blpop(ctx context.Context) (*BlobEvent, error) {
 	val, err := w.redisClient.BLPop(ctx, redisPopTimeout, w.listName).Result()
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving from Redis list: %w", err)
@@ -122,7 +169,7 @@ func (w *minioWatcher) blpop(ctx context.Context) (*BlobEvent, error) {
 
 // event processes Minio-specific events delivered via Redis. We expect a
 // single item array containing a map of {Event: ..., EvenTime: ...}
-func (w *minioWatcher) event(blob string) (*BlobEvent, error) {
+func (w *s3Watcher) event(blob string) (*BlobEvent, error) {
 	container := []json.RawMessage{}
 	if err := json.Unmarshal([]byte(blob), &container); err != nil {
 		return nil, err
@@ -144,6 +191,6 @@ func (w *minioWatcher) event(blob string) (*BlobEvent, error) {
 	return NewBlobEventWithBucket(w, set.Event[0].S3.Bucket.Name, key), nil
 }
 
-func (w *minioWatcher) OpenBucket(ctx context.Context) (*blob.Bucket, error) {
+func (w *s3Watcher) OpenBucket(ctx context.Context) (*blob.Bucket, error) {
 	return s3blob.OpenBucketV2(ctx, w.s3Client, w.bucketName, nil)
 }
