@@ -50,6 +50,10 @@ func newWatcher(t *testing.T) (*miniredis.Miniredis, watcher.Watcher) {
 }
 
 func newS3Watcher(t *testing.T) (*miniredis.Miniredis, watcher.Watcher) {
+	return newS3WatcherWithEventFormat(t, watcher.S3EventFormatMinio)
+}
+
+func newS3WatcherWithEventFormat(t *testing.T, eventFormat string) (*miniredis.Miniredis, watcher.Watcher) {
 	t.Helper()
 
 	m, err := miniredis.Run()
@@ -70,7 +74,7 @@ func newS3Watcher(t *testing.T) (*miniredis.Miniredis, watcher.Watcher) {
 		Token:              "token",
 		Bucket:             "bucket",
 		EventSource:        watcher.S3EventSourceRedis,
-		EventFormat:        watcher.S3EventFormatMinio,
+		EventFormat:        eventFormat,
 		Pipeline:           []string{"am1"},
 		RetentionPeriod:    &dur,
 		StripTopLevelDir:   true,
@@ -342,6 +346,33 @@ func TestS3WatcherReturnsOnValidMinioMessage(t *testing.T) {
 	poll.WaitOn(t, check, poll.WithTimeout(time.Second*3))
 }
 
+func TestS3WatcherReturnsOnValidEnduroMessage(t *testing.T) {
+	m, w := newS3WatcherWithEventFormat(t, watcher.S3EventFormatEnduro)
+	defer cleanup(t, m)
+
+	m.Lpush("minio-events", `{
+		"version": "1",
+		"type": "object.created",
+		"bucket": "bucket",
+		"key": "list-email-draft.txt",
+		"source": "seaweedfs"
+	}`)
+
+	check := func(t poll.LogT) poll.Result {
+		event, err := w.Watch(context.Background())
+		if err != nil {
+			return poll.Error(fmt.Errorf("watcher return an error unexpectedly: %w", err))
+		}
+		if event.Bucket != "bucket" || event.Key != "list-email-draft.txt" {
+			return poll.Error(fmt.Errorf("received unexpected event attributes (bucket %s, key %s)", event.Bucket, event.Key))
+		}
+
+		return poll.Success()
+	}
+
+	poll.WaitOn(t, check, poll.WithTimeout(time.Second*3))
+}
+
 func TestWatcherReturnsDecodedObjectKey(t *testing.T) {
 	m, w := newWatcher(t)
 	defer cleanup(t, m)
@@ -364,6 +395,32 @@ func TestWatcherReturnsDecodedObjectKey(t *testing.T) {
 		"EventTime": "2020-04-29T01:00:32Z"
 	}
 ]`)
+
+	check := func(t poll.LogT) poll.Result {
+		event, err := w.Watch(context.Background())
+		if err != nil {
+			return poll.Error(fmt.Errorf("watcher return an error unexpectedly: %w", err))
+		}
+		if event.Key != "list émail draft.txt" {
+			return poll.Error(fmt.Errorf("received unexpected object key %s", event.Key))
+		}
+
+		return poll.Success()
+	}
+
+	poll.WaitOn(t, check, poll.WithTimeout(time.Second*3))
+}
+
+func TestS3WatcherReturnsDecodedEnduroObjectKey(t *testing.T) {
+	m, w := newS3WatcherWithEventFormat(t, watcher.S3EventFormatEnduro)
+	defer cleanup(t, m)
+
+	m.Lpush("minio-events", `{
+		"version": "1",
+		"type": "object.created",
+		"bucket": "bucket",
+		"key": "list+%C3%A9mail+draft.txt"
+	}`)
 
 	check := func(t poll.LogT) poll.Result {
 		event, err := w.Watch(context.Background())
@@ -416,4 +473,83 @@ func TestWatcherReturnsErrOnInvalidObjectKey(t *testing.T) {
 	}
 
 	poll.WaitOn(t, check, poll.WithTimeout(time.Second*3))
+}
+
+func TestS3WatcherReturnsErrOnInvalidEnduroMessages(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		message string
+		err     string
+	}{
+		{
+			name: "UnsupportedVersion",
+			message: `{
+				"version": "2",
+				"type": "object.created",
+				"bucket": "bucket",
+				"key": "transfer.zip"
+			}`,
+			err: `unsupported Enduro event version "2"`,
+		},
+		{
+			name: "UnsupportedType",
+			message: `{
+				"version": "1",
+				"type": "object.deleted",
+				"bucket": "bucket",
+				"key": "transfer.zip"
+			}`,
+			err: `unsupported Enduro event type "object.deleted"`,
+		},
+		{
+			name: "EmptyBucket",
+			message: `{
+				"version": "1",
+				"type": "object.created",
+				"key": "transfer.zip"
+			}`,
+			err: "empty bucket",
+		},
+		{
+			name: "EmptyKey",
+			message: `{
+				"version": "1",
+				"type": "object.created",
+				"bucket": "bucket"
+			}`,
+			err: "empty key",
+		},
+		{
+			name: "InvalidKey",
+			message: `{
+				"version": "1",
+				"type": "object.created",
+				"bucket": "bucket",
+				"key": "list+%C 3%A9mail+draft.txt"
+			}`,
+			err: "invalid URL escape",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			m, w := newS3WatcherWithEventFormat(t, watcher.S3EventFormatEnduro)
+			defer cleanup(t, m)
+
+			m.Lpush("minio-events", tc.message)
+
+			check := func(t poll.LogT) poll.Result {
+				_, err := w.Watch(context.Background())
+
+				if err == nil {
+					return poll.Error(errors.New("watched did not return an error"))
+				}
+				if !strings.Contains(err.Error(), tc.err) {
+					return poll.Error(fmt.Errorf("unexpected error: %s", err))
+				}
+
+				return poll.Success()
+			}
+
+			poll.WaitOn(t, check, poll.WithTimeout(time.Second*3))
+		})
+	}
 }

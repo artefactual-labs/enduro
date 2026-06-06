@@ -18,8 +18,9 @@ import (
 )
 
 const (
-	S3EventSourceRedis = "redis"
-	S3EventFormatMinio = "minio"
+	S3EventSourceRedis  = "redis"
+	S3EventFormatMinio  = "minio"
+	S3EventFormatEnduro = "enduro"
 )
 
 // s3Watcher implements a Watcher for S3-compatible object storage.
@@ -28,6 +29,7 @@ type s3Watcher struct {
 	s3Client    *s3.Client
 	listName    string
 	bucketName  string
+	eventFormat string
 	*commonWatcherImpl
 }
 
@@ -79,7 +81,7 @@ func NewS3Watcher(ctx context.Context, config *S3Config) (*s3Watcher, error) {
 	if config.EventSource != S3EventSourceRedis {
 		return nil, fmt.Errorf("unsupported S3 watcher event source %q", config.EventSource)
 	}
-	if config.EventFormat != S3EventFormatMinio {
+	if config.EventFormat != S3EventFormatMinio && config.EventFormat != S3EventFormatEnduro {
 		return nil, fmt.Errorf("unsupported S3 watcher event format %q", config.EventFormat)
 	}
 
@@ -123,6 +125,7 @@ func NewS3Watcher(ctx context.Context, config *S3Config) (*s3Watcher, error) {
 		listName:    config.RedisList,
 		s3Client:    s3Client,
 		bucketName:  config.Bucket,
+		eventFormat: config.EventFormat,
 		commonWatcherImpl: &commonWatcherImpl{
 			name:               config.Name,
 			pipeline:           config.Pipeline,
@@ -167,9 +170,20 @@ func (w *s3Watcher) blpop(ctx context.Context) (*BlobEvent, error) {
 	return event, nil
 }
 
-// event processes Minio-specific events delivered via Redis. We expect a
-// single item array containing a map of {Event: ..., EvenTime: ...}
 func (w *s3Watcher) event(blob string) (*BlobEvent, error) {
+	switch w.eventFormat {
+	case S3EventFormatMinio:
+		return w.minioEvent(blob)
+	case S3EventFormatEnduro:
+		return w.enduroEvent(blob)
+	default:
+		return nil, fmt.Errorf("unsupported S3 watcher event format %q", w.eventFormat)
+	}
+}
+
+// minioEvent processes MinIO-specific events delivered via Redis. We expect a
+// single item array containing a map of {Event: ..., EvenTime: ...}
+func (w *s3Watcher) minioEvent(blob string) (*BlobEvent, error) {
 	container := []json.RawMessage{}
 	if err := json.Unmarshal([]byte(blob), &container); err != nil {
 		return nil, err
@@ -189,6 +203,32 @@ func (w *s3Watcher) event(blob string) (*BlobEvent, error) {
 	}
 
 	return NewBlobEventWithBucket(w, set.Event[0].S3.Bucket.Name, key), nil
+}
+
+func (w *s3Watcher) enduroEvent(blob string) (*BlobEvent, error) {
+	var event EnduroEvent
+	if err := json.Unmarshal([]byte(blob), &event); err != nil {
+		return nil, err
+	}
+	if event.Version != "1" {
+		return nil, fmt.Errorf("error processing item received from Redis list: unsupported Enduro event version %q", event.Version)
+	}
+	if event.Type != EnduroEventTypeObjectCreated {
+		return nil, fmt.Errorf("error processing item received from Redis list: unsupported Enduro event type %q", event.Type)
+	}
+	if event.Bucket == "" {
+		return nil, fmt.Errorf("error processing item received from Redis list: empty bucket")
+	}
+	if event.Key == "" {
+		return nil, fmt.Errorf("error processing item received from Redis list: empty key")
+	}
+
+	key, err := url.QueryUnescape(event.Key)
+	if err != nil {
+		return nil, fmt.Errorf("error processing item received from Redis list: %w", err)
+	}
+
+	return NewBlobEventWithBucket(w, event.Bucket, key), nil
 }
 
 func (w *s3Watcher) OpenBucket(ctx context.Context) (*blob.Bucket, error) {
