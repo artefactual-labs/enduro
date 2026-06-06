@@ -223,12 +223,7 @@ func (w *s3Watcher) enduroEvent(blob string) (*BlobEvent, error) {
 		return nil, fmt.Errorf("error processing item received from Redis list: empty key")
 	}
 
-	key, err := url.QueryUnescape(event.Key)
-	if err != nil {
-		return nil, fmt.Errorf("error processing item received from Redis list: %w", err)
-	}
-
-	return NewBlobEventWithBucket(w, event.Bucket, key), nil
+	return NewBlobEventWithBucket(w, event.Bucket, event.Key), nil
 }
 
 func (w *s3Watcher) OpenBucket(ctx context.Context) (*blob.Bucket, error) {
