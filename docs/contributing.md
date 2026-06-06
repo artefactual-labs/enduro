@@ -42,39 +42,44 @@ interface via <http://127.0.0.1:9000/> or connect to the API, e.g.:
 
     curl -v 127.0.0.1:9000/collection
 
-### Set up MinIO for object storage
+### Set up SeaweedFS for object storage
 
-MinIO is one of the services installed automatically with Docker Compose. You
-should be able to access the web file browser via <http://127.0.0.1:7460> using
-the following credentials:
+SeaweedFS is one of the services installed automatically with Docker Compose.
+The local S3 endpoint is available at <http://127.0.0.1:7460> using the
+following credentials:
 
 - Access key: `minio`
 - Secret key: `minio123`
 
-Alternatively, you can [install][mc] the MinIO command-line client (mc) and
-register the local instance with:
+The SeaweedFS filer UI is available at <http://127.0.0.1:7461>.
+
+You can [install][mc] the MinIO command-line client (mc) and register the local
+S3 endpoint with:
 
     $ mc alias set enduro http://127.0.0.1:7460 minio minio123
     Added `enduro` successfully.
 
-We provide some default configuration so MinIO publishes events via our local
-Redis instance. Validate the configuration with:
+We provide default configuration so SeaweedFS publishes filer create events to
+Enduro's object event webhook. Enduro normalizes those events and publishes them
+to our local Redis instance. The `[[watcher.s3]]` entry in `enduro.toml`
+consumes those events with `eventSource = "redis"` and
+`eventFormat = "enduro"`.
 
-    $ mc admin config get enduro notify_redis
-    notify_redis:1 format=access address=redis:6379 password= key=minio-events queue_dir=/tmp/events queue_limit=10000
-    notify_redis enable=off format=namespace address= key= password= queue_dir= queue_limit=0
+The webhook server is configured in `enduro.toml`:
 
-    $ mc event list enduro/sips
-    arn:minio:sqs::1:redis   s3:ObjectCreated:*   Filter:
+    [objectEventWebhook]
+    enabled = true
+    listen = "0.0.0.0:7480"
+    redisAddress = "redis://127.0.0.1:7470"
+    redisList = "object-events"
+    bucketsPath = "/buckets"
 
-Enduro consumes those events with the `[[watcher.s3]]` entry in `enduro.toml`.
-The watcher uses `eventSource = "redis"` and `eventFormat = "minio"` to remain
-compatible with MinIO's Redis notification payload.
+SeaweedFS loads its webhook notification configuration from
+`hack/seaweedfs/notification.toml`.
 
 List the bucket with:
 
     $ mc ls enduro/sips
-    [2020-04-29 13:28:32 PDT]  4.6KiB archivematica.png
 
 ### Start a transfer
 

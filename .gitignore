@@ -15,6 +15,7 @@ node_modules
 /hack/minio-data/.minio.sys/**/*.bin
 /hack/minio-data/.minio.sys/buckets/.minio.sys/
 /hack/minio-data/.minio.sys/buckets/.usage.json
+/hack/seaweedfs-data/
 
 /hack/landfill/*
 /hack/watched-dir/*
