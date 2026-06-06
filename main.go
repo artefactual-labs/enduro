@@ -45,6 +45,7 @@ import (
 	"github.com/artefactual-labs/enduro/internal/db"
 	"github.com/artefactual-labs/enduro/internal/metadata"
 	nha_activities "github.com/artefactual-labs/enduro/internal/nha/activities"
+	"github.com/artefactual-labs/enduro/internal/objectevent"
 	"github.com/artefactual-labs/enduro/internal/pipeline"
 	"github.com/artefactual-labs/enduro/internal/temporal"
 	"github.com/artefactual-labs/enduro/internal/validation"
@@ -229,6 +230,35 @@ func main() {
 		}
 	}
 
+	// Object event webhook server.
+	if config.ObjectEventWebhook.Enabled {
+		publisher, err := objectevent.NewRedisPublisher(
+			config.ObjectEventWebhook.RedisAddress,
+			config.ObjectEventWebhook.RedisList,
+		)
+		if err != nil {
+			logger.Error(err, "Error setting up object event publisher.")
+			os.Exit(1)
+		}
+
+		var srv *http.Server
+		g.Add(
+			func() error {
+				srv = objectevent.HTTPServer(logger, &config.ObjectEventWebhook, publisher)
+				return srv.ListenAndServe()
+			},
+			func(err error) {
+				_ = publisher.Close()
+				if srv == nil {
+					return
+				}
+				ctx, cancel := context.WithTimeout(ctx, time.Second*5)
+				defer cancel()
+				_ = srv.Shutdown(ctx)
+			},
+		)
+	}
+
 	// Watchers, where each watcher is a group actor.
 	{
 		for _, w := range wsvc.Watchers() {
@@ -402,20 +432,21 @@ func main() {
 }
 
 type configuration struct {
-	Verbosity       int
-	Debug           bool
-	DebugListen     string
-	API             api.Config
-	ExtractActivity archiveextract.Config
-	Database        db.Config
-	Temporal        temporal.Config
-	Watcher         watcher.Config
-	Pipeline        []pipeline.Config
-	Validation      validation.Config
-	Telemetry       TelemetryConfig
-	Metadata        metadata.Config
-	Worker          WorkerConfig
-	Workflow        workflow.Config
+	Verbosity          int
+	Debug              bool
+	DebugListen        string
+	API                api.Config
+	ExtractActivity    archiveextract.Config
+	Database           db.Config
+	Temporal           temporal.Config
+	Watcher            watcher.Config
+	Pipeline           []pipeline.Config
+	Validation         validation.Config
+	Telemetry          TelemetryConfig
+	Metadata           metadata.Config
+	Worker             WorkerConfig
+	Workflow           workflow.Config
+	ObjectEventWebhook objectevent.Config
 
 	// This is a workaround for client-specific functionality.
 	// Simple mechanism to support an arbitrary number of hooks and parameters.
@@ -430,6 +461,9 @@ type WorkerConfig struct {
 
 func (c configuration) Validate() error {
 	if err := c.API.Validate(); err != nil {
+		return err
+	}
+	if err := c.ObjectEventWebhook.Validate(); err != nil {
 		return err
 	}
 
@@ -447,6 +481,8 @@ func configureViper(v *viper.Viper) {
 	v.SetDefault("api.allowedOrigins", []string{"*"})
 	v.SetDefault("api.contentSecurityPolicy", "")
 	v.Set("api.appVersion", version)
+	v.SetDefault("objectEventWebhook.listen", "127.0.0.1:7480")
+	v.SetDefault("objectEventWebhook.bucketsPath", "/buckets")
 
 	temporal.SetDefaults(v)
 }

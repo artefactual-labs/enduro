@@ -453,6 +453,44 @@ is provided, the name will be chosen randomly from its values.
 
 E.g.: `"am"`, `["am1", "am2"]`
 
+## `[objectEventWebhook]`
+
+Enduro can expose a small internal webhook server for object storage systems
+that cannot write Enduro-compatible Redis events directly. The webhook receives
+provider-specific events, normalizes object-created file events, and writes
+`eventFormat = "enduro"` messages to Redis.
+
+The server is disabled by default:
+
+```toml
+[objectEventWebhook]
+enabled = true
+listen = "127.0.0.1:7480"
+redisAddress = "redis://127.0.0.1:7470"
+redisList = "object-events"
+bucketsPath = "/buckets"
+```
+
+The first supported provider endpoint is:
+
+```text
+POST /seaweedfs/events
+```
+
+SeaweedFS filer webhook create-file events under `bucketsPath` are converted
+to normalized Enduro object events. For example, a SeaweedFS event with key
+`/buckets/sips/transfer.zip` produces:
+
+```json
+{
+  "version": "1",
+  "type": "object.created",
+  "bucket": "sips",
+  "key": "transfer.zip",
+  "source": "seaweedfs"
+}
+```
+
 ## `[pipeline]`
 
 Used to define Archivematica pipelines. For example:

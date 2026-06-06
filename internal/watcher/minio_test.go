@@ -411,7 +411,7 @@ func TestWatcherReturnsDecodedObjectKey(t *testing.T) {
 	poll.WaitOn(t, check, poll.WithTimeout(time.Second*3))
 }
 
-func TestS3WatcherReturnsDecodedEnduroObjectKey(t *testing.T) {
+func TestS3WatcherReturnsRawEnduroObjectKey(t *testing.T) {
 	m, w := newS3WatcherWithEventFormat(t, watcher.S3EventFormatEnduro)
 	defer cleanup(t, m)
 
@@ -427,7 +427,7 @@ func TestS3WatcherReturnsDecodedEnduroObjectKey(t *testing.T) {
 		if err != nil {
 			return poll.Error(fmt.Errorf("watcher return an error unexpectedly: %w", err))
 		}
-		if event.Key != "list émail draft.txt" {
+		if event.Key != "list+%C3%A9mail+draft.txt" {
 			return poll.Error(fmt.Errorf("received unexpected object key %s", event.Key))
 		}
 
@@ -518,16 +518,6 @@ func TestS3WatcherReturnsErrOnInvalidEnduroMessages(t *testing.T) {
 				"bucket": "bucket"
 			}`,
 			err: "empty key",
-		},
-		{
-			name: "InvalidKey",
-			message: `{
-				"version": "1",
-				"type": "object.created",
-				"bucket": "bucket",
-				"key": "list+%C 3%A9mail+draft.txt"
-			}`,
-			err: "invalid URL escape",
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
