@@ -1,0 +1,11 @@
+[notification.webhook]
+enabled = true
+endpoint = "http://host.docker.internal:7480/seaweedfs/events"
+timeout_seconds = 10
+max_retries = 3
+backoff_seconds = 3
+max_backoff_seconds = 30
+workers = 2
+buffer_size = 1000
+event_types = ["create"]
+path_prefixes = ["/buckets/sips/"]

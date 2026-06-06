@@ -30,12 +30,39 @@ guide][temporal-deployment].
 
 #### S3-compatible storage + Redis
 
-Enduro can consume objects uploaded to S3-compatible object storage. The bundled
-development environment still uses MinIO, with [MinIO events via
-Redis][minio-redis-access], but the preferred configuration entry is now
-`watcher.s3` with `eventSource = "redis"` and `eventFormat = "minio"`.
-Object storage and Redis can be considered dependencies only when Enduro is set
-up with at least one S3 watcher entry.
+Enduro can consume objects uploaded to S3-compatible object storage. Object
+storage and Redis can be considered dependencies only when Enduro is set up
+with at least one S3 watcher entry.
+
+Enduro does not poll buckets directly. Instead, `[[watcher.s3]]` consumes
+object-created events from Redis, downloads the referenced object from the
+configured S3-compatible endpoint, and starts the processing workflow.
+
+There are two supported Redis event formats:
+
+- `eventFormat = "enduro"` reads Enduro-normalized object events. This is the
+  preferred format for new integrations because provider-specific details are
+  handled before events reach the watcher.
+- `eventFormat = "minio"` reads native MinIO Redis notification payloads. This
+  keeps the legacy MinIO + Redis notification path supported.
+
+The bundled development environment uses SeaweedFS as the S3-compatible storage
+service. SeaweedFS sends filer webhook events to Enduro's
+`[objectEventWebhook]` adapter, which normalizes object-created file events and
+writes them to Redis:
+
+```text
+SeaweedFS filer webhook
+  -> Enduro [objectEventWebhook]
+  -> Redis list object-events
+  -> Enduro [[watcher.s3]]
+  -> S3 object download
+  -> processing workflow
+```
+
+In this setup, `[[watcher.s3]]` uses `eventSource = "redis"` and
+`eventFormat = "enduro"`. The detailed configuration attributes are described
+in the [configuration reference](./configuration-reference.md).
 
 #### Temporal Web UI
 
@@ -110,6 +137,5 @@ the API via cURL is `curl -Ls 127.0.0.1:9000/collection | jq`:
 [Ansible role]: https://github.com/artefactual-labs/ansible-enduro-temporal
 [temporal-deployment]: https://docs.temporal.io/cluster-deployment-guide
 [temporal-web-ui]: https://docs.temporal.io/web-ui
-[minio-redis-access]: https://docs.min.io/docs/minio-bucket-notification-guide.html#Redis
 [docker-restart-policy]: https://docs.docker.com/config/containers/start-containers-automatically/#use-a-restart-policy
 [enduro-release-page]: https://github.com/artefactual-labs/enduro/releases

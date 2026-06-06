@@ -26,12 +26,19 @@ dsn = "enduro:enduro123@tcp(127.0.0.1:7450)/enduro"
 dirMode = "0o700"
 fileMode = "0o600"
 
-[[watcher.s3]]
-name = "dev-minio"
-eventSource = "redis"
-eventFormat = "minio"
+[objectEventWebhook]
+enabled = true
+listen = "0.0.0.0:7480"
 redisAddress = "redis://127.0.0.1:7470"
-redisList = "minio-events"
+redisList = "object-events"
+bucketsPath = "/buckets"
+
+[[watcher.s3]]
+name = "dev-s3"
+eventSource = "redis"
+eventFormat = "enduro"
+redisAddress = "redis://127.0.0.1:7470"
+redisList = "object-events"
 endpoint = "http://127.0.0.1:7460"
 pathStyle = true
 key = "minio"

@@ -327,20 +327,20 @@ E.g.: `"am"`, `["am1", "am2"]`
 ### `[[watcher.s3]]`
 
 The following monitor watches an S3-compatible object storage bucket. This
-example uses MinIO as the storage service and consumes MinIO-format object
-events from a Redis list:
+example uses SeaweedFS as the storage service and consumes normalized Enduro
+object events from a Redis list:
 
 ```toml
 [[watcher.s3]]
 
 # Name of the watcher.
-name = "dev-minio"
+name = "dev-s3"
 
-# Event delivery configuration. This matches the legacy MinIO + Redis setup.
+# Event delivery configuration. The object event webhook writes these messages.
 eventSource = "redis"
-eventFormat = "minio"
+eventFormat = "enduro"
 redisAddress = "redis://127.0.0.1:7470"
-redisList = "minio-events"
+redisList = "object-events"
 
 # S3-compatible endpoint and connection details, e.g. name of the bucket.
 endpoint = "http://127.0.0.1:7460"
@@ -369,9 +369,9 @@ excludeHiddenFiles = false
 transferType = "standard"
 ```
 
-MinIO will deliver new events to us via a Redis instance at
-`redis://127.0.0.1:7470` using a list named `minio-events`. When a new event is
-received, the object will be downloaded from `http://127.0.0.1:7460`, the
+The object event webhook will deliver new events to us via a Redis instance at
+`redis://127.0.0.1:7470` using a list named `object-events`. When a new event
+is received, the object will be downloaded from `http://127.0.0.1:7460`, the
 S3-compatible object storage endpoint, using path-style URLs and region
 `us-west-1`, bucket `sips`.
 Attributes `key` and `secret` are for authentication. After extraction of the
@@ -395,7 +395,7 @@ The payload format used for events read from Redis.
 used by the legacy `[[watcher.minio]]` integration.
 
 `"enduro"` reads normalized object-created events produced by an Enduro-owned
-adapter, such as a future webhook bridge:
+adapter, such as the object event webhook:
 
 ```json
 {
