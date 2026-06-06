@@ -382,6 +382,31 @@ The legacy `[[watcher.minio]]` configuration remains supported. It is
 equivalent to `[[watcher.s3]]` with `eventSource = "redis"` and
 `eventFormat = "minio"`.
 
+#### `eventSource` (String)
+
+The event transport used by the watcher. The only supported value is currently
+`"redis"`.
+
+#### `eventFormat` (String)
+
+The payload format used for events read from Redis.
+
+`"minio"` reads native MinIO Redis notification payloads. This is the format
+used by the legacy `[[watcher.minio]]` integration.
+
+`"enduro"` reads normalized object-created events produced by an Enduro-owned
+adapter, such as a future webhook bridge:
+
+```json
+{
+  "version": "1",
+  "type": "object.created",
+  "bucket": "sips",
+  "key": "transfer.zip",
+  "source": "seaweedfs"
+}
+```
+
 #### `retentionPeriod` (String)
 
 Specifies the duration for which a transfer will be retained before removal.
