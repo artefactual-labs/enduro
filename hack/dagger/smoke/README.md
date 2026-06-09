@@ -25,3 +25,29 @@ The Make target runs:
 ```sh
 dagger -m hack/dagger call smoke-tests --source . export --path hack/dagger/runtime/artifacts
 ```
+
+The object-storage smoke suite exercises S3 watcher ingestion through the
+supported local object storage paths:
+
+- `minio-legacy`: fixture-backed MinIO native Redis notifications
+  (`eventFormat = "minio"`),
+- `minio-latest`: env-configured MinIO native Redis notifications
+  (`eventFormat = "minio"`),
+- `seaweedfs`: SeaweedFS filer webhooks through Enduro's object event webhook
+  (`eventFormat = "enduro"`).
+
+Run the object-storage suite from the repository root:
+
+```sh
+make test-smoke-object-storage
+```
+
+The Make target runs:
+
+```sh
+dagger -m hack/dagger call object-storage-smoke-tests --source . export --path hack/dagger/runtime/object-storage-artifacts
+```
+
+The object-storage tests build and use `hack/s3put`, a small S3-compatible
+upload helper, so the same upload path can be used against each local provider
+without depending on a provider-specific CLI.

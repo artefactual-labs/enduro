@@ -79,6 +79,10 @@ test-smoke: # @HELP Run the Dagger smoke tests against ambox.
 test-smoke:
 	dagger -m hack/dagger call smoke-tests --source . export --path hack/dagger/runtime/artifacts
 
+test-smoke-object-storage: # @HELP Run the Dagger S3 watcher smoke tests against MinIO variants and SeaweedFS.
+test-smoke-object-storage:
+	dagger -m hack/dagger call object-storage-smoke-tests --source . export --path hack/dagger/runtime/object-storage-artifacts
+
 list-tested-packages: # @HELP Print a list of packages being tested.
 list-tested-packages:
 	$(foreach PACKAGE,$(TEST_PACKAGES),@echo $(PACKAGE)$(NEWLINE))
