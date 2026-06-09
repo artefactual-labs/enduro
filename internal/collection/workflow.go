@@ -22,6 +22,8 @@ const ProcessingWorkflowName = "processing-workflow"
 type RetryMode string
 
 const (
+	DefaultInitProcessingWorkflowTimeout = time.Second * 5
+
 	RetryModeFullReprocess        RetryMode = "full_reprocess"
 	RetryModeReconcileExistingAIP RetryMode = "reconcile_existing_aip"
 )
@@ -86,6 +88,10 @@ type ProcessingWorkflowRequest struct {
 }
 
 func InitProcessingWorkflow(ctx context.Context, tr trace.Tracer, c temporalsdk_client.Client, req *ProcessingWorkflowRequest) error {
+	return InitProcessingWorkflowWithTimeout(ctx, tr, c, req, DefaultInitProcessingWorkflowTimeout)
+}
+
+func InitProcessingWorkflowWithTimeout(ctx context.Context, tr trace.Tracer, c temporalsdk_client.Client, req *ProcessingWorkflowRequest, timeout time.Duration) error {
 	_, span := tr.Start(ctx, "InitProcessingWorkflow")
 	defer span.End()
 
@@ -97,7 +103,10 @@ func InitProcessingWorkflow(ctx context.Context, tr trace.Tracer, c temporalsdk_
 		req.TransferType = "standard"
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, time.Second*5)
+	if timeout == 0 {
+		timeout = DefaultInitProcessingWorkflowTimeout
+	}
+	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
 	opts := temporalsdk_client.StartWorkflowOptions{
