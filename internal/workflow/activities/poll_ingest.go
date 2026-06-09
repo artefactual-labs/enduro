@@ -39,13 +39,17 @@ func (a *PollIngestActivity) Execute(ctx context.Context, params *PollIngestActi
 	if retryDeadline := p.Config().RetryDeadline; retryDeadline != nil {
 		deadline = *retryDeadline
 	}
+	requestTimeout := defaultStatusRequestTimeout
+	if statusRequestTimeout := p.Config().StatusRequestTimeout; statusRequestTimeout != nil {
+		requestTimeout = *statusRequestTimeout
+	}
 
 	backoffStrategy := backoff.WithContext(backoffStrategy, ctx)
 	lastRetryableError := time.Time{}
 
 	err = backoff.RetryNotify(
 		func() (err error) {
-			ctx, cancel := context.WithTimeout(ctx, time.Second*10)
+			ctx, cancel := context.WithTimeout(ctx, requestTimeout)
 			defer cancel()
 
 			err = pipeline.IngestStatus(ctx, amc.Ingest, params.SIPID)

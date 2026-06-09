@@ -15,6 +15,11 @@ var (
 	// override with retryDeadline, a pipeline configuration attribute.
 	defaultMaxElapsedTime = time.Minute * 10
 
+	// Default request timeout for transfer and ingest status API calls. Users
+	// can override with statusRequestTimeout, a pipeline configuration
+	// attribute.
+	defaultStatusRequestTimeout = time.Second * 10
+
 	// System clock.
 	clock clockwork.Clock = clockwork.NewRealClock()
 )

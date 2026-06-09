@@ -508,6 +508,7 @@ transferLocationID = "88f6b517-c0cc-411b-8abf-79544ce96f54"
 storageServiceURL = "http://test:test@127.0.0.1:62081"
 capacity = 3
 retryDeadline = "10m"
+statusRequestTimeout = "10s"
 transferDeadline = "24h"
 unbag = false
 ```
@@ -723,6 +724,16 @@ repeatedly, e.g., HTTP 5xx server errors or network connectivity errors.
 
 E.g.: `"10m"`.
 
+#### `statusRequestTimeout` (String)
+
+If present, it sets the timeout for individual Archivematica transfer and
+ingest status API requests.
+
+Increase this value when an Archivematica pipeline can occasionally take longer
+to answer status requests under load.
+
+E.g.: `"10s"`.
+
 #### `transferDeadline` (String)
 
 If present, transfers in this pipeline will be automatically abandoned when the
@@ -799,6 +810,19 @@ optional fraction and a unit suffix, such as "30m", "24h" or "2h30m".
 Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
 
 E.g.: `5m` (String)
+
+#### `initProcessingTimeout` (String)
+
+Specifies the timeout duration for starting a processing workflow after a
+watcher receives an event.
+
+The string should be constructed as a sequence of decimal numbers, each with
+optional fraction and a unit suffix, such as "30m", "24h" or "2h30m".
+Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
+
+Defaults to `5s`.
+
+E.g.: `30s` (String)
 
 ## Configuration example
 

@@ -42,6 +42,10 @@ func (a *PollTransferActivity) Execute(ctx context.Context, params *PollTransfer
 	if retryDeadline := p.Config().RetryDeadline; retryDeadline != nil {
 		deadline = *retryDeadline
 	}
+	requestTimeout := defaultStatusRequestTimeout
+	if statusRequestTimeout := p.Config().StatusRequestTimeout; statusRequestTimeout != nil {
+		requestTimeout = *statusRequestTimeout
+	}
 
 	var sipID string
 	lastRetryableError := time.Time{}
@@ -49,7 +53,7 @@ func (a *PollTransferActivity) Execute(ctx context.Context, params *PollTransfer
 
 	err = backoff.RetryNotify(
 		func() (err error) {
-			ctx, cancel := context.WithTimeout(ctx, time.Second*10)
+			ctx, cancel := context.WithTimeout(ctx, requestTimeout)
 			defer cancel()
 
 			sipID, err = pipeline.TransferStatus(ctx, amc.Transfer, params.TransferID)

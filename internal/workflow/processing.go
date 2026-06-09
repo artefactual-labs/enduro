@@ -39,6 +39,7 @@ type ProcessingWorkflow struct {
 
 type Config struct {
 	ActivityHeartbeatTimeout time.Duration
+	InitProcessingTimeout    time.Duration
 }
 
 const (

@@ -308,7 +308,11 @@ func main() {
 								MetadataConfig:     config.Metadata,
 							}
 
-							if err := collection.InitProcessingWorkflow(ctx, tracer, temporalClient, &req); err != nil {
+							timeout := config.Workflow.InitProcessingTimeout
+							if timeout == 0 {
+								timeout = collection.DefaultInitProcessingWorkflowTimeout
+							}
+							if err := collection.InitProcessingWorkflowWithTimeout(ctx, tracer, temporalClient, &req, timeout); err != nil {
 								logger.Error(err, "Error initializing processing workflow.")
 							}
 							span.End()

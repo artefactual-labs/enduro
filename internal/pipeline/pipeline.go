@@ -25,22 +25,23 @@ import (
 var ErrRecoveryConfigInvalid = errors.New("invalid recovery configuration")
 
 type Config struct {
-	ID                 string
-	Name               string
-	BaseURL            string
-	User               string
-	Key                string
-	TransferDir        string
-	TransferPublisher  publisher.Config
-	TransferLocationID string
-	ProcessingDir      string
-	ProcessingConfig   string
-	StorageServiceURL  string
-	Capacity           uint64
-	RetryDeadline      *time.Duration
-	TransferDeadline   *time.Duration
-	Unbag              bool
-	Recovery           RecoveryConfig
+	ID                   string
+	Name                 string
+	BaseURL              string
+	User                 string
+	Key                  string
+	TransferDir          string
+	TransferPublisher    publisher.Config
+	TransferLocationID   string
+	ProcessingDir        string
+	ProcessingConfig     string
+	StorageServiceURL    string
+	Capacity             uint64
+	RetryDeadline        *time.Duration
+	StatusRequestTimeout *time.Duration
+	TransferDeadline     *time.Duration
+	Unbag                bool
+	Recovery             RecoveryConfig
 }
 
 type RecoveryConfig struct {
