@@ -74,6 +74,19 @@ function onToggleSearch() {
   setCollectionsSearchOpen(!collectionsSearchOpen.value)
 }
 
+function onQueryKeydown(event: KeyboardEvent) {
+  if (event.key === 'Enter') {
+    event.preventDefault()
+    onSubmit()
+    return
+  }
+
+  if (event.key === 'Escape') {
+    event.preventDefault()
+    onReset()
+  }
+}
+
 onMounted(() => {
   if (hasActiveSearch.value) {
     setCollectionsSearchOpen(true, { persist: false })
@@ -203,8 +216,7 @@ export { useCollectionsListData } from '~/loaders/collections-list'
                 size="sm"
                 class="w-full"
                 :color="validQuery === false ? 'error' : 'primary'"
-                @keydown.enter.prevent="onSubmit"
-                @keydown.esc.prevent="onReset"
+                @keydown="onQueryKeydown"
               />
               <USelect
                 v-model="selectedField"
