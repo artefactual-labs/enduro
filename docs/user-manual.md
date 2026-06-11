@@ -71,6 +71,65 @@ configuration section](./configuration-reference.md#watcher) for more details.
   transfer remains visible in the transfer and/or ingest tabs (depending on
   which micro-service failed).
 
+## Collection status state machine
+
+Enduro collection statuses describe Enduro's view of the processing workflow.
+The normal lifecycle is `queued` -> `in progress` -> `done`. Operator actions
+and failures can move the collection into `pending`, `error`, or `abandoned`.
+The actions below describe normal dashboard behavior; lower-level API endpoints
+may accept a broader set of calls.
+
+```mermaid
+stateDiagram-v2
+    [*] --> Queued: Workflow starts
+    Queued --> InProgress: Pipeline capacity acquired
+    Queued --> Abandoned: Cancel before Archivematica submission
+    Queued --> Error: Pre-processing failure
+    InProgress --> Pending: Operator decision required
+    Pending --> InProgress: Retry
+    Pending --> Abandoned: Abandon / decision timeout
+    Pending --> Error: Decision handling failure
+    InProgress --> Done: AIP stored successfully
+    InProgress --> Error: Processing failure
+    InProgress --> Abandoned: Cancel
+    Error --> Queued: Retry
+    Done --> [*]
+    Abandoned --> [*]
+```
+
+| Status | Meaning | Operator actions in the dashboard |
+| --- | --- | --- |
+| `queued` | Enduro has created the collection workflow, but the transfer has not started processing yet. It may be waiting for pipeline capacity. | Cancel is available when no Archivematica `transfer_id` has been assigned yet. Delete is not shown while the collection is still running. |
+| `in progress` | Enduro has acquired pipeline capacity and processing is underway. At this point the transfer may have been submitted to Archivematica. | Cancel is available. This stops Enduro's workflow, but it does not guarantee that already-submitted Archivematica work is stopped. Delete is not shown while the collection is still running. |
+| `pending` | Processing needs an operator decision before it can continue, usually after an activity failed and Enduro is waiting for retry or abandon. | Retry and Abandon are available from the pending decision controls. Delete is not shown while the collection is waiting for a decision. |
+| `done` | Processing completed successfully and the AIP was stored. | Delete is available. |
+| `error` | Processing failed and the workflow ended without a successful or operator-abandoned outcome. | Retry and Delete are available. Bulk Retry also targets collections in this state. |
+| `abandoned` | Processing was stopped by an operator decision or cancellation. | Delete is available. |
+| `new` | Reserved by the API but not used by the current processing workflow. | No normal dashboard action. |
+| `unknown` | Used when Enduro cannot map a status value to one of the known states. | Delete is available because the dashboard does not treat this as a running state. |
+
+The main transitions are:
+
+| From | To | Cause |
+| --- | --- | --- |
+| `queued` | `in progress` | Enduro acquires a pipeline capacity slot and starts the processing session. |
+| `queued` | `abandoned` | An operator cancels the collection before an Archivematica transfer ID is assigned. |
+| `queued` | `error` | The workflow fails before pipeline capacity is acquired, for example while checking duplicates, parsing metadata, loading configuration, or creating the processing session. |
+| `in progress` | `pending` | A workflow activity requires an operator decision before continuing. |
+| `pending` | `in progress` | An operator chooses Retry. |
+| `pending` | `abandoned` | An operator chooses Abandon, or the pending decision times out. |
+| `pending` | `error` | The decision path fails or receives an invalid decision value. |
+| `in progress` | `done` | Processing, ingest, and storage complete successfully. |
+| `in progress` | `error` | Processing fails without a successful or abandoned outcome. |
+| `in progress` | `abandoned` | An operator cancels the Enduro workflow. |
+| `error` | `queued` | An operator retries the collection, starting a new workflow run. |
+
+Cancel and Delete are different operations. Cancel asks Enduro to stop the
+processing workflow when possible. For queued collections that do not have an
+Archivematica transfer ID yet, canceling prevents submission to Archivematica.
+Delete removes the Enduro collection record and does not cancel processing that
+has already been started elsewhere.
+
 ## Pipeline capacity
 
 Pipeline capacity is the main operator-facing control for concurrent ingest

@@ -3,10 +3,13 @@ package collection
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"testing"
 	"time"
 
 	"github.com/go-logr/logr"
+	"github.com/stretchr/testify/mock"
+	temporalsdk_mocks "go.temporal.io/sdk/mocks"
 	"gotest.tools/v3/assert"
 	"gotest.tools/v3/poll"
 
@@ -50,6 +53,152 @@ func TestGoaMonitor(t *testing.T) {
 		cancel()
 		assert.NilError(t, <-done)
 	})
+}
+
+func TestGoaDelete(t *testing.T) {
+	t.Parallel()
+
+	tests := map[string]struct {
+		rowsAffected int64
+		execErr      error
+		wantErr      error
+		wantNotFound bool
+		wantEvent    bool
+	}{
+		"deletes existing collection": {
+			rowsAffected: 1,
+			wantEvent:    true,
+		},
+		"returns not found when no row is deleted": {
+			rowsAffected: 0,
+			wantNotFound: true,
+		},
+		"returns database error": {
+			rowsAffected: 1,
+			execErr:      errTestDB,
+			wantErr:      errTestDB,
+		},
+		"does not cancel workflow": {
+			rowsAffected: 1,
+			wantEvent:    true,
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			ctx := context.Background()
+			recorder := newExecRecorderDB(t)
+			recorder.rowsAffected = tc.rowsAffected
+			recorder.execErr = tc.execErr
+
+			client := &temporalsdk_mocks.Client{}
+			events := NewEventService()
+			sub, err := events.Subscribe(ctx)
+			assert.NilError(t, err)
+			defer sub.Close()
+
+			svc := NewService(testLogger(), recorder.db, client, "", nil)
+			svc.events = events
+
+			err = svc.Goa().Delete(ctx, &goacollection.DeletePayload{ID: 42})
+
+			assert.Equal(t, recorder.execQuery, "DELETE FROM collection WHERE id = (?)")
+			assert.DeepEqual(t, recorder.execArgs, []any{int64(42)})
+
+			assertGoaServiceErr(t, err, tc.wantErr, tc.wantNotFound)
+			assertCollectionEvent(t, sub, tc.wantEvent, EventTypeCollectionDeleted, 42)
+			client.AssertExpectations(t)
+		})
+	}
+}
+
+func TestGoaCancel(t *testing.T) {
+	t.Parallel()
+
+	errTemporal := errors.New("temporal error")
+	createdAt := time.Date(2026, time.June, 11, 10, 0, 0, 0, time.UTC)
+	row := &Collection{
+		ID:         42,
+		Name:       "collection",
+		WorkflowID: "processing-workflow-04e9257e-ac59-442c-a037-7504ea5ebf3f",
+		RunID:      "74795d4e-4530-4dc1-bb7b-7457ef3c9d75",
+		Status:     StatusQueued,
+		CreatedAt:  createdAt,
+	}
+
+	tests := map[string]struct {
+		row          *Collection
+		queryErr     error
+		cancelErr    error
+		wantErr      error
+		wantNotFound bool
+		wantEvent    bool
+		wantCancel   bool
+	}{
+		"cancels workflow for existing collection": {
+			row:        row,
+			wantEvent:  true,
+			wantCancel: true,
+		},
+		"returns not found when collection is missing": {
+			wantNotFound: true,
+		},
+		"returns database read error": {
+			queryErr: errTestDB,
+			wantErr:  errTestDB,
+		},
+		"returns temporal cancellation error": {
+			row:        row,
+			cancelErr:  errTemporal,
+			wantErr:    errTemporal,
+			wantCancel: true,
+		},
+		"does not delete collection row": {
+			row:        row,
+			wantEvent:  true,
+			wantCancel: true,
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			ctx := context.Background()
+			recorder := newExecRecorderDB(t)
+			recorder.row = tc.row
+			recorder.queryErr = tc.queryErr
+
+			client := &temporalsdk_mocks.Client{}
+			if tc.wantCancel {
+				client.On(
+					"CancelWorkflow",
+					mock.Anything,
+					row.WorkflowID,
+					row.RunID,
+				).Return(tc.cancelErr).Once()
+			}
+
+			events := NewEventService()
+			sub, err := events.Subscribe(ctx)
+			assert.NilError(t, err)
+			defer sub.Close()
+
+			svc := NewService(testLogger(), recorder.db, client, "", nil)
+			svc.events = events
+
+			err = svc.Goa().Cancel(ctx, &goacollection.CancelPayload{ID: 42})
+
+			assert.Equal(t, recorder.execQuery, "")
+			assert.DeepEqual(t, recorder.queryArgs, []any{int64(42)})
+
+			assertGoaServiceErr(t, err, tc.wantErr, tc.wantNotFound)
+			assertCollectionEvent(t, sub, tc.wantEvent, EventTypeCollectionUpdated, 42)
+			client.AssertExpectations(t)
+		})
+	}
 }
 
 func TestRetryModeForCollection(t *testing.T) {
@@ -191,6 +340,37 @@ func TestNewRetryResult(t *testing.T) {
 	got := newRetryResult(RetryModeReconcileExistingAIP)
 
 	assert.Equal(t, got.Mode, string(RetryModeReconcileExistingAIP))
+}
+
+func assertGoaServiceErr(t *testing.T, err, wantErr error, wantNotFound bool) {
+	t.Helper()
+
+	if wantNotFound {
+		var notFound *goacollection.CollectionNotfound
+		assert.Assert(t, errors.As(err, &notFound))
+		assert.Equal(t, notFound.ID, uint(42))
+		return
+	}
+
+	if wantErr != nil {
+		assert.ErrorIs(t, err, wantErr)
+		return
+	}
+
+	assert.NilError(t, err)
+}
+
+func assertCollectionEvent(t *testing.T, sub Subscription, want bool, eventType string, id uint) {
+	t.Helper()
+
+	select {
+	case got := <-sub.C():
+		assert.Assert(t, want, "unexpected collection event")
+		assert.Equal(t, got.Type, eventType)
+		assert.Equal(t, got.ID, id)
+	default:
+		assert.Assert(t, !want, "expected collection event")
+	}
 }
 
 func waitForSubscriptions(t *testing.T, events *EventServiceImpl, count int) {

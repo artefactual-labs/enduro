@@ -130,6 +130,47 @@ func (s *ProcessingWorkflowTestSuite) TestParseError() {
 	s.ErrorContains(s.env.GetWorkflowError(), "parse error")
 }
 
+func TestFinalCollectionStatus(t *testing.T) {
+	t.Parallel()
+
+	tests := map[string]struct {
+		status   collection.Status
+		canceled bool
+		want     collection.Status
+	}{
+		"done remains done": {
+			status: collection.StatusDone,
+			want:   collection.StatusDone,
+		},
+		"abandoned remains abandoned": {
+			status: collection.StatusAbandoned,
+			want:   collection.StatusAbandoned,
+		},
+		"non-terminal success path defaults to error": {
+			status: collection.StatusQueued,
+			want:   collection.StatusError,
+		},
+		"canceled queued workflow becomes abandoned": {
+			status:   collection.StatusQueued,
+			canceled: true,
+			want:     collection.StatusAbandoned,
+		},
+		"canceled in-progress workflow becomes abandoned": {
+			status:   collection.StatusInProgress,
+			canceled: true,
+			want:     collection.StatusAbandoned,
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			got := finalCollectionStatus(tc.status, tc.canceled)
+			assert.Equal(t, got, tc.want)
+		})
+	}
+}
+
 func (s *ProcessingWorkflowTestSuite) TestReconciliationRetryPreservesExistingState() {
 	ctrl := gomock.NewController(s.T())
 	pipelineRegistry, err := pipeline.NewPipelineRegistry(logr.Discard(), []pipeline.Config{
