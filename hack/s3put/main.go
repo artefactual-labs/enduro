@@ -36,6 +36,12 @@ func main() {
 	}
 	defer file.Close()
 
+	stat, err := file.Stat()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "stat file: %v\n", err)
+		os.Exit(1)
+	}
+
 	ctx := context.Background()
 	cfg, err := awsconfig.LoadDefaultConfig(ctx,
 		awsconfig.WithRegion(*region),
@@ -58,9 +64,10 @@ func main() {
 	})
 
 	if _, err := client.PutObject(ctx, &s3.PutObjectInput{
-		Bucket: bucket,
-		Key:    key,
-		Body:   file,
+		Bucket:        bucket,
+		Key:           key,
+		Body:          file,
+		ContentLength: aws.Int64(stat.Size()),
 	}); err != nil {
 		fmt.Fprintf(os.Stderr, "put object: %v\n", err)
 		os.Exit(1)

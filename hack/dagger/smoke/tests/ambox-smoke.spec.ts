@@ -273,19 +273,69 @@ async function waitForCollectionDone(
 ): Promise<Collection> {
   let lastStatus = "";
   let lastCollectionID = 0;
+  let sawCollection = false;
+  let lastError = "";
 
   for (let attempt = 0; attempt < 720; attempt++) {
-    const response = await request.get(
-      `${enduroURL}/collection?name=${encodeURIComponent(transferName)}`,
-    );
-    if (response.ok()) {
-      const body = await response.json();
-      const collection = body.items?.[0];
-      if (collection?.id) {
-        lastCollectionID = collection.id;
-        lastStatus = collection.status;
-        console.log(`${opts.logPrefix}=${lastCollectionID} status=${lastStatus}`);
+    try {
+      const response = await request.get(
+        `${enduroURL}/collection?name=${encodeURIComponent(transferName)}`,
+      );
+      if (response.ok()) {
+        lastError = "";
+        const body = await response.json();
+        const collection = body.items?.[0];
+        if (collection?.id) {
+          sawCollection = true;
+          lastCollectionID = collection.id;
+          lastStatus = collection.status;
+          console.log(`${opts.logPrefix}=${lastCollectionID} status=${lastStatus}`);
+        }
+      } else {
+        lastError = `status=${response.status()}`;
       }
+    } catch (err) {
+      lastError = String(err);
+    }
+
+    if (!sawCollection && attempt > 0 && attempt % 6 === 0) {
+      console.log(
+        `${opts.logPrefix} missing for ${transferName} after ${attempt * 10}s`,
+      );
+    }
+
+    if (!sawCollection && attempt === 30) {
+      const workflows = await runTemporal([
+        "workflow",
+        "list",
+        "--namespace",
+        "default",
+        "--address",
+        temporalAddress,
+        "--limit",
+        "20",
+        "--output",
+        "json",
+      ]);
+      await writeTextArtifact(
+        `${opts.artifactPrefix}collection-missing-report.txt`,
+        [
+          `transfer_name=${transferName}`,
+          `log_prefix=${opts.logPrefix}`,
+          `last_error=${lastError || "none"}`,
+          "collection_seen=false",
+          "",
+          "temporal_workflows=",
+          workflows,
+        ].join("\n") + "\n",
+      );
+      throw new Error(
+        `timed out waiting for ${transferName} collection to be created`,
+      );
+    }
+
+    if (lastError && attempt > 0 && attempt % 6 === 0) {
+      console.log(`${opts.logPrefix} poll error for ${transferName}: ${lastError}`);
     }
 
     if (lastStatus === "done") {
@@ -328,6 +378,23 @@ async function downloadAndInspectAIP(
   const response = await request.get(
     `${enduroURL}/collection/${opts.collection.id}/download`,
   );
+  if (!response.ok()) {
+    await saveCollection(request, opts.collection.id, collectionName);
+    await writeTextArtifact(
+      `${opts.artifactPrefix}download-error.txt`,
+      [
+        `transfer_name=${opts.transferName}`,
+        `collection_id=${opts.collection.id}`,
+        `download_status=${response.status()}`,
+        `download_status_text=${response.statusText()}`,
+        "download_headers=",
+        JSON.stringify(response.headers(), null, 2),
+        "",
+        "download_body=",
+        await response.text(),
+      ].join("\n") + "\n",
+    );
+  }
   expect(response.ok()).toBeTruthy();
 
   await fs.writeFile(path.join(artifactsDir, aipName), await response.body());

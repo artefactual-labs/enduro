@@ -171,6 +171,14 @@ func (m *EnduroE2E) smokeEnvironment(ctx context.Context, source *dagger.Directo
 	}
 
 	ambox := m.amboxService()
+	ambox, err = ambox.Start(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err := m.settleAmbox(ctx, ambox, cacheBuster); err != nil {
+		return nil, err
+	}
+
 	enduro := m.enduroService(source, volumes, mysql, temporal, ambox)
 
 	return &smokeEnvironment{
@@ -1160,12 +1168,12 @@ exit 1
 const seaweedFSEnduroEntrypointScript = `#!/bin/sh
 set -eu
 
-mkdir -p /etc/enduro/ssh /runtime/storage/seaweedfs
+mkdir -p /etc/enduro/ssh /tmp/seaweedfs
 /usr/local/bin/weed mini \
-	-dir=/runtime/storage/seaweedfs \
+	-dir=/tmp/seaweedfs \
 	-ip.bind=0.0.0.0 \
 	-bucket=sips \
-	-master.volumeSizeLimitMB=64 \
+	-master.volumeSizeLimitMB=1024 \
 	-webdav=false \
 	-admin.ui=false \
 	-s3.port.iceberg=0 &
