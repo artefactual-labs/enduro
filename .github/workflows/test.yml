@@ -67,6 +67,19 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - name: Configure Dagger engine cache
+        run: |
+          mkdir -p "$HOME/.config/dagger"
+          cat > "$HOME/.config/dagger/engine.json" <<'JSON'
+          {
+            "gc": {
+              "maxUsedSpace": "30GB",
+              "reservedSpace": "6GB",
+              "minFreeSpace": "15GB",
+              "sweepSize": "50%"
+            }
+          }
+          JSON
       - name: Run smoke tests
         uses: dagger/dagger-for-github@27b130bf0f79a7f6fbbbe0fbca6760dc9bb40a77 # v8.4.1
         env:
@@ -107,6 +120,19 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - name: Configure Dagger engine cache
+        run: |
+          mkdir -p "$HOME/.config/dagger"
+          cat > "$HOME/.config/dagger/engine.json" <<'JSON'
+          {
+            "gc": {
+              "maxUsedSpace": "30GB",
+              "reservedSpace": "6GB",
+              "minFreeSpace": "15GB",
+              "sweepSize": "50%"
+            }
+          }
+          JSON
       - name: Run object storage smoke tests
         uses: dagger/dagger-for-github@27b130bf0f79a7f6fbbbe0fbca6760dc9bb40a77 # v8.4.1
         env:

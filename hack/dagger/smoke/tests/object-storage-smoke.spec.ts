@@ -164,6 +164,23 @@ async function downloadAndInspectAIP(
   name: string,
 ) {
   const response = await request.get(`${enduroURL}/collection/${collection.id}/download`);
+  if (!response.ok()) {
+    await saveCollection(request, collection.id, "collection.json");
+    await writeTextArtifact(
+      "download-error.txt",
+      [
+        `transfer_name=${name}`,
+        `collection_id=${collection.id}`,
+        `download_status=${response.status()}`,
+        `download_status_text=${response.statusText()}`,
+        "download_headers=",
+        JSON.stringify(response.headers(), null, 2),
+        "",
+        "download_body=",
+        await response.text(),
+      ].join("\n") + "\n",
+    );
+  }
   expect(response.ok()).toBeTruthy();
 
   await fs.writeFile(path.join(artifactsDir, "aip.7z"), await response.body());
