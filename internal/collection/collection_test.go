@@ -4,7 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"database/sql/driver"
+	"errors"
 	"fmt"
+	"io"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -58,9 +60,20 @@ func TestUpdateReconciliationState(t *testing.T) {
 }
 
 type execRecorderDB struct {
-	db    *sql.DB
+	db *sql.DB
+
 	query string
 	args  []any
+
+	execQuery string
+	execArgs  []any
+	querySQL  string
+	queryArgs []any
+
+	rowsAffected int64
+	execErr      error
+	queryErr     error
+	row          *Collection
 }
 
 var execRecorderDriverID atomic.Uint64
@@ -68,7 +81,7 @@ var execRecorderDriverID atomic.Uint64
 func newExecRecorderDB(t *testing.T) *execRecorderDB {
 	t.Helper()
 
-	recorder := &execRecorderDB{}
+	recorder := &execRecorderDB{rowsAffected: 1}
 	driverName := fmt.Sprintf("collection-test-driver-%d", execRecorderDriverID.Add(1))
 	sql.Register(driverName, execRecorderDriver{recorder: recorder})
 
@@ -105,10 +118,108 @@ func (c execRecorderConn) Begin() (driver.Tx, error)           { return nil, dri
 
 func (c execRecorderConn) ExecContext(_ context.Context, query string, args []driver.NamedValue) (driver.Result, error) {
 	c.recorder.query = query
+	c.recorder.execQuery = query
 	c.recorder.args = make([]any, len(args))
+	c.recorder.execArgs = make([]any, len(args))
 	for i, arg := range args {
 		c.recorder.args[i] = arg.Value
+		c.recorder.execArgs[i] = arg.Value
 	}
 
-	return driver.RowsAffected(1), nil
+	if c.recorder.execErr != nil {
+		return nil, c.recorder.execErr
+	}
+
+	return driver.RowsAffected(c.recorder.rowsAffected), nil
 }
+
+func (c execRecorderConn) QueryContext(_ context.Context, query string, args []driver.NamedValue) (driver.Rows, error) {
+	c.recorder.querySQL = query
+	c.recorder.queryArgs = make([]any, len(args))
+	for i, arg := range args {
+		c.recorder.queryArgs[i] = arg.Value
+	}
+
+	if c.recorder.queryErr != nil {
+		return nil, c.recorder.queryErr
+	}
+
+	return &collectionRows{row: c.recorder.row}, nil
+}
+
+type collectionRows struct {
+	row  *Collection
+	done bool
+}
+
+func (r *collectionRows) Columns() []string {
+	return []string{
+		"id",
+		"name",
+		"workflow_id",
+		"run_id",
+		"transfer_id",
+		"aip_id",
+		"original_id",
+		"pipeline_id",
+		"decision_token",
+		"status",
+		"created_at",
+		"started_at",
+		"completed_at",
+		"aip_stored_at",
+		"reconciliation_status",
+		"reconciliation_checked_at",
+		"reconciliation_error",
+	}
+}
+
+func (r *collectionRows) Close() error {
+	return nil
+}
+
+func (r *collectionRows) Next(dest []driver.Value) error {
+	if r.done || r.row == nil {
+		return io.EOF
+	}
+	r.done = true
+
+	values := []driver.Value{
+		int64(r.row.ID),
+		r.row.Name,
+		r.row.WorkflowID,
+		r.row.RunID,
+		r.row.TransferID,
+		r.row.AIPID,
+		r.row.OriginalID,
+		r.row.PipelineID,
+		r.row.DecisionToken,
+		int64(r.row.Status),
+		r.row.CreatedAt,
+		nullTimeValue(r.row.StartedAt),
+		nullTimeValue(r.row.CompletedAt),
+		nullTimeValue(r.row.AIPStoredAt),
+		nullStringValue(r.row.ReconciliationStatus),
+		nullTimeValue(r.row.ReconciliationCheckedAt),
+		nullStringValue(r.row.ReconciliationError),
+	}
+	copy(dest, values)
+
+	return nil
+}
+
+func nullTimeValue(v sql.NullTime) driver.Value {
+	if !v.Valid {
+		return nil
+	}
+	return v.Time
+}
+
+func nullStringValue(v sql.NullString) driver.Value {
+	if !v.Valid {
+		return nil
+	}
+	return v.String
+}
+
+var errTestDB = errors.New("database error")

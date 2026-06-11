@@ -2,8 +2,8 @@ import { defineComponent, h, ref } from 'vue'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mountSuspended, mockNuxtImport } from '@nuxt/test-utils/runtime'
 
-import { RetryResultModeEnum } from '~/openapi-generator'
-import { useCollectionDetails } from './useCollectionDetails'
+import { EnduroDetailedStoredCollectionStatusEnum, RetryResultModeEnum } from '~/openapi-generator'
+import { canCancelCollection, useCollectionDetails } from './useCollectionDetails'
 
 const { navigateToMock } = vi.hoisted(() => ({
   navigateToMock: vi.fn()
@@ -108,5 +108,27 @@ describe('useCollectionDetails', () => {
     expect(navigateToMock).toHaveBeenCalledWith('/collections')
     expect(reloadCollectionData).toHaveBeenCalledTimes(3)
     expect(details.retryModeMessage.value).toBe('')
+  })
+
+  it('allows cancellation for queued collections before Archivematica submission', () => {
+    expect(canCancelCollection({
+      id: 1,
+      createdAt: new Date(),
+      status: EnduroDetailedStoredCollectionStatusEnum.Queued
+    })).toBe(true)
+
+    expect(canCancelCollection({
+      id: 1,
+      createdAt: new Date(),
+      status: EnduroDetailedStoredCollectionStatusEnum.Queued,
+      transferId: 'transfer-id'
+    })).toBe(false)
+
+    expect(canCancelCollection({
+      id: 1,
+      createdAt: new Date(),
+      status: EnduroDetailedStoredCollectionStatusEnum.InProgress,
+      transferId: 'transfer-id'
+    })).toBe(true)
   })
 })

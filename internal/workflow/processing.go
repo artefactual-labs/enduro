@@ -267,10 +267,7 @@ func (w *ProcessingWorkflow) Execute(ctx temporalsdk_workflow.Context, req *coll
 	// Ensure that the status of the collection is always updated when this
 	// workflow function returns.
 	defer func() {
-		// Mark as failed unless it completed successfully or it was abandoned.
-		if status != collection.StatusDone && status != collection.StatusAbandoned {
-			status = collection.StatusError
-		}
+		status = finalCollectionStatus(status, ctx.Err() == temporalsdk_workflow.ErrCanceled)
 
 		// Use disconnected context so it also runs after cancellation.
 		dctx, _ := temporalsdk_workflow.NewDisconnectedContext(ctx)
@@ -455,6 +452,16 @@ func (w *ProcessingWorkflow) Execute(ctx temporalsdk_workflow.Context, req *coll
 	)
 
 	return nil
+}
+
+func finalCollectionStatus(status collection.Status, canceled bool) collection.Status {
+	if status == collection.StatusDone || status == collection.StatusAbandoned {
+		return status
+	}
+	if canceled {
+		return collection.StatusAbandoned
+	}
+	return collection.StatusError
 }
 
 // SessionHandler runs activities that belong to the same session.

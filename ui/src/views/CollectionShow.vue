@@ -109,7 +109,7 @@
           <b-button-group size="sm">
             <b-button :to="{ name: 'collection-workflow', items: {id: collection.id} }">Status</b-button>
             <b-button v-if="collection.status == 'error'" variant="info" v-on:click="retry(collection.id)">Retry</b-button>
-            <b-button v-if="collection.status == 'in progress'" variant="dark" v-on:click="cancel(collection.id)">Cancel</b-button>
+            <b-button v-if="canCancel" variant="dark" v-on:click="cancel(collection.id)">Cancel</b-button>
           </b-button-group>
         </b-card-text>
       </b-card>
@@ -191,6 +191,13 @@ export default class CollectionShow extends Vue {
       return false;
     }
     return ['pending'].includes(this.collection.status);
+  }
+
+  private get canCancel() {
+    if (!this.collection) {
+      return false;
+    }
+    return this.collection.status == 'in progress' || (this.collection.status == 'queued' && !this.collection.transferId);
   }
 
   private onDelete() {
