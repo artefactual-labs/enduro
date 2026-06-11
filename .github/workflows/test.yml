@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
       - name: Install Go
         uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
         with:
@@ -22,7 +22,7 @@ jobs:
       contents: read
     steps:
       - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
       - name: Install Go
         uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
         with:
@@ -33,7 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
       - name: Install Go
         uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
         with:
@@ -42,7 +42,7 @@ jobs:
         run: make test-ci
       - name: Upload coverage to Codecov
         if: github.actor != 'dependabot[bot]'
-        uses: codecov/codecov-action@8cad3ba95e5920c42f44492e54bc9639cba47959 # v6.0.2
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v6.0.2
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
@@ -52,7 +52,7 @@ jobs:
           flags: go
       - name: Upload test results to Codecov
         if: github.actor != 'dependabot[bot]'
-        uses: codecov/codecov-action@8cad3ba95e5920c42f44492e54bc9639cba47959 # v6.0.2
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v6.0.2
         with:
           disable_search: true
           fail_ci_if_error: true
@@ -66,7 +66,7 @@ jobs:
       contents: read
     steps:
       - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
       - name: Run smoke tests
         uses: dagger/dagger-for-github@27b130bf0f79a7f6fbbbe0fbca6760dc9bb40a77 # v8.4.1
         env:
@@ -77,7 +77,7 @@ jobs:
           args: smoke-tests --source . export --path hack/dagger/runtime/artifacts
       - name: Upload smoke coverage to Codecov
         if: github.actor != 'dependabot[bot]'
-        uses: codecov/codecov-action@8cad3ba95e5920c42f44492e54bc9639cba47959 # v6.0.2
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v6.0.2
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
@@ -106,7 +106,7 @@ jobs:
           - seaweedfs
     steps:
       - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
       - name: Run object storage smoke tests
         uses: dagger/dagger-for-github@27b130bf0f79a7f6fbbbe0fbca6760dc9bb40a77 # v8.4.1
         env:
@@ -117,7 +117,7 @@ jobs:
           args: object-storage-smoke-test --source . --provider ${{ matrix.provider }} export --path hack/dagger/runtime/object-storage-artifacts-${{ matrix.provider }}
       - name: Upload object storage smoke coverage to Codecov
         if: github.actor != 'dependabot[bot]'
-        uses: codecov/codecov-action@8cad3ba95e5920c42f44492e54bc9639cba47959 # v6.0.2
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v6.0.2
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
@@ -136,7 +136,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           fetch-depth: 2
       - name: Install Node
@@ -155,7 +155,7 @@ jobs:
         run: npm run build --prefix frontend
       - name: Upload frontend coverage to Codecov
         if: github.actor != 'dependabot[bot]'
-        uses: codecov/codecov-action@8cad3ba95e5920c42f44492e54bc9639cba47959 # v6.0.2
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v6.0.2
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
