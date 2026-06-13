@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"syscall"
 	"testing"
 
@@ -49,7 +50,6 @@ func TestBundleActivity(t *testing.T) {
 
 		res := BundleActivityResult{}
 		assert.NilError(t, fut.Get(&res))
-		assert.DeepEqual(t, res, res)
 		assert.Assert(t,
 			fs.Equal(
 				destDir,
@@ -101,10 +101,195 @@ func TestBundleActivity(t *testing.T) {
 				),
 			),
 		)
-		assert.DeepEqual(t, res.FullPath, sipSourceDir)
+		assert.Equal(t, res.FullPath, sipSourceDir)
 		rePath, err := filepath.Rel(transferDir.Path(), sipSourceDir)
 		assert.NilError(t, err)
-		assert.DeepEqual(t, res.RelPath, rePath)
+		assert.Equal(t, res.RelPath, rePath)
+	})
+
+	t.Run("Reuses batch transfer when BatchDir is a filesystem alias of TransferDir", func(t *testing.T) {
+		activity := NewBundleActivity()
+		ts := &temporalsdk_testsuite.WorkflowTestSuite{}
+		env := ts.NewTestActivityEnvironment()
+		env.RegisterActivity(activity.Execute)
+
+		transferDir := fs.NewDir(t, "enduro",
+			fs.WithDir("Enduro_Testing",
+				fs.WithDir("general_pipeline",
+					fs.WithDir(
+						"sip",
+						fs.WithFile("foobar.txt", "Hello world!\n"),
+					),
+				),
+			),
+		)
+
+		aliasRoot := filepath.Join(t.TempDir(), "transfer_source")
+		if err := os.Symlink(transferDir.Path(), aliasRoot); err != nil {
+			t.Skipf("cannot create symlink: %v", err)
+		}
+
+		batchDir := filepath.Join(aliasRoot, "Enduro_Testing", "general_pipeline")
+		sipSourceDir := filepath.Join(batchDir, "sip")
+
+		fut, err := env.ExecuteActivity(activity.Execute, &BundleActivityParams{
+			IsDir:       true,
+			TransferDir: transferDir.Path(),
+			BatchDir:    batchDir,
+			Key:         "sip",
+		})
+		assert.NilError(t, err)
+
+		res := BundleActivityResult{}
+		assert.NilError(t, fut.Get(&res))
+		assert.Equal(t, res.FullPath, sipSourceDir)
+		assert.Equal(t, res.FullPathBeforeStrip, "")
+		assert.Equal(t, res.RelPath, filepath.Join("Enduro_Testing", "general_pipeline", "sip"))
+
+		items, err := os.ReadDir(transferDir.Path())
+		assert.NilError(t, err)
+		for _, item := range items {
+			assert.Assert(t, !strings.HasPrefix(item.Name(), "enduro"))
+		}
+	})
+
+	t.Run("Reuses batch transfer when BatchDir is a filesystem alias of a TransferDir subdirectory", func(t *testing.T) {
+		activity := NewBundleActivity()
+		ts := &temporalsdk_testsuite.WorkflowTestSuite{}
+		env := ts.NewTestActivityEnvironment()
+		env.RegisterActivity(activity.Execute)
+
+		transferDir := fs.NewDir(t, "enduro",
+			fs.WithDir("Enduro_Testing",
+				fs.WithDir("general_pipeline",
+					fs.WithDir(
+						"sip",
+						fs.WithFile("foobar.txt", "Hello world!\n"),
+					),
+				),
+			),
+		)
+
+		aliasRoot := filepath.Join(t.TempDir(), "incoming")
+		if err := os.Symlink(transferDir.Join("Enduro_Testing"), aliasRoot); err != nil {
+			t.Skipf("cannot create symlink: %v", err)
+		}
+
+		batchDir := filepath.Join(aliasRoot, "general_pipeline")
+		sipSourceDir := filepath.Join(batchDir, "sip")
+
+		fut, err := env.ExecuteActivity(activity.Execute, &BundleActivityParams{
+			IsDir:       true,
+			TransferDir: transferDir.Path(),
+			BatchDir:    batchDir,
+			Key:         "sip",
+		})
+		assert.NilError(t, err)
+
+		res := BundleActivityResult{}
+		assert.NilError(t, fut.Get(&res))
+		assert.Equal(t, res.FullPath, sipSourceDir)
+		assert.Equal(t, res.FullPathBeforeStrip, "")
+		assert.Equal(t, res.RelPath, filepath.Join("Enduro_Testing", "general_pipeline", "sip"))
+
+		items, err := os.ReadDir(transferDir.Path())
+		assert.NilError(t, err)
+		for _, item := range items {
+			assert.Assert(t, !strings.HasPrefix(item.Name(), "enduro"))
+		}
+	})
+
+	t.Run("Copies batch transfer when BatchDir is outside TransferDir", func(t *testing.T) {
+		activity := NewBundleActivity()
+		ts := &temporalsdk_testsuite.WorkflowTestSuite{}
+		env := ts.NewTestActivityEnvironment()
+		env.RegisterActivity(activity.Execute)
+
+		transferDir := fs.NewDir(t, "enduro")
+		batchDir := fs.NewDir(t, "batch",
+			fs.WithDir(
+				"sip",
+				fs.WithFile("foobar.txt", "Hello world!\n"),
+			),
+		)
+
+		fut, err := env.ExecuteActivity(activity.Execute, &BundleActivityParams{
+			IsDir:       true,
+			TransferDir: transferDir.Path(),
+			BatchDir:    batchDir.Path(),
+			Key:         "sip",
+		})
+		assert.NilError(t, err)
+
+		res := BundleActivityResult{}
+		assert.NilError(t, fut.Get(&res))
+		assert.Assert(t, strings.HasPrefix(res.FullPath, transferDir.Path()+string(os.PathSeparator)))
+		assert.Equal(t, res.FullPathBeforeStrip, res.FullPath)
+		assert.Assert(t, strings.HasPrefix(res.RelPath, "enduro"))
+		assert.Assert(t,
+			fs.Equal(
+				res.FullPath,
+				fs.Expected(t,
+					fs.WithFile("foobar.txt", "Hello world!\n"),
+					fs.MatchAnyFileMode,
+				),
+			),
+		)
+	})
+
+	t.Run("Copies external batch when unrelated transfer contents are unreadable", func(t *testing.T) {
+		if runtime.GOOS == "windows" {
+			t.Skip("chmod permissions are not portable on Windows")
+		}
+
+		activity := NewBundleActivity()
+		ts := &temporalsdk_testsuite.WorkflowTestSuite{}
+		env := ts.NewTestActivityEnvironment()
+		env.RegisterActivity(activity.Execute)
+
+		transferDir := fs.NewDir(t, "enduro",
+			fs.WithDir("unrelated",
+				fs.WithFile("foobar.txt", "Hello world!\n"),
+			),
+		)
+		unrelatedDir := transferDir.Join("unrelated")
+		assert.NilError(t, os.Chmod(unrelatedDir, 0))
+		t.Cleanup(func() {
+			_ = os.Chmod(unrelatedDir, 0o755)
+		})
+		if _, err := os.ReadDir(unrelatedDir); err == nil {
+			t.Skip("chmod did not make the directory unreadable")
+		}
+
+		batchDir := fs.NewDir(t, "batch",
+			fs.WithDir(
+				"sip",
+				fs.WithFile("foobar.txt", "Hello world!\n"),
+			),
+		)
+
+		fut, err := env.ExecuteActivity(activity.Execute, &BundleActivityParams{
+			IsDir:       true,
+			TransferDir: transferDir.Path(),
+			BatchDir:    batchDir.Path(),
+			Key:         "sip",
+		})
+		assert.NilError(t, err)
+
+		res := BundleActivityResult{}
+		assert.NilError(t, fut.Get(&res))
+		assert.Assert(t, strings.HasPrefix(res.FullPath, transferDir.Path()+string(os.PathSeparator)))
+		assert.Equal(t, res.FullPathBeforeStrip, res.FullPath)
+		assert.Assert(t, strings.HasPrefix(res.RelPath, "enduro"))
+		assert.Assert(t,
+			fs.Equal(
+				res.FullPath,
+				fs.Expected(t,
+					fs.WithFile("foobar.txt", "Hello world!\n"),
+					fs.MatchAnyFileMode,
+				),
+			),
+		)
 	})
 
 	t.Run("Removes hidden directories recursively", func(t *testing.T) {
@@ -147,7 +332,7 @@ func TestBundleActivity(t *testing.T) {
 				),
 			),
 		)
-		assert.DeepEqual(t, res.FullPath, sipSourceDir)
+		assert.Equal(t, res.FullPath, sipSourceDir)
 	})
 }
 

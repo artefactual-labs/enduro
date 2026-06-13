@@ -17,30 +17,57 @@ import (
 	"github.com/artefactual-labs/enduro/internal/temporal"
 )
 
-// BundleActivity stages transfer content in the pipeline transfer directory.
+// BundleActivity prepares transfer content for an Archivematica pipeline run.
+//
+// The activity normalizes three source shapes into a transfer that later
+// workflow steps can address with one BundleActivityResult:
+//   - a downloaded single file is moved into a new bundled transfer under
+//     TransferDir;
+//   - a downloaded or extracted directory is copied into an enduro* temporary
+//     directory under TransferDir, optionally stripping one top-level directory;
+//   - a batch transfer is either reused in place or copied into TransferDir,
+//     depending on whether filepath.Join(BatchDir, Key) already refers to
+//     content under TransferDir.
+//
+// Batch containment is intentionally filesystem-aware. A batch path may not be
+// textually below TransferDir while still pointing into it through a symlink,
+// bind mount, or other filesystem alias. In that case the activity reuses the
+// original transfer instead of creating an unnecessary staging copy.
+//
+// Reusing in-place batch transfers also changes cleanup semantics:
+// FullPathBeforeStrip is left empty so later workflow steps do not remove
+// original content that Enduro did not create. Copied and bundled transfers set
+// FullPathBeforeStrip to the temporary path that cleanup may remove later.
+//
+// After staging or reuse, the activity may remove hidden files and optionally
+// convert BagIt packages into Archivematica's standard transfer layout.
 type BundleActivity struct{}
 
+// NewBundleActivity creates a bundle activity instance.
 func NewBundleActivity() *BundleActivity {
 	return &BundleActivity{}
 }
 
+// BundleActivityParams configures how transfer content should be staged.
 type BundleActivityParams struct {
-	TransferDir        string
-	Key                string
-	TempFile           string
-	StripTopLevelDir   bool
-	ExcludeHiddenFiles bool
-	IsDir              bool
-	BatchDir           string
-	Unbag              bool
+	TransferDir        string // Pipeline transfer source directory.
+	Key                string // Object key, batch transfer name, or destination file name.
+	TempFile           string // Downloaded file or extracted directory to stage for non-batch transfers.
+	StripTopLevelDir   bool   // Remove the copied directory wrapper when it has exactly one child directory.
+	ExcludeHiddenFiles bool   // Remove or skip dotfiles and dot-directories from the staged transfer.
+	IsDir              bool   // Treat TempFile as a directory transfer instead of a single file.
+	BatchDir           string // Watched batch directory containing Key when processing a batch transfer.
+	Unbag              bool   // Convert a BagIt package into an Archivematica transfer after staging.
 }
 
+// BundleActivityResult identifies the transfer location after staging.
 type BundleActivityResult struct {
 	RelPath             string // Path of the transfer relative to the transfer directory.
 	FullPath            string // Full path to the transfer in the worker running the session.
 	FullPathBeforeStrip string // Same as FullPath but includes the top-level dir even when stripped.
 }
 
+// Execute stages or reuses transfer content and returns its pipeline-visible path.
 func (a *BundleActivity) Execute(ctx context.Context, params *BundleActivityParams) (*BundleActivityResult, error) {
 	var (
 		res = &BundleActivityResult{}
@@ -54,14 +81,16 @@ func (a *BundleActivity) Execute(ctx context.Context, params *BundleActivityPara
 	}()
 
 	if params.BatchDir != "" {
-		var batchDirIsInTransferDir bool
-		batchDirIsInTransferDir, err = isSubPath(params.TransferDir, params.BatchDir)
+		src := filepath.Join(params.BatchDir, params.Key)
+		var batchPathIsInTransferDir bool
+		res.RelPath, batchPathIsInTransferDir, err = relPathIfUnder(params.TransferDir, src)
 		if err != nil {
 			return nil, temporal.NewNonRetryableError(err)
 		}
-		if batchDirIsInTransferDir {
-			res.FullPath = filepath.Join(params.BatchDir, params.Key)
-			// This makes the workflow not to delete the original content in the transfer directory
+		if batchPathIsInTransferDir {
+			res.FullPath = src
+			// Reused batch content is original transfer content, so leave
+			// FullPathBeforeStrip empty to keep later cleanup from removing it.
 			res.FullPathBeforeStrip = ""
 			if params.ExcludeHiddenFiles {
 				if err := removeHiddenFiles(res.FullPath); err != nil {
@@ -69,7 +98,6 @@ func (a *BundleActivity) Execute(ctx context.Context, params *BundleActivityPara
 				}
 			}
 		} else {
-			src := filepath.Join(params.BatchDir, params.Key)
 			dst := params.TransferDir
 			res.FullPath, res.FullPathBeforeStrip, err = a.Copy(ctx, src, dst, params.StripTopLevelDir, params.ExcludeHiddenFiles)
 		}
@@ -99,15 +127,17 @@ func (a *BundleActivity) Execute(ctx context.Context, params *BundleActivityPara
 		}
 	}
 
-	res.RelPath, err = filepath.Rel(params.TransferDir, res.FullPath)
-	if err != nil {
-		return nil, fmt.Errorf("error calculating relative path to transfer (base=%q, target=%q): %v", params.TransferDir, res.FullPath, err)
+	if res.RelPath == "" {
+		res.RelPath, err = filepath.Rel(params.TransferDir, res.FullPath)
+		if err != nil {
+			return nil, fmt.Errorf("error calculating relative path to transfer (base=%q, target=%q): %v", params.TransferDir, res.FullPath, err)
+		}
 	}
 
 	return res, err
 }
 
-// SingleFile bundles a transfer with the downloaded blob in it.
+// SingleFile creates a transfer bundle containing the downloaded blob.
 func (a *BundleActivity) SingleFile(ctx context.Context, transferDir, key, tempFile string) (string, error) {
 	b, err := bundler.NewBundlerWithTempDir(transferDir)
 	if err != nil {
@@ -136,7 +166,11 @@ func (a *BundleActivity) SingleFile(ctx context.Context, transferDir, key, tempF
 	return b.FullBaseFsPath(), nil
 }
 
-// Copy a transfer in the given destination using an intermediate temp. directory.
+// Copy copies a transfer into dst using an intermediate temporary directory.
+//
+// It returns the final transfer path and the path before StripTopLevelDir was
+// applied. When excludeHiddenFiles is enabled, dotfiles and dot-directories are
+// skipped during the copy.
 func (a *BundleActivity) Copy(ctx context.Context, src, dst string, stripTopLevelDir, excludeHiddenFiles bool) (string, string, error) {
 	const prefix = "enduro"
 	tempDir, err := os.MkdirTemp(dst, prefix)
@@ -169,16 +203,170 @@ func (a *BundleActivity) Copy(ctx context.Context, src, dst string, stripTopLeve
 	return tempDir, tempDirBeforeStrip, nil
 }
 
-func isSubPath(path, subPath string) (bool, error) {
-	up := ".." + string(os.PathSeparator)
-	rel, err := filepath.Rel(path, subPath)
+// relPathIfUnder returns target's relative path when target is already under base.
+//
+// The check intentionally goes beyond filepath.Rel. Batch directories may be
+// configured through symlinks or mount aliases that point into TransferDir, and
+// those should be reused instead of copied into a new temporary directory.
+func relPathIfUnder(base, target string) (string, bool, error) {
+	baseAbs, err := filepath.Abs(base)
 	if err != nil {
-		return false, err
+		return "", false, err
 	}
-	if !strings.HasPrefix(rel, up) && rel != ".." {
-		return true, nil
+	targetAbs, err := filepath.Abs(target)
+	if err != nil {
+		return "", false, err
 	}
-	return false, nil
+
+	if rel, ok, err := lexicalRelPathIfUnder(baseAbs, targetAbs); err != nil || ok {
+		return rel, ok, err
+	}
+
+	if rel, ok, err := evaluatedRelPathIfUnder(baseAbs, targetAbs); err != nil || ok {
+		return rel, ok, err
+	}
+
+	return sameFileRelPathIfUnder(baseAbs, targetAbs)
+}
+
+// evaluatedRelPathIfUnder repeats the descendant check after resolving symlinks.
+func evaluatedRelPathIfUnder(base, target string) (string, bool, error) {
+	baseEval, err := filepath.EvalSymlinks(base)
+	if err != nil {
+		return "", false, err
+	}
+	targetEval, err := filepath.EvalSymlinks(target)
+	if err != nil {
+		return "", false, err
+	}
+	return lexicalRelPathIfUnder(baseEval, targetEval)
+}
+
+type sameFileCandidate struct {
+	info   os.FileInfo
+	suffix []string
+}
+
+// sameFileRelPathIfUnder detects filesystem aliases that path evaluation misses.
+//
+// Symlink evaluation does not resolve bind mounts. This fallback compares
+// directory identities with os.SameFile so a batch path reached through a mount
+// alias can still be recognized as content already under TransferDir.
+func sameFileRelPathIfUnder(baseAbs, targetAbs string) (string, bool, error) {
+	baseInfo, err := os.Stat(baseAbs)
+	if err != nil {
+		return "", false, err
+	}
+
+	var candidates []sameFileCandidate
+	var relParts []string
+	for current := targetAbs; ; current = filepath.Dir(current) {
+		currentInfo, err := os.Stat(current)
+		if err != nil {
+			return "", false, err
+		}
+		if os.SameFile(baseInfo, currentInfo) {
+			if len(relParts) == 0 {
+				return ".", true, nil
+			}
+			return filepath.Join(relParts...), true, nil
+		}
+		if currentInfo.IsDir() {
+			candidates = append(candidates, sameFileCandidate{
+				info:   currentInfo,
+				suffix: append([]string(nil), relParts...),
+			})
+		}
+
+		parent := filepath.Dir(current)
+		if parent == current {
+			break
+		}
+		relParts = append([]string{filepath.Base(current)}, relParts...)
+	}
+
+	return relPathForSameFileDescendant(baseAbs, candidates)
+}
+
+// relPathForSameFileDescendant finds which transfer descendant an alias maps to.
+//
+// candidates are ancestors from the target path. When one has the same
+// filesystem identity as a directory under baseAbs, its stored suffix rebuilds
+// the full transfer-relative path below that matching descendant.
+func relPathForSameFileDescendant(baseAbs string, candidates []sameFileCandidate) (string, bool, error) {
+	if len(candidates) == 0 {
+		return "", false, nil
+	}
+
+	var rel string
+	var ok bool
+	err := filepath.WalkDir(baseAbs, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			if path == baseAbs {
+				return err
+			}
+			// This walk is only a best-effort alias check. Existing transfer
+			// contents may be unreadable or removed concurrently, and that
+			// should not prevent an unrelated external batch from being copied.
+			return nil
+		}
+		if !d.IsDir() {
+			return nil
+		}
+
+		info, err := d.Info()
+		if err != nil {
+			if path == baseAbs {
+				return err
+			}
+			return fs.SkipDir
+		}
+		for _, candidate := range candidates {
+			if !os.SameFile(candidate.info, info) {
+				continue
+			}
+
+			rel, err = filepath.Rel(baseAbs, path)
+			if err != nil {
+				return err
+			}
+			rel = relPathWithSuffix(rel, candidate.suffix)
+			ok = true
+			return fs.SkipAll
+		}
+
+		return nil
+	})
+	if err != nil {
+		return "", false, err
+	}
+	return rel, ok, nil
+}
+
+// relPathWithSuffix appends target path components to a transfer-relative path.
+func relPathWithSuffix(rel string, suffix []string) string {
+	if len(suffix) == 0 {
+		return rel
+	}
+	if rel == "." {
+		return filepath.Join(suffix...)
+	}
+
+	parts := append([]string{rel}, suffix...)
+	return filepath.Join(parts...)
+}
+
+// lexicalRelPathIfUnder checks descendant paths without resolving filesystem aliases.
+func lexicalRelPathIfUnder(base, target string) (string, bool, error) {
+	up := ".." + string(os.PathSeparator)
+	rel, err := filepath.Rel(base, target)
+	if err != nil {
+		return "", false, err
+	}
+	if rel == ".." || strings.HasPrefix(rel, up) {
+		return "", false, nil
+	}
+	return rel, true, nil
 }
 
 // stripDirContainer strips the top-level directory of a transfer.
@@ -320,6 +508,7 @@ func unbag(path string) error {
 	return nil
 }
 
+// removeHiddenFiles removes dotfiles and dot-directories from path recursively.
 func removeHiddenFiles(path string) error {
 	root, err := os.OpenRoot(path)
 	if err != nil {
