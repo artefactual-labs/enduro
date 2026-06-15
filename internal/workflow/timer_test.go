@@ -68,3 +68,37 @@ func TestTimer(t *testing.T) {
 	assert.Equal(t, env.IsWorkflowCompleted(), true)
 	assert.ErrorContains(t, env.GetWorkflowError(), fmt.Sprintf("deadline exceeded: %s", deadline))
 }
+
+func TestTimerDoesNotExceedWhenCanceled(t *testing.T) {
+	wts := temporalsdk_testsuite.WorkflowTestSuite{}
+	env := wts.NewTestWorkflowEnvironment()
+
+	env.RegisterWorkflowWithOptions(
+		func(ctx temporalsdk_workflow.Context, duration time.Duration) error {
+			parentCtx, cancelParent := temporalsdk_workflow.WithCancel(ctx)
+
+			timer := workflow.NewTimer()
+			_, cancelTimer := timer.WithTimeout(parentCtx, duration)
+			defer cancelTimer()
+
+			cancelParent()
+			if err := temporalsdk_workflow.Sleep(ctx, time.Millisecond); err != nil {
+				return err
+			}
+
+			if timer.Exceeded() {
+				return fmt.Errorf("timer exceeded after cancellation")
+			}
+
+			return nil
+		},
+		temporalsdk_workflow.RegisterOptions{
+			Name: "workflow",
+		},
+	)
+
+	env.ExecuteWorkflow("workflow", time.Hour)
+
+	assert.Equal(t, env.IsWorkflowCompleted(), true)
+	assert.NilError(t, env.GetWorkflowError())
+}

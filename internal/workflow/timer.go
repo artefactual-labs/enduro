@@ -20,22 +20,28 @@ func NewTimer() *Timer {
 func (t *Timer) WithTimeout(ctx temporalsdk_workflow.Context, d time.Duration) (temporalsdk_workflow.Context, temporalsdk_workflow.CancelFunc) {
 	logger := temporalsdk_workflow.GetLogger(ctx)
 
-	timedCtx, cancelHandler := temporalsdk_workflow.WithCancel(ctx)
-	temporalsdk_workflow.Go(ctx, func(ctx temporalsdk_workflow.Context) {
-		if err := temporalsdk_workflow.NewTimer(ctx, d).Get(ctx, nil); err != nil {
+	timedCtx, cancelTimedCtx := temporalsdk_workflow.WithCancel(ctx)
+	timerCtx, cancelTimer := temporalsdk_workflow.WithCancel(ctx)
+	temporalsdk_workflow.Go(timerCtx, func(ctx temporalsdk_workflow.Context) {
+		err := temporalsdk_workflow.NewTimer(ctx, d).Get(ctx, nil)
+		if err != nil {
 			if !temporalsdk_temporal.IsCanceledError(err) {
 				logger.Warn("Timer failed", "err", err.Error())
 			}
+			return
 		}
-
-		cancelHandler()
 
 		t.Lock()
 		t.exceeded = true
 		t.Unlock()
+
+		cancelTimedCtx()
 	})
 
-	return timedCtx, cancelHandler
+	return timedCtx, func() {
+		cancelTimedCtx()
+		cancelTimer()
+	}
 }
 
 func (t *Timer) Exceeded() bool {
