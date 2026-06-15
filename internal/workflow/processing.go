@@ -1004,10 +1004,12 @@ func (w *ProcessingWorkflow) persistReconciliationState(sessCtx temporalsdk_work
 // For that reason, the workflow performs a short reconciliation loop here. It
 // persists each reconciliation result, accepts storage-complete outcomes even
 // after an ingest error, and gives only the states that may still settle on
-// their own, such as not_found and indeterminate, a brief window to resolve
-// before failing the workflow. A replicated_partial result already proves that
-// a required location is still missing, so the workflow stops immediately
-// instead of waiting for replica repair to happen implicitly.
+// their own after a successful ingest, such as not_found and indeterminate, a
+// brief window to resolve before failing the workflow. A failed ingest is
+// already terminal in Archivematica, so non-complete reconciliation outcomes
+// stop immediately. A replicated_partial result already proves that a required
+// location is still missing, so the workflow stops immediately instead of
+// waiting for replica repair to happen implicitly.
 func (w *ProcessingWorkflow) reconcileAfterIngest(sessCtx temporalsdk_workflow.Context, tinfo *TransferInfo, ingestErr error) error {
 	deadline := temporalsdk_workflow.Now(sessCtx).UTC().Add(postIngestReconciliationRetryWindow)
 
@@ -1029,10 +1031,10 @@ func (w *ProcessingWorkflow) reconcileAfterIngest(sessCtx temporalsdk_workflow.C
 			return setStoredAtFromReconciliation(tinfo, response)
 		default:
 			// not_found and indeterminate can still reflect a short visibility
-			// gap after Archivematica ingest has ended, so give only those
-			// states a brief retry window. replicated_partial already means a
-			// required location is missing, so treat it as final here.
-			if shouldRetryPostIngestReconciliation(response.Classification) && temporalsdk_workflow.Now(sessCtx).UTC().Before(deadline) {
+			// gap after a successful Archivematica ingest, so give only those
+			// states a brief retry window. Once ingest has failed, Archivematica
+			// will not make further progress on its own.
+			if shouldRetryPostIngestReconciliation(response.Classification, ingestErr) && temporalsdk_workflow.Now(sessCtx).UTC().Before(deadline) {
 				if err := temporalsdk_workflow.Sleep(sessCtx, postIngestReconciliationRetryInterval); err != nil {
 					return err
 				}
@@ -1044,7 +1046,11 @@ func (w *ProcessingWorkflow) reconcileAfterIngest(sessCtx temporalsdk_workflow.C
 	}
 }
 
-func shouldRetryPostIngestReconciliation(classification reconciliation.Classification) bool {
+func shouldRetryPostIngestReconciliation(classification reconciliation.Classification, ingestErr error) bool {
+	if ingestErr != nil {
+		return false
+	}
+
 	switch classification {
 	case reconciliation.ClassificationNotFound, reconciliation.ClassificationIndeterminate:
 		return true

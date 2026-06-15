@@ -1652,7 +1652,7 @@ func (s *ProcessingWorkflowTestSuite) TestRecoveryEnabledPromotesIngestFailureWh
 	s.NoError(s.env.GetWorkflowError())
 }
 
-func (s *ProcessingWorkflowTestSuite) TestRecoveryEnabledRetriesNotFoundAfterIngestFailure() {
+func (s *ProcessingWorkflowTestSuite) TestRecoveryEnabledFailsFastOnNotFoundAfterIngestFailure() {
 	s.hooks.Hooks["hari"]["disabled"] = true
 	s.hooks.Hooks["prod"]["disabled"] = true
 
@@ -1665,10 +1665,6 @@ func (s *ProcessingWorkflowTestSuite) TestRecoveryEnabledRetriesNotFoundAfterIng
 	registerWorkflowActivityStubs(s.env)
 
 	pollErr := errors.New("ingest poll failed")
-	aipStoredAt := "2026-03-17T07:00:00Z"
-	completedAt := "2026-03-17T08:00:00Z"
-	finalStoredAt := time.Date(2026, time.March, 17, 8, 0, 0, 0, time.UTC)
-
 	s.env.OnActivity(updatePackageLocalActivity, mock.Anything, mock.Anything, mock.Anything, &updatePackageLocalActivityParams{
 		CollectionID: uint(12345),
 		Key:          "key",
@@ -1763,35 +1759,15 @@ func (s *ProcessingWorkflowTestSuite) TestRecoveryEnabledRetriesNotFoundAfterIng
 			strings.Contains(*params.Error, string(reconciliation.ClassificationNotFound)) &&
 			strings.Contains(*params.Error, "ingest poll failed")
 	})).Return(nil).Once()
-	s.env.OnActivity(activities.ReconcileStorageActivityName, &activities.ReconcileStorageActivityParams{
-		PipelineName: "pipeline",
-		AIPID:        "aip-id",
-	}).Return(&activities.ReconcileStorageActivityResponse{
-		Classification: reconciliation.ClassificationReplicatedComplete,
-		Status:         reconciliation.StatusComplete,
-		AIPStoredAt:    &aipStoredAt,
-		CompletedAt:    &completedAt,
-	}, nil).Once()
-	s.env.OnActivity(updateReconciliationLocalActivity, mock.Anything, mock.Anything, mock.Anything, mock.MatchedBy(func(params *updateReconciliationLocalActivityParams) bool {
-		return params.CollectionID == 12345 &&
-			params.AIPStoredAt != nil &&
-			params.CheckedAt != nil &&
-			params.Status != nil &&
-			*params.Status == string(reconciliation.StatusComplete) &&
-			params.Error == nil &&
-			params.AIPStoredAt.Format(time.RFC3339) == "2026-03-17T07:00:00Z"
-	})).Return(nil).Once()
 	s.env.OnActivity(releasePipelineLocalActivity, mock.Anything, mock.Anything, "pipeline").Return(nil).Once()
-	s.env.OnActivity(activities.HidePackageActivityName, "transfer-id", "transfer", "pipeline", false).Return(nil).Once()
-	s.env.OnActivity(activities.HidePackageActivityName, "aip-id", "ingest", "pipeline", false).Return(nil).Once()
 	s.env.OnActivity(updatePackageLocalActivity, mock.Anything, mock.Anything, mock.Anything, &updatePackageLocalActivityParams{
 		CollectionID: uint(12345),
 		Key:          "key",
 		PipelineID:   "new-pipeline-id",
 		TransferID:   "transfer-id",
 		SIPID:        "aip-id",
-		StoredAt:     finalStoredAt,
-		Status:       collection.StatusDone,
+		StoredAt:     time.Time{},
+		Status:       collection.StatusError,
 	}).Return(nil).Once()
 
 	s.env.ExecuteWorkflow(s.workflow.Execute, &collection.ProcessingWorkflowRequest{
@@ -1802,7 +1778,8 @@ func (s *ProcessingWorkflowTestSuite) TestRecoveryEnabledRetriesNotFoundAfterIng
 	})
 
 	s.True(s.env.IsWorkflowCompleted())
-	s.NoError(s.env.GetWorkflowError())
+	s.ErrorContains(s.env.GetWorkflowError(), "ingest failed and storage reconciliation returned not_found")
+	s.True(temporal.NonRetryableError(s.env.GetWorkflowError()))
 }
 
 func (s *ProcessingWorkflowTestSuite) TestRecoveryEnabledFailsFastOnReplicatedPartialAfterIngestFailure() {
@@ -2087,10 +2064,18 @@ func TestShouldRetryPostIngestReconciliation(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			got := shouldRetryPostIngestReconciliation(tc.classification)
+			got := shouldRetryPostIngestReconciliation(tc.classification, nil)
 			assert.Equal(t, tc.want, got)
 		})
 	}
+}
+
+func TestShouldNotRetryPostIngestReconciliationAfterIngestError(t *testing.T) {
+	t.Parallel()
+
+	got := shouldRetryPostIngestReconciliation(reconciliation.ClassificationNotFound, errors.New("ingest failed"))
+
+	assert.Assert(t, !got)
 }
 
 func TestSetStoredAtFromReconciliationRequiresCompletedAt(t *testing.T) {
