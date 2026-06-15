@@ -106,7 +106,10 @@ func (a *BatchActivity) Execute(ctx context.Context, params BatchWorkflowInput) 
 			return err
 		}
 
-		return fs.SkipDir
+		if entry.IsDir() {
+			return fs.SkipDir
+		}
+		return nil
 	})
 	if err != nil {
 		return temporal.NewNonRetryableError(err)

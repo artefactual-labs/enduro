@@ -26,15 +26,35 @@ const {
   selectedPipelineId,
   selectedProcessingConfig,
   selectedTransferType,
+  showBatchStatus,
   status,
   statusErrorMessage,
   loadStatus,
   submit,
   submitErrorMessage,
-  submitSuccessMessage,
   transferOptions,
   useCompletedDirHint
 } = useBatchImport()
+
+const batchStatusLabel = computed(() => (
+  isRunning.value ? 'RUNNING' : (status.value.status?.toUpperCase() || 'SUBMITTED')
+))
+
+const batchStatusColor = computed(() => {
+  if (isRunning.value) return 'warning'
+
+  switch (status.value.status?.toLowerCase()) {
+    case 'completed':
+      return 'success'
+    case 'failed':
+    case 'canceled':
+    case 'terminated':
+    case 'timed_out':
+      return 'error'
+    default:
+      return 'neutral'
+  }
+})
 
 useSeoMeta({
   title: 'Batch import'
@@ -64,14 +84,6 @@ export { useBatchPageData, useBatchStatusData } from '~/loaders/batch-page'
     />
 
     <UAlert
-      v-if="submitSuccessMessage"
-      color="success"
-      variant="subtle"
-      title="Batch submitted"
-      :description="submitSuccessMessage"
-    />
-
-    <UAlert
       v-if="statusErrorMessage"
       color="warning"
       variant="subtle"
@@ -79,29 +91,29 @@ export { useBatchPageData, useBatchStatusData } from '~/loaders/batch-page'
       :description="statusErrorMessage"
     />
 
-    <UCard v-if="isRunning">
+    <UCard v-if="showBatchStatus">
       <template #header>
         <div class="flex items-center justify-between gap-3">
           <div>
             <p class="text-xs font-medium uppercase tracking-[0.2em] text-muted">
-              Active job
+              {{ isRunning ? 'Active job' : 'Submission received' }}
             </p>
             <h1 class="text-xl font-semibold text-highlighted">
-              Batch running
+              {{ isRunning ? 'Batch running' : 'Batch submitted' }}
             </h1>
           </div>
 
           <UBadge
-            label="RUNNING"
-            color="warning"
-            variant="subtle"
+            :label="batchStatusLabel"
+            :color="batchStatusColor"
+            variant="solid"
           />
         </div>
       </template>
 
       <div class="space-y-4">
         <p class="text-sm text-muted">
-          Batch operation is still running. Status refreshes automatically every second.
+          {{ isRunning ? 'Batch operation is still running. Status refreshes automatically every second.' : 'Enduro accepted the batch. Review the collections list to follow each transfer.' }}
         </p>
 
         <dl class="grid grid-cols-3 gap-y-2 text-sm">
@@ -109,7 +121,11 @@ export { useBatchPageData, useBatchStatusData } from '~/loaders/batch-page'
             Status
           </dt>
           <dd class="col-span-2">
-            {{ status.status || 'running' }}
+            <UBadge
+              :label="batchStatusLabel"
+              :color="batchStatusColor"
+              variant="subtle"
+            />
           </dd>
           <dt class="text-muted">
             Workflow ID
@@ -125,7 +141,7 @@ export { useBatchPageData, useBatchStatusData } from '~/loaders/batch-page'
           </dd>
         </dl>
 
-        <div class="flex justify-end">
+        <div class="flex justify-end gap-2">
           <UButton
             label="Refresh now"
             color="neutral"
@@ -133,6 +149,12 @@ export { useBatchPageData, useBatchStatusData } from '~/loaders/batch-page'
             size="sm"
             :loading="isLoadingStatus"
             @click="loadStatus"
+          />
+          <UButton
+            to="/collections"
+            label="View collections"
+            color="primary"
+            size="sm"
           />
         </div>
       </div>
@@ -158,13 +180,13 @@ export { useBatchPageData, useBatchStatusData } from '~/loaders/batch-page'
 
       <div class="space-y-5">
         <p class="text-sm text-muted">
-          Submit a new batch by choosing the source path, optional pipeline and processing configuration, and the destination behavior for processed transfers.
+          Submit a new batch by choosing the source directory, optional pipeline and processing configuration, and the destination behavior for processed transfers.
         </p>
 
         <div class="grid grid-cols-1 gap-4">
           <UFormField
             label="Path"
-            description="Select the path for the batch"
+            description="Select the parent directory that contains the batch transfers"
             required
           >
             <UInput
@@ -244,7 +266,7 @@ export { useBatchPageData, useBatchStatusData } from '~/loaders/batch-page'
 
           <UFormField
             label="Depth"
-            description="Depth where SIPs reside in the hierarchy"
+            description="0 selects direct children of the batch path; 1 selects one level below. Enduro submits folders and non-hidden files at that level."
           >
             <UInput
               v-model.number="depth"

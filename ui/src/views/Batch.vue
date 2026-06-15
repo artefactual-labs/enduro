@@ -12,18 +12,23 @@
 
         <h3>Batch</h3>
 
-        <template v-if="isRunning">
-          <p class="mb-4">Batch operation is still running...</p>
+        <template v-if="showStatus">
+          <p class="mb-4">
+            {{ isRunning ? 'Batch operation is still running...' : 'Batch submitted. Review the collections list to follow each transfer.' }}
+          </p>
           <pre>{{ status }}</pre>
+          <b-button :to="{ name: 'collections' }" variant="primary">
+            View collections
+          </b-button>
         </template>
 
         <template v-else>
 
-          <p>Start a new batch.</p>
+          <p>Start a new batch from a source directory.</p>
 
           <b-form @submit.prevent="onSubmit">
 
-            <b-form-group label="Path" label-for="input-path" description="Select the path for the batch.">
+            <b-form-group label="Path" label-for="input-path" description="Select the parent directory that contains the batch transfers.">
               <b-form-input id="input-path" v-model="form.path" type="text" required></b-form-input>
             </b-form-group>
 
@@ -53,7 +58,7 @@
               </b-form-checkbox>
             </b-form-group>
 
-            <b-form-group label="Depth" label-for="depth-input" description="Depth where SIPs reside in the hierarchy.">
+            <b-form-group label="Depth" label-for="depth-input" description="0 selects direct children of the batch path; 1 selects one level below. Enduro submits folders and non-hidden files at that level.">
               <b-form-input id="depth-input" v-model="form.depth" type="number" min="0"></b-form-input>
             </b-form-group>
 
@@ -146,6 +151,8 @@ export default class Batch extends Vue {
     running: false,
   };
 
+  private submitted: boolean = false;
+
   private hints: api.BatchHintsResponseBody = {
     completedDirs: [],
   };
@@ -168,6 +175,10 @@ export default class Batch extends Vue {
 
   private get isRunning() {
     return this.status && this.status.running;
+  }
+
+  private get showStatus() {
+    return this.isRunning || this.submitted;
   }
 
   private created() {
@@ -261,6 +272,7 @@ export default class Batch extends Vue {
     request.submitRequestBody.depth = Number(this.form.depth);
     return EnduroBatchClient.batchSubmit(request).then((response: api.BatchSubmitResponseBody) => {
       this.saveDefaults();
+      this.submitted = true;
       this.loadStatus();
     }).catch((response: Response) => {
       if (response.status === 409) {
@@ -281,4 +293,3 @@ export default class Batch extends Vue {
 <style lang="scss">
 
 </style>
-
