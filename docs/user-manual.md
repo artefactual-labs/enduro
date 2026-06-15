@@ -33,12 +33,19 @@ configuration section](./configuration-reference.md#watcher) for more details.
   purpose.
 - Once your transfers are in place, you will be telling Enduro where to look for
   them to start the import process. You will be directing Enduro to look in a
-  given parent directory, and when it does it will import all of the top-level
-  subdirectories in that parent directory.
+  given parent directory, and it will import the entries at the selected depth
+  in that parent directory.
 - For example, if you create a top-level directory called *EnduroTests*, and
   place subdirectories called *Nature*, *Household items* and *Buildings*
   inside it, Enduro will consider each of those subdirectories to be transfers
   (regardless of the directory structure within those subdirectories).
+- A transfer can be a directory or a non-hidden file such as a `.zip` file. For
+  example, a batch directory can contain both `Nature/` and `Buildings.zip`.
+  Enduro does not inspect zip contents while discovering the batch; the selected
+  Archivematica transfer type controls how Archivematica processes the zip.
+- The batch depth setting controls which level Enduro scans. Depth `0` means
+  direct children of the batch path. Depth `1` means one level below that, and
+  so on. Only entries at that depth are submitted as transfers.
 
 ![EnduroTests](./assets/sample-hierarchy.png)
 
@@ -49,6 +56,8 @@ configuration section](./configuration-reference.md#watcher) for more details.
 - Enter the path of the directory containing the transfers to be ingested.
 - Enter the name of the Archivematica processing pipeline that will be used to
   perform the ingest.
+- Set the depth when the transfers are not direct children of the selected
+  batch path.
 - Click Submit. Note that the page does not change when Submit is clicked;
   don't re-click.
 

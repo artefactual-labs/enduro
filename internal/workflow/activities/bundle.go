@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -82,24 +83,29 @@ func (a *BundleActivity) Execute(ctx context.Context, params *BundleActivityPara
 
 	if params.BatchDir != "" {
 		src := filepath.Join(params.BatchDir, params.Key)
-		var batchPathIsInTransferDir bool
-		res.RelPath, batchPathIsInTransferDir, err = relPathIfUnder(params.TransferDir, src)
-		if err != nil {
-			return nil, temporal.NewNonRetryableError(err)
-		}
-		if batchPathIsInTransferDir {
-			res.FullPath = src
-			// Reused batch content is original transfer content, so leave
-			// FullPathBeforeStrip empty to keep later cleanup from removing it.
-			res.FullPathBeforeStrip = ""
-			if params.ExcludeHiddenFiles {
-				if err := removeHiddenFiles(res.FullPath); err != nil {
-					return nil, temporal.NewNonRetryableError(fmt.Errorf("failed to remove hidden files: %w", err))
+		if params.IsDir {
+			var batchPathIsInTransferDir bool
+			res.RelPath, batchPathIsInTransferDir, err = relPathIfUnder(params.TransferDir, src)
+			if err != nil {
+				return nil, temporal.NewNonRetryableError(err)
+			}
+			if batchPathIsInTransferDir {
+				res.FullPath = src
+				// Reused batch content is original transfer content, so leave
+				// FullPathBeforeStrip empty to keep later cleanup from removing it.
+				res.FullPathBeforeStrip = ""
+				if params.ExcludeHiddenFiles {
+					if err := removeHiddenFiles(res.FullPath); err != nil {
+						return nil, temporal.NewNonRetryableError(fmt.Errorf("failed to remove hidden files: %w", err))
+					}
 				}
+			} else {
+				dst := params.TransferDir
+				res.FullPath, res.FullPathBeforeStrip, err = a.Copy(ctx, src, dst, params.StripTopLevelDir, params.ExcludeHiddenFiles)
 			}
 		} else {
-			dst := params.TransferDir
-			res.FullPath, res.FullPathBeforeStrip, err = a.Copy(ctx, src, dst, params.StripTopLevelDir, params.ExcludeHiddenFiles)
+			res.FullPath, err = a.CopySingleFile(params.TransferDir, params.Key, src)
+			res.FullPathBeforeStrip = res.FullPath
 		}
 	} else if params.IsDir {
 		// For a standard (non-batch) package that has been downloaded (and
@@ -156,6 +162,45 @@ func (a *BundleActivity) SingleFile(ctx context.Context, transferDir, key, tempF
 	}
 
 	if err := os.Chmod(path, os.FileMode(0o755)); err != nil {
+		return "", fmt.Errorf("error changing file mode: %v", err)
+	}
+
+	if err := b.Bundle(); err != nil {
+		return "", fmt.Errorf("error bundling the transfer: %v", err)
+	}
+
+	return b.FullBaseFsPath(), nil
+}
+
+// CopySingleFile creates a transfer bundle containing a source file without
+// moving the original file.
+func (a *BundleActivity) CopySingleFile(transferDir, key, src string) (string, error) {
+	b, err := bundler.NewBundlerWithTempDir(transferDir)
+	if err != nil {
+		return "", fmt.Errorf("error creating bundle: %v", err)
+	}
+
+	source, err := os.Open(src)
+	if err != nil {
+		return "", fmt.Errorf("error opening file: %v", err)
+	}
+	defer source.Close()
+
+	dest, err := b.Create(filepath.Join("objects", key))
+	if err != nil {
+		return "", fmt.Errorf("error creating file: %v", err)
+	}
+
+	destPath := filepath.Join(transferDir, dest.Name())
+	if _, err := io.Copy(dest, source); err != nil {
+		_ = dest.Close()
+		return "", fmt.Errorf("error copying file: %v", err)
+	}
+	if err := dest.Close(); err != nil {
+		return "", fmt.Errorf("error closing file: %v", err)
+	}
+
+	if err := os.Chmod(destPath, os.FileMode(0o755)); err != nil {
 		return "", fmt.Errorf("error changing file mode: %v", err)
 	}
 

@@ -58,6 +58,162 @@ func TestBatchActivityStartsProcessingWorkflows(t *testing.T) {
 	assert.NilError(t, err)
 }
 
+func TestBatchActivityStartsProcessingWorkflowsForFilesAndDirectories(t *testing.T) {
+	opts := []fs.PathOp{
+		fs.WithFile("transfer1.zip", "contents"),
+		fs.WithDir("transfer2",
+			fs.WithFile("transfer2.txt", ""),
+		),
+	}
+	tmpDir := fs.NewDir(t, "batch", opts...)
+	batchPath := tmpDir.Path()
+	defer tmpDir.Remove()
+
+	ctrl := gomock.NewController(t)
+	ctx := context.Background()
+	serviceMock := batchfake.NewMockService(ctrl)
+	a := NewBatchActivity(serviceMock)
+
+	serviceMock.EXPECT().InitProcessingWorkflow(ctx, &collection.ProcessingWorkflowRequest{
+		BatchDir:         batchPath,
+		Key:              "transfer1.zip",
+		IsDir:            false,
+		PipelineName:     "am",
+		ProcessingConfig: "automated",
+	})
+	serviceMock.EXPECT().InitProcessingWorkflow(ctx, &collection.ProcessingWorkflowRequest{
+		BatchDir:         batchPath,
+		Key:              "transfer2",
+		IsDir:            true,
+		PipelineName:     "am",
+		ProcessingConfig: "automated",
+	})
+
+	err := a.Execute(ctx, BatchWorkflowInput{
+		Path:             batchPath,
+		PipelineName:     "am",
+		ProcessingConfig: "automated",
+	})
+	assert.NilError(t, err)
+}
+
+func TestBatchActivityStartsProcessingWorkflowsForFilesAtDepth(t *testing.T) {
+	opts := []fs.PathOp{
+		fs.WithDir("lot1",
+			fs.WithFile("transfer1.zip", "contents"),
+			fs.WithFile(".DS_Store", "metadata"),
+		),
+		fs.WithDir("lot2",
+			fs.WithFile("transfer2.zip", "contents"),
+		),
+	}
+	tmpDir := fs.NewDir(t, "batch", opts...)
+	batchPath := tmpDir.Path()
+	defer tmpDir.Remove()
+
+	ctrl := gomock.NewController(t)
+	ctx := context.Background()
+	serviceMock := batchfake.NewMockService(ctrl)
+	a := NewBatchActivity(serviceMock)
+
+	serviceMock.EXPECT().InitProcessingWorkflow(ctx, &collection.ProcessingWorkflowRequest{
+		BatchDir:         tmpDir.Join("lot1"),
+		Key:              "transfer1.zip",
+		IsDir:            false,
+		PipelineName:     "am",
+		ProcessingConfig: "automated",
+	})
+	serviceMock.EXPECT().InitProcessingWorkflow(ctx, &collection.ProcessingWorkflowRequest{
+		BatchDir:         tmpDir.Join("lot2"),
+		Key:              "transfer2.zip",
+		IsDir:            false,
+		PipelineName:     "am",
+		ProcessingConfig: "automated",
+	})
+
+	err := a.Execute(ctx, BatchWorkflowInput{
+		Path:             batchPath,
+		PipelineName:     "am",
+		ProcessingConfig: "automated",
+		Depth:            1,
+	})
+	assert.NilError(t, err)
+}
+
+func TestBatchActivityDoesNotDescendIntoDirectoryTransferAtDepth(t *testing.T) {
+	opts := []fs.PathOp{
+		fs.WithDir("transfer1",
+			fs.WithFile("DSCF2073.JPG", "contents"),
+		),
+	}
+	tmpDir := fs.NewDir(t, "batch", opts...)
+	batchPath := tmpDir.Path()
+	defer tmpDir.Remove()
+
+	ctrl := gomock.NewController(t)
+	ctx := context.Background()
+	serviceMock := batchfake.NewMockService(ctrl)
+	a := NewBatchActivity(serviceMock)
+
+	serviceMock.EXPECT().InitProcessingWorkflow(ctx, &collection.ProcessingWorkflowRequest{
+		BatchDir:         batchPath,
+		Key:              "transfer1",
+		IsDir:            true,
+		PipelineName:     "am",
+		ProcessingConfig: "automated",
+	})
+
+	err := a.Execute(ctx, BatchWorkflowInput{
+		Path:             batchPath,
+		PipelineName:     "am",
+		ProcessingConfig: "automated",
+		Depth:            0,
+	})
+	assert.NilError(t, err)
+}
+
+func TestBatchActivityStartsProcessingWorkflowsForMixedTransfersAtDepth(t *testing.T) {
+	opts := []fs.PathOp{
+		fs.WithDir("lot",
+			fs.WithFile("transfer1.zip", "contents"),
+			fs.WithDir("transfer2",
+				fs.WithFile("DSCF2073.JPG", "contents"),
+			),
+		),
+	}
+	tmpDir := fs.NewDir(t, "batch", opts...)
+	batchPath := tmpDir.Path()
+	defer tmpDir.Remove()
+
+	ctrl := gomock.NewController(t)
+	ctx := context.Background()
+	serviceMock := batchfake.NewMockService(ctrl)
+	a := NewBatchActivity(serviceMock)
+
+	serviceMock.EXPECT().InitProcessingWorkflow(ctx, &collection.ProcessingWorkflowRequest{
+		BatchDir:         tmpDir.Join("lot"),
+		Key:              "transfer1.zip",
+		IsDir:            false,
+		PipelineName:     "am",
+		ProcessingConfig: "automated",
+	})
+	serviceMock.EXPECT().InitProcessingWorkflow(ctx, &collection.ProcessingWorkflowRequest{
+		BatchDir:         tmpDir.Join("lot"),
+		Key:              "transfer2",
+		IsDir:            true,
+		PipelineName:     "am",
+		ProcessingConfig: "automated",
+	})
+
+	err := a.Execute(ctx, BatchWorkflowInput{
+		Path:             batchPath,
+		PipelineName:     "am",
+		ProcessingConfig: "automated",
+		Depth:            1,
+	})
+	assert.NilError(t, err)
+}
+
 func TestBatchActivityFailsWithBogusBatchPath(t *testing.T) {
 	// Set up the activity
 	ctrl := gomock.NewController(t)

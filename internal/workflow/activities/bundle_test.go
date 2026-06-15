@@ -237,6 +237,40 @@ func TestBundleActivity(t *testing.T) {
 		)
 	})
 
+	t.Run("Bundles batch file when BatchDir is outside TransferDir", func(t *testing.T) {
+		activity := NewBundleActivity()
+		ts := &temporalsdk_testsuite.WorkflowTestSuite{}
+		env := ts.NewTestActivityEnvironment()
+		env.RegisterActivity(activity.Execute)
+
+		transferDir := fs.NewDir(t, "enduro")
+		batchDir := fs.NewDir(t, "batch",
+			fs.WithFile("transfer1.zip", "zip contents\n"),
+		)
+
+		fut, err := env.ExecuteActivity(activity.Execute, &BundleActivityParams{
+			IsDir:       false,
+			TransferDir: transferDir.Path(),
+			BatchDir:    batchDir.Path(),
+			Key:         "transfer1.zip",
+		})
+		assert.NilError(t, err)
+
+		res := BundleActivityResult{}
+		assert.NilError(t, fut.Get(&res))
+		assert.Assert(t, strings.HasPrefix(res.FullPath, transferDir.Path()+string(os.PathSeparator)))
+		assert.Equal(t, res.FullPathBeforeStrip, res.FullPath)
+		assert.Assert(t, strings.HasPrefix(res.RelPath, "c"+string(os.PathSeparator)))
+
+		data, err := os.ReadFile(filepath.Join(res.FullPath, "objects", "transfer1.zip"))
+		assert.NilError(t, err)
+		assert.Equal(t, string(data), "zip contents\n")
+
+		original, err := os.ReadFile(batchDir.Join("transfer1.zip"))
+		assert.NilError(t, err)
+		assert.Equal(t, string(original), "zip contents\n")
+	})
+
 	t.Run("Copies external batch when unrelated transfer contents are unreadable", func(t *testing.T) {
 		if runtime.GOOS == "windows" {
 			t.Skip("chmod permissions are not portable on Windows")

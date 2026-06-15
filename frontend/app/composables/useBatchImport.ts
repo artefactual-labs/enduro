@@ -72,7 +72,7 @@ export function useBatchImport() {
 
   const isSubmitting = ref(false)
   const submitErrorMessage = ref('')
-  const submitSuccessMessage = ref('')
+  const hasSubmittedBatch = ref(false)
 
   let statusTimer: number | null = null
   let isDisposed = false
@@ -106,6 +106,7 @@ export function useBatchImport() {
   ))
 
   const isRunning = computed(() => status.value.running)
+  const showBatchStatus = computed(() => isRunning.value || hasSubmittedBatch.value)
   const hasKnownCompletedDirs = computed(() => (hints.value.completedDirs?.length ?? 0) > 0)
   const canSubmit = computed(() => !isSubmitting.value && !isRunning.value && path.value.trim().length > 0)
 
@@ -200,12 +201,11 @@ export function useBatchImport() {
 
     isSubmitting.value = true
     submitErrorMessage.value = ''
-    submitSuccessMessage.value = ''
 
     try {
       await enduroApi.batches.submit(buildSubmitRequest())
       saveDefaults()
-      submitSuccessMessage.value = 'Batch submitted.'
+      hasSubmittedBatch.value = true
       path.value = ''
       await reloadStatus()
     } catch (error) {
@@ -283,10 +283,10 @@ export function useBatchImport() {
     selectedTransferType,
     status,
     statusErrorMessage,
+    showBatchStatus,
     loadStatus,
     submit,
     submitErrorMessage,
-    submitSuccessMessage,
     transferOptions,
     useCompletedDirHint
   }
