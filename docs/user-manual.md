@@ -54,6 +54,8 @@ configuration section](./configuration-reference.md#watcher) for more details.
 - To start a new batch ingest, click on Batch import in the upper right corner
   of the Collections tab. This will open a new batch import page.
 - Enter the path of the directory containing the transfers to be ingested.
+  When the batch path browser is configured, click Browse to select a directory
+  under the configured browser root instead of typing the path manually.
 - Enter the name of the Archivematica processing pipeline that will be used to
   perform the ingest.
 - Set the depth when the transfers are not direct children of the selected

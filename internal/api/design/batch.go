@@ -53,6 +53,24 @@ var _ = Service("batch", func() {
 			Response(StatusOK)
 		})
 	})
+	Method("browse", func() {
+		Description("Browse batch source directories")
+		Payload(func() {
+			Attribute("path", String, "Root-relative directory path to list")
+		})
+		Result(BatchBrowseResult)
+		Error("not_available")
+		Error("not_valid")
+		HTTP(func() {
+			GET("/browser")
+			Response(StatusOK)
+			Response("not_available", StatusNotFound)
+			Response("not_valid", StatusBadRequest)
+			Params(func() {
+				Param("path")
+			})
+		})
+	})
 })
 
 var BatchResult = Type("BatchResult", func() {
@@ -71,4 +89,27 @@ var BatchStatusResult = Type("BatchStatusResult", func() {
 
 var BatchHintsResult = Type("BatchHintsResult", func() {
 	Attribute("completed_dirs", ArrayOf(String), "A list of known values of completedDir used by existing watchers.")
+	Attribute("browser_enabled", Boolean, "Whether the batch source directory browser is configured.", func() {
+		Default(false)
+	})
+})
+
+var BatchBrowseResult = Type("BatchBrowseResult", func() {
+	Attribute("path", String, "Root-relative path of the listed directory.")
+	Attribute("absolute_path", String, "Absolute path of the listed directory.")
+	Attribute("entries", ArrayOf(BatchBrowseEntry), "Immediate child directories.")
+	Attribute("truncated", Boolean, "Whether the result was truncated because it exceeded the entry limit.", func() {
+		Default(false)
+	})
+	Required("path", "absolute_path", "entries", "truncated")
+})
+
+var BatchBrowseEntry = Type("BatchBrowseEntry", func() {
+	Attribute("name", String, "Directory name.")
+	Attribute("path", String, "Root-relative path of the directory.")
+	Attribute("absolute_path", String, "Absolute path of the directory.")
+	Attribute("modified_at", String, "Directory modification time.", func() {
+		Format(FormatDateTime)
+	})
+	Required("name", "path", "absolute_path")
 })

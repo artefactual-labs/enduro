@@ -24,6 +24,7 @@ type Server struct {
 	Submit http.Handler
 	Status http.Handler
 	Hints  http.Handler
+	Browse http.Handler
 	CORS   http.Handler
 }
 
@@ -57,12 +58,15 @@ func New(
 			{"Submit", "POST", "/batch"},
 			{"Status", "GET", "/batch"},
 			{"Hints", "GET", "/batch/hints"},
+			{"Browse", "GET", "/batch/browser"},
 			{"CORS", "OPTIONS", "/batch"},
 			{"CORS", "OPTIONS", "/batch/hints"},
+			{"CORS", "OPTIONS", "/batch/browser"},
 		},
 		Submit: NewSubmitHandler(e.Submit, mux, decoder, encoder, errhandler, formatter),
 		Status: NewStatusHandler(e.Status, mux, decoder, encoder, errhandler, formatter),
 		Hints:  NewHintsHandler(e.Hints, mux, decoder, encoder, errhandler, formatter),
+		Browse: NewBrowseHandler(e.Browse, mux, decoder, encoder, errhandler, formatter),
 		CORS:   NewCORSHandler(),
 	}
 }
@@ -75,6 +79,7 @@ func (s *Server) Use(m func(http.Handler) http.Handler) {
 	s.Submit = m(s.Submit)
 	s.Status = m(s.Status)
 	s.Hints = m(s.Hints)
+	s.Browse = m(s.Browse)
 	s.CORS = m(s.CORS)
 }
 
@@ -86,6 +91,7 @@ func Mount(mux goahttp.Muxer, h *Server) {
 	MountSubmitHandler(mux, h.Submit)
 	MountStatusHandler(mux, h.Status)
 	MountHintsHandler(mux, h.Hints)
+	MountBrowseHandler(mux, h.Browse)
 	MountCORSHandler(mux, h.CORS)
 }
 
@@ -239,12 +245,66 @@ func NewHintsHandler(
 	})
 }
 
+// MountBrowseHandler configures the mux to serve the "batch" service "browse"
+// endpoint.
+func MountBrowseHandler(mux goahttp.Muxer, h http.Handler) {
+	f, ok := HandleBatchOrigin(h).(http.HandlerFunc)
+	if !ok {
+		f = func(w http.ResponseWriter, r *http.Request) {
+			h.ServeHTTP(w, r)
+		}
+	}
+	mux.Handle("GET", "/batch/browser", f)
+}
+
+// NewBrowseHandler creates a HTTP handler which loads the HTTP request and
+// calls the "batch" service "browse" endpoint.
+func NewBrowseHandler(
+	endpoint goa.Endpoint,
+	mux goahttp.Muxer,
+	decoder func(*http.Request) goahttp.Decoder,
+	encoder func(context.Context, http.ResponseWriter) goahttp.Encoder,
+	errhandler func(context.Context, http.ResponseWriter, error),
+	formatter func(ctx context.Context, err error) goahttp.Statuser,
+) http.Handler {
+	var (
+		decodeRequest  = DecodeBrowseRequest(mux, decoder)
+		encodeResponse = EncodeBrowseResponse(encoder)
+		encodeError    = EncodeBrowseError(encoder, formatter)
+	)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
+		ctx = context.WithValue(ctx, goa.MethodKey, "browse")
+		ctx = context.WithValue(ctx, goa.ServiceKey, "batch")
+		payload, err := decodeRequest(r)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil && errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		res, err := endpoint(ctx, payload)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil && errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		if err := encodeResponse(ctx, w, res); err != nil {
+			if errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+		}
+	})
+}
+
 // MountCORSHandler configures the mux to serve the CORS endpoints for the
 // service batch.
 func MountCORSHandler(mux goahttp.Muxer, h http.Handler) {
 	h = HandleBatchOrigin(h)
 	mux.Handle("OPTIONS", "/batch", h.ServeHTTP)
 	mux.Handle("OPTIONS", "/batch/hints", h.ServeHTTP)
+	mux.Handle("OPTIONS", "/batch/browser", h.ServeHTTP)
 }
 
 // NewCORSHandler creates a HTTP handler which returns a simple 204 response.

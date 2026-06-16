@@ -15,12 +15,15 @@
 
 import * as runtime from '../runtime';
 import type {
+  BatchBrowseResult,
   BatchHintsResult,
   BatchResult,
   BatchStatusResult,
   SubmitRequestBody,
 } from '../models/index';
 import {
+    BatchBrowseResultFromJSON,
+    BatchBrowseResultToJSON,
     BatchHintsResultFromJSON,
     BatchHintsResultToJSON,
     BatchResultFromJSON,
@@ -30,6 +33,10 @@ import {
     SubmitRequestBodyFromJSON,
     SubmitRequestBodyToJSON,
 } from '../models/index';
+
+export interface BatchBrowseRequest {
+    path?: string;
+}
 
 export interface BatchSubmitRequest {
     submitRequestBody: SubmitRequestBody;
@@ -42,6 +49,22 @@ export interface BatchSubmitRequest {
  * @interface BatchApiInterface
  */
 export interface BatchApiInterface {
+    /**
+     * Browse batch source directories
+     * @summary browse batch
+     * @param {string} [path] Root-relative directory path to list
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof BatchApiInterface
+     */
+    batchBrowseRaw(requestParameters: BatchBrowseRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BatchBrowseResult>>;
+
+    /**
+     * Browse batch source directories
+     * browse batch
+     */
+    batchBrowse(requestParameters: BatchBrowseRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BatchBrowseResult>;
+
     /**
      * Retrieve form hints
      * @summary hints batch
@@ -94,6 +117,41 @@ export interface BatchApiInterface {
  * 
  */
 export class BatchApi extends runtime.BaseAPI implements BatchApiInterface {
+
+    /**
+     * Browse batch source directories
+     * browse batch
+     */
+    async batchBrowseRaw(requestParameters: BatchBrowseRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BatchBrowseResult>> {
+        const queryParameters: any = {};
+
+        if (requestParameters['path'] != null) {
+            queryParameters['path'] = requestParameters['path'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+
+        let urlPath = `/batch/browser`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => BatchBrowseResultFromJSON(jsonValue));
+    }
+
+    /**
+     * Browse batch source directories
+     * browse batch
+     */
+    async batchBrowse(requestParameters: BatchBrowseRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BatchBrowseResult> {
+        const response = await this.batchBrowseRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
 
     /**
      * Retrieve form hints

@@ -1,5 +1,7 @@
 /* tslint:disable */
 /* eslint-disable */
+export * from './BatchBrowseEntry';
+export * from './BatchBrowseResult';
 export * from './BatchHintsResult';
 export * from './BatchResult';
 export * from './BatchStatusResult';

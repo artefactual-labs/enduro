@@ -22,3 +22,8 @@ func StatusBatchPath() string {
 func HintsBatchPath() string {
 	return "/batch/hints"
 }
+
+// BrowseBatchPath returns the URL path to the batch service browse HTTP endpoint.
+func BrowseBatchPath() string {
+	return "/batch/browser"
+}

@@ -69,6 +69,51 @@ paths:
                         application/vnd.goa.error:
                             schema:
                                 $ref: '#/components/schemas/Error'
+    /batch/browser:
+        get:
+            tags:
+                - batch
+            summary: browse batch
+            description: Browse batch source directories
+            operationId: batch#browse
+            parameters:
+                - name: path
+                  in: query
+                  description: Root-relative directory path to list
+                  allowEmptyValue: true
+                  schema:
+                    type: string
+                    description: Root-relative directory path to list
+                    example: abc123
+                  example: abc123
+            responses:
+                "200":
+                    description: OK response.
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/BatchBrowseResult'
+                            example:
+                                absolute_path: abc123
+                                entries:
+                                    - absolute_path: abc123
+                                      modified_at: "1970-01-01T00:00:01Z"
+                                      name: abc123
+                                      path: abc123
+                                path: abc123
+                                truncated: false
+                "400":
+                    description: 'not_valid: Bad Request response.'
+                    content:
+                        application/vnd.goa.error:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                "404":
+                    description: 'not_available: Not Found response.'
+                    content:
+                        application/vnd.goa.error:
+                            schema:
+                                $ref: '#/components/schemas/Error'
     /batch/hints:
         get:
             tags:
@@ -84,6 +129,7 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/BatchHintsResult'
                             example:
+                                browser_enabled: false
                                 completed_dirs:
                                     - abc123
     /collection:
@@ -728,9 +774,83 @@ paths:
                     description: File downloaded
 components:
     schemas:
+        BatchBrowseEntry:
+            type: object
+            properties:
+                absolute_path:
+                    type: string
+                    description: Absolute path of the directory.
+                    example: abc123
+                modified_at:
+                    type: string
+                    description: Directory modification time.
+                    example: "1970-01-01T00:00:01Z"
+                    format: date-time
+                name:
+                    type: string
+                    description: Directory name.
+                    example: abc123
+                path:
+                    type: string
+                    description: Root-relative path of the directory.
+                    example: abc123
+            example:
+                absolute_path: abc123
+                modified_at: "1970-01-01T00:00:01Z"
+                name: abc123
+                path: abc123
+            required:
+                - name
+                - path
+                - absolute_path
+        BatchBrowseResult:
+            type: object
+            properties:
+                absolute_path:
+                    type: string
+                    description: Absolute path of the listed directory.
+                    example: abc123
+                entries:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/BatchBrowseEntry'
+                    description: Immediate child directories.
+                    example:
+                        - absolute_path: abc123
+                          modified_at: "1970-01-01T00:00:01Z"
+                          name: abc123
+                          path: abc123
+                path:
+                    type: string
+                    description: Root-relative path of the listed directory.
+                    example: abc123
+                truncated:
+                    type: boolean
+                    description: Whether the result was truncated because it exceeded the entry limit.
+                    default: false
+                    example: false
+            example:
+                absolute_path: abc123
+                entries:
+                    - absolute_path: abc123
+                      modified_at: "1970-01-01T00:00:01Z"
+                      name: abc123
+                      path: abc123
+                path: abc123
+                truncated: false
+            required:
+                - path
+                - absolute_path
+                - entries
+                - truncated
         BatchHintsResult:
             type: object
             properties:
+                browser_enabled:
+                    type: boolean
+                    description: Whether the batch source directory browser is configured.
+                    default: false
+                    example: false
                 completed_dirs:
                     type: array
                     items:
@@ -740,6 +860,7 @@ components:
                     example:
                         - abc123
             example:
+                browser_enabled: false
                 completed_dirs:
                     - abc123
         BatchResult:

@@ -8,7 +8,7 @@ import {
 } from './batch-page.helpers'
 
 test('default batch helper values match the inactive page state', () => {
-  expect(createDefaultBatchHints()).toEqual({ completedDirs: [] })
+  expect(createDefaultBatchHints()).toEqual({ browserEnabled: false, completedDirs: [] })
   expect(createDefaultBatchStatus()).toEqual({ running: false })
 })
 
@@ -27,7 +27,7 @@ test('resolveBatchPageData keeps fulfilled loader data', () => {
     },
     loadedHints: {
       status: 'fulfilled',
-      value: { completedDirs: ['/completed'] }
+      value: { browserEnabled: true, completedDirs: ['/completed'] }
     },
     loadedProcessingOptions: {
       status: 'fulfilled',
@@ -39,6 +39,7 @@ test('resolveBatchPageData keeps fulfilled loader data', () => {
   expect(data.selectedPipelineId).toBe('pipeline-1')
   expect(data.pipelinesErrorMessage).toBe('')
   expect(data.hintsErrorMessage).toBe('')
+  expect(data.hints.browserEnabled).toBe(true)
   expect(data.processingErrorMessage).toBe('')
   expect(data.processingOptions).toEqual([{ label: 'default', value: 'default' }])
 })
@@ -61,7 +62,7 @@ test('resolveBatchPageData falls back cleanly when API calls fail', () => {
   })
 
   expect(data.pipelines).toEqual([])
-  expect(data.hints).toEqual({ completedDirs: [] })
+  expect(data.hints).toEqual({ browserEnabled: false, completedDirs: [] })
   expect(data.processingOptions).toEqual([])
   expect(data.pipelinesErrorMessage).toBe('Could not load configured pipelines.')
   expect(data.hintsErrorMessage).toBe('Could not load batch path hints.')

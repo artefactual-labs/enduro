@@ -60,6 +60,39 @@ paths:
                         $ref: '#/definitions/BatchSubmitNotAvailableResponseBody'
             schemes:
                 - http
+    /batch/browser:
+        get:
+            tags:
+                - batch
+            summary: browse batch
+            description: Browse batch source directories
+            operationId: batch#browse
+            parameters:
+                - name: path
+                  in: query
+                  description: Root-relative directory path to list
+                  required: false
+                  type: string
+            responses:
+                "200":
+                    description: OK response.
+                    schema:
+                        $ref: '#/definitions/BatchBrowseResult'
+                        required:
+                            - path
+                            - absolute_path
+                            - entries
+                            - truncated
+                "400":
+                    description: Bad Request response.
+                    schema:
+                        $ref: '#/definitions/BatchBrowseNotValidResponseBody'
+                "404":
+                    description: Not Found response.
+                    schema:
+                        $ref: '#/definitions/BatchBrowseNotAvailableResponseBody'
+            schemes:
+                - http
     /batch/hints:
         get:
             tags:
@@ -530,10 +563,172 @@ paths:
             schemes:
                 - http
 definitions:
+    BatchBrowseEntry:
+        title: BatchBrowseEntry
+        type: object
+        properties:
+            absolute_path:
+                type: string
+                description: Absolute path of the directory.
+                example: abc123
+            modified_at:
+                type: string
+                description: Directory modification time.
+                example: "1970-01-01T00:00:01Z"
+                format: date-time
+            name:
+                type: string
+                description: Directory name.
+                example: abc123
+            path:
+                type: string
+                description: Root-relative path of the directory.
+                example: abc123
+        example:
+            absolute_path: abc123
+            modified_at: "1970-01-01T00:00:01Z"
+            name: abc123
+            path: abc123
+        required:
+            - name
+            - path
+            - absolute_path
+    BatchBrowseNotAvailableResponseBody:
+        title: 'Mediatype identifier: application/vnd.goa.error; view=default'
+        type: object
+        properties:
+            fault:
+                type: boolean
+                description: Is the error a server-side fault?
+                example: false
+            id:
+                type: string
+                description: ID is a unique identifier for this particular occurrence of the problem.
+                example: 123abc
+            message:
+                type: string
+                description: Message is a human-readable explanation specific to this occurrence of the problem.
+                example: parameter 'p' must be an integer
+            name:
+                type: string
+                description: Name is the name of this class of errors.
+                example: bad_request
+            temporary:
+                type: boolean
+                description: Is the error temporary?
+                example: false
+            timeout:
+                type: boolean
+                description: Is the error a timeout?
+                example: false
+        description: browse_not_available_response_body result type (default view)
+        example:
+            fault: false
+            id: 123abc
+            message: parameter 'p' must be an integer
+            name: bad_request
+            temporary: false
+            timeout: false
+        required:
+            - name
+            - id
+            - message
+            - temporary
+            - timeout
+            - fault
+    BatchBrowseNotValidResponseBody:
+        title: 'Mediatype identifier: application/vnd.goa.error; view=default'
+        type: object
+        properties:
+            fault:
+                type: boolean
+                description: Is the error a server-side fault?
+                example: false
+            id:
+                type: string
+                description: ID is a unique identifier for this particular occurrence of the problem.
+                example: 123abc
+            message:
+                type: string
+                description: Message is a human-readable explanation specific to this occurrence of the problem.
+                example: parameter 'p' must be an integer
+            name:
+                type: string
+                description: Name is the name of this class of errors.
+                example: bad_request
+            temporary:
+                type: boolean
+                description: Is the error temporary?
+                example: false
+            timeout:
+                type: boolean
+                description: Is the error a timeout?
+                example: false
+        description: browse_not_valid_response_body result type (default view)
+        example:
+            fault: false
+            id: 123abc
+            message: parameter 'p' must be an integer
+            name: bad_request
+            temporary: false
+            timeout: false
+        required:
+            - name
+            - id
+            - message
+            - temporary
+            - timeout
+            - fault
+    BatchBrowseResult:
+        title: BatchBrowseResult
+        type: object
+        properties:
+            absolute_path:
+                type: string
+                description: Absolute path of the listed directory.
+                example: abc123
+            entries:
+                type: array
+                items:
+                    $ref: '#/definitions/BatchBrowseEntry'
+                description: Immediate child directories.
+                example:
+                    - absolute_path: abc123
+                      modified_at: "1970-01-01T00:00:01Z"
+                      name: abc123
+                      path: abc123
+            path:
+                type: string
+                description: Root-relative path of the listed directory.
+                example: abc123
+            truncated:
+                type: boolean
+                description: Whether the result was truncated because it exceeded the entry limit.
+                default: false
+                example: false
+        example:
+            absolute_path: abc123
+            entries:
+                - absolute_path: abc123
+                  modified_at: "1970-01-01T00:00:01Z"
+                  name: abc123
+                  path: abc123
+            path: abc123
+            truncated: false
+        required:
+            - path
+            - absolute_path
+            - entries
+            - truncated
     BatchHintsResult:
         title: BatchHintsResult
         type: object
         properties:
+            browser_enabled:
+                type: boolean
+                description: Whether the batch source directory browser is configured.
+                default: false
+                example: false
             completed_dirs:
                 type: array
                 items:
@@ -543,6 +738,7 @@ definitions:
                 example:
                     - abc123
         example:
+            browser_enabled: false
             completed_dirs:
                 - abc123
     BatchResult:

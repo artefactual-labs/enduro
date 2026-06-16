@@ -49,6 +49,21 @@ type StatusResponseBody struct {
 type HintsResponseBody struct {
 	// A list of known values of completedDir used by existing watchers.
 	CompletedDirs []string `form:"completed_dirs,omitempty" json:"completed_dirs,omitempty" xml:"completed_dirs,omitempty"`
+	// Whether the batch source directory browser is configured.
+	BrowserEnabled bool `form:"browser_enabled" json:"browser_enabled" xml:"browser_enabled"`
+}
+
+// BrowseResponseBody is the type of the "batch" service "browse" endpoint HTTP
+// response body.
+type BrowseResponseBody struct {
+	// Root-relative path of the listed directory.
+	Path string `form:"path" json:"path" xml:"path"`
+	// Absolute path of the listed directory.
+	AbsolutePath string `form:"absolute_path" json:"absolute_path" xml:"absolute_path"`
+	// Immediate child directories.
+	Entries []*BatchBrowseEntryResponseBody `form:"entries" json:"entries" xml:"entries"`
+	// Whether the result was truncated because it exceeded the entry limit.
+	Truncated bool `form:"truncated" json:"truncated" xml:"truncated"`
 }
 
 // SubmitNotAvailableResponseBody is the type of the "batch" service "submit"
@@ -87,6 +102,54 @@ type SubmitNotValidResponseBody struct {
 	Fault bool `form:"fault" json:"fault" xml:"fault"`
 }
 
+// BrowseNotAvailableResponseBody is the type of the "batch" service "browse"
+// endpoint HTTP response body for the "not_available" error.
+type BrowseNotAvailableResponseBody struct {
+	// Name is the name of this class of errors.
+	Name string `form:"name" json:"name" xml:"name"`
+	// ID is a unique identifier for this particular occurrence of the problem.
+	ID string `form:"id" json:"id" xml:"id"`
+	// Message is a human-readable explanation specific to this occurrence of the
+	// problem.
+	Message string `form:"message" json:"message" xml:"message"`
+	// Is the error temporary?
+	Temporary bool `form:"temporary" json:"temporary" xml:"temporary"`
+	// Is the error a timeout?
+	Timeout bool `form:"timeout" json:"timeout" xml:"timeout"`
+	// Is the error a server-side fault?
+	Fault bool `form:"fault" json:"fault" xml:"fault"`
+}
+
+// BrowseNotValidResponseBody is the type of the "batch" service "browse"
+// endpoint HTTP response body for the "not_valid" error.
+type BrowseNotValidResponseBody struct {
+	// Name is the name of this class of errors.
+	Name string `form:"name" json:"name" xml:"name"`
+	// ID is a unique identifier for this particular occurrence of the problem.
+	ID string `form:"id" json:"id" xml:"id"`
+	// Message is a human-readable explanation specific to this occurrence of the
+	// problem.
+	Message string `form:"message" json:"message" xml:"message"`
+	// Is the error temporary?
+	Temporary bool `form:"temporary" json:"temporary" xml:"temporary"`
+	// Is the error a timeout?
+	Timeout bool `form:"timeout" json:"timeout" xml:"timeout"`
+	// Is the error a server-side fault?
+	Fault bool `form:"fault" json:"fault" xml:"fault"`
+}
+
+// BatchBrowseEntryResponseBody is used to define fields on response body types.
+type BatchBrowseEntryResponseBody struct {
+	// Directory name.
+	Name string `form:"name" json:"name" xml:"name"`
+	// Root-relative path of the directory.
+	Path string `form:"path" json:"path" xml:"path"`
+	// Absolute path of the directory.
+	AbsolutePath string `form:"absolute_path" json:"absolute_path" xml:"absolute_path"`
+	// Directory modification time.
+	ModifiedAt *string `form:"modified_at,omitempty" json:"modified_at,omitempty" xml:"modified_at,omitempty"`
+}
+
 // NewSubmitResponseBody builds the HTTP response body from the result of the
 // "submit" endpoint of the "batch" service.
 func NewSubmitResponseBody(res *batch.BatchResult) *SubmitResponseBody {
@@ -112,12 +175,43 @@ func NewStatusResponseBody(res *batch.BatchStatusResult) *StatusResponseBody {
 // NewHintsResponseBody builds the HTTP response body from the result of the
 // "hints" endpoint of the "batch" service.
 func NewHintsResponseBody(res *batch.BatchHintsResult) *HintsResponseBody {
-	body := &HintsResponseBody{}
+	body := &HintsResponseBody{
+		BrowserEnabled: res.BrowserEnabled,
+	}
 	if res.CompletedDirs != nil {
 		body.CompletedDirs = make([]string, len(res.CompletedDirs))
 		for i, val := range res.CompletedDirs {
 			body.CompletedDirs[i] = val
 		}
+	}
+	{
+		var zero bool
+		if body.BrowserEnabled == zero {
+			body.BrowserEnabled = false
+		}
+	}
+	return body
+}
+
+// NewBrowseResponseBody builds the HTTP response body from the result of the
+// "browse" endpoint of the "batch" service.
+func NewBrowseResponseBody(res *batch.BatchBrowseResult) *BrowseResponseBody {
+	body := &BrowseResponseBody{
+		Path:         res.Path,
+		AbsolutePath: res.AbsolutePath,
+		Truncated:    res.Truncated,
+	}
+	if res.Entries != nil {
+		body.Entries = make([]*BatchBrowseEntryResponseBody, len(res.Entries))
+		for i, val := range res.Entries {
+			if val == nil {
+				body.Entries[i] = nil
+				continue
+			}
+			body.Entries[i] = marshalBatchBatchBrowseEntryToBatchBrowseEntryResponseBody(val)
+		}
+	} else {
+		body.Entries = []*BatchBrowseEntryResponseBody{}
 	}
 	return body
 }
@@ -140,6 +234,34 @@ func NewSubmitNotAvailableResponseBody(res *goa.ServiceError) *SubmitNotAvailabl
 // of the "submit" endpoint of the "batch" service.
 func NewSubmitNotValidResponseBody(res *goa.ServiceError) *SubmitNotValidResponseBody {
 	body := &SubmitNotValidResponseBody{
+		Name:      res.Name,
+		ID:        res.ID,
+		Message:   res.Message,
+		Temporary: res.Temporary,
+		Timeout:   res.Timeout,
+		Fault:     res.Fault,
+	}
+	return body
+}
+
+// NewBrowseNotAvailableResponseBody builds the HTTP response body from the
+// result of the "browse" endpoint of the "batch" service.
+func NewBrowseNotAvailableResponseBody(res *goa.ServiceError) *BrowseNotAvailableResponseBody {
+	body := &BrowseNotAvailableResponseBody{
+		Name:      res.Name,
+		ID:        res.ID,
+		Message:   res.Message,
+		Temporary: res.Temporary,
+		Timeout:   res.Timeout,
+		Fault:     res.Fault,
+	}
+	return body
+}
+
+// NewBrowseNotValidResponseBody builds the HTTP response body from the result
+// of the "browse" endpoint of the "batch" service.
+func NewBrowseNotValidResponseBody(res *goa.ServiceError) *BrowseNotValidResponseBody {
+	body := &BrowseNotValidResponseBody{
 		Name:      res.Name,
 		ID:        res.ID,
 		Message:   res.Message,
@@ -184,6 +306,14 @@ func NewSubmitPayload(body *SubmitRequestBody) *batch.SubmitPayload {
 	if body.Depth == nil {
 		v.Depth = 0
 	}
+
+	return v
+}
+
+// NewBrowsePayload builds a batch service browse endpoint payload.
+func NewBrowsePayload(path *string) *batch.BrowsePayload {
+	v := &batch.BrowsePayload{}
+	v.Path = path
 
 	return v
 }

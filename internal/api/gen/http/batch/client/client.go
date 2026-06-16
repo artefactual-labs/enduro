@@ -27,6 +27,9 @@ type Client struct {
 	// Hints Doer is the HTTP client used to make requests to the hints endpoint.
 	HintsDoer goahttp.Doer
 
+	// Browse Doer is the HTTP client used to make requests to the browse endpoint.
+	BrowseDoer goahttp.Doer
+
 	// CORS Doer is the HTTP client used to make requests to the  endpoint.
 	CORSDoer goahttp.Doer
 
@@ -53,6 +56,7 @@ func NewClient(
 		SubmitDoer:          doer,
 		StatusDoer:          doer,
 		HintsDoer:           doer,
+		BrowseDoer:          doer,
 		CORSDoer:            doer,
 		RestoreResponseBody: restoreBody,
 		scheme:              scheme,
@@ -119,6 +123,30 @@ func (c *Client) Hints() goa.Endpoint {
 		resp, err := c.HintsDoer.Do(req)
 		if err != nil {
 			return nil, goahttp.ErrRequestError("batch", "hints", err)
+		}
+		return decodeResponse(resp)
+	}
+}
+
+// Browse returns an endpoint that makes HTTP requests to the batch service
+// browse server.
+func (c *Client) Browse() goa.Endpoint {
+	var (
+		encodeRequest  = EncodeBrowseRequest(c.encoder)
+		decodeResponse = DecodeBrowseResponse(c.decoder, c.RestoreResponseBody)
+	)
+	return func(ctx context.Context, v any) (any, error) {
+		req, err := c.BuildBrowseRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		err = encodeRequest(req, v)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.BrowseDoer.Do(req)
+		if err != nil {
+			return nil, goahttp.ErrRequestError("batch", "browse", err)
 		}
 		return decodeResponse(resp)
 	}

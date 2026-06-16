@@ -5,13 +5,220 @@
     "application/gob"
   ],
   "definitions": {
+    "BatchBrowseEntry": {
+      "example": {
+        "absolute_path": "abc123",
+        "modified_at": "1970-01-01T00:00:01Z",
+        "name": "abc123",
+        "path": "abc123"
+      },
+      "properties": {
+        "absolute_path": {
+          "description": "Absolute path of the directory.",
+          "example": "abc123",
+          "type": "string"
+        },
+        "modified_at": {
+          "description": "Directory modification time.",
+          "example": "1970-01-01T00:00:01Z",
+          "format": "date-time",
+          "type": "string"
+        },
+        "name": {
+          "description": "Directory name.",
+          "example": "abc123",
+          "type": "string"
+        },
+        "path": {
+          "description": "Root-relative path of the directory.",
+          "example": "abc123",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "path",
+        "absolute_path"
+      ],
+      "title": "BatchBrowseEntry",
+      "type": "object"
+    },
+    "BatchBrowseNotAvailableResponseBody": {
+      "description": "browse_not_available_response_body result type (default view)",
+      "example": {
+        "fault": false,
+        "id": "123abc",
+        "message": "parameter 'p' must be an integer",
+        "name": "bad_request",
+        "temporary": false,
+        "timeout": false
+      },
+      "properties": {
+        "fault": {
+          "description": "Is the error a server-side fault?",
+          "example": false,
+          "type": "boolean"
+        },
+        "id": {
+          "description": "ID is a unique identifier for this particular occurrence of the problem.",
+          "example": "123abc",
+          "type": "string"
+        },
+        "message": {
+          "description": "Message is a human-readable explanation specific to this occurrence of the problem.",
+          "example": "parameter 'p' must be an integer",
+          "type": "string"
+        },
+        "name": {
+          "description": "Name is the name of this class of errors.",
+          "example": "bad_request",
+          "type": "string"
+        },
+        "temporary": {
+          "description": "Is the error temporary?",
+          "example": false,
+          "type": "boolean"
+        },
+        "timeout": {
+          "description": "Is the error a timeout?",
+          "example": false,
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name",
+        "id",
+        "message",
+        "temporary",
+        "timeout",
+        "fault"
+      ],
+      "title": "Mediatype identifier: application/vnd.goa.error; view=default",
+      "type": "object"
+    },
+    "BatchBrowseNotValidResponseBody": {
+      "description": "browse_not_valid_response_body result type (default view)",
+      "example": {
+        "fault": false,
+        "id": "123abc",
+        "message": "parameter 'p' must be an integer",
+        "name": "bad_request",
+        "temporary": false,
+        "timeout": false
+      },
+      "properties": {
+        "fault": {
+          "description": "Is the error a server-side fault?",
+          "example": false,
+          "type": "boolean"
+        },
+        "id": {
+          "description": "ID is a unique identifier for this particular occurrence of the problem.",
+          "example": "123abc",
+          "type": "string"
+        },
+        "message": {
+          "description": "Message is a human-readable explanation specific to this occurrence of the problem.",
+          "example": "parameter 'p' must be an integer",
+          "type": "string"
+        },
+        "name": {
+          "description": "Name is the name of this class of errors.",
+          "example": "bad_request",
+          "type": "string"
+        },
+        "temporary": {
+          "description": "Is the error temporary?",
+          "example": false,
+          "type": "boolean"
+        },
+        "timeout": {
+          "description": "Is the error a timeout?",
+          "example": false,
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name",
+        "id",
+        "message",
+        "temporary",
+        "timeout",
+        "fault"
+      ],
+      "title": "Mediatype identifier: application/vnd.goa.error; view=default",
+      "type": "object"
+    },
+    "BatchBrowseResult": {
+      "example": {
+        "absolute_path": "abc123",
+        "entries": [
+          {
+            "absolute_path": "abc123",
+            "modified_at": "1970-01-01T00:00:01Z",
+            "name": "abc123",
+            "path": "abc123"
+          }
+        ],
+        "path": "abc123",
+        "truncated": false
+      },
+      "properties": {
+        "absolute_path": {
+          "description": "Absolute path of the listed directory.",
+          "example": "abc123",
+          "type": "string"
+        },
+        "entries": {
+          "description": "Immediate child directories.",
+          "example": [
+            {
+              "absolute_path": "abc123",
+              "modified_at": "1970-01-01T00:00:01Z",
+              "name": "abc123",
+              "path": "abc123"
+            }
+          ],
+          "items": {
+            "$ref": "#/definitions/BatchBrowseEntry"
+          },
+          "type": "array"
+        },
+        "path": {
+          "description": "Root-relative path of the listed directory.",
+          "example": "abc123",
+          "type": "string"
+        },
+        "truncated": {
+          "default": false,
+          "description": "Whether the result was truncated because it exceeded the entry limit.",
+          "example": false,
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "path",
+        "absolute_path",
+        "entries",
+        "truncated"
+      ],
+      "title": "BatchBrowseResult",
+      "type": "object"
+    },
     "BatchHintsResult": {
       "example": {
+        "browser_enabled": false,
         "completed_dirs": [
           "abc123"
         ]
       },
       "properties": {
+        "browser_enabled": {
+          "default": false,
+          "description": "Whether the batch source directory browser is configured.",
+          "example": false,
+          "type": "boolean"
+        },
         "completed_dirs": {
           "description": "A list of known values of completedDir used by existing watchers.",
           "example": [
@@ -1341,6 +1548,54 @@
           "http"
         ],
         "summary": "submit batch",
+        "tags": [
+          "batch"
+        ]
+      }
+    },
+    "/batch/browser": {
+      "get": {
+        "description": "Browse batch source directories",
+        "operationId": "batch#browse",
+        "parameters": [
+          {
+            "description": "Root-relative directory path to list",
+            "in": "query",
+            "name": "path",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK response.",
+            "schema": {
+              "$ref": "#/definitions/BatchBrowseResult",
+              "required": [
+                "path",
+                "absolute_path",
+                "entries",
+                "truncated"
+              ]
+            }
+          },
+          "400": {
+            "description": "Bad Request response.",
+            "schema": {
+              "$ref": "#/definitions/BatchBrowseNotValidResponseBody"
+            }
+          },
+          "404": {
+            "description": "Not Found response.",
+            "schema": {
+              "$ref": "#/definitions/BatchBrowseNotAvailableResponseBody"
+            }
+          }
+        },
+        "schemes": [
+          "http"
+        ],
+        "summary": "browse batch",
         "tags": [
           "batch"
         ]
