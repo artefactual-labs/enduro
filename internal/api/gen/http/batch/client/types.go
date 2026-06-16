@@ -49,6 +49,21 @@ type StatusResponseBody struct {
 type HintsResponseBody struct {
 	// A list of known values of completedDir used by existing watchers.
 	CompletedDirs []string `form:"completed_dirs,omitempty" json:"completed_dirs,omitempty" xml:"completed_dirs,omitempty"`
+	// Whether the batch source directory browser is configured.
+	BrowserEnabled *bool `form:"browser_enabled,omitempty" json:"browser_enabled,omitempty" xml:"browser_enabled,omitempty"`
+}
+
+// BrowseResponseBody is the type of the "batch" service "browse" endpoint HTTP
+// response body.
+type BrowseResponseBody struct {
+	// Root-relative path of the listed directory.
+	Path *string `form:"path,omitempty" json:"path,omitempty" xml:"path,omitempty"`
+	// Absolute path of the listed directory.
+	AbsolutePath *string `form:"absolute_path,omitempty" json:"absolute_path,omitempty" xml:"absolute_path,omitempty"`
+	// Immediate child directories.
+	Entries []*BatchBrowseEntryResponseBody `form:"entries,omitempty" json:"entries,omitempty" xml:"entries,omitempty"`
+	// Whether the result was truncated because it exceeded the entry limit.
+	Truncated *bool `form:"truncated,omitempty" json:"truncated,omitempty" xml:"truncated,omitempty"`
 }
 
 // SubmitNotAvailableResponseBody is the type of the "batch" service "submit"
@@ -85,6 +100,54 @@ type SubmitNotValidResponseBody struct {
 	Timeout *bool `form:"timeout,omitempty" json:"timeout,omitempty" xml:"timeout,omitempty"`
 	// Is the error a server-side fault?
 	Fault *bool `form:"fault,omitempty" json:"fault,omitempty" xml:"fault,omitempty"`
+}
+
+// BrowseNotAvailableResponseBody is the type of the "batch" service "browse"
+// endpoint HTTP response body for the "not_available" error.
+type BrowseNotAvailableResponseBody struct {
+	// Name is the name of this class of errors.
+	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
+	// ID is a unique identifier for this particular occurrence of the problem.
+	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
+	// Message is a human-readable explanation specific to this occurrence of the
+	// problem.
+	Message *string `form:"message,omitempty" json:"message,omitempty" xml:"message,omitempty"`
+	// Is the error temporary?
+	Temporary *bool `form:"temporary,omitempty" json:"temporary,omitempty" xml:"temporary,omitempty"`
+	// Is the error a timeout?
+	Timeout *bool `form:"timeout,omitempty" json:"timeout,omitempty" xml:"timeout,omitempty"`
+	// Is the error a server-side fault?
+	Fault *bool `form:"fault,omitempty" json:"fault,omitempty" xml:"fault,omitempty"`
+}
+
+// BrowseNotValidResponseBody is the type of the "batch" service "browse"
+// endpoint HTTP response body for the "not_valid" error.
+type BrowseNotValidResponseBody struct {
+	// Name is the name of this class of errors.
+	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
+	// ID is a unique identifier for this particular occurrence of the problem.
+	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
+	// Message is a human-readable explanation specific to this occurrence of the
+	// problem.
+	Message *string `form:"message,omitempty" json:"message,omitempty" xml:"message,omitempty"`
+	// Is the error temporary?
+	Temporary *bool `form:"temporary,omitempty" json:"temporary,omitempty" xml:"temporary,omitempty"`
+	// Is the error a timeout?
+	Timeout *bool `form:"timeout,omitempty" json:"timeout,omitempty" xml:"timeout,omitempty"`
+	// Is the error a server-side fault?
+	Fault *bool `form:"fault,omitempty" json:"fault,omitempty" xml:"fault,omitempty"`
+}
+
+// BatchBrowseEntryResponseBody is used to define fields on response body types.
+type BatchBrowseEntryResponseBody struct {
+	// Directory name.
+	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
+	// Root-relative path of the directory.
+	Path *string `form:"path,omitempty" json:"path,omitempty" xml:"path,omitempty"`
+	// Absolute path of the directory.
+	AbsolutePath *string `form:"absolute_path,omitempty" json:"absolute_path,omitempty" xml:"absolute_path,omitempty"`
+	// Directory modification time.
+	ModifiedAt *string `form:"modified_at,omitempty" json:"modified_at,omitempty" xml:"modified_at,omitempty"`
 }
 
 // NewSubmitRequestBody builds the HTTP request body from the payload of the
@@ -186,11 +249,66 @@ func NewStatusBatchStatusResultOK(body *StatusResponseBody) *batch.BatchStatusRe
 // from a HTTP "OK" response.
 func NewHintsBatchHintsResultOK(body *HintsResponseBody) *batch.BatchHintsResult {
 	v := &batch.BatchHintsResult{}
+	if body.BrowserEnabled != nil {
+		v.BrowserEnabled = *body.BrowserEnabled
+	}
 	if body.CompletedDirs != nil {
 		v.CompletedDirs = make([]string, len(body.CompletedDirs))
 		for i, val := range body.CompletedDirs {
 			v.CompletedDirs[i] = val
 		}
+	}
+	if body.BrowserEnabled == nil {
+		v.BrowserEnabled = false
+	}
+
+	return v
+}
+
+// NewBrowseBatchBrowseResultOK builds a "batch" service "browse" endpoint
+// result from a HTTP "OK" response.
+func NewBrowseBatchBrowseResultOK(body *BrowseResponseBody) *batch.BatchBrowseResult {
+	v := &batch.BatchBrowseResult{
+		Path:         *body.Path,
+		AbsolutePath: *body.AbsolutePath,
+		Truncated:    *body.Truncated,
+	}
+	v.Entries = make([]*batch.BatchBrowseEntry, len(body.Entries))
+	for i, val := range body.Entries {
+		if val == nil {
+			v.Entries[i] = nil
+			continue
+		}
+		v.Entries[i] = unmarshalBatchBrowseEntryResponseBodyToBatchBatchBrowseEntry(val)
+	}
+
+	return v
+}
+
+// NewBrowseNotAvailable builds a batch service browse endpoint not_available
+// error.
+func NewBrowseNotAvailable(body *BrowseNotAvailableResponseBody) *goa.ServiceError {
+	v := &goa.ServiceError{
+		Name:      *body.Name,
+		ID:        *body.ID,
+		Message:   *body.Message,
+		Temporary: *body.Temporary,
+		Timeout:   *body.Timeout,
+		Fault:     *body.Fault,
+	}
+
+	return v
+}
+
+// NewBrowseNotValid builds a batch service browse endpoint not_valid error.
+func NewBrowseNotValid(body *BrowseNotValidResponseBody) *goa.ServiceError {
+	v := &goa.ServiceError{
+		Name:      *body.Name,
+		ID:        *body.ID,
+		Message:   *body.Message,
+		Temporary: *body.Temporary,
+		Timeout:   *body.Timeout,
+		Fault:     *body.Fault,
 	}
 
 	return v
@@ -211,6 +329,30 @@ func ValidateSubmitResponseBody(body *SubmitResponseBody) (err error) {
 func ValidateStatusResponseBody(body *StatusResponseBody) (err error) {
 	if body.Running == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("running", "body"))
+	}
+	return
+}
+
+// ValidateBrowseResponseBody runs the validations defined on BrowseResponseBody
+func ValidateBrowseResponseBody(body *BrowseResponseBody) (err error) {
+	if body.Path == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("path", "body"))
+	}
+	if body.AbsolutePath == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("absolute_path", "body"))
+	}
+	if body.Entries == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("entries", "body"))
+	}
+	if body.Truncated == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("truncated", "body"))
+	}
+	for _, e := range body.Entries {
+		if e != nil {
+			if err2 := ValidateBatchBrowseEntryResponseBody(e); err2 != nil {
+				err = goa.MergeErrors(err, err2)
+			}
+		}
 	}
 	return
 }
@@ -259,6 +401,72 @@ func ValidateSubmitNotValidResponseBody(body *SubmitNotValidResponseBody) (err e
 	}
 	if body.Fault == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("fault", "body"))
+	}
+	return
+}
+
+// ValidateBrowseNotAvailableResponseBody runs the validations defined on
+// browse_not_available_response_body
+func ValidateBrowseNotAvailableResponseBody(body *BrowseNotAvailableResponseBody) (err error) {
+	if body.Name == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("name", "body"))
+	}
+	if body.ID == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("id", "body"))
+	}
+	if body.Message == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("message", "body"))
+	}
+	if body.Temporary == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("temporary", "body"))
+	}
+	if body.Timeout == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("timeout", "body"))
+	}
+	if body.Fault == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("fault", "body"))
+	}
+	return
+}
+
+// ValidateBrowseNotValidResponseBody runs the validations defined on
+// browse_not_valid_response_body
+func ValidateBrowseNotValidResponseBody(body *BrowseNotValidResponseBody) (err error) {
+	if body.Name == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("name", "body"))
+	}
+	if body.ID == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("id", "body"))
+	}
+	if body.Message == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("message", "body"))
+	}
+	if body.Temporary == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("temporary", "body"))
+	}
+	if body.Timeout == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("timeout", "body"))
+	}
+	if body.Fault == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("fault", "body"))
+	}
+	return
+}
+
+// ValidateBatchBrowseEntryResponseBody runs the validations defined on
+// BatchBrowseEntryResponseBody
+func ValidateBatchBrowseEntryResponseBody(body *BatchBrowseEntryResponseBody) (err error) {
+	if body.Name == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("name", "body"))
+	}
+	if body.Path == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("path", "body"))
+	}
+	if body.AbsolutePath == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("absolute_path", "body"))
+	}
+	if body.ModifiedAt != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.modified_at", *body.ModifiedAt, goa.FormatDateTime))
 	}
 	return
 }

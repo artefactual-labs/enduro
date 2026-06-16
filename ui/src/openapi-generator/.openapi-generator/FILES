@@ -4,6 +4,8 @@ apis/PipelineApi.ts
 apis/SwaggerApi.ts
 apis/index.ts
 index.ts
+models/BatchBrowseEntry.ts
+models/BatchBrowseResult.ts
 models/BatchHintsResult.ts
 models/BatchResult.ts
 models/BatchStatusResult.ts

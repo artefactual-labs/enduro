@@ -19,14 +19,16 @@ type Client struct {
 	SubmitEndpoint goa.Endpoint
 	StatusEndpoint goa.Endpoint
 	HintsEndpoint  goa.Endpoint
+	BrowseEndpoint goa.Endpoint
 }
 
 // NewClient initializes a "batch" service client given the endpoints.
-func NewClient(submit, status, hints goa.Endpoint) *Client {
+func NewClient(submit, status, hints, browse goa.Endpoint) *Client {
 	return &Client{
 		SubmitEndpoint: submit,
 		StatusEndpoint: status,
 		HintsEndpoint:  hints,
+		BrowseEndpoint: browse,
 	}
 }
 
@@ -62,4 +64,18 @@ func (c *Client) Hints(ctx context.Context) (res *BatchHintsResult, err error) {
 		return
 	}
 	return ires.(*BatchHintsResult), nil
+}
+
+// Browse calls the "browse" endpoint of the "batch" service.
+// Browse may return the following errors:
+//   - "not_available" (type *goa.ServiceError)
+//   - "not_valid" (type *goa.ServiceError)
+//   - error: internal error
+func (c *Client) Browse(ctx context.Context, p *BrowsePayload) (res *BatchBrowseResult, err error) {
+	var ires any
+	ires, err = c.BrowseEndpoint(ctx, p)
+	if err != nil {
+		return
+	}
+	return ires.(*BatchBrowseResult), nil
 }

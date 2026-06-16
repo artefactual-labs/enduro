@@ -108,6 +108,7 @@ export function useBatchImport() {
   const isRunning = computed(() => status.value.running)
   const showBatchStatus = computed(() => isRunning.value || hasSubmittedBatch.value)
   const hasKnownCompletedDirs = computed(() => (hints.value.completedDirs?.length ?? 0) > 0)
+  const canBrowseBatchDirectories = computed(() => Boolean(hints.value.browserEnabled))
   const canSubmit = computed(() => !isSubmitting.value && !isRunning.value && path.value.trim().length > 0)
 
   function clearStatusTimer() {
@@ -225,6 +226,10 @@ export function useBatchImport() {
     destinationMode.value = 'completed-dir'
   }
 
+  function useBrowsedPath(value: string) {
+    path.value = value
+  }
+
   watch(() => pageData.value?.selectedPipelineId ?? normalizeRouteStringParam(route.query.pipeline), (value) => {
     suppressPipelineRouteSync = true
     selectedPipelineId.value = value
@@ -256,6 +261,7 @@ export function useBatchImport() {
 
   return {
     canSubmit,
+    canBrowseBatchDirectories,
     completedDir,
     destinationMode,
     destinationModeOptions,
@@ -288,6 +294,7 @@ export function useBatchImport() {
     submit,
     submitErrorMessage,
     transferOptions,
-    useCompletedDirHint
+    useCompletedDirHint,
+    useBrowsedPath
   }
 }

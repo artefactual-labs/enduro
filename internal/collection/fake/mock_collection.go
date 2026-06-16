@@ -310,44 +310,6 @@ func (c *MockServiceSetStatusPendingCall) DoAndReturn(f func(context.Context, ui
 	return c
 }
 
-// UpdateWorkflowStatus mocks base method.
-func (m *MockService) UpdateWorkflowStatus(ctx context.Context, ID uint, name, workflowID, runID, transferID, aipID, pipelineID string, status collection0.Status, storedAt time.Time) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateWorkflowStatus", ctx, ID, name, workflowID, runID, transferID, aipID, pipelineID, status, storedAt)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// UpdateWorkflowStatus indicates an expected call of UpdateWorkflowStatus.
-func (mr *MockServiceMockRecorder) UpdateWorkflowStatus(ctx, ID, name, workflowID, runID, transferID, aipID, pipelineID, status, storedAt any) *MockServiceUpdateWorkflowStatusCall {
-	mr.mock.ctrl.T.Helper()
-	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateWorkflowStatus", reflect.TypeOf((*MockService)(nil).UpdateWorkflowStatus), ctx, ID, name, workflowID, runID, transferID, aipID, pipelineID, status, storedAt)
-	return &MockServiceUpdateWorkflowStatusCall{Call: call}
-}
-
-// MockServiceUpdateWorkflowStatusCall wrap *gomock.Call
-type MockServiceUpdateWorkflowStatusCall struct {
-	*gomock.Call
-}
-
-// Return rewrite *gomock.Call.Return
-func (c *MockServiceUpdateWorkflowStatusCall) Return(arg0 error) *MockServiceUpdateWorkflowStatusCall {
-	c.Call = c.Call.Return(arg0)
-	return c
-}
-
-// Do rewrite *gomock.Call.Do
-func (c *MockServiceUpdateWorkflowStatusCall) Do(f func(context.Context, uint, string, string, string, string, string, string, collection0.Status, time.Time) error) *MockServiceUpdateWorkflowStatusCall {
-	c.Call = c.Call.Do(f)
-	return c
-}
-
-// DoAndReturn rewrite *gomock.Call.DoAndReturn
-func (c *MockServiceUpdateWorkflowStatusCall) DoAndReturn(f func(context.Context, uint, string, string, string, string, string, string, collection0.Status, time.Time) error) *MockServiceUpdateWorkflowStatusCall {
-	c.Call = c.Call.DoAndReturn(f)
-	return c
-}
-
 // UpdateReconciliationState mocks base method.
 func (m *MockService) UpdateReconciliationState(ctx context.Context, ID uint, aipStoredAt, checkedAt *time.Time, status, errMsg *string) error {
 	m.ctrl.T.Helper()
@@ -382,6 +344,44 @@ func (c *MockServiceUpdateReconciliationStateCall) Do(f func(context.Context, ui
 
 // DoAndReturn rewrite *gomock.Call.DoAndReturn
 func (c *MockServiceUpdateReconciliationStateCall) DoAndReturn(f func(context.Context, uint, *time.Time, *time.Time, *string, *string) error) *MockServiceUpdateReconciliationStateCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
+}
+
+// UpdateWorkflowStatus mocks base method.
+func (m *MockService) UpdateWorkflowStatus(ctx context.Context, ID uint, name, workflowID, runID, transferID, aipID, pipelineID string, status collection0.Status, storedAt time.Time) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateWorkflowStatus", ctx, ID, name, workflowID, runID, transferID, aipID, pipelineID, status, storedAt)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateWorkflowStatus indicates an expected call of UpdateWorkflowStatus.
+func (mr *MockServiceMockRecorder) UpdateWorkflowStatus(ctx, ID, name, workflowID, runID, transferID, aipID, pipelineID, status, storedAt any) *MockServiceUpdateWorkflowStatusCall {
+	mr.mock.ctrl.T.Helper()
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateWorkflowStatus", reflect.TypeOf((*MockService)(nil).UpdateWorkflowStatus), ctx, ID, name, workflowID, runID, transferID, aipID, pipelineID, status, storedAt)
+	return &MockServiceUpdateWorkflowStatusCall{Call: call}
+}
+
+// MockServiceUpdateWorkflowStatusCall wrap *gomock.Call
+type MockServiceUpdateWorkflowStatusCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *MockServiceUpdateWorkflowStatusCall) Return(arg0 error) *MockServiceUpdateWorkflowStatusCall {
+	c.Call = c.Call.Return(arg0)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *MockServiceUpdateWorkflowStatusCall) Do(f func(context.Context, uint, string, string, string, string, string, string, collection0.Status, time.Time) error) *MockServiceUpdateWorkflowStatusCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *MockServiceUpdateWorkflowStatusCall) DoAndReturn(f func(context.Context, uint, string, string, string, string, string, string, collection0.Status, time.Time) error) *MockServiceUpdateWorkflowStatusCall {
 	c.Call = c.Call.DoAndReturn(f)
 	return c
 }

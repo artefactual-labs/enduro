@@ -19,6 +19,7 @@ type Endpoints struct {
 	Submit goa.Endpoint
 	Status goa.Endpoint
 	Hints  goa.Endpoint
+	Browse goa.Endpoint
 }
 
 // NewEndpoints wraps the methods of the "batch" service with endpoints.
@@ -27,6 +28,7 @@ func NewEndpoints(s Service) *Endpoints {
 		Submit: NewSubmitEndpoint(s),
 		Status: NewStatusEndpoint(s),
 		Hints:  NewHintsEndpoint(s),
+		Browse: NewBrowseEndpoint(s),
 	}
 }
 
@@ -35,6 +37,7 @@ func (e *Endpoints) Use(m func(goa.Endpoint) goa.Endpoint) {
 	e.Submit = m(e.Submit)
 	e.Status = m(e.Status)
 	e.Hints = m(e.Hints)
+	e.Browse = m(e.Browse)
 }
 
 // NewSubmitEndpoint returns an endpoint function that calls the method
@@ -59,5 +62,14 @@ func NewStatusEndpoint(s Service) goa.Endpoint {
 func NewHintsEndpoint(s Service) goa.Endpoint {
 	return func(ctx context.Context, req any) (any, error) {
 		return s.Hints(ctx)
+	}
+}
+
+// NewBrowseEndpoint returns an endpoint function that calls the method
+// "browse" of service "batch".
+func NewBrowseEndpoint(s Service) goa.Endpoint {
+	return func(ctx context.Context, req any) (any, error) {
+		p := req.(*BrowsePayload)
+		return s.Browse(ctx, p)
 	}
 }

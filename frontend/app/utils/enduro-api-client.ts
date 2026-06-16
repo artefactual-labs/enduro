@@ -3,6 +3,7 @@ import {
   CollectionApi,
   Configuration,
   PipelineApi,
+  type BatchBrowseResult,
   type BatchHintsResult,
   type BatchResult,
   type BatchStatusResult,
@@ -58,6 +59,7 @@ export type EnduroApiClient = {
     processing: (id: string, requestOptions?: RequestOptions) => Promise<string[]>
   }
   batches: {
+    browse: (request?: { path?: string }, requestOptions?: RequestOptions) => Promise<BatchBrowseResult>
     hints: (requestOptions?: RequestOptions) => Promise<BatchHintsResult>
     status: (requestOptions?: RequestOptions) => Promise<BatchStatusResult>
     submit: (request: SubmitRequestBody, requestOptions?: RequestOptions) => Promise<BatchResult>
@@ -151,6 +153,7 @@ export function createEnduroApiClient(basePath: string): EnduroApiClient {
       processing: (id, requestOptions) => pipeline.pipelineProcessing({ id }, requestOptions)
     },
     batches: {
+      browse: (request = {}, requestOptions) => batch.batchBrowse(request, requestOptions),
       hints: requestOptions => batch.batchHints(requestOptions),
       status: requestOptions => batch.batchStatus(requestOptions),
       submit: (request, requestOptions) => batch.batchSubmit({ submitRequestBody: request }, requestOptions)

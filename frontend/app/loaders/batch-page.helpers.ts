@@ -17,6 +17,7 @@ export type BatchPageData = {
 
 export function createDefaultBatchHints(): BatchHintsResult {
   return {
+    browserEnabled: false,
     completedDirs: []
   }
 }

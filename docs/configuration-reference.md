@@ -95,6 +95,24 @@ Address of the Temporal front-end server.
 
 E.g.: `"127.0.0.1:7400"`
 
+## `[batch]`
+
+Batch import configuration.
+
+#### `browserRoot` (String)
+
+Optional filesystem directory that bounds the Batch import path browser. Relative
+paths are resolved from the directory containing the loaded configuration file.
+When unset or empty, the browser is disabled and users type the batch path
+manually. When set, the API only lists directories under this root and the
+dashboard shows a Browse button beside the batch Path field.
+Choose the narrowest practical directory and avoid roots that contain unrelated
+or sensitive filesystem content.
+
+E.g.: `"/mnt/transfers"`
+
+E.g.: `"./hack/batches"`
+
 ## `[api]`
 
 Configuration of the Enduro API server.

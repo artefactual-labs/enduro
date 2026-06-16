@@ -25,6 +25,7 @@ type Service interface {
 	Submit(context.Context, *goabatch.SubmitPayload) (res *goabatch.BatchResult, err error)
 	Status(context.Context) (res *goabatch.BatchStatusResult, err error)
 	Hints(context.Context) (res *goabatch.BatchHintsResult, err error)
+	Browse(context.Context, *goabatch.BrowsePayload) (res *goabatch.BatchBrowseResult, err error)
 	InitProcessingWorkflow(ctx context.Context, req *collection.ProcessingWorkflowRequest) error
 }
 
@@ -36,16 +37,23 @@ type batchImpl struct {
 	// A list of completedDirs reported by the watcher configuration. This is
 	// used to provide the user with possible known values.
 	completedDirs []string
+	browserRoot   string
 }
 
 var _ Service = (*batchImpl)(nil)
 
-func NewService(logger logr.Logger, cc temporalsdk_client.Client, taskQueue string, completedDirs []string) *batchImpl {
+func NewService(logger logr.Logger, cc temporalsdk_client.Client, taskQueue string, completedDirs []string, configs ...Config) *batchImpl {
+	var config Config
+	if len(configs) > 0 {
+		config = configs[0]
+	}
+
 	return &batchImpl{
 		logger:        logger,
 		cc:            cc,
 		taskQueue:     taskQueue,
 		completedDirs: completedDirs,
+		browserRoot:   config.BrowserRoot,
 	}
 }
 
@@ -134,7 +142,8 @@ func (s *batchImpl) Status(ctx context.Context) (*goabatch.BatchStatusResult, er
 
 func (s *batchImpl) Hints(ctx context.Context) (*goabatch.BatchHintsResult, error) {
 	result := &goabatch.BatchHintsResult{
-		CompletedDirs: s.completedDirs,
+		CompletedDirs:  s.completedDirs,
+		BrowserEnabled: s.browserRoot != "",
 	}
 	return result, nil
 }

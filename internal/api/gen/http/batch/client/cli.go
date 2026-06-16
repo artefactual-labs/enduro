@@ -72,3 +72,18 @@ func BuildSubmitPayload(batchSubmitBody string) (*batch.SubmitPayload, error) {
 
 	return v, nil
 }
+
+// BuildBrowsePayload builds the payload for the batch browse endpoint from CLI
+// flags.
+func BuildBrowsePayload(batchBrowsePath string) (*batch.BrowsePayload, error) {
+	var path *string
+	{
+		if batchBrowsePath != "" {
+			path = &batchBrowsePath
+		}
+	}
+	v := &batch.BrowsePayload{}
+	v.Path = path
+
+	return v, nil
+}

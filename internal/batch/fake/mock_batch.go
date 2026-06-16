@@ -42,6 +42,45 @@ func (m *MockService) EXPECT() *MockServiceMockRecorder {
 	return m.recorder
 }
 
+// Browse mocks base method.
+func (m *MockService) Browse(arg0 context.Context, arg1 *batch.BrowsePayload) (*batch.BatchBrowseResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Browse", arg0, arg1)
+	ret0, _ := ret[0].(*batch.BatchBrowseResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Browse indicates an expected call of Browse.
+func (mr *MockServiceMockRecorder) Browse(arg0, arg1 any) *MockServiceBrowseCall {
+	mr.mock.ctrl.T.Helper()
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Browse", reflect.TypeOf((*MockService)(nil).Browse), arg0, arg1)
+	return &MockServiceBrowseCall{Call: call}
+}
+
+// MockServiceBrowseCall wrap *gomock.Call
+type MockServiceBrowseCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *MockServiceBrowseCall) Return(res *batch.BatchBrowseResult, err error) *MockServiceBrowseCall {
+	c.Call = c.Call.Return(res, err)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *MockServiceBrowseCall) Do(f func(context.Context, *batch.BrowsePayload) (*batch.BatchBrowseResult, error)) *MockServiceBrowseCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *MockServiceBrowseCall) DoAndReturn(f func(context.Context, *batch.BrowsePayload) (*batch.BatchBrowseResult, error)) *MockServiceBrowseCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
+}
+
 // Hints mocks base method.
 func (m *MockService) Hints(arg0 context.Context) (*batch.BatchHintsResult, error) {
 	m.ctrl.T.Helper()

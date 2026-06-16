@@ -227,3 +227,121 @@ func DecodeHintsResponse(decoder func(*http.Response) goahttp.Decoder, restoreBo
 		}
 	}
 }
+
+// BuildBrowseRequest instantiates a HTTP request object with method and path
+// set to call the "batch" service "browse" endpoint
+func (c *Client) BuildBrowseRequest(ctx context.Context, v any) (*http.Request, error) {
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: BrowseBatchPath()}
+	req, err := http.NewRequest("GET", u.String(), nil)
+	if err != nil {
+		return nil, goahttp.ErrInvalidURL("batch", "browse", u.String(), err)
+	}
+	if ctx != nil {
+		req = req.WithContext(ctx)
+	}
+
+	return req, nil
+}
+
+// EncodeBrowseRequest returns an encoder for requests sent to the batch browse
+// server.
+func EncodeBrowseRequest(encoder func(*http.Request) goahttp.Encoder) func(*http.Request, any) error {
+	return func(req *http.Request, v any) error {
+		p, ok := v.(*batch.BrowsePayload)
+		if !ok {
+			return goahttp.ErrInvalidType("batch", "browse", "*batch.BrowsePayload", v)
+		}
+		values := req.URL.Query()
+		if p.Path != nil {
+			values.Add("path", *p.Path)
+		}
+		req.URL.RawQuery = values.Encode()
+		return nil
+	}
+}
+
+// DecodeBrowseResponse returns a decoder for responses returned by the batch
+// browse endpoint. restoreBody controls whether the response body should be
+// restored after having been read.
+// DecodeBrowseResponse may return the following errors:
+//   - "not_available" (type *goa.ServiceError): http.StatusNotFound
+//   - "not_valid" (type *goa.ServiceError): http.StatusBadRequest
+//   - error: internal error
+func DecodeBrowseResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
+	return func(resp *http.Response) (any, error) {
+		if restoreBody {
+			b, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			defer func() {
+				resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			}()
+		} else {
+			defer resp.Body.Close()
+		}
+		switch resp.StatusCode {
+		case http.StatusOK:
+			var (
+				body BrowseResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("batch", "browse", err)
+			}
+			err = ValidateBrowseResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("batch", "browse", err)
+			}
+			res := NewBrowseBatchBrowseResultOK(&body)
+			return res, nil
+		case http.StatusNotFound:
+			var (
+				body BrowseNotAvailableResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("batch", "browse", err)
+			}
+			err = ValidateBrowseNotAvailableResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("batch", "browse", err)
+			}
+			return nil, NewBrowseNotAvailable(&body)
+		case http.StatusBadRequest:
+			var (
+				body BrowseNotValidResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("batch", "browse", err)
+			}
+			err = ValidateBrowseNotValidResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("batch", "browse", err)
+			}
+			return nil, NewBrowseNotValid(&body)
+		default:
+			body, _ := io.ReadAll(resp.Body)
+			return nil, goahttp.ErrInvalidResponse("batch", "browse", resp.StatusCode, string(body))
+		}
+	}
+}
+
+// unmarshalBatchBrowseEntryResponseBodyToBatchBatchBrowseEntry builds a value
+// of type *batch.BatchBrowseEntry from a value of type
+// *BatchBrowseEntryResponseBody.
+func unmarshalBatchBrowseEntryResponseBodyToBatchBatchBrowseEntry(v *BatchBrowseEntryResponseBody) *batch.BatchBrowseEntry {
+	res := &batch.BatchBrowseEntry{
+		Name:         *v.Name,
+		Path:         *v.Path,
+		AbsolutePath: *v.AbsolutePath,
+		ModifiedAt:   v.ModifiedAt,
+	}
+
+	return res
+}

@@ -10,6 +10,7 @@ import (
 	"net/http/pprof"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"runtime"
 	"syscall"
 	"time"
@@ -178,7 +179,7 @@ func main() {
 	// Set up the batch service.
 	var batchsvc batch.Service
 	{
-		batchsvc = batch.NewService(logger.WithName("batch"), temporalClient, config.Temporal.TaskQueue, config.Watcher.CompletedDirs())
+		batchsvc = batch.NewService(logger.WithName("batch"), temporalClient, config.Temporal.TaskQueue, config.Watcher.CompletedDirs(), config.Batch)
 	}
 
 	// Set up the collection service.
@@ -443,6 +444,7 @@ type configuration struct {
 	ExtractActivity    archiveextract.Config
 	Database           db.Config
 	Temporal           temporal.Config
+	Batch              batch.Config
 	Watcher            watcher.Config
 	Pipeline           []pipeline.Config
 	Validation         validation.Config
@@ -463,8 +465,11 @@ type WorkerConfig struct {
 	MaxConcurrentWorkflowsExecutionsSize int
 }
 
-func (c configuration) Validate() error {
+func (c *configuration) Validate(baseDir string) error {
 	if err := c.API.Validate(); err != nil {
+		return err
+	}
+	if err := c.Batch.ValidateWithBaseDir(baseDir); err != nil {
 		return err
 	}
 	if err := c.ObjectEventWebhook.Validate(); err != nil {
@@ -510,11 +515,24 @@ func readConfig(v *viper.Viper, config *configuration, configFile string) (found
 		return found, fmt.Errorf("failed to unmarshal configuration: %w", err)
 	}
 
-	if err := config.Validate(); err != nil {
+	if err := config.Validate(configBaseDir(v, found)); err != nil {
 		return found, fmt.Errorf("failed to validate the provided config: %w", err)
 	}
 
 	return found, nil
+}
+
+func configBaseDir(v *viper.Viper, found bool) string {
+	if !found {
+		return ""
+	}
+
+	configFile := v.ConfigFileUsed()
+	if configFile == "" {
+		return ""
+	}
+
+	return filepath.Dir(configFile)
 }
 
 type TelemetryConfig struct {

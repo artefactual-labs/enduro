@@ -20,6 +20,12 @@ import { mapValues } from '../runtime';
  */
 export interface BatchHintsResult {
     /**
+     * Whether the batch source directory browser is configured.
+     * @type {boolean}
+     * @memberof BatchHintsResult
+     */
+    browserEnabled?: boolean;
+    /**
      * A list of known values of completedDir used by existing watchers.
      * @type {Array<string>}
      * @memberof BatchHintsResult
@@ -44,6 +50,7 @@ export function BatchHintsResultFromJSONTyped(json: any, ignoreDiscriminator: bo
     }
     return {
         
+        'browserEnabled': json['browser_enabled'] == null ? undefined : json['browser_enabled'],
         'completedDirs': json['completed_dirs'] == null ? undefined : json['completed_dirs'],
     };
 }
@@ -59,6 +66,7 @@ export function BatchHintsResultToJSONTyped(value?: BatchHintsResult | null, ign
 
     return {
         
+        'browser_enabled': value['browserEnabled'],
         'completed_dirs': value['completedDirs'],
     };
 }

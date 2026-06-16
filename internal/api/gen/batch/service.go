@@ -22,6 +22,8 @@ type Service interface {
 	Status(context.Context) (res *BatchStatusResult, err error)
 	// Retrieve form hints
 	Hints(context.Context) (res *BatchHintsResult, err error)
+	// Browse batch source directories
+	Browse(context.Context, *BrowsePayload) (res *BatchBrowseResult, err error)
 }
 
 // APIName is the name of the API as defined in the design.
@@ -38,12 +40,37 @@ const ServiceName = "batch"
 // MethodNames lists the service method names as defined in the design. These
 // are the same values that are set in the endpoint request contexts under the
 // MethodKey key.
-var MethodNames = [3]string{"submit", "status", "hints"}
+var MethodNames = [4]string{"submit", "status", "hints", "browse"}
+
+type BatchBrowseEntry struct {
+	// Directory name.
+	Name string
+	// Root-relative path of the directory.
+	Path string
+	// Absolute path of the directory.
+	AbsolutePath string
+	// Directory modification time.
+	ModifiedAt *string
+}
+
+// BatchBrowseResult is the result type of the batch service browse method.
+type BatchBrowseResult struct {
+	// Root-relative path of the listed directory.
+	Path string
+	// Absolute path of the listed directory.
+	AbsolutePath string
+	// Immediate child directories.
+	Entries []*BatchBrowseEntry
+	// Whether the result was truncated because it exceeded the entry limit.
+	Truncated bool
+}
 
 // BatchHintsResult is the result type of the batch service hints method.
 type BatchHintsResult struct {
 	// A list of known values of completedDir used by existing watchers.
 	CompletedDirs []string
+	// Whether the batch source directory browser is configured.
+	BrowserEnabled bool
 }
 
 // BatchResult is the result type of the batch service submit method.
@@ -58,6 +85,12 @@ type BatchStatusResult struct {
 	Status     *string
 	WorkflowID *string
 	RunID      *string
+}
+
+// BrowsePayload is the payload type of the batch service browse method.
+type BrowsePayload struct {
+	// Root-relative directory path to list
+	Path *string
 }
 
 // SubmitPayload is the payload type of the batch service submit method.

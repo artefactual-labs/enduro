@@ -1,5 +1,6 @@
 <script setup lang="ts">
 const {
+  canBrowseBatchDirectories,
   canSubmit,
   completedDir,
   destinationMode,
@@ -33,6 +34,7 @@ const {
   submit,
   submitErrorMessage,
   transferOptions,
+  useBrowsedPath,
   useCompletedDirHint
 } = useBatchImport()
 
@@ -57,6 +59,7 @@ const batchStatusColor = computed(() => {
 })
 
 const submitConfirmationOpen = ref(false)
+const directoryBrowserOpen = ref(false)
 
 const selectedProcessingConfigLabel = computed(() => {
   const option = processingOptions.value.find(item => item.value === selectedProcessingConfig.value)
@@ -140,16 +143,6 @@ export { useBatchPageData, useBatchStatusData } from '~/loaders/batch-page'
 
         <dl class="grid grid-cols-3 gap-y-2 text-sm">
           <dt class="text-muted">
-            Status
-          </dt>
-          <dd class="col-span-2">
-            <UBadge
-              :label="batchStatusLabel"
-              :color="batchStatusColor"
-              variant="subtle"
-            />
-          </dd>
-          <dt class="text-muted">
             Workflow ID
           </dt>
           <dd class="col-span-2 break-all">
@@ -211,11 +204,21 @@ export { useBatchPageData, useBatchStatusData } from '~/loaders/batch-page'
             description="Select the parent directory that contains the batch transfers"
             required
           >
-            <UInput
-              v-model="path"
-              placeholder="/path/to/transfers"
-              class="w-full"
-            />
+            <div class="flex gap-2">
+              <UInput
+                v-model="path"
+                placeholder="/path/to/transfers"
+                class="min-w-0 flex-1"
+              />
+              <UButton
+                v-if="canBrowseBatchDirectories"
+                icon="i-lucide-folder-search"
+                label="Browse"
+                color="neutral"
+                variant="outline"
+                @click="directoryBrowserOpen = true"
+              />
+            </div>
           </UFormField>
 
           <UFormField
@@ -406,5 +409,11 @@ export { useBatchPageData, useBatchStatusData } from '~/loaders/batch-page'
         </div>
       </div>
     </AppConfirmDialog>
+
+    <BatchDirectoryBrowser
+      v-if="canBrowseBatchDirectories"
+      v-model:open="directoryBrowserOpen"
+      @select="useBrowsedPath"
+    />
   </AppPageContainer>
 </template>

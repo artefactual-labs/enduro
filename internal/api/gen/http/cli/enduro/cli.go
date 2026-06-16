@@ -27,7 +27,7 @@ import (
 func UsageCommands() []string {
 	return []string{
 		"pipeline (list|show|processing)",
-		"batch (submit|status|hints)",
+		"batch (submit|status|hints|browse)",
 		"collection (monitor|list|show|delete|cancel|retry|workflow|download|decide|bulk|bulk-status)",
 	}
 }
@@ -70,6 +70,9 @@ func ParseEndpoint(
 		batchStatusFlags = flag.NewFlagSet("status", flag.ExitOnError)
 
 		batchHintsFlags = flag.NewFlagSet("hints", flag.ExitOnError)
+
+		batchBrowseFlags    = flag.NewFlagSet("browse", flag.ExitOnError)
+		batchBrowsePathFlag = batchBrowseFlags.String("path", "", "")
 
 		collectionFlags = flag.NewFlagSet("collection", flag.ContinueOnError)
 
@@ -122,6 +125,7 @@ func ParseEndpoint(
 	batchSubmitFlags.Usage = batchSubmitUsage
 	batchStatusFlags.Usage = batchStatusUsage
 	batchHintsFlags.Usage = batchHintsUsage
+	batchBrowseFlags.Usage = batchBrowseUsage
 
 	collectionFlags.Usage = collectionUsage
 	collectionMonitorFlags.Usage = collectionMonitorUsage
@@ -195,6 +199,9 @@ func ParseEndpoint(
 
 			case "hints":
 				epf = batchHintsFlags
+
+			case "browse":
+				epf = batchBrowseFlags
 
 			}
 
@@ -278,6 +285,9 @@ func ParseEndpoint(
 				endpoint = c.Status()
 			case "hints":
 				endpoint = c.Hints()
+			case "browse":
+				endpoint = c.Browse()
+				data, err = batchc.BuildBrowsePayload(*batchBrowsePathFlag)
 			}
 		case "collection":
 			c := collectionc.NewClient(scheme, host, doer, enc, dec, restore)
@@ -399,6 +409,7 @@ func batchUsage() {
 	fmt.Fprintln(os.Stderr, `    submit: Submit a new batch`)
 	fmt.Fprintln(os.Stderr, `    status: Retrieve status of current batch operation.`)
 	fmt.Fprintln(os.Stderr, `    hints: Retrieve form hints`)
+	fmt.Fprintln(os.Stderr, `    browse: Browse batch source directories`)
 	fmt.Fprintln(os.Stderr)
 	fmt.Fprintln(os.Stderr, "Additional help:")
 	fmt.Fprintf(os.Stderr, "    %s batch COMMAND --help\n", os.Args[0])
@@ -451,6 +462,24 @@ func batchHintsUsage() {
 	fmt.Fprintln(os.Stderr)
 	fmt.Fprintln(os.Stderr, "Example:")
 	fmt.Fprintf(os.Stderr, "    %s %s\n", os.Args[0], "batch hints")
+}
+
+func batchBrowseUsage() {
+	// Header with flags
+	fmt.Fprintf(os.Stderr, "%s [flags] batch browse", os.Args[0])
+	fmt.Fprint(os.Stderr, " -path STRING")
+	fmt.Fprintln(os.Stderr)
+
+	// Description
+	fmt.Fprintln(os.Stderr)
+	fmt.Fprintln(os.Stderr, `Browse batch source directories`)
+
+	// Flags list
+	fmt.Fprintln(os.Stderr, `    -path STRING: `)
+
+	fmt.Fprintln(os.Stderr)
+	fmt.Fprintln(os.Stderr, "Example:")
+	fmt.Fprintf(os.Stderr, "    %s %s\n", os.Args[0], "batch browse --path \"abc123\"")
 }
 
 // collectionUsage displays the usage of the collection command and its

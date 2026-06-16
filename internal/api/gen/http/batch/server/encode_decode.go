@@ -126,3 +126,89 @@ func EncodeHintsResponse(encoder func(context.Context, http.ResponseWriter) goah
 		return enc.Encode(body)
 	}
 }
+
+// EncodeBrowseResponse returns an encoder for responses returned by the batch
+// browse endpoint.
+func EncodeBrowseResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {
+	return func(ctx context.Context, w http.ResponseWriter, v any) error {
+		res, _ := v.(*batch.BatchBrowseResult)
+		enc := encoder(ctx, w)
+		body := NewBrowseResponseBody(res)
+		w.WriteHeader(http.StatusOK)
+		return enc.Encode(body)
+	}
+}
+
+// DecodeBrowseRequest returns a decoder for requests sent to the batch browse
+// endpoint.
+func DecodeBrowseRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (*batch.BrowsePayload, error) {
+	return func(r *http.Request) (*batch.BrowsePayload, error) {
+		var payload *batch.BrowsePayload
+		var (
+			path *string
+		)
+		pathRaw := r.URL.Query().Get("path")
+		if pathRaw != "" {
+			path = &pathRaw
+		}
+		payload = NewBrowsePayload(path)
+
+		return payload, nil
+	}
+}
+
+// EncodeBrowseError returns an encoder for errors returned by the browse batch
+// endpoint.
+func EncodeBrowseError(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder, formatter func(ctx context.Context, err error) goahttp.Statuser) func(context.Context, http.ResponseWriter, error) error {
+	encodeError := goahttp.ErrorEncoder(encoder, formatter)
+	return func(ctx context.Context, w http.ResponseWriter, v error) error {
+		var en goa.GoaErrorNamer
+		if !errors.As(v, &en) {
+			return encodeError(ctx, w, v)
+		}
+		switch en.GoaErrorName() {
+		case "not_available":
+			var res *goa.ServiceError
+			errors.As(v, &res)
+			enc := encoder(ctx, w)
+			var body any
+			if formatter != nil {
+				body = formatter(ctx, res)
+			} else {
+				body = NewBrowseNotAvailableResponseBody(res)
+			}
+			w.Header().Set("goa-error", res.GoaErrorName())
+			w.WriteHeader(http.StatusNotFound)
+			return enc.Encode(body)
+		case "not_valid":
+			var res *goa.ServiceError
+			errors.As(v, &res)
+			enc := encoder(ctx, w)
+			var body any
+			if formatter != nil {
+				body = formatter(ctx, res)
+			} else {
+				body = NewBrowseNotValidResponseBody(res)
+			}
+			w.Header().Set("goa-error", res.GoaErrorName())
+			w.WriteHeader(http.StatusBadRequest)
+			return enc.Encode(body)
+		default:
+			return encodeError(ctx, w, v)
+		}
+	}
+}
+
+// marshalBatchBatchBrowseEntryToBatchBrowseEntryResponseBody builds a value of
+// type *BatchBrowseEntryResponseBody from a value of type
+// *batch.BatchBrowseEntry.
+func marshalBatchBatchBrowseEntryToBatchBrowseEntryResponseBody(v *batch.BatchBrowseEntry) *BatchBrowseEntryResponseBody {
+	res := &BatchBrowseEntryResponseBody{
+		Name:         v.Name,
+		Path:         v.Path,
+		AbsolutePath: v.AbsolutePath,
+		ModifiedAt:   v.ModifiedAt,
+	}
+
+	return res
+}
