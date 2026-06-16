@@ -56,6 +56,28 @@ const batchStatusColor = computed(() => {
   }
 })
 
+const submitConfirmationOpen = ref(false)
+
+const selectedProcessingConfigLabel = computed(() => {
+  const option = processingOptions.value.find(item => item.value === selectedProcessingConfig.value)
+  if (option?.label) return option.label
+  if (selectedProcessingConfig.value) return selectedProcessingConfig.value
+
+  return 'Default (none selected)'
+})
+
+const submitConfirmationPath = computed(() => path.value.trim())
+
+function requestSubmitConfirmation() {
+  if (!canSubmit.value) return
+  submitConfirmationOpen.value = true
+}
+
+async function confirmSubmit() {
+  await submit()
+  submitConfirmationOpen.value = false
+}
+
 useSeoMeta({
   title: 'Batch import'
 })
@@ -346,10 +368,43 @@ export { useBatchPageData, useBatchStatusData } from '~/loaders/batch-page'
             color="primary"
             :loading="isSubmitting || isLoadingHints"
             :disabled="!canSubmit"
-            @click="submit"
+            @click="requestSubmitConfirmation"
           />
         </div>
       </div>
     </UCard>
+
+    <AppConfirmDialog
+      v-model:open="submitConfirmationOpen"
+      title="Submit batch import?"
+      description="Review the batch details before submitting."
+      confirm-label="Submit"
+      cancel-label="Cancel"
+      modal-class="max-w-lg"
+      :pending="isSubmitting"
+      @confirm="confirmSubmit"
+    >
+      <p class="text-sm text-muted">
+        You're submitting this directory as a batch transfer.
+      </p>
+
+      <div class="space-y-4">
+        <div class="space-y-2">
+          <p class="text-xs font-medium uppercase tracking-[0.14em] text-muted">
+            Path
+          </p>
+          <pre class="overflow-x-auto whitespace-pre-wrap break-all rounded-md bg-elevated px-3 py-2 font-mono text-xs leading-relaxed text-highlighted">{{ submitConfirmationPath }}</pre>
+        </div>
+
+        <div class="space-y-2">
+          <p class="text-xs font-medium uppercase tracking-[0.14em] text-muted">
+            Processing configuration
+          </p>
+          <p class="rounded-md bg-elevated px-3 py-2 text-sm text-highlighted">
+            {{ selectedProcessingConfigLabel }}
+          </p>
+        </div>
+      </div>
+    </AppConfirmDialog>
   </AppPageContainer>
 </template>

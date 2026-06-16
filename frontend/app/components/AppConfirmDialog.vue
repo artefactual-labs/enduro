@@ -8,12 +8,14 @@ const props = withDefaults(defineProps<{
   confirmLabel?: string
   cancelLabel?: string
   confirmColor?: ConfirmColor
+  modalClass?: string
   pending?: boolean
 }>(), {
   description: '',
   confirmLabel: 'Confirm',
   cancelLabel: 'Cancel',
   confirmColor: 'primary',
+  modalClass: 'max-w-md',
   pending: false
 })
 
@@ -39,9 +41,18 @@ function handleConfirm() {
     :description="description"
     :close="!pending"
     :dismissible="!pending"
-    class="max-w-md"
+    :class="modalClass"
     @update:open="updateOpen"
   >
+    <template
+      v-if="$slots.default"
+      #body
+    >
+      <div class="space-y-4">
+        <slot />
+      </div>
+    </template>
+
     <template #footer="{ close }">
       <div class="flex justify-end gap-2">
         <UButton
