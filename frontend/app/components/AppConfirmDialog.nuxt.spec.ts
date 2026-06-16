@@ -16,6 +16,19 @@ describe('AppConfirmDialog', () => {
     expect(modal.props('class')).toBe('max-w-md')
   })
 
+  it('accepts a custom modal width class', async () => {
+    const wrapper = await mountSuspended(AppConfirmDialog, {
+      props: {
+        modalClass: 'max-w-lg',
+        open: true,
+        title: 'Submit batch import?'
+      }
+    })
+
+    const modal = wrapper.findComponent({ name: 'UModal' })
+    expect(modal.props('class')).toBe('max-w-lg')
+  })
+
   it('blocks close requests while a confirm action is pending', async () => {
     const wrapper = await mountSuspended(AppConfirmDialog, {
       props: {
