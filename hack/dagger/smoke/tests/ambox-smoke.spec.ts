@@ -114,6 +114,12 @@ test("Nuxt batch import form submits a directory transfer", async ({ page }) => 
     await page.locator('input[placeholder="/path/to/transfers"]').fill(batchDir);
 
     await page.getByRole("button", { name: "Submit" }).click();
+    const confirmation = page
+      .getByRole("dialog")
+      .filter({ hasText: "Submit batch import?" });
+    await expect(confirmation).toBeVisible();
+    await confirmation.getByRole("button", { name: "Submit" }).click();
+
     await Promise.race([
       page.getByText("Batch submitted", { exact: true }).waitFor(),
       page.getByText("Batch running", { exact: true }).waitFor(),
