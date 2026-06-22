@@ -92,6 +92,45 @@ func TestReconcileStorageActivityExecute(t *testing.T) {
 		assert.Equal(t, *res.CompletedAt, "2026-03-17T08:00:00Z")
 	})
 
+	t.Run("Classifies standalone completion", func(t *testing.T) {
+		t.Parallel()
+
+		activity := newReconcileStorageActivityForTest(t, pipeline.Config{
+			Name: "am",
+			ID:   "pipeline-1",
+			Recovery: pipeline.RecoveryConfig{
+				ReconcileExistingAIP: true,
+				RequiredLocations:    []string{"loc-1"},
+				StandaloneLocations:  []string{"standalone-loc"},
+			},
+			StorageServiceURL: "http://user:key@example.com",
+		}, func(context.Context, *pipeline.Pipeline, string) (*pipeline.StoragePackage, error) {
+			primaryStoredAt := parseTestTime(t, "2026-03-17T07:00:00Z")
+
+			return &pipeline.StoragePackage{
+				UUID:            "aip-123",
+				Status:          "UPLOADED",
+				StoredDate:      &primaryStoredAt,
+				CurrentFullPath: "/var/aips/aip-123.7z",
+				CurrentLocation: pipeline.StorageLocation{UUID: "standalone-loc"},
+			}, nil
+		})
+
+		res, err := activity.Execute(context.Background(), &ReconcileStorageActivityParams{
+			PipelineName: "am",
+			AIPID:        "aip-123",
+		})
+
+		assert.NilError(t, err)
+		assert.Equal(t, res.Classification, reconciliation.ClassificationLocalComplete)
+		assert.Equal(t, res.Status, reconciliation.StatusComplete)
+		assert.Equal(t, res.PrimaryExists, true)
+		assert.Equal(t, res.StorageComplete, true)
+		assert.Assert(t, res.AIPStoredAt != nil)
+		assert.Assert(t, res.CompletedAt != nil)
+		assert.Equal(t, *res.CompletedAt, "2026-03-17T07:00:00Z")
+	})
+
 	t.Run("Returns transport errors", func(t *testing.T) {
 		t.Parallel()
 

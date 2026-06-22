@@ -15,8 +15,8 @@ const (
 	// ClassificationNotFound means Storage Service has no package for the AIP
 	// UUID, so a full reprocess may still be appropriate.
 	ClassificationNotFound Classification = "not_found"
-	// ClassificationLocalComplete means the primary AIP exists and no required
-	// replica locations are configured for the pipeline.
+	// ClassificationLocalComplete means the primary AIP exists and satisfies the
+	// configured recovery policy without requiring replica completion.
 	ClassificationLocalComplete Classification = "local_complete"
 	// ClassificationReplicatedPartial means the primary AIP exists but at least
 	// one configured required replica is still missing or lacks a stored date.
@@ -71,9 +71,10 @@ type Result struct {
 
 // ClassifyStorage translates Storage Service observations into Enduro's
 // recovery model. The policy decision is intentionally small:
-// when no required locations are configured, the primary AIP is the completion
-// target; otherwise every configured location must have a replica with a
-// concrete stored date before storage is considered complete.
+// when no required locations are configured, or the primary AIP is in a
+// standalone location, the primary AIP is the completion target; otherwise every
+// configured location must have a replica with a concrete stored date before
+// storage is considered complete.
 func ClassifyStorage(cfg pipeline.RecoveryConfig, pkg *pipeline.StoragePackage) Result {
 	if pkg == nil {
 		return Result{
@@ -95,7 +96,7 @@ func ClassifyStorage(cfg pipeline.RecoveryConfig, pkg *pipeline.StoragePackage) 
 		AIPStoredAt:   pkg.StoredDate,
 	}
 
-	if len(cfg.RequiredLocations) == 0 {
+	if len(cfg.RequiredLocations) == 0 || cfg.IsStandaloneLocation(pkg.CurrentLocation.UUID) {
 		result.Classification = ClassificationLocalComplete
 		result.Status = StatusComplete
 		result.StorageComplete = true

@@ -725,6 +725,9 @@ At a high level:
 - set `requiredLocations` to one or more Storage Service location UUIDs when
   those locations must also be confirmed before the collection is considered
   complete
+- set `standaloneLocations` to primary Storage Service location UUIDs that are
+  final storage destinations even when `requiredLocations` is configured for
+  packages stored elsewhere
 
 #### `capacity` (Integer)
 

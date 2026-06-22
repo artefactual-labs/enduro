@@ -73,6 +73,44 @@ func TestClassifyStorage(t *testing.T) {
 				AIPStoredAt:    &primaryStoredAt,
 			},
 		},
+		"Standalone storage completes from primary stored date when required locations are configured": {
+			cfg: pipeline.RecoveryConfig{
+				RequiredLocations:   []string{"replica-loc"},
+				StandaloneLocations: []string{"standalone-loc"},
+			},
+			pkg: &pipeline.StoragePackage{
+				StoredDate: &primaryStoredAt,
+				CurrentLocation: pipeline.StorageLocation{
+					UUID: "standalone-loc",
+				},
+			},
+			want: Result{
+				Classification:  ClassificationLocalComplete,
+				Status:          StatusComplete,
+				PrimaryExists:   true,
+				StorageComplete: true,
+				AIPStoredAt:     &primaryStoredAt,
+				CompletedAt:     &primaryStoredAt,
+			},
+		},
+		"Required locations still apply outside standalone storage": {
+			cfg: pipeline.RecoveryConfig{
+				RequiredLocations:   []string{"replica-loc"},
+				StandaloneLocations: []string{"standalone-loc"},
+			},
+			pkg: &pipeline.StoragePackage{
+				StoredDate: &primaryStoredAt,
+				CurrentLocation: pipeline.StorageLocation{
+					UUID: "cloud-loc",
+				},
+			},
+			want: Result{
+				Classification: ClassificationReplicatedPartial,
+				Status:         StatusPartial,
+				PrimaryExists:  true,
+				AIPStoredAt:    &primaryStoredAt,
+			},
+		},
 		"Replicated storage is partial when a required replica has no stored date": {
 			cfg: pipeline.RecoveryConfig{
 				RequiredLocations: []string{"loc-1"},

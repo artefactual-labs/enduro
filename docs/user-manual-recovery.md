@@ -145,6 +145,20 @@ Use the minimal form when the primary package alone is enough to satisfy your
 storage rule. Omitting `requiredLocations` has the same effect as setting it to
 `[]`. Add `requiredLocations` only when specific Storage Service locations must
 also be confirmed before Enduro should treat the collection as fully stored.
+If the same pipeline can send packages to both replicated and non-replicated
+AIP stores, add the non-replicated primary package locations to
+`standaloneLocations`:
+
+```toml
+[pipeline.recovery]
+reconcileExistingAIP = true
+requiredLocations = ["cloud-location-id", "cloud-replica-location-id"]
+standaloneLocations = ["local-location-id", "vpaa-location-id"]
+```
+
+When the primary package is in a standalone location, Enduro treats the primary
+stored date as the completion condition and does not require replicas. Packages
+stored outside standalone locations still need every `requiredLocations` entry.
 
 Example based on a fuller pipeline definition:
 
@@ -176,6 +190,14 @@ reconcileExistingAIP = true
 requiredLocations = [
   "primary-location-id",
   "replica-location-id",
+]
+
+# Optional. Primary package locations where the primary package is the final
+# storage destination, even when requiredLocations is configured for packages
+# stored elsewhere.
+standaloneLocations = [
+  "local-location-id",
+  "vpaa-location-id",
 ]
 ```
 
@@ -257,18 +279,34 @@ Guidance:
 - only include locations that operators are prepared to monitor; every required
   location becomes part of the success condition
 
+### `standaloneLocations` (Array(String))
+
+Primary Storage Service locations where the package is considered fully stored
+from its primary stored date. Use this when one pipeline handles both replicated
+and non-replicated AIP stores. When the primary package is in one of these
+locations, Enduro does not require `requiredLocations` for that package.
+
+E.g.: `["local-location-id", "vpaa-location-id"]`
+
+Guidance:
+
+- include only primary package locations that are final storage destinations
+- do not use this as a list of replica locations that may fail
+- omit this setting when every package in the pipeline should follow the same
+  `requiredLocations` rule
+
 ## Finding valid Storage Service location IDs
 
-`requiredLocations` must use Storage Service location UUIDs. Enduro does not
-invent these values.
+`requiredLocations` and `standaloneLocations` must use Storage Service location
+UUIDs. Enduro does not invent these values.
 
 Operators should obtain them from Archivematica Storage Service and record the
 UUIDs they intend to use in pipeline configuration. In practice, this means
-looking up the primary package location and any replica locations in Storage
-Service before enabling recovery.
+looking up the primary package location, any standalone package locations, and
+any replica locations in Storage Service before enabling recovery.
 
 If multiple pipelines have different storage policies, each pipeline can use a
-different `requiredLocations` list.
+different `requiredLocations` and `standaloneLocations` list.
 
 ## Reconciliation after ingest
 

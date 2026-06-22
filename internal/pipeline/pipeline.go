@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/user"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -47,6 +48,15 @@ type Config struct {
 type RecoveryConfig struct {
 	ReconcileExistingAIP bool
 	RequiredLocations    []string
+	StandaloneLocations  []string
+}
+
+func (c RecoveryConfig) IsStandaloneLocation(locationID string) bool {
+	if locationID == "" {
+		return false
+	}
+
+	return slices.Contains(c.StandaloneLocations, locationID)
 }
 
 func (c Config) Validate() error {
