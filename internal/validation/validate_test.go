@@ -50,7 +50,6 @@ func TestChecksumExistsValidator(t *testing.T) {
 		},
 	}
 	for name, tc := range tests {
-		name, tc := name, tc
 		t.Run(name, func(t *testing.T) {
 			tmpDir := fs.NewDir(t, "transfer", tc.dirOpts...)
 			defer tmpDir.Remove()

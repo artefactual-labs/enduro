@@ -212,7 +212,7 @@ func TestTransferStatus(t *testing.T) {
 						nil,
 					)
 			},
-			wantSID: strPtr("fb901f48-8d38-4e1b-8047-6e03a0079439"),
+			wantSID: new("fb901f48-8d38-4e1b-8047-6e03a0079439"),
 			wantErr: nil,
 		},
 	}
@@ -432,10 +432,6 @@ func TestIngestStatus(t *testing.T) {
 			assert.Equal(t, errors.Is(err, tc.wantErr), true)
 		})
 	}
-}
-
-func strPtr(str string) *string {
-	return &str
 }
 
 type fakeTimeoutError struct{}
