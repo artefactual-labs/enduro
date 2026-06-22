@@ -1,9 +1,11 @@
 package pipeline
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/go-logr/logr"
+	"github.com/spf13/viper"
 	"gotest.tools/v3/assert"
 
 	"github.com/artefactual-labs/enduro/internal/publisher"
@@ -174,6 +176,38 @@ func TestPipelineConfigValidate(t *testing.T) {
 			assert.ErrorContains(t, err, tc.errContains)
 		})
 	}
+}
+
+func TestPipelineConfigUnmarshalsStandaloneLocations(t *testing.T) {
+	t.Parallel()
+
+	v := viper.New()
+	v.SetConfigType("toml")
+	err := v.ReadConfig(strings.NewReader(`
+[[pipeline]]
+name = "am"
+
+[pipeline.recovery]
+reconcileExistingAIP = true
+requiredLocations = ["required-location"]
+standaloneLocations = ["local-location", "vpaa-location"]
+`))
+	assert.NilError(t, err)
+
+	type config struct {
+		Pipeline []Config
+	}
+
+	var c config
+	err = v.Unmarshal(&c)
+	assert.NilError(t, err)
+
+	assert.Equal(t, len(c.Pipeline), 1)
+	assert.DeepEqual(t, c.Pipeline[0].Recovery, RecoveryConfig{
+		ReconcileExistingAIP: true,
+		RequiredLocations:    []string{"required-location"},
+		StandaloneLocations:  []string{"local-location", "vpaa-location"},
+	})
 }
 
 func testCapacity(t *testing.T, p *Pipeline, s, c int64) {

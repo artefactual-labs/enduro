@@ -238,6 +238,92 @@ func TestGetStoragePackage(t *testing.T) {
 		assert.Equal(t, len(pkg.Replicas), 0)
 	})
 
+	t.Run("Standalone reconciliation ignores replica lookup failures", func(t *testing.T) {
+		t.Parallel()
+
+		const (
+			primaryID  = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+			primaryLoc = "33333333-3333-4333-8333-333333333333"
+			replicaID  = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"
+		)
+
+		p := newStoragePipelineForTest(t, &fakeRequestAdapter{
+			send: func(ctx context.Context, requestInfo *kabs.RequestInformation, constructor serialization.ParsableFactory, errorMappings kabs.ErrorMappings) (serialization.Parsable, error) {
+				switch id := pathUUIDString(t, requestInfo); id {
+				case primaryID:
+					pkg := models.NewPackageEscaped()
+					pkg.SetUuid(uuidPtr("11111111-1111-1111-1111-111111111111"))
+					storedAt := time.Date(2026, 3, 17, 7, 0, 0, 0, time.UTC)
+					pkg.SetStoredDate(&storedAt)
+					pkg.SetCurrentLocation(stringPtr("/api/v2/location/" + primaryLoc + "/"))
+					pkg.SetReplicas([]string{"/api/v2/file/" + replicaID + "/"})
+					return pkg, nil
+				case replicaID:
+					return nil, errors.New("temporary replica lookup failure")
+				default:
+					assert.Assert(t, false, "unexpected request UUID "+id)
+					return nil, nil
+				}
+			},
+		})
+
+		pkg, err := p.GetStoragePackageForReconciliation(context.Background(), primaryID, RecoveryConfig{
+			RequiredLocations:   []string{"replica-location"},
+			StandaloneLocations: []string{primaryLoc},
+		})
+
+		assert.NilError(t, err)
+		assert.Assert(t, pkg != nil)
+		assert.Equal(t, pkg.CurrentLocation.UUID, primaryLoc)
+		assert.Equal(t, len(pkg.Replicas), 0)
+	})
+
+	t.Run("Replicated reconciliation hydrates replicas outside standalone locations", func(t *testing.T) {
+		t.Parallel()
+
+		const (
+			primaryID  = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+			primaryLoc = "33333333-3333-4333-8333-333333333333"
+			replicaID  = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"
+			replicaLoc = "44444444-4444-4444-8444-444444444444"
+		)
+
+		p := newStoragePipelineForTest(t, &fakeRequestAdapter{
+			send: func(ctx context.Context, requestInfo *kabs.RequestInformation, constructor serialization.ParsableFactory, errorMappings kabs.ErrorMappings) (serialization.Parsable, error) {
+				switch id := pathUUIDString(t, requestInfo); id {
+				case primaryID:
+					pkg := models.NewPackageEscaped()
+					pkg.SetUuid(uuidPtr("11111111-1111-1111-1111-111111111111"))
+					storedAt := time.Date(2026, 3, 17, 7, 0, 0, 0, time.UTC)
+					pkg.SetStoredDate(&storedAt)
+					pkg.SetCurrentLocation(stringPtr("/api/v2/location/" + primaryLoc + "/"))
+					pkg.SetReplicas([]string{"/api/v2/file/" + replicaID + "/"})
+					return pkg, nil
+				case replicaID:
+					replicaStoredAt := time.Date(2026, 3, 17, 8, 0, 0, 0, time.UTC)
+					pkg := models.NewPackageEscaped()
+					pkg.SetUuid(uuidPtr("22222222-2222-2222-2222-222222222222"))
+					pkg.SetStoredDate(&replicaStoredAt)
+					pkg.SetCurrentLocation(stringPtr("/api/v2/location/" + replicaLoc + "/"))
+					return pkg, nil
+				default:
+					assert.Assert(t, false, "unexpected request UUID "+id)
+					return nil, nil
+				}
+			},
+		})
+
+		pkg, err := p.GetStoragePackageForReconciliation(context.Background(), primaryID, RecoveryConfig{
+			RequiredLocations:   []string{replicaLoc},
+			StandaloneLocations: []string{"55555555-5555-4555-8555-555555555555"},
+		})
+
+		assert.NilError(t, err)
+		assert.Assert(t, pkg != nil)
+		assert.Equal(t, len(pkg.Replicas), 1)
+		assert.Equal(t, pkg.Replicas[0].CurrentLocation.UUID, replicaLoc)
+	})
+
 	t.Run("Rejects invalid package UUID", func(t *testing.T) {
 		t.Parallel()
 

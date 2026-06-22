@@ -38,17 +38,23 @@ type StorageReplica struct {
 }
 
 func (p *Pipeline) GetStoragePackage(ctx context.Context, aipID string) (*StoragePackage, error) {
-	return p.getStoragePackage(ctx, aipID, true)
+	return p.getStoragePackage(ctx, aipID, alwaysLoadStorageReplicas)
 }
 
 // GetStoragePackageForReconciliation returns only the storage details needed
 // by the configured recovery policy. Primary-only policies do not need replica
 // hydration, so unrelated replica problems should not block reconciliation.
 func (p *Pipeline) GetStoragePackageForReconciliation(ctx context.Context, aipID string, cfg RecoveryConfig) (*StoragePackage, error) {
-	return p.getStoragePackage(ctx, aipID, len(cfg.RequiredLocations) > 0)
+	return p.getStoragePackage(ctx, aipID, func(pkg *StoragePackage) bool {
+		return len(cfg.RequiredLocations) > 0 && !cfg.IsStandaloneLocation(pkg.CurrentLocation.UUID)
+	})
 }
 
-func (p *Pipeline) getStoragePackage(ctx context.Context, aipID string, loadReplicas bool) (*StoragePackage, error) {
+func alwaysLoadStorageReplicas(*StoragePackage) bool {
+	return true
+}
+
+func (p *Pipeline) getStoragePackage(ctx context.Context, aipID string, shouldLoadReplicas func(*StoragePackage) bool) (*StoragePackage, error) {
 	if p.storageServiceClient == nil {
 		return nil, errors.New("storage service client is not configured")
 	}
@@ -69,7 +75,7 @@ func (p *Pipeline) getStoragePackage(ctx context.Context, aipID string, loadRepl
 		return nil, errors.New("storage service returned an empty package response")
 	}
 
-	return p.normalizeStoragePackage(ctx, pkg, loadReplicas)
+	return p.normalizeStoragePackage(ctx, pkg, shouldLoadReplicas)
 }
 
 func (p *Pipeline) DownloadStoragePackage(ctx context.Context, aipID string) (*ssclient.FileStream, error) {
@@ -96,7 +102,7 @@ func (p *Pipeline) DownloadStoragePackage(ctx context.Context, aipID string) (*s
 	return stream, nil
 }
 
-func (p *Pipeline) normalizeStoragePackage(ctx context.Context, pkg *models.PackageEscaped, loadReplicas bool) (*StoragePackage, error) {
+func (p *Pipeline) normalizeStoragePackage(ctx context.Context, pkg *models.PackageEscaped, shouldLoadReplicas func(*StoragePackage) bool) (*StoragePackage, error) {
 	out := &StoragePackage{
 		UUID:            derefUUID(pkg.GetUuid()),
 		Status:          derefString(pkg.GetStatus()),
@@ -112,7 +118,7 @@ func (p *Pipeline) normalizeStoragePackage(ctx context.Context, pkg *models.Pack
 		out.CurrentLocation = StorageLocation{UUID: locationID}
 	}
 
-	if !loadReplicas {
+	if shouldLoadReplicas == nil || !shouldLoadReplicas(out) {
 		return out, nil
 	}
 
