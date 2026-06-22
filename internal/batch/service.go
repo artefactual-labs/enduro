@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	"go.artefactual.dev/tools/ref"
 	"go.opentelemetry.io/otel/trace/noop"
 	temporalapi_enums "go.temporal.io/api/enums/v1"
 	temporalapi_serviceerror "go.temporal.io/api/serviceerror"
@@ -136,7 +135,7 @@ func (s *batchImpl) Status(ctx context.Context) (*goabatch.BatchStatusResult, er
 		result.Running = true
 		return result, nil
 	}
-	result.Status = ref.New(strings.ToLower(resp.WorkflowExecutionInfo.Status.String()))
+	result.Status = new(strings.ToLower(resp.WorkflowExecutionInfo.Status.String()))
 	return result, nil
 }
 

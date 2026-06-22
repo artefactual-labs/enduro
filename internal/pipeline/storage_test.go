@@ -41,20 +41,20 @@ func TestGetStoragePackage(t *testing.T) {
 					primaryStoredAt := time.Date(2026, 3, 17, 7, 0, 0, 0, time.UTC)
 					pkg := models.NewPackageEscaped()
 					pkg.SetUuid(uuidPtr("11111111-1111-1111-1111-111111111111"))
-					pkg.SetStatus(stringPtr("UPLOADED"))
+					pkg.SetStatus(new("UPLOADED"))
 					pkg.SetStoredDate(&primaryStoredAt)
-					pkg.SetCurrentFullPath(stringPtr("/var/aips/" + primaryID + ".7z"))
-					pkg.SetCurrentLocation(stringPtr("/api/v2/location/" + primaryLoc + "/"))
+					pkg.SetCurrentFullPath(new("/var/aips/" + primaryID + ".7z"))
+					pkg.SetCurrentLocation(new("/api/v2/location/" + primaryLoc + "/"))
 					pkg.SetReplicas([]string{"/api/v2/file/" + replicaID + "/"})
 					return pkg, nil
 				case replicaID:
 					replicaStoredAt := time.Date(2026, 3, 17, 8, 0, 0, 0, time.UTC)
 					pkg := models.NewPackageEscaped()
 					pkg.SetUuid(uuidPtr("22222222-2222-2222-2222-222222222222"))
-					pkg.SetStatus(stringPtr("UPLOADED"))
+					pkg.SetStatus(new("UPLOADED"))
 					pkg.SetStoredDate(&replicaStoredAt)
-					pkg.SetCurrentFullPath(stringPtr("/replicas/" + primaryID + ".7z"))
-					pkg.SetCurrentLocation(stringPtr("/api/v2/location/" + replicaLoc + "/"))
+					pkg.SetCurrentFullPath(new("/replicas/" + primaryID + ".7z"))
+					pkg.SetCurrentLocation(new("/api/v2/location/" + replicaLoc + "/"))
 					pkg.SetReplicas([]string{})
 					return pkg, nil
 				default:
@@ -154,7 +154,7 @@ func TestGetStoragePackage(t *testing.T) {
 			send: func(ctx context.Context, requestInfo *kabs.RequestInformation, constructor serialization.ParsableFactory, errorMappings kabs.ErrorMappings) (serialization.Parsable, error) {
 				pkg := models.NewPackageEscaped()
 				pkg.SetUuid(uuidPtr("11111111-1111-1111-1111-111111111111"))
-				pkg.SetCurrentLocation(stringPtr("not-a-uri"))
+				pkg.SetCurrentLocation(new("not-a-uri"))
 				return pkg, nil
 			},
 		})
@@ -255,7 +255,7 @@ func TestGetStoragePackage(t *testing.T) {
 					pkg.SetUuid(uuidPtr("11111111-1111-1111-1111-111111111111"))
 					storedAt := time.Date(2026, 3, 17, 7, 0, 0, 0, time.UTC)
 					pkg.SetStoredDate(&storedAt)
-					pkg.SetCurrentLocation(stringPtr("/api/v2/location/" + primaryLoc + "/"))
+					pkg.SetCurrentLocation(new("/api/v2/location/" + primaryLoc + "/"))
 					pkg.SetReplicas([]string{"/api/v2/file/" + replicaID + "/"})
 					return pkg, nil
 				case replicaID:
@@ -296,7 +296,7 @@ func TestGetStoragePackage(t *testing.T) {
 					pkg.SetUuid(uuidPtr("11111111-1111-1111-1111-111111111111"))
 					storedAt := time.Date(2026, 3, 17, 7, 0, 0, 0, time.UTC)
 					pkg.SetStoredDate(&storedAt)
-					pkg.SetCurrentLocation(stringPtr("/api/v2/location/" + primaryLoc + "/"))
+					pkg.SetCurrentLocation(new("/api/v2/location/" + primaryLoc + "/"))
 					pkg.SetReplicas([]string{"/api/v2/file/" + replicaID + "/"})
 					return pkg, nil
 				case replicaID:
@@ -304,7 +304,7 @@ func TestGetStoragePackage(t *testing.T) {
 					pkg := models.NewPackageEscaped()
 					pkg.SetUuid(uuidPtr("22222222-2222-2222-2222-222222222222"))
 					pkg.SetStoredDate(&replicaStoredAt)
-					pkg.SetCurrentLocation(stringPtr("/api/v2/location/" + replicaLoc + "/"))
+					pkg.SetCurrentLocation(new("/api/v2/location/" + replicaLoc + "/"))
 					return pkg, nil
 				default:
 					assert.Assert(t, false, "unexpected request UUID "+id)
@@ -532,10 +532,6 @@ func (f *fakeRequestAdapter) ConvertToNativeRequest(ctx context.Context, request
 func uuidPtr(value string) *uuid.UUID {
 	id := uuid.MustParse(value)
 	return &id
-}
-
-func stringPtr(value string) *string {
-	return &value
 }
 
 func pathUUIDString(t *testing.T, requestInfo *kabs.RequestInformation) string {

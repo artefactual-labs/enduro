@@ -38,7 +38,6 @@ func TestWeighted(t *testing.T) {
 	var wg sync.WaitGroup
 	wg.Add(n)
 	for i := range n {
-		i := i
 		go func() {
 			defer wg.Done()
 			HammerWeighted(sem, int64(i), loops)

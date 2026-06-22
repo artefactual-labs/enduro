@@ -6,6 +6,7 @@ linters:
     - importas
     - intrange
     - misspell
+    - modernize
   settings:
     importas:
       alias:
