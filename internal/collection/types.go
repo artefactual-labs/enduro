@@ -116,7 +116,7 @@ func formatOptionalNullString(ns sql.NullString) *string {
 func formatTime(t time.Time) string {
 	var ret string
 	if !t.IsZero() {
-		ret = t.Format(time.RFC3339)
+		ret = t.UTC().Format(time.RFC3339)
 	}
 	return ret
 }
