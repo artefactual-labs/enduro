@@ -304,6 +304,66 @@ func TestCollectionGoaDetailIncludesReconciliationFields(t *testing.T) {
 	assert.Equal(t, *got.ReconciliationError, "replica lag")
 }
 
+func TestCollectionGoaSummary(t *testing.T) {
+	t.Parallel()
+
+	location := time.FixedZone("CEST", 2*60*60)
+	storedAt := time.Date(2026, time.June, 17, 12, 30, 0, 0, location)
+	col := Collection{
+		ID:         42,
+		Name:       "collection",
+		WorkflowID: "processing-workflow-04e9257e-ac59-442c-a037-7504ea5ebf3f",
+		RunID:      "74795d4e-4530-4dc1-bb7b-7457ef3c9d75",
+		TransferID: "a5581c4f-c3f7-45c2-b756-787ab9669479",
+		AIPID:      "0f83f8f8-79df-4851-a89d-a4e61e9ef112",
+		OriginalID: "original-identifier",
+		PipelineID: "d964fcd2-7f3f-4640-9068-edcaacf0411b",
+		Status:     StatusDone,
+		CreatedAt:  storedAt.Add(-time.Hour),
+		StartedAt: sql.NullTime{
+			Time:  storedAt.Add(-30 * time.Minute),
+			Valid: true,
+		},
+		CompletedAt: sql.NullTime{
+			Time:  storedAt,
+			Valid: true,
+		},
+		AIPStoredAt: sql.NullTime{
+			Time:  time.Now().UTC(),
+			Valid: true,
+		},
+		ReconciliationStatus: sql.NullString{
+			String: "partial",
+			Valid:  true,
+		},
+		ReconciliationCheckedAt: sql.NullTime{
+			Time:  time.Now().UTC(),
+			Valid: true,
+		},
+		ReconciliationError: sql.NullString{
+			String: "replica missing",
+			Valid:  true,
+		},
+	}
+
+	got := col.GoaSummary()
+
+	assert.DeepEqual(t, got, &goacollection.EnduroStoredCollection{
+		ID:          42,
+		Name:        new("collection"),
+		WorkflowID:  new("processing-workflow-04e9257e-ac59-442c-a037-7504ea5ebf3f"),
+		RunID:       new("74795d4e-4530-4dc1-bb7b-7457ef3c9d75"),
+		TransferID:  new("a5581c4f-c3f7-45c2-b756-787ab9669479"),
+		AipID:       new("0f83f8f8-79df-4851-a89d-a4e61e9ef112"),
+		OriginalID:  new("original-identifier"),
+		PipelineID:  new("d964fcd2-7f3f-4640-9068-edcaacf0411b"),
+		Status:      "done",
+		CreatedAt:   "2026-06-17T09:30:00Z",
+		StartedAt:   new("2026-06-17T10:00:00Z"),
+		CompletedAt: new("2026-06-17T10:30:00Z"),
+	})
+}
+
 func TestCollectionGoaSummaryOmitsReconciliationFields(t *testing.T) {
 	t.Parallel()
 
