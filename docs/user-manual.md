@@ -141,6 +141,27 @@ Archivematica transfer ID yet, canceling prevents submission to Archivematica.
 Delete removes the Enduro collection record and does not cancel processing that
 has already been started elsewhere.
 
+## Collection timeline fields
+
+Collection timestamps describe different parts of the Enduro, Archivematica, and
+Storage Service workflow. Some values are recorded by Enduro, while others can
+come from Storage Service when recovery is enabled.
+
+The API returns timestamps as UTC date-time strings. The dashboard displays those
+same instants in the web browser's local time zone.
+
+| Concept | API field | Dashboard location | Meaning |
+| --- | --- | --- | --- |
+| Collection created | `created_at` | Collection detail `Overview` tab, shown as `Created` | When Enduro created the collection record. A collection may remain `queued` after this time while it waits for pipeline capacity. |
+| Processing first started | `started_at` | Collections page, shown as `Started`; collection detail `Overview` tab, shown as `Started` | The first time Enduro acquired pipeline capacity and began processing the collection. Retries do not replace an already recorded value. |
+| Storage complete | `completed_at` | Collections page, shown as `Stored`; collection detail `Overview` tab, shown as `Stored` | The time Enduro treats the collection as stored. For a normal ingest this is the ingest/storage completion time. With storage reconciliation, this can come from Storage Service rather than the local workflow clock. |
+| Primary AIP stored | `aip_stored_at` | Collection detail `Storage` tab, shown as `Primary AIP stored at` | The time Storage Service reports for the primary AIP package. This is available only when Enduro has recorded storage reconciliation data. |
+| Storage last checked | `reconciliation_checked_at` | Collection detail `Storage` tab, shown as `Last checked at` | When Enduro last checked Storage Service for this collection. |
+
+In normal operation, `Started` is recorded once and remains the first processing
+start time for the collection. `Stored` records storage completion, not the time
+of the most recent retry.
+
 ## Pipeline capacity
 
 Pipeline capacity is the main operator-facing control for concurrent ingest

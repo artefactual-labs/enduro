@@ -47,7 +47,9 @@
           <dt>Stored</dt>
           <dd>
             {{ collection.completedAt | formatDateTime }}
-            (took {{ collection.startedAt | formatDuration(collection.completedAt) }})
+            <template v-if="showStoredDuration">
+              (took {{ collection.startedAt | formatDuration(collection.completedAt) }})
+            </template>
           </dd>
         </template>
 
@@ -198,6 +200,13 @@ export default class CollectionShow extends Vue {
       return false;
     }
     return this.collection.status == 'in progress' || (this.collection.status == 'queued' && !this.collection.transferId);
+  }
+
+  private get showStoredDuration() {
+    if (!this.collection || !this.collection.startedAt || !this.collection.completedAt) {
+      return false;
+    }
+    return this.collection.completedAt >= this.collection.startedAt;
   }
 
   private onDelete() {

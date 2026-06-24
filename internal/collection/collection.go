@@ -186,7 +186,7 @@ func (svc *collectionImpl) SetStatusInProgress(ctx context.Context, ID uint, sta
 	args := []any{StatusInProgress}
 
 	if !startedAt.IsZero() {
-		query = `UPDATE collection SET status = (?), started_at = (?) WHERE id = (?)`
+		query = `UPDATE collection SET status = (?), started_at = COALESCE(started_at, (?)) WHERE id = (?)`
 		args = append(args, startedAt, ID)
 	} else {
 		query = `UPDATE collection SET status = (?) WHERE id = (?)`
