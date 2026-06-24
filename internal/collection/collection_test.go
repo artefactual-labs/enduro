@@ -59,6 +59,44 @@ func TestUpdateReconciliationState(t *testing.T) {
 	})
 }
 
+func TestSetStatusInProgress(t *testing.T) {
+	t.Parallel()
+
+	t.Run("Preserves an existing started_at value", func(t *testing.T) {
+		t.Parallel()
+
+		recorder := newExecRecorderDB(t)
+		svc := NewService(testLogger(), recorder.db, nil, "", nil)
+		startedAt := time.Date(2026, time.June, 24, 8, 30, 0, 0, time.UTC)
+
+		err := svc.SetStatusInProgress(context.Background(), 42, startedAt)
+
+		assert.NilError(t, err)
+		assert.Equal(t, recorder.query, "UPDATE collection SET status = (?), started_at = COALESCE(started_at, (?)) WHERE id = (?)")
+		assert.DeepEqual(t, recorder.args, []any{
+			int64(StatusInProgress),
+			startedAt,
+			int64(42),
+		})
+	})
+
+	t.Run("Updates only the status without a started_at value", func(t *testing.T) {
+		t.Parallel()
+
+		recorder := newExecRecorderDB(t)
+		svc := NewService(testLogger(), recorder.db, nil, "", nil)
+
+		err := svc.SetStatusInProgress(context.Background(), 42, time.Time{})
+
+		assert.NilError(t, err)
+		assert.Equal(t, recorder.query, "UPDATE collection SET status = (?) WHERE id = (?)")
+		assert.DeepEqual(t, recorder.args, []any{
+			int64(StatusInProgress),
+			int64(42),
+		})
+	})
+}
+
 type execRecorderDB struct {
 	db *sql.DB
 
