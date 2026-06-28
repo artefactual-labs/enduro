@@ -4,6 +4,6 @@
     "test": "playwright test --reporter=line"
   },
   "devDependencies": {
-    "@playwright/test": "1.60.0"
+    "@playwright/test": "1.61.1"
   }
 }
