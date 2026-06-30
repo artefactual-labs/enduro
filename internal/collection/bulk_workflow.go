@@ -2,6 +2,7 @@ package collection
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -41,6 +42,7 @@ type bulkWorkflowAction uint
 const (
 	bulkWorkflowActionRetry bulkWorkflowAction = iota
 	bulkWorkflowActionDecide
+	bulkWorkflowActionCancel
 )
 
 const (
@@ -73,6 +75,10 @@ func bulkWorkflowInputAction(params BulkWorkflowInput) (bulkWorkflowAction, stri
 	case BulkWorkflowOperationAbandon:
 		if params.Status == StatusPending {
 			return bulkWorkflowActionDecide, collectionDecisionAbandon, nil
+		}
+	case BulkWorkflowOperationCancel:
+		if params.Status == StatusQueued {
+			return bulkWorkflowActionCancel, "", nil
 		}
 	}
 
@@ -218,6 +224,8 @@ func (a *BulkActivity) executeOperation(ctx context.Context, params BulkWorkflow
 		return a.Retry(ctx, ID)
 	case bulkWorkflowActionDecide:
 		return a.Decide(ctx, ID, decision)
+	case bulkWorkflowActionCancel:
+		return a.Cancel(ctx, ID)
 	default:
 		return fmt.Errorf("bulk %s is not supported for %s collections", params.Operation, params.Status)
 	}
@@ -248,4 +256,34 @@ func (a *BulkActivity) Decide(ctx context.Context, ID uint, option string) error
 		ID:     ID,
 		Option: option,
 	})
+}
+
+func (a *BulkActivity) Cancel(ctx context.Context, ID uint) error {
+	ctx, cancel := context.WithTimeout(ctx, time.Second)
+	defer cancel()
+
+	col, err := a.colsvc.Goa().Show(ctx, &collection.ShowPayload{ID: ID})
+	if err != nil {
+		return err
+	}
+	skip, err := validateBulkCancelCollection(ID, col.Status, col.TransferID)
+	if err != nil {
+		return err
+	}
+	if skip {
+		return errBulkCancelSkipped
+	}
+
+	return a.colsvc.Goa().Cancel(ctx, &collection.CancelPayload{ID: ID})
+}
+
+func validateBulkCancelCollection(ID uint, status string, transferID *string) (bool, error) {
+	if status != StatusQueued.String() {
+		return false, fmt.Errorf("collection %d is no longer queued", ID)
+	}
+	if transferID != nil && *transferID != "" {
+		return true, nil
+	}
+
+	return false, nil
 }

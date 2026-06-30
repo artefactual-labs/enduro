@@ -8,6 +8,7 @@ import {
   buildBulkOperationOptions,
   buildBulkRequest,
   createDefaultBulkStatus,
+  defaultBulkOperationForStatus,
   didBulkRunFail
 } from './useCollectionBulk.helpers'
 
@@ -42,16 +43,27 @@ test('buildBulkRequest includes positive size limits and omits invalid ones', ()
   })
 })
 
-test('buildBulkOperationOptions enables abandon for pending collections only', () => {
+test('buildBulkOperationOptions enables operations for compatible statuses only', () => {
   expect(buildBulkOperationOptions(BulkRequestBodyStatusEnum.Pending)).toEqual([
-    { label: 'Retry', value: BulkRequestBodyOperationEnum.Retry },
+    { label: 'Retry', value: BulkRequestBodyOperationEnum.Retry, disabled: false },
     { label: 'Cancel', value: BulkRequestBodyOperationEnum.Cancel, disabled: true },
     { label: 'Abandon', value: BulkRequestBodyOperationEnum.Abandon, disabled: false }
   ])
 
   expect(buildBulkOperationOptions(BulkRequestBodyStatusEnum.Error)).toEqual([
-    { label: 'Retry', value: BulkRequestBodyOperationEnum.Retry },
+    { label: 'Retry', value: BulkRequestBodyOperationEnum.Retry, disabled: false },
     { label: 'Cancel', value: BulkRequestBodyOperationEnum.Cancel, disabled: true },
     { label: 'Abandon', value: BulkRequestBodyOperationEnum.Abandon, disabled: true }
   ])
+
+  expect(buildBulkOperationOptions(BulkRequestBodyStatusEnum.Queued)).toEqual([
+    { label: 'Retry', value: BulkRequestBodyOperationEnum.Retry, disabled: true },
+    { label: 'Cancel', value: BulkRequestBodyOperationEnum.Cancel, disabled: false },
+    { label: 'Abandon', value: BulkRequestBodyOperationEnum.Abandon, disabled: true }
+  ])
+})
+
+test('defaultBulkOperationForStatus selects cancel for queued collections', () => {
+  expect(defaultBulkOperationForStatus(BulkRequestBodyStatusEnum.Queued)).toBe(BulkRequestBodyOperationEnum.Cancel)
+  expect(defaultBulkOperationForStatus(BulkRequestBodyStatusEnum.Pending)).toBe(BulkRequestBodyOperationEnum.Retry)
 })

@@ -9,6 +9,7 @@ import {
   buildBulkOperationOptions,
   buildBulkRequest,
   createDefaultBulkStatus,
+  defaultBulkOperationForStatus,
   didBulkRunFail
 } from './useCollectionBulk.helpers'
 
@@ -23,7 +24,8 @@ const statusRefreshDelayMs = 1000
 const statusOptions: SelectOption[] = [
   { label: 'Error', value: BulkRequestBodyStatusEnum.Error },
   { label: 'Abandoned', value: BulkRequestBodyStatusEnum.Abandoned },
-  { label: 'Pending', value: BulkRequestBodyStatusEnum.Pending }
+  { label: 'Pending', value: BulkRequestBodyStatusEnum.Pending },
+  { label: 'Queued', value: BulkRequestBodyStatusEnum.Queued }
 ]
 
 export function useCollectionBulk() {
@@ -91,7 +93,7 @@ export function useCollectionBulk() {
 
     try {
       await enduroApi.collections.bulk(buildRequest())
-      submitSuccessMessage.value = 'Bulk operation submitted.'
+      submitSuccessMessage.value = 'Status will refresh automatically while it runs.'
       await reload()
     } catch (error) {
       if (error instanceof ResponseError && error.response.status === 409) {
@@ -114,11 +116,9 @@ export function useCollectionBulk() {
   }, { immediate: true })
 
   watch(selectedStatus, () => {
-    if (
-      selectedStatus.value !== BulkRequestBodyStatusEnum.Pending &&
-      selectedOperation.value === BulkRequestBodyOperationEnum.Abandon
-    ) {
-      selectedOperation.value = BulkRequestBodyOperationEnum.Retry
+    const operation = operationOptions.value.find(option => option.value === selectedOperation.value)
+    if (operation?.disabled) {
+      selectedOperation.value = defaultBulkOperationForStatus(selectedStatus.value)
     }
   })
 
