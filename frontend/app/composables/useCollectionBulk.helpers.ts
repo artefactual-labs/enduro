@@ -1,4 +1,14 @@
 import type { BulkRequestBody, BulkStatusResult } from '../openapi-generator'
+import {
+  BulkRequestBodyOperationEnum,
+  BulkRequestBodyStatusEnum
+} from '../openapi-generator'
+
+export type BulkSelectOption = {
+  disabled?: boolean
+  label: string
+  value: string
+}
 
 export function createDefaultBulkStatus(): BulkStatusResult {
   return {
@@ -25,4 +35,16 @@ export function buildBulkRequest(input: {
   }
 
   return request
+}
+
+export function buildBulkOperationOptions(status: BulkRequestBody['status']): BulkSelectOption[] {
+  return [
+    { label: 'Retry', value: BulkRequestBodyOperationEnum.Retry },
+    { label: 'Cancel', value: BulkRequestBodyOperationEnum.Cancel, disabled: true },
+    {
+      label: 'Abandon',
+      value: BulkRequestBodyOperationEnum.Abandon,
+      disabled: status !== BulkRequestBodyStatusEnum.Pending
+    }
+  ]
 }

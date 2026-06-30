@@ -31,9 +31,10 @@
           <b-form @submit="onSubmit">
 
             <b-form-group label="Collection status filter" label-for="input-status" description="Select the status of the collections that you want to modify.">
-              <b-form-select id="input-operation" v-model="form.status" required>
+              <b-form-select id="input-operation" v-model="form.status" required @change="onStatusChanged">
                <b-form-select-option value="error">Error</b-form-select-option>
                <b-form-select-option value="abandoned">Abandoned</b-form-select-option>
+               <b-form-select-option value="pending">Pending</b-form-select-option>
               </b-form-select>
             </b-form-group>
 
@@ -41,7 +42,7 @@
               <b-form-select id="input-operation" v-model="form.operation" required>
                 <b-form-select-option value="retry">Retry</b-form-select-option>
                 <b-form-select-option value="cancel" disabled>Cancel</b-form-select-option>
-                <b-form-select-option value="abandon" disabled>Abandon</b-form-select-option>
+                <b-form-select-option value="abandon" :disabled="form.status !== 'pending'">Abandon</b-form-select-option>
               </b-form-select>
             </b-form-group>
 
@@ -93,6 +94,12 @@ export default class CollectionBulk extends Vue {
 
   private created() {
     this.loadStatus();
+  }
+
+  private onStatusChanged() {
+    if (this.form.status !== 'pending' && this.form.operation === 'abandon') {
+      this.form.operation = 'retry';
+    }
   }
 
   private loadStatus() {

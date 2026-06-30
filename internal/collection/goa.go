@@ -431,6 +431,9 @@ func (w *goaWrapper) Bulk(ctx context.Context, payload *goacollection.BulkPayloa
 		Status:    NewStatus(payload.Status),
 		Size:      payload.Size,
 	}
+	if _, _, err := bulkWorkflowInputAction(input); err != nil {
+		return nil, goacollection.MakeNotValid(err)
+	}
 
 	opts := temporalsdk_client.StartWorkflowOptions{
 		ID:                       BulkWorkflowID,

@@ -36,6 +36,20 @@ const (
 	BulkWorkflowOperationAbandon BulkWorkflowOperation = "abandon"
 )
 
+type bulkWorkflowAction uint
+
+const (
+	bulkWorkflowActionRetry bulkWorkflowAction = iota
+	bulkWorkflowActionDecide
+)
+
+const (
+	collectionDecisionAbandon   = "ABANDON"
+	collectionDecisionRetryOnce = "RETRY_ONCE"
+)
+
+var errBulkCancelSkipped = errors.New("bulk cancel skipped")
+
 type BulkWorkflowInput struct {
 	// Status of collections where bulk is performed.
 	Status Status
@@ -45,6 +59,24 @@ type BulkWorkflowInput struct {
 
 	// Max. number of collections affected. Zero means no cap established.
 	Size uint
+}
+
+func bulkWorkflowInputAction(params BulkWorkflowInput) (bulkWorkflowAction, string, error) {
+	switch params.Operation {
+	case BulkWorkflowOperationRetry:
+		switch params.Status {
+		case StatusError, StatusAbandoned:
+			return bulkWorkflowActionRetry, "", nil
+		case StatusPending:
+			return bulkWorkflowActionDecide, collectionDecisionRetryOnce, nil
+		}
+	case BulkWorkflowOperationAbandon:
+		if params.Status == StatusPending {
+			return bulkWorkflowActionDecide, collectionDecisionAbandon, nil
+		}
+	}
+
+	return 0, "", fmt.Errorf("bulk %s is not supported for %s collections", params.Operation, params.Status)
 }
 
 // BulkWorkflow is a Temporal workflow that performs bulk operations.
@@ -72,6 +104,10 @@ func NewBulkActivity(colsvc Service) *BulkActivity {
 }
 
 func (a *BulkActivity) Execute(ctx context.Context, params BulkWorkflowInput) error {
+	if _, _, err := bulkWorkflowInputAction(params); err != nil {
+		return err
+	}
+
 	var group run.Group
 
 	// One actor does the work while updating progress.
@@ -137,11 +173,9 @@ func (a *BulkActivity) Execute(ctx context.Context, params BulkWorkflowInput) er
 							}
 							mu.Unlock()
 
-							switch params.Operation {
-							case BulkWorkflowOperationRetry:
-								err = a.Retry(ctx, item.ID)
-							default:
-								return fmt.Errorf("bulk %s not supported yet", params.Operation)
+							err = a.executeOperation(ctx, params, item.ID)
+							if errors.Is(err, errBulkCancelSkipped) {
+								continue
 							}
 							if err != nil {
 								return fmt.Errorf("error executing bulk %s (failed on collection %d): %v", params.Operation, item.ID, err)
@@ -173,6 +207,22 @@ func (a *BulkActivity) Execute(ctx context.Context, params BulkWorkflowInput) er
 	return group.Run()
 }
 
+func (a *BulkActivity) executeOperation(ctx context.Context, params BulkWorkflowInput, ID uint) error {
+	action, decision, err := bulkWorkflowInputAction(params)
+	if err != nil {
+		return err
+	}
+
+	switch action {
+	case bulkWorkflowActionRetry:
+		return a.Retry(ctx, ID)
+	case bulkWorkflowActionDecide:
+		return a.Decide(ctx, ID, decision)
+	default:
+		return fmt.Errorf("bulk %s is not supported for %s collections", params.Operation, params.Status)
+	}
+}
+
 func (a *BulkActivity) Retry(ctx context.Context, ID uint) error {
 	ctx, cancel := context.WithTimeout(ctx, time.Second)
 	defer cancel()
@@ -188,4 +238,14 @@ func (a *BulkActivity) Retry(ctx context.Context, ID uint) error {
 	// which is something that we used to do in Temporal.
 
 	return err
+}
+
+func (a *BulkActivity) Decide(ctx context.Context, ID uint, option string) error {
+	ctx, cancel := context.WithTimeout(ctx, time.Second)
+	defer cancel()
+
+	return a.colsvc.Goa().Decide(ctx, &collection.DecidePayload{
+		ID:     ID,
+		Option: option,
+	})
 }

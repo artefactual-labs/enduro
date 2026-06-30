@@ -6,6 +6,7 @@ import {
 import { ResponseError } from '~/openapi-generator/runtime'
 import { useCollectionBulkStatusData } from '~/loaders/collection-bulk-status'
 import {
+  buildBulkOperationOptions,
   buildBulkRequest,
   createDefaultBulkStatus,
   didBulkRunFail
@@ -21,13 +22,8 @@ const statusRefreshDelayMs = 1000
 
 const statusOptions: SelectOption[] = [
   { label: 'Error', value: BulkRequestBodyStatusEnum.Error },
-  { label: 'Abandoned', value: BulkRequestBodyStatusEnum.Abandoned }
-]
-
-const operationOptions: SelectOption[] = [
-  { label: 'Retry', value: BulkRequestBodyOperationEnum.Retry },
-  { label: 'Cancel', value: BulkRequestBodyOperationEnum.Cancel, disabled: true },
-  { label: 'Abandon', value: BulkRequestBodyOperationEnum.Abandon, disabled: true }
+  { label: 'Abandoned', value: BulkRequestBodyStatusEnum.Abandoned },
+  { label: 'Pending', value: BulkRequestBodyStatusEnum.Pending }
 ]
 
 export function useCollectionBulk() {
@@ -56,6 +52,7 @@ export function useCollectionBulk() {
   const hasCompletedRun = computed(() => Boolean(status.value.closedAt))
   const lastRunFailed = computed(() => didBulkRunFail(status.value.status))
   const canSubmit = computed(() => !isRunning.value && !isSubmitting.value)
+  const operationOptions = computed(() => buildBulkOperationOptions(selectedStatus.value))
 
   function clearStatusTimer() {
     if (!statusTimer) return
@@ -115,6 +112,15 @@ export function useCollectionBulk() {
       clearStatusTimer()
     }
   }, { immediate: true })
+
+  watch(selectedStatus, () => {
+    if (
+      selectedStatus.value !== BulkRequestBodyStatusEnum.Pending &&
+      selectedOperation.value === BulkRequestBodyOperationEnum.Abandon
+    ) {
+      selectedOperation.value = BulkRequestBodyOperationEnum.Retry
+    }
+  })
 
   onBeforeUnmount(() => {
     isDisposed = true
