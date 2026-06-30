@@ -174,7 +174,7 @@ export { useCollectionBulkStatusData } from '~/loaders/collection-bulk-status'
         </UAlert>
 
         <p class="text-sm text-muted">
-          Start a new bulk operation. The current parity scope matches the legacy UI and supports retrying collections in the error state.
+          Start a new bulk operation for collections that need operator recovery.
         </p>
 
         <div class="grid grid-cols-1 gap-4">

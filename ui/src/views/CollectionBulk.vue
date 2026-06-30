@@ -33,6 +33,7 @@
             <b-form-group label="Collection status filter" label-for="input-status" description="Select the status of the collections that you want to modify.">
               <b-form-select id="input-operation" v-model="form.status" required>
                <b-form-select-option value="error">Error</b-form-select-option>
+               <b-form-select-option value="abandoned">Abandoned</b-form-select-option>
               </b-form-select>
             </b-form-group>
 
@@ -142,4 +143,3 @@ export default class CollectionBulk extends Vue {
 <style lang="scss">
 
 </style>
-

@@ -104,8 +104,8 @@ stateDiagram-v2
     InProgress --> Error: Processing failure
     InProgress --> Abandoned: Cancel
     Error --> Queued: Retry
+    Abandoned --> Queued: Retry
     Done --> [*]
-    Abandoned --> [*]
 ```
 
 | Status | Meaning | Operator actions in the dashboard |
@@ -115,7 +115,7 @@ stateDiagram-v2
 | `pending` | Processing needs an operator decision before it can continue, usually after an activity failed and Enduro is waiting for retry or abandon. | Retry and Abandon are available from the pending decision controls. Delete is not shown while the collection is waiting for a decision. |
 | `done` | Processing completed successfully and the AIP was stored. | Delete is available. |
 | `error` | Processing failed and the workflow ended without a successful or operator-abandoned outcome. | Retry and Delete are available. Bulk Retry also targets collections in this state. |
-| `abandoned` | Processing was stopped by an operator decision or cancellation. | Delete is available. |
+| `abandoned` | Processing was stopped by an operator decision or cancellation. | Retry and Delete are available. Bulk Retry also targets collections in this state. |
 | `new` | Reserved by the API but not used by the current processing workflow. | No normal dashboard action. |
 | `unknown` | Used when Enduro cannot map a status value to one of the known states. | Delete is available because the dashboard does not treat this as a running state. |
 
@@ -134,6 +134,7 @@ The main transitions are:
 | `in progress` | `error` | Processing fails without a successful or abandoned outcome. |
 | `in progress` | `abandoned` | An operator cancels the Enduro workflow. |
 | `error` | `queued` | An operator retries the collection, starting a new workflow run. |
+| `abandoned` | `queued` | An operator retries the collection, starting a new workflow run. |
 
 Cancel and Delete are different operations. Cancel asks Enduro to stop the
 processing workflow when possible. For queued collections that do not have an

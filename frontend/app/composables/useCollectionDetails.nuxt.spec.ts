@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mountSuspended, mockNuxtImport } from '@nuxt/test-utils/runtime'
 
 import { EnduroDetailedStoredCollectionStatusEnum, RetryResultModeEnum } from '~/openapi-generator'
-import { canCancelCollection, useCollectionDetails } from './useCollectionDetails'
+import { canCancelCollection, canRetryCollection, useCollectionDetails } from './useCollectionDetails'
 
 const { navigateToMock } = vi.hoisted(() => ({
   navigateToMock: vi.fn()
@@ -130,5 +130,25 @@ describe('useCollectionDetails', () => {
       status: EnduroDetailedStoredCollectionStatusEnum.InProgress,
       transferId: 'transfer-id'
     })).toBe(true)
+  })
+
+  it('allows retry for failed and abandoned terminal collections', () => {
+    expect(canRetryCollection({
+      id: 1,
+      createdAt: new Date(),
+      status: EnduroDetailedStoredCollectionStatusEnum.Error
+    })).toBe(true)
+
+    expect(canRetryCollection({
+      id: 1,
+      createdAt: new Date(),
+      status: EnduroDetailedStoredCollectionStatusEnum.Abandoned
+    })).toBe(true)
+
+    expect(canRetryCollection({
+      id: 1,
+      createdAt: new Date(),
+      status: EnduroDetailedStoredCollectionStatusEnum.Done
+    })).toBe(false)
   })
 })
