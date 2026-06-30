@@ -5,6 +5,7 @@ import {
 } from '../openapi-generator'
 
 import {
+  buildBulkOperationOptions,
   buildBulkRequest,
   createDefaultBulkStatus,
   didBulkRunFail
@@ -39,4 +40,18 @@ test('buildBulkRequest includes positive size limits and omits invalid ones', ()
     operation: BulkRequestBodyOperationEnum.Retry,
     status: BulkRequestBodyStatusEnum.Error
   })
+})
+
+test('buildBulkOperationOptions enables abandon for pending collections only', () => {
+  expect(buildBulkOperationOptions(BulkRequestBodyStatusEnum.Pending)).toEqual([
+    { label: 'Retry', value: BulkRequestBodyOperationEnum.Retry },
+    { label: 'Cancel', value: BulkRequestBodyOperationEnum.Cancel, disabled: true },
+    { label: 'Abandon', value: BulkRequestBodyOperationEnum.Abandon, disabled: false }
+  ])
+
+  expect(buildBulkOperationOptions(BulkRequestBodyStatusEnum.Error)).toEqual([
+    { label: 'Retry', value: BulkRequestBodyOperationEnum.Retry },
+    { label: 'Cancel', value: BulkRequestBodyOperationEnum.Cancel, disabled: true },
+    { label: 'Abandon', value: BulkRequestBodyOperationEnum.Abandon, disabled: true }
+  ])
 })
