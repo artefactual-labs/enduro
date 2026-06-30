@@ -30,6 +30,11 @@ export function canCancelCollection(collection: EnduroDetailedStoredCollection |
   return collection.status === EnduroDetailedStoredCollectionStatusEnum.Queued && !collection.transferId
 }
 
+export function canRetryCollection(collection: EnduroDetailedStoredCollection | null): boolean {
+  return collection?.status === EnduroDetailedStoredCollectionStatusEnum.Error
+    || collection?.status === EnduroDetailedStoredCollectionStatusEnum.Abandoned
+}
+
 function createDefaultState(): CollectionDetailsState {
   return {
     activeAction: null,
@@ -181,7 +186,7 @@ export function useCollectionDetails() {
     return status ? RUNNING_STATUSES.has(status) : false
   })
   const canDelete = computed(() => Boolean(collection.value) && !isRunning.value)
-  const canRetry = computed(() => collection.value?.status === EnduroDetailedStoredCollectionStatusEnum.Error)
+  const canRetry = computed(() => canRetryCollection(collection.value))
   const canCancel = computed(() => canCancelCollection(collection.value))
 
   watch(() => monitor.recentEvents.value[0]?.receivedAt, () => {

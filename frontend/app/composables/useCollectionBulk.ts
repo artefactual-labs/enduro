@@ -20,7 +20,8 @@ type SelectOption = {
 const statusRefreshDelayMs = 1000
 
 const statusOptions: SelectOption[] = [
-  { label: 'Error', value: BulkRequestBodyStatusEnum.Error }
+  { label: 'Error', value: BulkRequestBodyStatusEnum.Error },
+  { label: 'Abandoned', value: BulkRequestBodyStatusEnum.Abandoned }
 ]
 
 const operationOptions: SelectOption[] = [
