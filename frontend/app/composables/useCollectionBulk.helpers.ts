@@ -39,12 +39,26 @@ export function buildBulkRequest(input: {
 
 export function buildBulkOperationOptions(status: BulkRequestBody['status']): BulkSelectOption[] {
   return [
-    { label: 'Retry', value: BulkRequestBodyOperationEnum.Retry },
-    { label: 'Cancel', value: BulkRequestBodyOperationEnum.Cancel, disabled: true },
+    {
+      label: 'Retry',
+      value: BulkRequestBodyOperationEnum.Retry,
+      disabled: status === BulkRequestBodyStatusEnum.Queued
+    },
+    {
+      label: 'Cancel',
+      value: BulkRequestBodyOperationEnum.Cancel,
+      disabled: status !== BulkRequestBodyStatusEnum.Queued
+    },
     {
       label: 'Abandon',
       value: BulkRequestBodyOperationEnum.Abandon,
       disabled: status !== BulkRequestBodyStatusEnum.Pending
     }
   ]
+}
+
+export function defaultBulkOperationForStatus(status: BulkRequestBody['status']): BulkRequestBody['operation'] {
+  return status === BulkRequestBodyStatusEnum.Queued
+    ? BulkRequestBodyOperationEnum.Cancel
+    : BulkRequestBodyOperationEnum.Retry
 }

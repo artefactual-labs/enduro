@@ -35,13 +35,14 @@
                <b-form-select-option value="error">Error</b-form-select-option>
                <b-form-select-option value="abandoned">Abandoned</b-form-select-option>
                <b-form-select-option value="pending">Pending</b-form-select-option>
+               <b-form-select-option value="queued">Queued</b-form-select-option>
               </b-form-select>
             </b-form-group>
 
             <b-form-group label="Operation" label-for="input-size" description="Type of operation to be performed.">
               <b-form-select id="input-operation" v-model="form.operation" required>
-                <b-form-select-option value="retry">Retry</b-form-select-option>
-                <b-form-select-option value="cancel" disabled>Cancel</b-form-select-option>
+                <b-form-select-option value="retry" :disabled="form.status === 'queued'">Retry</b-form-select-option>
+                <b-form-select-option value="cancel" :disabled="form.status !== 'queued'">Cancel</b-form-select-option>
                 <b-form-select-option value="abandon" :disabled="form.status !== 'pending'">Abandon</b-form-select-option>
               </b-form-select>
             </b-form-group>
@@ -97,8 +98,25 @@ export default class CollectionBulk extends Vue {
   }
 
   private onStatusChanged() {
-    if (this.form.status !== 'pending' && this.form.operation === 'abandon') {
-      this.form.operation = 'retry';
+    if (!this.operationAllowed(this.form.operation)) {
+      this.form.operation = this.defaultOperation;
+    }
+  }
+
+  private get defaultOperation() {
+    return this.form.status === 'queued' ? 'cancel' : 'retry';
+  }
+
+  private operationAllowed(operation: string | null) {
+    switch (operation) {
+      case 'retry':
+        return this.form.status !== 'queued';
+      case 'cancel':
+        return this.form.status === 'queued';
+      case 'abandon':
+        return this.form.status === 'pending';
+      default:
+        return true;
     }
   }
 

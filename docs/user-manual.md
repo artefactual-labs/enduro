@@ -110,7 +110,7 @@ stateDiagram-v2
 
 | Status | Meaning | Operator actions in the dashboard |
 | --- | --- | --- |
-| `queued` | Enduro has created the collection workflow, but the transfer has not started processing yet. It may be waiting for pipeline capacity. | Cancel is available when no Archivematica `transfer_id` has been assigned yet. Delete is not shown while the collection is still running. |
+| `queued` | Enduro has created the collection workflow, but the transfer has not started processing yet. It may be waiting for pipeline capacity. | Cancel is available when no Archivematica `transfer_id` has been assigned yet. Bulk Cancel also targets queued collections without a `transfer_id`. Delete is not shown while the collection is still running. |
 | `in progress` | Enduro has acquired pipeline capacity and processing is underway. At this point the transfer may have been submitted to Archivematica. | Cancel is available. This stops Enduro's workflow, but it does not guarantee that already-submitted Archivematica work is stopped. Delete is not shown while the collection is still running. |
 | `pending` | Processing needs an operator decision before it can continue, usually after an activity failed and Enduro is waiting for retry or abandon. | Retry and Abandon are available from the pending decision controls. Bulk Retry and Bulk Abandon also target collections in this state. Delete is not shown while the collection is waiting for a decision. |
 | `done` | Processing completed successfully and the AIP was stored. | Delete is available. |
