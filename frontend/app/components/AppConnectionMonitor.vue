@@ -7,6 +7,14 @@ const monitorVersionLabel = computed(() => versionLabel.value || '(version unava
 const now = ref(Date.now())
 let timer: number | null = null
 
+function openMonitor() {
+  open.value = true
+}
+
+function closeMonitor() {
+  open.value = false
+}
+
 onMounted(() => {
   timer = window.setInterval(() => {
     now.value = Date.now()
@@ -98,7 +106,7 @@ const formattedPingLatency = computed(() => {
     variant="ghost"
     size="sm"
     class="rounded-full border border-default/70 bg-elevated/70 px-2.5 hover:bg-elevated"
-    @click="open = true"
+    @click="openMonitor"
   >
     <span class="inline-flex items-center gap-2">
       <span class="relative inline-flex size-2.5">
@@ -247,7 +255,7 @@ const formattedPingLatency = computed(() => {
         <UButton
           label="Close"
           color="neutral"
-          @click="open = false"
+          @click="closeMonitor"
         />
       </div>
     </template>

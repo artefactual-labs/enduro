@@ -27,7 +27,7 @@ services:
       start_period: 30s
 
   temporal-admin-tools:
-    image: "temporalio/admin-tools:1.30.4.1"
+    image: "temporalio/admin-tools:1.30.5"
     restart: "on-failure:6"
     depends_on:
       mysql:
@@ -45,7 +45,7 @@ services:
     command: "/compose/setup-mysql.sh"
 
   temporal:
-    image: "temporalio/server:1.30.4.1"
+    image: "temporalio/server:1.30.5"
     depends_on:
       temporal-admin-tools:
         condition: service_completed_successfully
@@ -69,7 +69,7 @@ services:
       retries: 60
 
   temporal-create-namespace:
-    image: "temporalio/admin-tools:1.30.4.1"
+    image: "temporalio/admin-tools:1.30.5"
     restart: "on-failure:5"
     depends_on:
       temporal:
@@ -83,7 +83,7 @@ services:
     command: "/compose/create-namespace.sh"
 
   temporal-ui:
-    image: "temporalio/ui:2.50.0"
+    image: "temporalio/ui:2.51.1"
     depends_on:
       temporal:
         condition: service_healthy

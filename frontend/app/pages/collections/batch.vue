@@ -61,6 +61,10 @@ const batchStatusColor = computed(() => {
 const submitConfirmationOpen = ref(false)
 const directoryBrowserOpen = ref(false)
 
+function openDirectoryBrowser() {
+  directoryBrowserOpen.value = true
+}
+
 const selectedProcessingConfigLabel = computed(() => {
   const option = processingOptions.value.find(item => item.value === selectedProcessingConfig.value)
   if (option?.label) return option.label
@@ -216,7 +220,7 @@ export { useBatchPageData, useBatchStatusData } from '~/loaders/batch-page'
                 label="Browse"
                 color="neutral"
                 variant="outline"
-                @click="directoryBrowserOpen = true"
+                @click="openDirectoryBrowser"
               />
             </div>
           </UFormField>
