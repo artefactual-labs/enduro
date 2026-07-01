@@ -12,16 +12,16 @@ import (
 
 const (
 	mysqlImage        = "mysql:8.4.8-oraclelinux9"
-	temporalImage     = "temporalio/server:1.30.3"
-	temporalToolImage = "temporalio/admin-tools:1.30.3"
+	temporalImage     = "temporalio/server:1.30.5"
+	temporalToolImage = "temporalio/admin-tools:1.30.5"
 	goImage           = "golang:1.26.4-bookworm"
 	nodeImage         = "node:24-bookworm"
-	redisImage        = "redis:8.2.6-alpine3.22"
+	redisImage        = "redis:8.2.7-alpine3.22"
 	minioLegacyImage  = "minio/minio:RELEASE.2020-04-28T23-56-56Z"
 	minioLatestImage  = "minio/minio:RELEASE.2025-09-07T16-13-09Z"
-	seaweedFSImage    = "chrislusf/seaweedfs:4.31"
+	seaweedFSImage    = "chrislusf/seaweedfs:4.37"
 	amboxImage        = "ghcr.io/sevein/ambox:latest"
-	playwrightImage   = "mcr.microsoft.com/playwright:v1.60.0-noble"
+	playwrightImage   = "mcr.microsoft.com/playwright:v1.61.1-noble"
 )
 
 type EnduroE2E struct{}

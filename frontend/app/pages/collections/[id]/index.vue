@@ -26,6 +26,10 @@ const deleteDialogOpen = ref(false)
 
 const isBusy = computed(() => isLoading.value || activeAction.value !== null)
 
+function requestDelete() {
+  deleteDialogOpen.value = true
+}
+
 const overviewItems = computed(() => {
   if (!collection.value) return []
 
@@ -267,7 +271,7 @@ async function confirmDelete() {
             size="sm"
             :loading="activeAction === 'delete'"
             :disabled="isBusy"
-            @click="deleteDialogOpen = true"
+            @click="requestDelete"
           />
         </div>
       </div>
