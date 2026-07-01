@@ -63,6 +63,14 @@ type BulkWorkflowInput struct {
 	Size uint
 }
 
+type bulkCollectionService interface {
+	List(context.Context, *collection.ListPayload) (*collection.ListResult, error)
+	Show(context.Context, *collection.ShowPayload) (*collection.EnduroDetailedStoredCollection, error)
+	Cancel(context.Context, *collection.CancelPayload) error
+	Retry(context.Context, *collection.RetryPayload) (*collection.RetryResult, error)
+	Decide(context.Context, *collection.DecidePayload) error
+}
+
 func bulkWorkflowInputAction(params BulkWorkflowInput) (bulkWorkflowAction, string, error) {
 	switch params.Operation {
 	case BulkWorkflowOperationRetry:
@@ -100,10 +108,14 @@ func BulkWorkflow(ctx temporalsdk_workflow.Context, params BulkWorkflowInput) er
 }
 
 type BulkActivity struct {
-	colsvc Service
+	colsvc bulkCollectionService
 }
 
 func NewBulkActivity(colsvc Service) *BulkActivity {
+	return newBulkActivity(colsvc.Goa())
+}
+
+func newBulkActivity(colsvc bulkCollectionService) *BulkActivity {
 	return &BulkActivity{
 		colsvc: colsvc,
 	}
@@ -162,7 +174,7 @@ func (a *BulkActivity) Execute(ctx context.Context, params BulkWorkflowInput) er
 					case <-cancel:
 						return nil
 					default:
-						res, err := a.colsvc.Goa().List(ctx, &collection.ListPayload{
+						res, err := a.colsvc.List(ctx, &collection.ListPayload{
 							Status: &status,
 							Cursor: nextCursor,
 						})
@@ -235,7 +247,7 @@ func (a *BulkActivity) Retry(ctx context.Context, ID uint) error {
 	ctx, cancel := context.WithTimeout(ctx, time.Second)
 	defer cancel()
 
-	_, err := a.colsvc.Goa().Retry(ctx, &collection.RetryPayload{ID: ID})
+	_, err := a.colsvc.Retry(ctx, &collection.RetryPayload{ID: ID})
 
 	// User may have already started it manually.
 	if temporalsdk_temporal.IsWorkflowExecutionAlreadyStartedError(err) {
@@ -252,7 +264,7 @@ func (a *BulkActivity) Decide(ctx context.Context, ID uint, option string) error
 	ctx, cancel := context.WithTimeout(ctx, time.Second)
 	defer cancel()
 
-	return a.colsvc.Goa().Decide(ctx, &collection.DecidePayload{
+	return a.colsvc.Decide(ctx, &collection.DecidePayload{
 		ID:     ID,
 		Option: option,
 	})
@@ -262,7 +274,7 @@ func (a *BulkActivity) Cancel(ctx context.Context, ID uint) error {
 	ctx, cancel := context.WithTimeout(ctx, time.Second)
 	defer cancel()
 
-	col, err := a.colsvc.Goa().Show(ctx, &collection.ShowPayload{ID: ID})
+	col, err := a.colsvc.Show(ctx, &collection.ShowPayload{ID: ID})
 	if err != nil {
 		return err
 	}
@@ -274,7 +286,7 @@ func (a *BulkActivity) Cancel(ctx context.Context, ID uint) error {
 		return errBulkCancelSkipped
 	}
 
-	return a.colsvc.Goa().Cancel(ctx, &collection.CancelPayload{ID: ID})
+	return a.colsvc.Cancel(ctx, &collection.CancelPayload{ID: ID})
 }
 
 func validateBulkCancelCollection(ID uint, status string, transferID *string) (bool, error) {

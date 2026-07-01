@@ -3,10 +3,9 @@ package collection
 import (
 	"context"
 	"fmt"
-	"io"
 	"testing"
-	"time"
 
+	"go.uber.org/mock/gomock"
 	"gotest.tools/v3/assert"
 
 	goacollection "github.com/artefactual-labs/enduro/internal/api/gen/collection"
@@ -138,10 +137,12 @@ func TestBulkActivityExecuteSkipsQueuedCollectionsWithTransfer(t *testing.T) {
 	t.Parallel()
 
 	transferID := "transfer-id"
-	var canceled []uint
+	ctrl := gomock.NewController(t)
+	colsvc := NewMockBulkCollectionService(ctrl)
 
-	goaSvc := &bulkActivityTestGoaService{
-		list: func(ctx context.Context, payload *goacollection.ListPayload) (*goacollection.ListResult, error) {
+	colsvc.EXPECT().
+		List(gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx context.Context, payload *goacollection.ListPayload) (*goacollection.ListResult, error) {
 			if payload.Status == nil || *payload.Status != StatusQueued.String() {
 				return nil, fmt.Errorf("unexpected list status: %v", payload.Status)
 			}
@@ -153,8 +154,10 @@ func TestBulkActivityExecuteSkipsQueuedCollectionsWithTransfer(t *testing.T) {
 					{ID: 12, Status: StatusQueued.String()},
 				},
 			}, nil
-		},
-		show: func(ctx context.Context, payload *goacollection.ShowPayload) (*goacollection.EnduroDetailedStoredCollection, error) {
+		})
+	colsvc.EXPECT().
+		Show(gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx context.Context, payload *goacollection.ShowPayload) (*goacollection.EnduroDetailedStoredCollection, error) {
 			switch payload.ID {
 			case 10:
 				return &goacollection.EnduroDetailedStoredCollection{
@@ -170,14 +173,16 @@ func TestBulkActivityExecuteSkipsQueuedCollectionsWithTransfer(t *testing.T) {
 			default:
 				return nil, fmt.Errorf("unexpected show ID: %d", payload.ID)
 			}
-		},
-		cancel: func(ctx context.Context, payload *goacollection.CancelPayload) error {
-			canceled = append(canceled, payload.ID)
+		}).
+		Times(2)
+	colsvc.EXPECT().
+		Cancel(gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx context.Context, payload *goacollection.CancelPayload) error {
+			assert.Equal(t, payload.ID, uint(11))
 			return nil
-		},
-	}
+		})
 
-	activity := NewBulkActivity(&bulkActivityTestService{goa: goaSvc})
+	activity := newBulkActivity(colsvc)
 	err := activity.Execute(context.Background(), BulkWorkflowInput{
 		Status:    StatusQueued,
 		Operation: BulkWorkflowOperationCancel,
@@ -185,95 +190,4 @@ func TestBulkActivityExecuteSkipsQueuedCollectionsWithTransfer(t *testing.T) {
 	})
 
 	assert.NilError(t, err)
-	assert.DeepEqual(t, canceled, []uint{11})
-}
-
-type bulkActivityTestService struct {
-	goa goacollection.Service
-}
-
-func (s *bulkActivityTestService) Goa() goacollection.Service {
-	return s.goa
-}
-
-func (s *bulkActivityTestService) Create(context.Context, *Collection) error {
-	panic("unused")
-}
-
-func (s *bulkActivityTestService) CheckDuplicate(context.Context, uint) (bool, error) {
-	panic("unused")
-}
-
-func (s *bulkActivityTestService) UpdateWorkflowStatus(context.Context, uint, string, string, string, string, string, string, Status, time.Time) error {
-	panic("unused")
-}
-
-func (s *bulkActivityTestService) UpdateReconciliationState(context.Context, uint, *time.Time, *time.Time, *string, *string) error {
-	panic("unused")
-}
-
-func (s *bulkActivityTestService) SetStatus(context.Context, uint, Status) error {
-	panic("unused")
-}
-
-func (s *bulkActivityTestService) SetStatusInProgress(context.Context, uint, time.Time) error {
-	panic("unused")
-}
-
-func (s *bulkActivityTestService) SetStatusPending(context.Context, uint, []byte) error {
-	panic("unused")
-}
-
-func (s *bulkActivityTestService) SetOriginalID(context.Context, uint, string) error {
-	panic("unused")
-}
-
-type bulkActivityTestGoaService struct {
-	list   func(context.Context, *goacollection.ListPayload) (*goacollection.ListResult, error)
-	show   func(context.Context, *goacollection.ShowPayload) (*goacollection.EnduroDetailedStoredCollection, error)
-	cancel func(context.Context, *goacollection.CancelPayload) error
-}
-
-func (s *bulkActivityTestGoaService) Monitor(context.Context, goacollection.MonitorServerStream) error {
-	panic("unused")
-}
-
-func (s *bulkActivityTestGoaService) List(ctx context.Context, payload *goacollection.ListPayload) (*goacollection.ListResult, error) {
-	return s.list(ctx, payload)
-}
-
-func (s *bulkActivityTestGoaService) Show(ctx context.Context, payload *goacollection.ShowPayload) (*goacollection.EnduroDetailedStoredCollection, error) {
-	return s.show(ctx, payload)
-}
-
-func (s *bulkActivityTestGoaService) Delete(context.Context, *goacollection.DeletePayload) error {
-	panic("unused")
-}
-
-func (s *bulkActivityTestGoaService) Cancel(ctx context.Context, payload *goacollection.CancelPayload) error {
-	return s.cancel(ctx, payload)
-}
-
-func (s *bulkActivityTestGoaService) Retry(context.Context, *goacollection.RetryPayload) (*goacollection.RetryResult, error) {
-	panic("unused")
-}
-
-func (s *bulkActivityTestGoaService) Workflow(context.Context, *goacollection.WorkflowPayload) (*goacollection.EnduroCollectionWorkflowStatus, error) {
-	panic("unused")
-}
-
-func (s *bulkActivityTestGoaService) Download(context.Context, *goacollection.DownloadPayload) (*goacollection.DownloadResult, io.ReadCloser, error) {
-	panic("unused")
-}
-
-func (s *bulkActivityTestGoaService) Decide(context.Context, *goacollection.DecidePayload) error {
-	panic("unused")
-}
-
-func (s *bulkActivityTestGoaService) Bulk(context.Context, *goacollection.BulkPayload) (*goacollection.BulkResult, error) {
-	panic("unused")
-}
-
-func (s *bulkActivityTestGoaService) BulkStatus(context.Context) (*goacollection.BulkStatusResult, error) {
-	panic("unused")
 }

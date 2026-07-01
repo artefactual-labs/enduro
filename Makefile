@@ -186,6 +186,7 @@ gen-mock: # @HELP Generates mocks with mockgen.
 gen-mock: tool-mockgen
 	mockgen -typed -destination=./internal/batch/fake/mock_batch.go -package=fake github.com/artefactual-labs/enduro/internal/batch Service
 	mockgen -typed -destination=./internal/collection/fake/mock_collection.go -package=fake github.com/artefactual-labs/enduro/internal/collection Service
+	mockgen -typed -source=./internal/collection/bulk_workflow.go -destination=./internal/collection/mock_bulk_collection_service_test.go -package=collection -mock_names=bulkCollectionService=MockBulkCollectionService
 	mockgen -typed -destination=./internal/pipeline/fake/mock_pipeline.go -package=fake github.com/artefactual-labs/enduro/internal/pipeline Service
 	mockgen -typed -destination=./internal/watcher/fake/mock_watcher.go -package=fake github.com/artefactual-labs/enduro/internal/watcher Service
 	mockgen -typed -destination=./internal/watcher/fake/mock_watcher_unit.go -package=fake github.com/artefactual-labs/enduro/internal/watcher Watcher
