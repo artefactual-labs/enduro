@@ -93,9 +93,9 @@ func (svc *collectionImpl) Create(ctx context.Context, col *Collection) error {
 }
 
 func (svc *collectionImpl) CheckDuplicate(ctx context.Context, id uint) (bool, error) {
-	query := `SELECT EXISTS(SELECT 1 FROM collection c1 WHERE c1.name = (SELECT name FROM collection WHERE id = ?) AND c1.id <> ? AND c1.status NOT IN (3, 6))`
+	query := `SELECT EXISTS(SELECT 1 FROM collection c1 WHERE c1.name = (SELECT name FROM collection WHERE id = ?) AND c1.id <> ? AND c1.status NOT IN (?, ?))`
 	var exists bool
-	err := svc.db.GetContext(ctx, &exists, query, id, id)
+	err := svc.db.GetContext(ctx, &exists, query, id, id, StatusError, StatusAbandoned)
 	if err != nil {
 		return false, fmt.Errorf("sql error: %w", err)
 	}

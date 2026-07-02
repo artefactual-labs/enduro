@@ -69,7 +69,9 @@
 
         <b-link class="small" v-if="!isRunning" v-b-modal="'delete-modal'">Delete</b-link>
         <b-modal id="delete-modal" @ok="onDeleteConfirmed()" title="Are you sure?">
-          Once completed, this operation cannot be reversed.
+          Delete removes the Enduro collection record only. It does not cancel
+          already-started processing, delete AIPs, or remove Archivematica
+          transfer or ingest records. This operation cannot be reversed.
           <template v-slot:modal-footer="{ ok, cancel, hide }">
             <b-button size="sm" variant="danger" @click="ok()">Delete</b-button>
             <b-button size="sm" variant="light" @click="cancel()">Cancel</b-button>

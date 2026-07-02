@@ -287,9 +287,10 @@ E.g.: `"10m"`
 
 #### `rejectDuplicates` (Boolean)
 
-When enabled, the workflow will execute a check on the internal database for
-successfully completed transfers with the same transfer name as the currently
-processing package. If it finds a duplicate the transfer will fail.
+When enabled, the workflow checks the internal database for another collection
+with the same transfer name as the currently processing package. Existing
+collections in `error` or `abandoned` are ignored. If Enduro finds another
+matching collection, the transfer fails.
 
 E.g.: `false`
 
@@ -441,9 +442,10 @@ E.g.: `"10m"`
 
 #### `rejectDuplicates` (Boolean)
 
-When enabled, the workflow will execute a check on the internal database for
-successfully completed transfers with the same transfer name as the currently
-processing package. If it finds a duplicate the transfer will fail.
+When enabled, the workflow checks the internal database for another collection
+with the same transfer name as the currently processing package. Existing
+collections in `error` or `abandoned` are ignored. If Enduro finds another
+matching collection, the transfer fails.
 
 E.g.: `false`
 

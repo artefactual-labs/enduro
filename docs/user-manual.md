@@ -142,6 +142,28 @@ Archivematica transfer ID yet, canceling prevents submission to Archivematica.
 Delete removes the Enduro collection record and does not cancel processing that
 has already been started elsewhere.
 
+### Choosing Retry, Abandon, Cancel, or Delete
+
+Use Retry when Enduro should attempt to process the same collection again.
+Retry is available for failed collections and abandoned collections. Bulk Retry
+can target both `error` and `abandoned` collections.
+
+Use Abandon only when a collection is `pending` and Enduro is waiting for an
+operator decision. Abandon records that the pending workflow should stop instead
+of retrying the failed activity. It is not the normal action for a workflow that
+has already ended in `error`.
+
+Use Delete when the Enduro record should no longer be tracked, for example test
+imports, accidental submissions, duplicate entries, or packages that will be
+rebagged and submitted again in a new batch. Delete removes the Enduro
+collection row only. It does not cancel already-started processing, delete AIPs,
+or remove Archivematica transfer or ingest records.
+
+When duplicate rejection is enabled, Enduro ignores existing collections that
+are already in `error` or `abandoned` while checking for duplicate names. If a
+new rebagged package is still rejected as a duplicate, look for another existing
+collection with the same name that is not in `error` or `abandoned`.
+
 ## Collection timeline fields
 
 Collection timestamps describe different parts of the Enduro, Archivematica, and
