@@ -23,6 +23,12 @@ const {
 } = useCollectionDetails()
 const backToCollectionsRoute = useCollectionsListLocation()
 const deleteDialogOpen = ref(false)
+const deleteDialogDescription = [
+  'Delete removes the Enduro collection record only.',
+  'It does not cancel already-started processing, delete AIPs, or remove',
+  'Archivematica transfer or ingest records.',
+  'This operation cannot be reversed.'
+].join(' ')
 
 const isBusy = computed(() => isLoading.value || activeAction.value !== null)
 
@@ -383,7 +389,7 @@ async function confirmDelete() {
     <AppConfirmDialog
       v-model:open="deleteDialogOpen"
       title="Delete collection?"
-      description="This operation cannot be reversed."
+      :description="deleteDialogDescription"
       confirm-label="Delete"
       confirm-color="error"
       :pending="activeAction === 'delete'"

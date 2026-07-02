@@ -97,6 +97,27 @@ func TestSetStatusInProgress(t *testing.T) {
 	})
 }
 
+func TestCheckDuplicateIgnoresFailedAndAbandonedCollections(t *testing.T) {
+	t.Parallel()
+
+	duplicateExists := false
+	recorder := newExecRecorderDB(t)
+	recorder.queryBool = &duplicateExists
+	svc := NewService(testLogger(), recorder.db, nil, "", nil)
+
+	got, err := svc.CheckDuplicate(context.Background(), 42)
+
+	assert.NilError(t, err)
+	assert.Equal(t, got, false)
+	assert.Equal(t, recorder.querySQL, "SELECT EXISTS(SELECT 1 FROM collection c1 WHERE c1.name = (SELECT name FROM collection WHERE id = ?) AND c1.id <> ? AND c1.status NOT IN (?, ?))")
+	assert.DeepEqual(t, recorder.queryArgs, []any{
+		int64(42),
+		int64(42),
+		int64(StatusError),
+		int64(StatusAbandoned),
+	})
+}
+
 type execRecorderDB struct {
 	db *sql.DB
 
@@ -112,6 +133,7 @@ type execRecorderDB struct {
 	execErr      error
 	queryErr     error
 	row          *Collection
+	queryBool    *bool
 }
 
 var execRecorderDriverID atomic.Uint64
@@ -181,8 +203,34 @@ func (c execRecorderConn) QueryContext(_ context.Context, query string, args []d
 	if c.recorder.queryErr != nil {
 		return nil, c.recorder.queryErr
 	}
+	if c.recorder.queryBool != nil {
+		return &boolRows{value: *c.recorder.queryBool}, nil
+	}
 
 	return &collectionRows{row: c.recorder.row}, nil
+}
+
+type boolRows struct {
+	value bool
+	done  bool
+}
+
+func (r *boolRows) Columns() []string {
+	return []string{"exists"}
+}
+
+func (r *boolRows) Close() error {
+	return nil
+}
+
+func (r *boolRows) Next(dest []driver.Value) error {
+	if r.done {
+		return io.EOF
+	}
+	r.done = true
+	dest[0] = r.value
+
+	return nil
 }
 
 type collectionRows struct {
