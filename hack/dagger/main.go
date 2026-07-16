@@ -11,15 +11,15 @@ import (
 )
 
 const (
-	mysqlImage        = "mysql:8.4.8-oraclelinux9"
-	temporalImage     = "temporalio/server:1.30.5"
-	temporalToolImage = "temporalio/admin-tools:1.30.5"
-	goImage           = "golang:1.26.4-bookworm"
+	mysqlImage        = "mysql:8.4.10-oraclelinux9"
+	temporalImage     = "temporalio/server:1.31.2"
+	temporalToolImage = "temporalio/admin-tools:1.31.2"
+	goImage           = "golang:1.26.5-bookworm"
 	nodeImage         = "node:24-bookworm"
 	redisImage        = "redis:8.2.7-alpine3.22"
 	minioLegacyImage  = "minio/minio:RELEASE.2020-04-28T23-56-56Z"
 	minioLatestImage  = "minio/minio:RELEASE.2025-09-07T16-13-09Z"
-	seaweedFSImage    = "chrislusf/seaweedfs:4.37"
+	seaweedFSImage    = "chrislusf/seaweedfs:4.39"
 	amboxImage        = "ghcr.io/sevein/ambox:latest"
 	playwrightImage   = "mcr.microsoft.com/playwright:v1.61.1-noble"
 )
