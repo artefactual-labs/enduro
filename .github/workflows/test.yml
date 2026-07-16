@@ -67,15 +67,17 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Report initial disk usage
+        run: df -h /
       - name: Configure Dagger engine cache
         run: |
           mkdir -p "$HOME/.config/dagger"
           cat > "$HOME/.config/dagger/engine.json" <<'JSON'
           {
             "gc": {
-              "maxUsedSpace": "30GB",
-              "reservedSpace": "6GB",
-              "minFreeSpace": "15GB",
+              "maxUsedSpace": "30%",
+              "reservedSpace": "5%",
+              "minFreeSpace": "30%",
               "sweepSize": "50%"
             }
           }
@@ -88,6 +90,9 @@ jobs:
           verb: call
           module: hack/dagger
           args: smoke-tests --source . export --path hack/dagger/runtime/artifacts
+      - name: Report final disk usage
+        if: always()
+        run: df -h /
       - name: Upload smoke coverage to Codecov
         if: github.actor != 'dependabot[bot]'
         uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v6.0.2
@@ -120,15 +125,17 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Report initial disk usage
+        run: df -h /
       - name: Configure Dagger engine cache
         run: |
           mkdir -p "$HOME/.config/dagger"
           cat > "$HOME/.config/dagger/engine.json" <<'JSON'
           {
             "gc": {
-              "maxUsedSpace": "30GB",
-              "reservedSpace": "6GB",
-              "minFreeSpace": "15GB",
+              "maxUsedSpace": "30%",
+              "reservedSpace": "5%",
+              "minFreeSpace": "30%",
               "sweepSize": "50%"
             }
           }
@@ -141,6 +148,9 @@ jobs:
           verb: call
           module: hack/dagger
           args: object-storage-smoke-test --source . --provider ${{ matrix.provider }} export --path hack/dagger/runtime/object-storage-artifacts-${{ matrix.provider }}
+      - name: Report final disk usage
+        if: always()
+        run: df -h /
       - name: Upload object storage smoke coverage to Codecov
         if: github.actor != 'dependabot[bot]'
         uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v6.0.2
