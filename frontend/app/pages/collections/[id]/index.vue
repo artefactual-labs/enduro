@@ -42,7 +42,7 @@ const overviewItems = computed(() => {
   const items: Array<{ key: string, label: string, slot?: string, value?: string, valueClass?: string }> = [
     { key: 'status', label: 'Status', slot: 'status' },
     { key: 'created', label: 'Created', value: formatDateTime(collection.value.createdAt) },
-    { key: 'started', label: 'Started', value: collection.value.startedAt ? formatDateTime(collection.value.startedAt) : 'Not started yet.' }
+    { key: 'started', label: 'Processing started', value: collection.value.startedAt ? formatDateTime(collection.value.startedAt) : 'Processing has not started yet.' }
   ]
 
   if (collection.value.originalId) {

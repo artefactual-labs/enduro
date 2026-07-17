@@ -13,7 +13,7 @@ const columns: TableColumn<EnduroStoredCollection>[] = [
   },
   {
     accessorKey: 'startedAt',
-    header: 'Started'
+    header: 'Processing started'
   },
   {
     accessorKey: 'completedAt',

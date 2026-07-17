@@ -34,7 +34,7 @@ const metadataItems = computed(() => {
   ]
 
   if (workflow.startedAt) {
-    items.push({ key: 'startedAt', label: 'Started', value: formatDateTime(workflow.startedAt) })
+    items.push({ key: 'startedAt', label: 'Workflow started', value: formatDateTime(workflow.startedAt) })
   }
 
   if (workflow.completedAt) {

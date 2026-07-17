@@ -93,6 +93,18 @@ describe('collections index page', () => {
     expect(wrapper.text()).toContain('transfer2.zip')
   })
 
+  it('labels the collection processing start explicitly', async () => {
+    useCollectionsBrowserMock.mockReturnValue(createCollectionsBrowserState())
+    useDashboardUiOptionsMock.mockReturnValue(createDashboardUiOptionsState())
+
+    const wrapper = await mountSuspended(CollectionsPage, {
+      route: '/collections'
+    })
+
+    const headers = wrapper.findAll('th').map(header => header.text())
+    expect(headers).toContain('Processing started')
+  })
+
   it('opens the search panel from the toolbar toggle', async () => {
     useCollectionsBrowserMock.mockReturnValue(createCollectionsBrowserState())
     const uiOptions = createDashboardUiOptionsState()
