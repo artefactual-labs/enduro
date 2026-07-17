@@ -3,7 +3,7 @@ module dagger/enduro-e-2-e
 // Dagger v0.28.0 still says highest supported is 1.26.2.
 go 1.26.2
 
-toolchain go1.26.3
+toolchain go1.26.5
 
 require (
 	github.com/Khan/genqlient v0.8.1
@@ -14,10 +14,8 @@ require (
 )
 
 require (
-	github.com/agnivade/levenshtein v1.2.1 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
-	github.com/sergi/go-diff v1.4.0 // indirect
 )
 
 require (
@@ -44,10 +42,10 @@ require (
 	go.opentelemetry.io/otel/sdk/log v0.19.0 // indirect
 	go.opentelemetry.io/otel/sdk/metric v1.44.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.10.0 // indirect
-	golang.org/x/net v0.53.0 // indirect
+	golang.org/x/net v0.55.0 // indirect
 	golang.org/x/sync v0.20.0 // indirect
 	golang.org/x/sys v0.45.0 // indirect
-	golang.org/x/text v0.36.0 // indirect
+	golang.org/x/text v0.37.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260420184626-e10c466a9529 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260420184626-e10c466a9529 // indirect
 	google.golang.org/grpc v1.80.0 // indirect
