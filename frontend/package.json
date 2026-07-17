@@ -24,7 +24,7 @@
     "@iconify-json/simple-icons": "^1.2.90",
     "@nuxt/ui": "^4.10.0",
     "nuxt": "^4.4.8",
-    "tailwindcss": "^4.3.2",
+    "tailwindcss": "^4.3.3",
     "vue-router": "^5.2.0"
   },
   "overrides": {
