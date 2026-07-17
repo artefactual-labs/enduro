@@ -86,15 +86,27 @@ describe('workflow page', () => {
     useCollectionWorkflowMock.mockReset()
   })
 
-  it('renders started and completed metadata when timestamps are present', async () => {
+  it('labels the workflow start time explicitly', async () => {
     useCollectionWorkflowMock.mockReturnValue(createWorkflowState())
 
     const wrapper = await mountSuspended(WorkflowPage, {
       route: '/collections/77/workflow'
     })
 
-    expect(wrapper.text()).toContain('Started')
-    expect(wrapper.text()).toContain('Completed')
+    const labels = wrapper.findAll('dt').map(label => label.text())
+    expect(labels).toContain('Workflow started')
+    expect(labels).not.toContain('Processing started')
+  })
+
+  it('renders workflow completion metadata and duration', async () => {
+    useCollectionWorkflowMock.mockReturnValue(createWorkflowState())
+
+    const wrapper = await mountSuspended(WorkflowPage, {
+      route: '/collections/77/workflow'
+    })
+
+    const labels = wrapper.findAll('dt').map(label => label.text())
+    expect(labels).toContain('Completed')
     expect(wrapper.text()).toContain('COMPLETED')
     expect(wrapper.text()).toContain('took 5m')
   })
