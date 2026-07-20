@@ -2,6 +2,7 @@
 
 - [Overview](./overview.md)
 - [Installation](./installation.md)
+- [Database Migrations](./database-migrations.md)
 - [Security Configuration](./security-configuration.md)
 - [User Manual](./user-manual.md)
 - [Configuration Reference](./configuration-reference.md)

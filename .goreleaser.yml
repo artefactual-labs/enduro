@@ -46,6 +46,7 @@ archives:
       - LICENSE
       - README.md
       - enduro.toml
+      - internal/db/migrations/*.sql
 checksum:
   name_template: checksums.txt
   algorithm: sha256

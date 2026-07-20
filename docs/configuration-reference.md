@@ -222,6 +222,14 @@ Connection details using the [Data Source Name format].
 
 E.g.: `enduro:enduro123@tcp(127.0.0.1:7450)/enduro`
 
+#### `autoMigrate` (Boolean)
+
+Whether Enduro applies pending database migrations automatically when it
+starts. Set this to `false` when migrations are managed manually with the
+golang-migrate CLI.
+
+Default: `true`.
+
 ## `[watcher]`
 
 Watchers monitor data sources like filesystems or S3 buckets to process new

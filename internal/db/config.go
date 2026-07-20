@@ -1,5 +1,6 @@
 package db
 
 type Config struct {
-	DSN string
+	DSN         string
+	AutoMigrate bool
 }

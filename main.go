@@ -130,7 +130,10 @@ func main() {
 		os.Exit(1)
 	}
 
-	database, err := db.Connect(config.Database.DSN)
+	if !config.Database.AutoMigrate {
+		logger.Info("Automatic database migrations disabled.")
+	}
+	database, err := db.ConnectWithConfig(config.Database)
 	if err != nil {
 		logger.Error(err, "Database configuration failed.")
 		os.Exit(1)
@@ -490,6 +493,7 @@ func configureViper(v *viper.Viper) {
 	v.SetDefault("api.allowedOrigins", []string{"*"})
 	v.SetDefault("api.contentSecurityPolicy", "")
 	v.Set("api.appVersion", version)
+	v.SetDefault("database.autoMigrate", true)
 	v.SetDefault("objectEventWebhook.listen", "127.0.0.1:7480")
 	v.SetDefault("objectEventWebhook.bucketsPath", "/buckets")
 
