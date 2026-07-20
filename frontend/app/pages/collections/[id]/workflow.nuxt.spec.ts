@@ -1,6 +1,12 @@
 import { ref } from 'vue'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { mountSuspended, mockComponent, mockNuxtImport } from '@nuxt/test-utils/runtime'
+import {
+  type EnduroCollectionStatusHistory,
+  EnduroCollectionStatusHistoryAvailabilityEnum as Availability,
+  EnduroCollectionStatusTransitionPreviousStatusEnum as PreviousStatus,
+  EnduroCollectionStatusTransitionStatusEnum as Status
+} from '~/openapi-generator'
 
 import WorkflowPage from './workflow.vue'
 
@@ -49,7 +55,8 @@ function createWorkflowState(status = 'completed') {
     collection: ref({
       id: 77,
       workflowId: 'workflow-77',
-      runId: 'run-77'
+      runId: 'run-77',
+      status: 'done'
     }),
     errorMessage: ref(''),
     hasLoaded: ref(true),
@@ -71,6 +78,12 @@ function createWorkflowState(status = 'completed') {
         }
       ]
     }),
+    statusHistory: ref<EnduroCollectionStatusHistory>({
+      availability: Availability.Unavailable,
+      transitions: []
+    }),
+    statusHistoryErrorMessage: ref(''),
+    workflowErrorMessage: ref(''),
     loadWorkflow: vi.fn()
   }
 }
@@ -109,6 +122,128 @@ describe('workflow page', () => {
     expect(labels).toContain('Completed')
     expect(wrapper.text()).toContain('COMPLETED')
     expect(wrapper.text()).toContain('took 5m')
+  })
+
+  it('describes the Temporal-derived workflow sections', async () => {
+    useCollectionWorkflowMock.mockReturnValue(createWorkflowState())
+
+    const wrapper = await mountSuspended(WorkflowPage, {
+      route: '/collections/77/workflow'
+    })
+
+    expect(wrapper.text()).toContain('Activity summary')
+    expect(wrapper.text()).toContain('activity executions derived from the Temporal workflow event history')
+    expect(wrapper.text()).toContain('Workflow event history')
+    expect(wrapper.text()).toContain('Temporal events recorded for this workflow execution, shown newest first')
+    wrapper.unmount()
+  })
+
+  it('shows a safe empty state for legacy collections', async () => {
+    useCollectionWorkflowMock.mockReturnValue(createWorkflowState())
+
+    const wrapper = await mountSuspended(WorkflowPage, {
+      route: '/collections/77/workflow'
+    })
+
+    expect(wrapper.text()).toContain('Status history is not available for this workflow run')
+    expect(wrapper.text()).toContain('started or retried after the upgrade')
+  })
+
+  it('keeps collection lifecycle visible when Temporal is unavailable', async () => {
+    const state = createWorkflowState()
+    state.workflowErrorMessage.value = 'The Temporal workflow history is not available.'
+    useCollectionWorkflowMock.mockReturnValue(state)
+
+    const wrapper = await mountSuspended(WorkflowPage, {
+      route: '/collections/77/workflow'
+    })
+
+    expect(wrapper.text()).toContain('Temporal workflow unavailable')
+    expect(wrapper.text()).toContain('Collection lifecycle')
+    expect(wrapper.text()).toContain('Status history is not available for this workflow run')
+    expect(wrapper.text()).not.toContain('Activity summary')
+  })
+
+  it('renders recorded collection status periods', async () => {
+    const state = createWorkflowState()
+    state.statusHistory.value = {
+      availability: Availability.Available,
+      transitions: [
+        {
+          id: 1,
+          isRunStart: true,
+          occurredAt: new Date('2026-04-22T18:40:00Z'),
+          reason: 'collection_created',
+          runId: 'run-77',
+          status: Status.Queued,
+          workflowId: 'workflow-77'
+        },
+        {
+          id: 2,
+          isRunStart: false,
+          occurredAt: new Date('2026-04-22T18:47:00Z'),
+          previousStatus: PreviousStatus.Queued,
+          reason: 'pipeline_acquired',
+          runId: 'run-77',
+          status: Status.InProgress,
+          workflowId: 'workflow-77'
+        }
+      ]
+    }
+    useCollectionWorkflowMock.mockReturnValue(state)
+
+    const wrapper = await mountSuspended(WorkflowPage, {
+      route: '/collections/77/workflow'
+    })
+
+    expect(wrapper.text()).toContain('Queued')
+    expect(wrapper.text()).toContain('In progress')
+    expect(wrapper.text()).toContain('Pipeline acquired')
+    expect(wrapper.text()).toContain('Time by status')
+
+    let transitionHistoryButton = wrapper.findAll('button')
+      .find(button => button.text() === 'Show exact transition history')
+    expect(transitionHistoryButton?.attributes('aria-pressed')).toBe('false')
+
+    await transitionHistoryButton?.trigger('click')
+    transitionHistoryButton = wrapper.findAll('button')
+      .find(button => button.text() === 'Hide exact transition history')
+
+    expect(transitionHistoryButton?.attributes('aria-pressed')).toBe('true')
+    expect(wrapper.text()).toContain('Time in status')
+    wrapper.unmount()
+  })
+
+  it('renders recorded transitions from an incomplete history', async () => {
+    const state = createWorkflowState()
+    state.statusHistory.value = {
+      availability: Availability.Partial,
+      transitions: [
+        {
+          id: 2,
+          isRunStart: false,
+          occurredAt: new Date('2026-04-22T18:47:00Z'),
+          previousStatus: PreviousStatus.Queued,
+          reason: 'pipeline_acquired',
+          runId: 'run-77',
+          status: Status.InProgress,
+          workflowId: 'workflow-77'
+        }
+      ]
+    }
+    useCollectionWorkflowMock.mockReturnValue(state)
+
+    const wrapper = await mountSuspended(WorkflowPage, {
+      route: '/collections/77/workflow'
+    })
+
+    expect(wrapper.text()).toContain('Status history is incomplete')
+    expect(wrapper.text()).toContain('Earlier statuses and their durations are not included')
+    expect(wrapper.text()).toContain('In progress')
+    expect(wrapper.text()).toContain('Pipeline acquired')
+    expect(wrapper.text()).toContain('Recorded time by status')
+    expect(wrapper.text()).not.toContain('Status history is not available for this workflow run')
+    wrapper.unmount()
   })
 
   it('keeps the selected history event content mounted while the modal starts closing', async () => {

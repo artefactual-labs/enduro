@@ -30,6 +30,15 @@ type EnduroCollectionWorkflowStatus struct {
 	View string
 }
 
+// EnduroCollectionStatusHistory is the viewed result type that is projected
+// based on a view.
+type EnduroCollectionStatusHistory struct {
+	// Type to project
+	Projected *EnduroCollectionStatusHistoryView
+	// View to render
+	View string
+}
+
 // EnduroMonitorUpdateView is a type that runs validations on a projected type.
 type EnduroMonitorUpdateView struct {
 	Timestamp *string
@@ -133,6 +142,39 @@ type EnduroCollectionWorkflowHistoryView struct {
 	Details any
 }
 
+// EnduroCollectionStatusHistoryView is a type that runs validations on a
+// projected type.
+type EnduroCollectionStatusHistoryView struct {
+	// Whether complete history is available for the current workflow run
+	Availability *string
+	Transitions  EnduroCollectionStatusTransitionCollectionView
+}
+
+// EnduroCollectionStatusTransitionCollectionView is a type that runs
+// validations on a projected type.
+type EnduroCollectionStatusTransitionCollectionView []*EnduroCollectionStatusTransitionView
+
+// EnduroCollectionStatusTransitionView is a type that runs validations on a
+// projected type.
+type EnduroCollectionStatusTransitionView struct {
+	// Identifier of the status transition
+	ID *uint64
+	// Identifier of the processing workflow
+	WorkflowID *string
+	// Identifier of the processing workflow run
+	RunID *string
+	// Status before the transition
+	PreviousStatus *string
+	// Status entered by the transition
+	Status *string
+	// Transition datetime
+	OccurredAt *string
+	// Whether the transition starts a fully recorded workflow run
+	IsRunStart *bool
+	// Machine-readable reason for the transition
+	Reason *string
+}
+
 var (
 	// EnduroDetailedStoredCollectionMap is a map indexing the attribute names of
 	// EnduroDetailedStoredCollection by view name.
@@ -162,6 +204,14 @@ var (
 		"default": {
 			"status",
 			"history",
+		},
+	}
+	// EnduroCollectionStatusHistoryMap is a map indexing the attribute names of
+	// EnduroCollectionStatusHistory by view name.
+	EnduroCollectionStatusHistoryMap = map[string][]string{
+		"default": {
+			"availability",
+			"transitions",
 		},
 	}
 	// EnduroStoredCollectionMap is a map indexing the attribute names of
@@ -218,6 +268,34 @@ var (
 			"details",
 		},
 	}
+	// EnduroCollectionStatusTransitionCollectionMap is a map indexing the
+	// attribute names of EnduroCollectionStatusTransitionCollection by view name.
+	EnduroCollectionStatusTransitionCollectionMap = map[string][]string{
+		"default": {
+			"id",
+			"workflow_id",
+			"run_id",
+			"previous_status",
+			"status",
+			"occurred_at",
+			"is_run_start",
+			"reason",
+		},
+	}
+	// EnduroCollectionStatusTransitionMap is a map indexing the attribute names of
+	// EnduroCollectionStatusTransition by view name.
+	EnduroCollectionStatusTransitionMap = map[string][]string{
+		"default": {
+			"id",
+			"workflow_id",
+			"run_id",
+			"previous_status",
+			"status",
+			"occurred_at",
+			"is_run_start",
+			"reason",
+		},
+	}
 )
 
 // ValidateEnduroDetailedStoredCollection runs the validations defined on the
@@ -238,6 +316,18 @@ func ValidateEnduroCollectionWorkflowStatus(result *EnduroCollectionWorkflowStat
 	switch result.View {
 	case "default", "":
 		err = ValidateEnduroCollectionWorkflowStatusView(result.Projected)
+	default:
+		err = goa.InvalidEnumValueError("view", result.View, []any{"default"})
+	}
+	return
+}
+
+// ValidateEnduroCollectionStatusHistory runs the validations defined on the
+// viewed result type EnduroCollectionStatusHistory.
+func ValidateEnduroCollectionStatusHistory(result *EnduroCollectionStatusHistory) (err error) {
+	switch result.View {
+	case "default", "":
+		err = ValidateEnduroCollectionStatusHistoryView(result.Projected)
 	default:
 		err = goa.InvalidEnumValueError("view", result.View, []any{"default"})
 	}
@@ -405,5 +495,73 @@ func ValidateEnduroCollectionWorkflowHistoryCollectionView(result EnduroCollecti
 // EnduroCollectionWorkflowHistoryView using the "default" view.
 func ValidateEnduroCollectionWorkflowHistoryView(result *EnduroCollectionWorkflowHistoryView) (err error) {
 
+	return
+}
+
+// ValidateEnduroCollectionStatusHistoryView runs the validations defined on
+// EnduroCollectionStatusHistoryView using the "default" view.
+func ValidateEnduroCollectionStatusHistoryView(result *EnduroCollectionStatusHistoryView) (err error) {
+	if result.Availability == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("availability", "result"))
+	}
+	if result.Availability != nil {
+		if !(*result.Availability == "available" || *result.Availability == "partial" || *result.Availability == "unavailable") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("result.availability", *result.Availability, []any{"available", "partial", "unavailable"}))
+		}
+	}
+	if result.Transitions != nil {
+		if err2 := ValidateEnduroCollectionStatusTransitionCollectionView(result.Transitions); err2 != nil {
+			err = goa.MergeErrors(err, err2)
+		}
+	}
+	return
+}
+
+// ValidateEnduroCollectionStatusTransitionCollectionView runs the validations
+// defined on EnduroCollectionStatusTransitionCollectionView using the
+// "default" view.
+func ValidateEnduroCollectionStatusTransitionCollectionView(result EnduroCollectionStatusTransitionCollectionView) (err error) {
+	for _, item := range result {
+		if err2 := ValidateEnduroCollectionStatusTransitionView(item); err2 != nil {
+			err = goa.MergeErrors(err, err2)
+		}
+	}
+	return
+}
+
+// ValidateEnduroCollectionStatusTransitionView runs the validations defined on
+// EnduroCollectionStatusTransitionView using the "default" view.
+func ValidateEnduroCollectionStatusTransitionView(result *EnduroCollectionStatusTransitionView) (err error) {
+	if result.ID == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("id", "result"))
+	}
+	if result.WorkflowID == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("workflow_id", "result"))
+	}
+	if result.RunID == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("run_id", "result"))
+	}
+	if result.Status == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("status", "result"))
+	}
+	if result.OccurredAt == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("occurred_at", "result"))
+	}
+	if result.IsRunStart == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("is_run_start", "result"))
+	}
+	if result.PreviousStatus != nil {
+		if !(*result.PreviousStatus == "new" || *result.PreviousStatus == "in progress" || *result.PreviousStatus == "done" || *result.PreviousStatus == "error" || *result.PreviousStatus == "unknown" || *result.PreviousStatus == "queued" || *result.PreviousStatus == "pending" || *result.PreviousStatus == "abandoned") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("result.previous_status", *result.PreviousStatus, []any{"new", "in progress", "done", "error", "unknown", "queued", "pending", "abandoned"}))
+		}
+	}
+	if result.Status != nil {
+		if !(*result.Status == "new" || *result.Status == "in progress" || *result.Status == "done" || *result.Status == "error" || *result.Status == "unknown" || *result.Status == "queued" || *result.Status == "pending" || *result.Status == "abandoned") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("result.status", *result.Status, []any{"new", "in progress", "done", "error", "unknown", "queued", "pending", "abandoned"}))
+		}
+	}
+	if result.OccurredAt != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("result.occurred_at", *result.OccurredAt, goa.FormatDateTime))
+	}
 	return
 }

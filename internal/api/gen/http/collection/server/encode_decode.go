@@ -493,6 +493,75 @@ func EncodeWorkflowError(encoder func(context.Context, http.ResponseWriter) goah
 	}
 }
 
+// EncodeStatusHistoryResponse returns an encoder for responses returned by the
+// collection status_history endpoint.
+func EncodeStatusHistoryResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {
+	return func(ctx context.Context, w http.ResponseWriter, v any) error {
+		res := v.(*collectionviews.EnduroCollectionStatusHistory)
+		enc := encoder(ctx, w)
+		body := NewStatusHistoryResponseBody(res.Projected)
+		w.WriteHeader(http.StatusOK)
+		return enc.Encode(body)
+	}
+}
+
+// DecodeStatusHistoryRequest returns a decoder for requests sent to the
+// collection status_history endpoint.
+func DecodeStatusHistoryRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (*collection.StatusHistoryPayload, error) {
+	return func(r *http.Request) (*collection.StatusHistoryPayload, error) {
+		var payload *collection.StatusHistoryPayload
+		var (
+			id  uint
+			err error
+
+			params = mux.Vars(r)
+		)
+		{
+			idRaw := params["id"]
+			v, err2 := strconv.ParseUint(idRaw, 10, strconv.IntSize)
+			if err2 != nil {
+				err = goa.MergeErrors(err, goa.InvalidFieldTypeError("id", idRaw, "unsigned integer"))
+			}
+			id = uint(v)
+		}
+		if err != nil {
+			return payload, err
+		}
+		payload = NewStatusHistoryPayload(id)
+
+		return payload, nil
+	}
+}
+
+// EncodeStatusHistoryError returns an encoder for errors returned by the
+// status_history collection endpoint.
+func EncodeStatusHistoryError(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder, formatter func(ctx context.Context, err error) goahttp.Statuser) func(context.Context, http.ResponseWriter, error) error {
+	encodeError := goahttp.ErrorEncoder(encoder, formatter)
+	return func(ctx context.Context, w http.ResponseWriter, v error) error {
+		var en goa.GoaErrorNamer
+		if !errors.As(v, &en) {
+			return encodeError(ctx, w, v)
+		}
+		switch en.GoaErrorName() {
+		case "not_found":
+			var res *collection.CollectionNotfound
+			errors.As(v, &res)
+			enc := encoder(ctx, w)
+			var body any
+			if formatter != nil {
+				body = formatter(ctx, res)
+			} else {
+				body = NewStatusHistoryNotFoundResponseBody(res)
+			}
+			w.Header().Set("goa-error", res.GoaErrorName())
+			w.WriteHeader(http.StatusNotFound)
+			return enc.Encode(body)
+		default:
+			return encodeError(ctx, w, v)
+		}
+	}
+}
+
 // EncodeDownloadResponse returns an encoder for responses returned by the
 // collection download endpoint.
 func EncodeDownloadResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {
@@ -796,6 +865,24 @@ func marshalCollectionviewsEnduroCollectionWorkflowHistoryViewToEnduroCollection
 		ID:      v.ID,
 		Type:    v.Type,
 		Details: v.Details,
+	}
+
+	return res
+}
+
+// marshalCollectionviewsEnduroCollectionStatusTransitionViewToEnduroCollectionStatusTransitionResponseBody
+// builds a value of type *EnduroCollectionStatusTransitionResponseBody from a
+// value of type *collectionviews.EnduroCollectionStatusTransitionView.
+func marshalCollectionviewsEnduroCollectionStatusTransitionViewToEnduroCollectionStatusTransitionResponseBody(v *collectionviews.EnduroCollectionStatusTransitionView) *EnduroCollectionStatusTransitionResponseBody {
+	res := &EnduroCollectionStatusTransitionResponseBody{
+		ID:             *v.ID,
+		WorkflowID:     *v.WorkflowID,
+		RunID:          *v.RunID,
+		PreviousStatus: v.PreviousStatus,
+		Status:         *v.Status,
+		OccurredAt:     *v.OccurredAt,
+		IsRunStart:     *v.IsRunStart,
+		Reason:         v.Reason,
 	}
 
 	return res

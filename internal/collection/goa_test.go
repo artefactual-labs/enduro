@@ -201,6 +201,87 @@ func TestGoaCancel(t *testing.T) {
 	}
 }
 
+func TestGoaStatusHistory(t *testing.T) {
+	t.Parallel()
+
+	occurredAt := time.Date(2026, time.July, 19, 10, 30, 0, 0, time.UTC)
+	recorder := newExecRecorderDB(t)
+	recorder.row = &Collection{
+		ID:         42,
+		WorkflowID: "workflow-42",
+		RunID:      "run-42",
+		Status:     StatusInProgress,
+		CreatedAt:  occurredAt.Add(-time.Minute),
+	}
+	recorder.transitions = []StatusTransition{
+		{
+			ID:           1,
+			CollectionID: 42,
+			WorkflowID:   "workflow-42",
+			RunID:        "run-42",
+			Status:       StatusQueued,
+			OccurredAt:   occurredAt,
+			IsRunStart:   true,
+			Reason:       sql.NullString{String: "collection_created", Valid: true},
+		},
+		{
+			ID:             2,
+			CollectionID:   42,
+			WorkflowID:     "workflow-42",
+			RunID:          "run-42",
+			PreviousStatus: sql.NullInt64{Int64: int64(StatusQueued), Valid: true},
+			Status:         StatusInProgress,
+			OccurredAt:     occurredAt.Add(time.Minute),
+			Reason:         sql.NullString{String: "pipeline_acquired", Valid: true},
+		},
+	}
+	svc := NewService(testLogger(), recorder.db, nil, "", nil)
+
+	got, err := svc.Goa().StatusHistory(context.Background(), &goacollection.StatusHistoryPayload{ID: 42})
+
+	assert.NilError(t, err)
+	assert.Equal(t, got.Availability, StatusHistoryAvailable)
+	assert.Equal(t, len(got.Transitions), 2)
+	assert.Equal(t, got.Transitions[0].Status, "queued")
+	assert.Assert(t, got.Transitions[0].PreviousStatus == nil)
+	assert.Equal(t, got.Transitions[1].Status, "in progress")
+	assert.Equal(t, *got.Transitions[1].PreviousStatus, "queued")
+	assert.Equal(t, *got.Transitions[1].Reason, "pipeline_acquired")
+	assert.Equal(t, got.Transitions[1].OccurredAt, "2026-07-19T10:31:00Z")
+}
+
+func TestGoaStatusHistoryUnavailableForLegacyCollection(t *testing.T) {
+	t.Parallel()
+
+	recorder := newExecRecorderDB(t)
+	recorder.row = &Collection{
+		ID:         42,
+		WorkflowID: "workflow-42",
+		RunID:      "run-42",
+		Status:     StatusDone,
+		CreatedAt:  time.Now().UTC(),
+	}
+	svc := NewService(testLogger(), recorder.db, nil, "", nil)
+
+	got, err := svc.Goa().StatusHistory(context.Background(), &goacollection.StatusHistoryPayload{ID: 42})
+
+	assert.NilError(t, err)
+	assert.Equal(t, got.Availability, StatusHistoryUnavailable)
+	assert.Equal(t, len(got.Transitions), 0)
+}
+
+func TestGoaStatusHistoryReturnsNotFound(t *testing.T) {
+	t.Parallel()
+
+	recorder := newExecRecorderDB(t)
+	svc := NewService(testLogger(), recorder.db, nil, "", nil)
+
+	got, err := svc.Goa().StatusHistory(context.Background(), &goacollection.StatusHistoryPayload{ID: 42})
+
+	assert.Assert(t, got == nil)
+	assertGoaServiceErr(t, err, nil, true)
+}
+
 func TestRetryModeForCollection(t *testing.T) {
 	t.Parallel()
 

@@ -1,13 +1,16 @@
-import type { EnduroCollectionWorkflowStatus } from '~/openapi-generator'
 import { useNuxtApp } from '#app'
 import { defineBasicLoader } from 'vue-router/experimental'
+import {
+  type CollectionWorkflowData,
+  loadCollectionWorkflowSources
+} from './collection-workflow.helpers'
 import { parseCollectionId } from './route-params'
 
 export class CollectionWorkflowLoadError extends Error {
   override name = 'CollectionWorkflowLoadError'
 }
 
-export const useCollectionWorkflowData = defineBasicLoader<{ workflow: EnduroCollectionWorkflowStatus }>(
+export const useCollectionWorkflowData = defineBasicLoader<CollectionWorkflowData>(
   async (to, { signal }) => {
     const collectionId = parseCollectionId(to.params.id)
     if (collectionId <= 0) {
@@ -16,12 +19,7 @@ export const useCollectionWorkflowData = defineBasicLoader<{ workflow: EnduroCol
 
     const { $enduroApi } = useNuxtApp()
 
-    try {
-      const workflow = await $enduroApi.collections.workflow(collectionId, { signal })
-      return { workflow }
-    } catch {
-      throw new CollectionWorkflowLoadError('The workflow history is not available.')
-    }
+    return loadCollectionWorkflowSources($enduroApi.collections, collectionId, signal)
   },
   {
     errors: [CollectionWorkflowLoadError]

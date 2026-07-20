@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { ParsedWorkflowHistoryEvent } from '~/utils/workflow-history'
+import { collectionStatusPresentation } from '~/utils/collection-status'
 import {
   isWorkflowExecutionTerminalStatus,
   workflowActivityStatusColor,
@@ -12,6 +13,9 @@ const {
   hasLoaded,
   isLoading,
   parsedWorkflow,
+  statusHistory,
+  statusHistoryErrorMessage,
+  workflowErrorMessage,
   loadWorkflow
 } = useCollectionWorkflow()
 const backToCollectionsRoute = useCollectionsListLocation()
@@ -28,9 +32,10 @@ const shouldAutoReload = computed(() => (
 const metadataItems = computed(() => {
   const workflow = parsedWorkflow.value
   const items: Array<{ key: string, label: string, slot?: string, value?: string }> = [
+    { key: 'collectionStatus', label: 'Collection status', slot: 'collectionStatus' },
     { key: 'workflowId', label: 'ID', slot: 'workflowId' },
     { key: 'runId', label: 'Run ID', slot: 'runId' },
-    { key: 'status', label: 'Status', slot: 'status' }
+    { key: 'status', label: 'Temporal status', slot: 'status' }
   ]
 
   if (workflow.startedAt) {
@@ -182,7 +187,26 @@ export { useCollectionWorkflowData } from '~/loaders/collection-workflow'
     />
 
     <UAlert
-      v-if="parsedWorkflow.workflowError"
+      v-if="workflowErrorMessage"
+      color="warning"
+      variant="subtle"
+      title="Temporal workflow unavailable"
+      :description="workflowErrorMessage"
+    >
+      <template #actions>
+        <UButton
+          label="Retry"
+          color="warning"
+          variant="outline"
+          size="sm"
+          :loading="isLoading"
+          @click="loadWorkflow(true)"
+        />
+      </template>
+    </UAlert>
+
+    <UAlert
+      v-else-if="parsedWorkflow.workflowError"
       color="error"
       variant="subtle"
       title="Workflow failure"
@@ -206,6 +230,14 @@ export { useCollectionWorkflowData } from '~/loaders/collection-workflow'
         :items="metadataItems"
         label-width="10rem"
       >
+        <template #collectionStatus>
+          <UBadge
+            :label="collectionStatusPresentation(collection?.status).label"
+            :color="collectionStatusPresentation(collection?.status).color"
+            variant="subtle"
+          />
+        </template>
+
         <template #workflowId>
           <AppUuid :value="collection?.workflowId" />
         </template>
@@ -216,8 +248,8 @@ export { useCollectionWorkflowData } from '~/loaders/collection-workflow'
 
         <template #status>
           <UBadge
-            :label="parsedWorkflow.status.toUpperCase()"
-            :color="workflowExecutionStatusColor(parsedWorkflow.status)"
+            :label="workflowErrorMessage ? 'UNAVAILABLE' : parsedWorkflow.status.toUpperCase()"
+            :color="workflowErrorMessage ? 'neutral' : workflowExecutionStatusColor(parsedWorkflow.status)"
             variant="subtle"
           />
         </template>
@@ -234,131 +266,176 @@ export { useCollectionWorkflowData } from '~/loaders/collection-workflow'
       </AppMetadataList>
     </UCard>
 
-    <UCard :ui="{ header: 'p-3 sm:px-5', body: 'p-0 sm:p-0' }">
+    <UCard :ui="{ header: 'p-3 sm:px-5' }">
       <template #header>
-        <h3 class="font-semibold">
-          Activity summary
-        </h3>
+        <div>
+          <h3 class="font-semibold">
+            Collection lifecycle
+          </h3>
+          <p class="mt-0.5 text-sm text-muted">
+            Time spent in each Enduro collection status for the current workflow run.
+          </p>
+        </div>
       </template>
 
-      <AppWorkflowActivityList
-        v-if="parsedWorkflow.activities.length"
-        :activities="parsedWorkflow.activities"
-        :format-date-time="formatDateTime"
-        :status-color="workflowActivityStatusColor"
+      <UAlert
+        v-if="statusHistoryErrorMessage"
+        color="warning"
+        variant="subtle"
+        title="Status history could not be loaded"
+        :description="statusHistoryErrorMessage"
       />
-      <div
+      <AppCollectionStatusTimeline
+        v-else-if="statusHistory"
+        :history="statusHistory"
+        :run-id="collection?.runId"
+      />
+      <UAlert
         v-else
-        class="px-4 py-4 text-sm text-muted sm:px-5"
-      >
-        No workflow activities were returned.
-      </div>
+        color="neutral"
+        variant="subtle"
+        title="Status history is unavailable"
+        description="No collection status history response was returned."
+      />
     </UCard>
 
-    <UCard :ui="{ header: 'p-3 sm:px-5', body: 'p-0 sm:p-0' }">
-      <template #header>
-        <h3 class="font-semibold">
-          History
-        </h3>
-      </template>
+    <template v-if="!workflowErrorMessage">
+      <UCard :ui="{ header: 'p-3 sm:px-5', body: 'p-0 sm:p-0' }">
+        <template #header>
+          <div>
+            <h3 class="font-semibold">
+              Activity summary
+            </h3>
+            <p class="mt-0.5 text-sm text-muted">
+              A simplified view of activity executions derived from the Temporal workflow event history.
+            </p>
+          </div>
+        </template>
 
-      <div
-        v-if="parsedWorkflow.events.length"
-        class="overflow-x-auto"
-      >
-        <table class="min-w-full table-fixed">
-          <colgroup>
-            <col class="w-[5.5rem]">
-            <col>
-            <col class="w-[13rem]">
-          </colgroup>
-          <thead class="bg-elevated/30">
-            <tr class="border-b border-default">
-              <th
-                scope="col"
-                class="px-4 py-3 text-left text-sm font-semibold text-highlighted sm:px-5"
+        <AppWorkflowActivityList
+          v-if="parsedWorkflow.activities.length"
+          :activities="parsedWorkflow.activities"
+          :format-date-time="formatDateTime"
+          :status-color="workflowActivityStatusColor"
+        />
+        <div
+          v-else
+          class="px-4 py-4 text-sm text-muted sm:px-5"
+        >
+          No workflow activities were returned.
+        </div>
+      </UCard>
+
+      <UCard :ui="{ header: 'p-3 sm:px-5', body: 'p-0 sm:p-0' }">
+        <template #header>
+          <div>
+            <h3 class="font-semibold">
+              Workflow event history
+            </h3>
+            <p class="mt-0.5 text-sm text-muted">
+              Temporal events recorded for this workflow execution, shown newest first.
+            </p>
+          </div>
+        </template>
+
+        <div
+          v-if="parsedWorkflow.events.length"
+          class="overflow-x-auto"
+        >
+          <table class="min-w-full table-fixed">
+            <colgroup>
+              <col class="w-[5.5rem]">
+              <col>
+              <col class="w-[13rem]">
+            </colgroup>
+            <thead class="bg-elevated/30">
+              <tr class="border-b border-default">
+                <th
+                  scope="col"
+                  class="px-4 py-3 text-left text-sm font-semibold text-highlighted sm:px-5"
+                >
+                  ID
+                </th>
+                <th
+                  scope="col"
+                  class="px-4 py-3 text-left text-sm font-semibold text-highlighted sm:px-5"
+                >
+                  Event
+                </th>
+                <th
+                  scope="col"
+                  class="px-4 py-3 text-left text-sm font-semibold text-highlighted sm:px-5"
+                >
+                  Time
+                </th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-default">
+              <tr
+                v-for="event in parsedWorkflow.events"
+                :key="event.id ?? `${event.type}-${event.eventTime}`"
+                class="app-table-row"
               >
-                ID
-              </th>
-              <th
-                scope="col"
-                class="px-4 py-3 text-left text-sm font-semibold text-highlighted sm:px-5"
-              >
-                Event
-              </th>
-              <th
-                scope="col"
-                class="px-4 py-3 text-left text-sm font-semibold text-highlighted sm:px-5"
-              >
-                Time
-              </th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-default">
-            <tr
-              v-for="event in parsedWorkflow.events"
-              :key="event.id ?? `${event.type}-${event.eventTime}`"
-              class="app-table-row"
-            >
-              <td class="px-4 py-3 align-top text-sm sm:px-5">
-                <UBadge
-                  v-if="event.id !== null"
-                  :label="`#${event.id}`"
-                  color="neutral"
-                  variant="outline"
-                  size="sm"
-                />
-                <span
-                  v-else
-                  class="text-muted"
-                >N/A</span>
-              </td>
-              <td class="px-4 py-3 align-top sm:px-5">
-                <div class="min-w-0 space-y-1">
-                  <div class="flex flex-wrap items-center gap-2">
-                    <span class="break-words font-medium text-highlighted">
-                      {{ event.type }}
-                    </span>
-                    <UBadge
-                      v-if="event.activityName"
-                      :label="event.activityName"
-                      color="primary"
-                      variant="subtle"
-                      size="sm"
-                    />
+                <td class="px-4 py-3 align-top text-sm sm:px-5">
+                  <UBadge
+                    v-if="event.id !== null"
+                    :label="`#${event.id}`"
+                    color="neutral"
+                    variant="outline"
+                    size="sm"
+                  />
+                  <span
+                    v-else
+                    class="text-muted"
+                  >N/A</span>
+                </td>
+                <td class="px-4 py-3 align-top sm:px-5">
+                  <div class="min-w-0 space-y-1">
+                    <div class="flex flex-wrap items-center gap-2">
+                      <span class="break-words font-medium text-highlighted">
+                        {{ event.type }}
+                      </span>
+                      <UBadge
+                        v-if="event.activityName"
+                        :label="event.activityName"
+                        color="primary"
+                        variant="subtle"
+                        size="sm"
+                      />
+                    </div>
+                    <code
+                      v-if="event.description && !isVerboseHistoryDescription(event.description)"
+                      class="block whitespace-pre-wrap break-words rounded-md bg-elevated/60 px-2 py-1 text-xs text-toned"
+                    >{{ event.description }}</code>
+                    <div
+                      v-else-if="event.description"
+                      class="space-y-2"
+                    >
+                      <UButton
+                        label="View details"
+                        color="neutral"
+                        variant="outline"
+                        size="xs"
+                        @click="openHistoryDetail(event)"
+                      />
+                    </div>
                   </div>
-                  <code
-                    v-if="event.description && !isVerboseHistoryDescription(event.description)"
-                    class="block whitespace-pre-wrap break-words rounded-md bg-elevated/60 px-2 py-1 text-xs text-toned"
-                  >{{ event.description }}</code>
-                  <div
-                    v-else-if="event.description"
-                    class="space-y-2"
-                  >
-                    <UButton
-                      label="View details"
-                      color="neutral"
-                      variant="outline"
-                      size="xs"
-                      @click="openHistoryDetail(event)"
-                    />
-                  </div>
-                </div>
-              </td>
-              <td class="px-4 py-3 align-top text-sm text-muted whitespace-nowrap sm:px-5">
-                {{ event.eventTime ? formatDateTime(event.eventTime) : 'Time unavailable' }}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <div
-        v-else
-        class="px-4 py-4 text-sm text-muted sm:px-5"
-      >
-        No workflow history was returned.
-      </div>
-    </UCard>
+                </td>
+                <td class="px-4 py-3 align-top text-sm text-muted whitespace-nowrap sm:px-5">
+                  {{ event.eventTime ? formatDateTime(event.eventTime) : 'Time unavailable' }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div
+          v-else
+          class="px-4 py-4 text-sm text-muted sm:px-5"
+        >
+          No workflow history was returned.
+        </div>
+      </UCard>
+    </template>
 
     <UModal
       v-model:open="historyDetailOpen"

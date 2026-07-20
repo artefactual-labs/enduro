@@ -32,6 +32,8 @@ type Service interface {
 	Retry(context.Context, *RetryPayload) (res *RetryResult, err error)
 	// Retrieve workflow status by ID
 	Workflow(context.Context, *WorkflowPayload) (res *EnduroCollectionWorkflowStatus, err error)
+	// Retrieve the recorded status transition history for a collection
+	StatusHistory(context.Context, *StatusHistoryPayload) (res *EnduroCollectionStatusHistory, err error)
 	// Download collection by ID
 
 	// If body implements [io.WriterTo], that implementation will be used instead.
@@ -60,7 +62,7 @@ const ServiceName = "collection"
 // MethodNames lists the service method names as defined in the design. These
 // are the same values that are set in the endpoint request contexts under the
 // MethodKey key.
-var MethodNames = [11]string{"monitor", "list", "show", "delete", "cancel", "retry", "workflow", "download", "decide", "bulk", "bulk_status"}
+var MethodNames = [12]string{"monitor", "list", "show", "delete", "cancel", "retry", "workflow", "status_history", "download", "decide", "bulk", "bulk_status"}
 
 // MonitorServerStream allows streaming instances of *EnduroMonitorUpdate to
 // the client.
@@ -148,6 +150,36 @@ type DownloadResult struct {
 	ContentLength      int64
 	ContentDisposition string
 }
+
+// EnduroCollectionStatusHistory is the result type of the collection service
+// status_history method.
+type EnduroCollectionStatusHistory struct {
+	// Whether complete history is available for the current workflow run
+	Availability string
+	Transitions  EnduroCollectionStatusTransitionCollection
+}
+
+// StatusTransition describes a committed collection status change.
+type EnduroCollectionStatusTransition struct {
+	// Identifier of the status transition
+	ID uint64
+	// Identifier of the processing workflow
+	WorkflowID string
+	// Identifier of the processing workflow run
+	RunID string
+	// Status before the transition
+	PreviousStatus *string
+	// Status entered by the transition
+	Status string
+	// Transition datetime
+	OccurredAt string
+	// Whether the transition starts a fully recorded workflow run
+	IsRunStart bool
+	// Machine-readable reason for the transition
+	Reason *string
+}
+
+type EnduroCollectionStatusTransitionCollection []*EnduroCollectionStatusTransition
 
 // WorkflowHistoryEvent describes a history event in Temporal.
 type EnduroCollectionWorkflowHistory struct {
@@ -288,6 +320,13 @@ type ShowPayload struct {
 	ID uint
 }
 
+// StatusHistoryPayload is the payload type of the collection service
+// status_history method.
+type StatusHistoryPayload struct {
+	// Identifier of collection to look up
+	ID uint
+}
+
 // WorkflowPayload is the payload type of the collection service workflow
 // method.
 type WorkflowPayload struct {
@@ -355,6 +394,21 @@ func NewEnduroCollectionWorkflowStatus(vres *collectionviews.EnduroCollectionWor
 func NewViewedEnduroCollectionWorkflowStatus(res *EnduroCollectionWorkflowStatus, view string) *collectionviews.EnduroCollectionWorkflowStatus {
 	p := newEnduroCollectionWorkflowStatusView(res)
 	return &collectionviews.EnduroCollectionWorkflowStatus{Projected: p, View: "default"}
+}
+
+// NewEnduroCollectionStatusHistory initializes result type
+// EnduroCollectionStatusHistory from viewed result type
+// EnduroCollectionStatusHistory.
+func NewEnduroCollectionStatusHistory(vres *collectionviews.EnduroCollectionStatusHistory) *EnduroCollectionStatusHistory {
+	return newEnduroCollectionStatusHistory(vres.Projected)
+}
+
+// NewViewedEnduroCollectionStatusHistory initializes viewed result type
+// EnduroCollectionStatusHistory from result type EnduroCollectionStatusHistory
+// using the given view.
+func NewViewedEnduroCollectionStatusHistory(res *EnduroCollectionStatusHistory, view string) *collectionviews.EnduroCollectionStatusHistory {
+	p := newEnduroCollectionStatusHistoryView(res)
+	return &collectionviews.EnduroCollectionStatusHistory{Projected: p, View: "default"}
 }
 
 // newEnduroStoredCollection converts projected type EnduroStoredCollection to
@@ -555,6 +609,100 @@ func newEnduroCollectionWorkflowHistoryView(res *EnduroCollectionWorkflowHistory
 		ID:      res.ID,
 		Type:    res.Type,
 		Details: res.Details,
+	}
+	return vres
+}
+
+// newEnduroCollectionStatusHistory converts projected type
+// EnduroCollectionStatusHistory to service type EnduroCollectionStatusHistory.
+func newEnduroCollectionStatusHistory(vres *collectionviews.EnduroCollectionStatusHistoryView) *EnduroCollectionStatusHistory {
+	res := &EnduroCollectionStatusHistory{}
+	if vres.Availability != nil {
+		res.Availability = *vres.Availability
+	}
+	if vres.Transitions != nil {
+		res.Transitions = newEnduroCollectionStatusTransitionCollection(vres.Transitions)
+	}
+	return res
+}
+
+// newEnduroCollectionStatusHistoryView projects result type
+// EnduroCollectionStatusHistory to projected type
+// EnduroCollectionStatusHistoryView using the "default" view.
+func newEnduroCollectionStatusHistoryView(res *EnduroCollectionStatusHistory) *collectionviews.EnduroCollectionStatusHistoryView {
+	vres := &collectionviews.EnduroCollectionStatusHistoryView{
+		Availability: &res.Availability,
+	}
+	if res.Transitions != nil {
+		vres.Transitions = newEnduroCollectionStatusTransitionCollectionView(res.Transitions)
+	}
+	return vres
+}
+
+// newEnduroCollectionStatusTransitionCollection converts projected type
+// EnduroCollectionStatusTransitionCollection to service type
+// EnduroCollectionStatusTransitionCollection.
+func newEnduroCollectionStatusTransitionCollection(vres collectionviews.EnduroCollectionStatusTransitionCollectionView) EnduroCollectionStatusTransitionCollection {
+	res := make(EnduroCollectionStatusTransitionCollection, len(vres))
+	for i, n := range vres {
+		res[i] = newEnduroCollectionStatusTransition(n)
+	}
+	return res
+}
+
+// newEnduroCollectionStatusTransitionCollectionView projects result type
+// EnduroCollectionStatusTransitionCollection to projected type
+// EnduroCollectionStatusTransitionCollectionView using the "default" view.
+func newEnduroCollectionStatusTransitionCollectionView(res EnduroCollectionStatusTransitionCollection) collectionviews.EnduroCollectionStatusTransitionCollectionView {
+	vres := make(collectionviews.EnduroCollectionStatusTransitionCollectionView, len(res))
+	for i, n := range res {
+		vres[i] = newEnduroCollectionStatusTransitionView(n)
+	}
+	return vres
+}
+
+// newEnduroCollectionStatusTransition converts projected type
+// EnduroCollectionStatusTransition to service type
+// EnduroCollectionStatusTransition.
+func newEnduroCollectionStatusTransition(vres *collectionviews.EnduroCollectionStatusTransitionView) *EnduroCollectionStatusTransition {
+	res := &EnduroCollectionStatusTransition{
+		PreviousStatus: vres.PreviousStatus,
+		Reason:         vres.Reason,
+	}
+	if vres.ID != nil {
+		res.ID = *vres.ID
+	}
+	if vres.WorkflowID != nil {
+		res.WorkflowID = *vres.WorkflowID
+	}
+	if vres.RunID != nil {
+		res.RunID = *vres.RunID
+	}
+	if vres.Status != nil {
+		res.Status = *vres.Status
+	}
+	if vres.OccurredAt != nil {
+		res.OccurredAt = *vres.OccurredAt
+	}
+	if vres.IsRunStart != nil {
+		res.IsRunStart = *vres.IsRunStart
+	}
+	return res
+}
+
+// newEnduroCollectionStatusTransitionView projects result type
+// EnduroCollectionStatusTransition to projected type
+// EnduroCollectionStatusTransitionView using the "default" view.
+func newEnduroCollectionStatusTransitionView(res *EnduroCollectionStatusTransition) *collectionviews.EnduroCollectionStatusTransitionView {
+	vres := &collectionviews.EnduroCollectionStatusTransitionView{
+		ID:             &res.ID,
+		WorkflowID:     &res.WorkflowID,
+		RunID:          &res.RunID,
+		PreviousStatus: res.PreviousStatus,
+		Status:         &res.Status,
+		OccurredAt:     &res.OccurredAt,
+		IsRunStart:     &res.IsRunStart,
+		Reason:         res.Reason,
 	}
 	return vres
 }

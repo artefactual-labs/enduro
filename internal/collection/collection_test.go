@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -66,35 +67,202 @@ func TestSetStatusInProgress(t *testing.T) {
 		t.Parallel()
 
 		recorder := newExecRecorderDB(t)
+		recorder.row = &Collection{WorkflowID: "workflow-42", RunID: "run-42", Status: StatusQueued}
 		svc := NewService(testLogger(), recorder.db, nil, "", nil)
 		startedAt := time.Date(2026, time.June, 24, 8, 30, 0, 0, time.UTC)
 
 		err := svc.SetStatusInProgress(context.Background(), 42, startedAt)
 
 		assert.NilError(t, err)
-		assert.Equal(t, recorder.query, "UPDATE collection SET status = (?), started_at = COALESCE(started_at, (?)) WHERE id = (?)")
-		assert.DeepEqual(t, recorder.args, []any{
+		assert.Equal(t, recorder.execQueries[0], "UPDATE collection SET status = (?), started_at = COALESCE(started_at, (?)) WHERE id = (?)")
+		assert.DeepEqual(t, recorder.execArgsList[0], []any{
 			int64(StatusInProgress),
 			startedAt,
 			int64(42),
 		})
+		assert.Equal(t, recorder.execQueries[1], "INSERT INTO collection_status_transition (collection_id, workflow_id, run_id, previous_status, status, is_run_start, reason) VALUES ((?), (?), (?), (?), (?), (?), (?))")
+		assert.DeepEqual(t, recorder.execArgsList[1], []any{
+			int64(42),
+			"workflow-42",
+			"run-42",
+			int64(StatusQueued),
+			int64(StatusInProgress),
+			false,
+			"pipeline_acquired",
+		})
+		assert.Assert(t, recorder.committed)
 	})
 
 	t.Run("Updates only the status without a started_at value", func(t *testing.T) {
 		t.Parallel()
 
 		recorder := newExecRecorderDB(t)
+		recorder.row = &Collection{WorkflowID: "workflow-42", RunID: "run-42", Status: StatusPending}
 		svc := NewService(testLogger(), recorder.db, nil, "", nil)
 
 		err := svc.SetStatusInProgress(context.Background(), 42, time.Time{})
 
 		assert.NilError(t, err)
-		assert.Equal(t, recorder.query, "UPDATE collection SET status = (?) WHERE id = (?)")
-		assert.DeepEqual(t, recorder.args, []any{
+		assert.Equal(t, recorder.execQueries[0], "UPDATE collection SET status = (?) WHERE id = (?)")
+		assert.DeepEqual(t, recorder.execArgsList[0], []any{
 			int64(StatusInProgress),
 			int64(42),
 		})
+		assert.Equal(t, recorder.execArgsList[1][6], "operator_decision_received")
+		assert.Assert(t, recorder.committed)
 	})
+}
+
+func TestSetStatusDoesNotDuplicateTransition(t *testing.T) {
+	t.Parallel()
+
+	recorder := newExecRecorderDB(t)
+	recorder.row = &Collection{WorkflowID: "workflow-42", RunID: "run-42", Status: StatusPending}
+	svc := NewService(testLogger(), recorder.db, nil, "", nil)
+
+	err := svc.SetStatus(context.Background(), 42, StatusPending)
+
+	assert.NilError(t, err)
+	assert.Equal(t, len(recorder.execQueries), 1)
+	assert.Assert(t, recorder.committed)
+}
+
+func TestSetStatusPendingRecordsOperatorDecision(t *testing.T) {
+	t.Parallel()
+
+	recorder := newExecRecorderDB(t)
+	recorder.row = &Collection{WorkflowID: "workflow-42", RunID: "run-42", Status: StatusInProgress}
+	svc := NewService(testLogger(), recorder.db, nil, "", nil)
+
+	err := svc.SetStatusPending(context.Background(), 42, []byte("task-token"))
+
+	assert.NilError(t, err)
+	assert.DeepEqual(t, recorder.execArgsList[1], []any{
+		int64(42),
+		"workflow-42",
+		"run-42",
+		int64(StatusInProgress),
+		int64(StatusPending),
+		false,
+		"operator_decision_required",
+	})
+}
+
+func TestCreateRecordsRunStartTransition(t *testing.T) {
+	t.Parallel()
+
+	recorder := newExecRecorderDB(t)
+	svc := NewService(testLogger(), recorder.db, nil, "", nil)
+	col := &Collection{
+		Name:       "collection",
+		WorkflowID: "workflow-42",
+		RunID:      "run-42",
+		Status:     StatusQueued,
+	}
+
+	err := svc.Create(context.Background(), col)
+
+	assert.NilError(t, err)
+	assert.Equal(t, col.ID, uint(42))
+	assert.Equal(t, len(recorder.execQueries), 2)
+	assert.DeepEqual(t, recorder.execArgsList[1], []any{
+		int64(42),
+		"workflow-42",
+		"run-42",
+		nil,
+		int64(StatusQueued),
+		true,
+		"collection_created",
+	})
+	assert.Assert(t, recorder.committed)
+}
+
+func TestStatusTransitionFailureRollsBack(t *testing.T) {
+	t.Parallel()
+
+	recorder := newExecRecorderDB(t)
+	recorder.row = &Collection{WorkflowID: "workflow-42", RunID: "run-42", Status: StatusQueued}
+	recorder.execErr = errTestDB
+	recorder.execErrAt = 2
+	svc := NewService(testLogger(), recorder.db, nil, "", nil)
+
+	err := svc.SetStatus(context.Background(), 42, StatusError)
+
+	assert.ErrorContains(t, err, "error inserting collection status transition")
+	assert.Assert(t, recorder.rolledBack)
+	assert.Assert(t, !recorder.committed)
+}
+
+func TestUpdateWorkflowStatusRecordsRetryRunStart(t *testing.T) {
+	t.Parallel()
+
+	recorder := newExecRecorderDB(t)
+	recorder.row = &Collection{WorkflowID: "workflow-42", RunID: "old-run", Status: StatusError}
+	svc := NewService(testLogger(), recorder.db, nil, "", nil)
+
+	err := svc.UpdateWorkflowStatus(
+		context.Background(),
+		42,
+		"collection",
+		"workflow-42",
+		"new-run",
+		"",
+		"",
+		"",
+		StatusQueued,
+		time.Time{},
+	)
+
+	assert.NilError(t, err)
+	assert.DeepEqual(t, recorder.execArgsList[1], []any{
+		int64(42),
+		"workflow-42",
+		"new-run",
+		int64(StatusError),
+		int64(StatusQueued),
+		true,
+		"workflow_retried",
+	})
+}
+
+func TestStatusHistoryAvailability(t *testing.T) {
+	t.Parallel()
+
+	tests := map[string]struct {
+		transitions []StatusTransition
+		runID       string
+		want        string
+	}{
+		"unavailable without transitions": {
+			runID: "run-42",
+			want:  StatusHistoryUnavailable,
+		},
+		"partial when recording started during run": {
+			transitions: []StatusTransition{{RunID: "run-42"}},
+			runID:       "run-42",
+			want:        StatusHistoryPartial,
+		},
+		"available from run start": {
+			transitions: []StatusTransition{{RunID: "run-42", IsRunStart: true}},
+			runID:       "run-42",
+			want:        StatusHistoryAvailable,
+		},
+		"uses the current run": {
+			transitions: []StatusTransition{
+				{RunID: "old-run", IsRunStart: true},
+				{RunID: "run-42"},
+			},
+			runID: "run-42",
+			want:  StatusHistoryPartial,
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			assert.Equal(t, statusHistoryAvailability(tc.transitions, tc.runID), tc.want)
+		})
+	}
 }
 
 func TestCheckDuplicateIgnoresFailedAndAbandonedCollections(t *testing.T) {
@@ -124,16 +292,23 @@ type execRecorderDB struct {
 	query string
 	args  []any
 
-	execQuery string
-	execArgs  []any
-	querySQL  string
-	queryArgs []any
+	execQuery    string
+	execArgs     []any
+	execQueries  []string
+	execArgsList [][]any
+	querySQL     string
+	queryArgs    []any
 
 	rowsAffected int64
 	execErr      error
+	execErrAt    int
 	queryErr     error
 	row          *Collection
 	queryBool    *bool
+	transitions  []StatusTransition
+	lastInsertID int64
+	committed    bool
+	rolledBack   bool
 }
 
 var execRecorderDriverID atomic.Uint64
@@ -141,7 +316,7 @@ var execRecorderDriverID atomic.Uint64
 func newExecRecorderDB(t *testing.T) *execRecorderDB {
 	t.Helper()
 
-	recorder := &execRecorderDB{rowsAffected: 1}
+	recorder := &execRecorderDB{rowsAffected: 1, lastInsertID: 42}
 	driverName := fmt.Sprintf("collection-test-driver-%d", execRecorderDriverID.Add(1))
 	sql.Register(driverName, execRecorderDriver{recorder: recorder})
 
@@ -174,23 +349,31 @@ type execRecorderConn struct {
 
 func (c execRecorderConn) Prepare(string) (driver.Stmt, error) { return nil, driver.ErrSkip }
 func (c execRecorderConn) Close() error                        { return nil }
-func (c execRecorderConn) Begin() (driver.Tx, error)           { return nil, driver.ErrSkip }
+func (c execRecorderConn) Begin() (driver.Tx, error) {
+	return &execRecorderTx{recorder: c.recorder}, nil
+}
+
+func (c execRecorderConn) BeginTx(context.Context, driver.TxOptions) (driver.Tx, error) {
+	return c.Begin()
+}
 
 func (c execRecorderConn) ExecContext(_ context.Context, query string, args []driver.NamedValue) (driver.Result, error) {
 	c.recorder.query = query
 	c.recorder.execQuery = query
+	c.recorder.execQueries = append(c.recorder.execQueries, query)
 	c.recorder.args = make([]any, len(args))
 	c.recorder.execArgs = make([]any, len(args))
 	for i, arg := range args {
 		c.recorder.args[i] = arg.Value
 		c.recorder.execArgs[i] = arg.Value
 	}
+	c.recorder.execArgsList = append(c.recorder.execArgsList, append([]any(nil), c.recorder.execArgs...))
 
-	if c.recorder.execErr != nil {
+	if c.recorder.execErr != nil && (c.recorder.execErrAt == 0 || c.recorder.execErrAt == len(c.recorder.execQueries)) {
 		return nil, c.recorder.execErr
 	}
 
-	return driver.RowsAffected(c.recorder.rowsAffected), nil
+	return execRecorderResult{lastInsertID: c.recorder.lastInsertID, rowsAffected: c.recorder.rowsAffected}, nil
 }
 
 func (c execRecorderConn) QueryContext(_ context.Context, query string, args []driver.NamedValue) (driver.Rows, error) {
@@ -206,8 +389,91 @@ func (c execRecorderConn) QueryContext(_ context.Context, query string, args []d
 	if c.recorder.queryBool != nil {
 		return &boolRows{value: *c.recorder.queryBool}, nil
 	}
+	if strings.Contains(query, "FROM collection_status_transition") {
+		return &statusTransitionRows{transitions: c.recorder.transitions}, nil
+	}
+	if strings.Contains(query, "SELECT workflow_id, run_id, status FROM collection") {
+		return &collectionStatusRows{row: c.recorder.row}, nil
+	}
 
 	return &collectionRows{row: c.recorder.row}, nil
+}
+
+type execRecorderTx struct {
+	recorder *execRecorderDB
+}
+
+func (tx *execRecorderTx) Commit() error {
+	tx.recorder.committed = true
+	return nil
+}
+
+func (tx *execRecorderTx) Rollback() error {
+	tx.recorder.rolledBack = true
+	return nil
+}
+
+type execRecorderResult struct {
+	lastInsertID int64
+	rowsAffected int64
+}
+
+func (r execRecorderResult) LastInsertId() (int64, error) { return r.lastInsertID, nil }
+func (r execRecorderResult) RowsAffected() (int64, error) { return r.rowsAffected, nil }
+
+type collectionStatusRows struct {
+	row  *Collection
+	done bool
+}
+
+func (r *collectionStatusRows) Columns() []string {
+	return []string{"workflow_id", "run_id", "status"}
+}
+
+func (r *collectionStatusRows) Close() error { return nil }
+
+func (r *collectionStatusRows) Next(dest []driver.Value) error {
+	if r.done || r.row == nil {
+		return io.EOF
+	}
+	r.done = true
+	dest[0] = r.row.WorkflowID
+	dest[1] = r.row.RunID
+	dest[2] = int64(r.row.Status)
+	return nil
+}
+
+type statusTransitionRows struct {
+	transitions []StatusTransition
+	index       int
+}
+
+func (r *statusTransitionRows) Columns() []string {
+	return []string{"id", "collection_id", "workflow_id", "run_id", "previous_status", "status", "occurred_at", "is_run_start", "reason"}
+}
+
+func (r *statusTransitionRows) Close() error { return nil }
+
+func (r *statusTransitionRows) Next(dest []driver.Value) error {
+	if r.index >= len(r.transitions) {
+		return io.EOF
+	}
+	transition := r.transitions[r.index]
+	r.index++
+	dest[0] = int64(transition.ID)
+	dest[1] = int64(transition.CollectionID)
+	dest[2] = transition.WorkflowID
+	dest[3] = transition.RunID
+	if transition.PreviousStatus.Valid {
+		dest[4] = transition.PreviousStatus.Int64
+	}
+	dest[5] = int64(transition.Status)
+	dest[6] = transition.OccurredAt
+	dest[7] = transition.IsRunStart
+	if transition.Reason.Valid {
+		dest[8] = transition.Reason.String
+	}
+	return nil
 }
 
 type boolRows struct {

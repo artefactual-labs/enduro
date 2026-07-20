@@ -17,33 +17,35 @@ import (
 
 // Client is the "collection" service client.
 type Client struct {
-	MonitorEndpoint    goa.Endpoint
-	ListEndpoint       goa.Endpoint
-	ShowEndpoint       goa.Endpoint
-	DeleteEndpoint     goa.Endpoint
-	CancelEndpoint     goa.Endpoint
-	RetryEndpoint      goa.Endpoint
-	WorkflowEndpoint   goa.Endpoint
-	DownloadEndpoint   goa.Endpoint
-	DecideEndpoint     goa.Endpoint
-	BulkEndpoint       goa.Endpoint
-	BulkStatusEndpoint goa.Endpoint
+	MonitorEndpoint       goa.Endpoint
+	ListEndpoint          goa.Endpoint
+	ShowEndpoint          goa.Endpoint
+	DeleteEndpoint        goa.Endpoint
+	CancelEndpoint        goa.Endpoint
+	RetryEndpoint         goa.Endpoint
+	WorkflowEndpoint      goa.Endpoint
+	StatusHistoryEndpoint goa.Endpoint
+	DownloadEndpoint      goa.Endpoint
+	DecideEndpoint        goa.Endpoint
+	BulkEndpoint          goa.Endpoint
+	BulkStatusEndpoint    goa.Endpoint
 }
 
 // NewClient initializes a "collection" service client given the endpoints.
-func NewClient(monitor, list, show, delete_, cancel, retry, workflow, download, decide, bulk, bulkStatus goa.Endpoint) *Client {
+func NewClient(monitor, list, show, delete_, cancel, retry, workflow, statusHistory, download, decide, bulk, bulkStatus goa.Endpoint) *Client {
 	return &Client{
-		MonitorEndpoint:    monitor,
-		ListEndpoint:       list,
-		ShowEndpoint:       show,
-		DeleteEndpoint:     delete_,
-		CancelEndpoint:     cancel,
-		RetryEndpoint:      retry,
-		WorkflowEndpoint:   workflow,
-		DownloadEndpoint:   download,
-		DecideEndpoint:     decide,
-		BulkEndpoint:       bulk,
-		BulkStatusEndpoint: bulkStatus,
+		MonitorEndpoint:       monitor,
+		ListEndpoint:          list,
+		ShowEndpoint:          show,
+		DeleteEndpoint:        delete_,
+		CancelEndpoint:        cancel,
+		RetryEndpoint:         retry,
+		WorkflowEndpoint:      workflow,
+		StatusHistoryEndpoint: statusHistory,
+		DownloadEndpoint:      download,
+		DecideEndpoint:        decide,
+		BulkEndpoint:          bulk,
+		BulkStatusEndpoint:    bulkStatus,
 	}
 }
 
@@ -124,6 +126,20 @@ func (c *Client) Workflow(ctx context.Context, p *WorkflowPayload) (res *EnduroC
 		return
 	}
 	return ires.(*EnduroCollectionWorkflowStatus), nil
+}
+
+// StatusHistory calls the "status_history" endpoint of the "collection"
+// service.
+// StatusHistory may return the following errors:
+//   - "not_found" (type *CollectionNotfound): Collection not found
+//   - error: internal error
+func (c *Client) StatusHistory(ctx context.Context, p *StatusHistoryPayload) (res *EnduroCollectionStatusHistory, err error) {
+	var ires any
+	ires, err = c.StatusHistoryEndpoint(ctx, p)
+	if err != nil {
+		return
+	}
+	return ires.(*EnduroCollectionStatusHistory), nil
 }
 
 // Download calls the "download" endpoint of the "collection" service.

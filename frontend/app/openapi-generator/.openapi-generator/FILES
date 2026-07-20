@@ -16,6 +16,8 @@ models/BulkStatusResult.ts
 models/Collection.ts
 models/CollectionDecideRequest.ts
 models/CollectionNotfound.ts
+models/EnduroCollectionStatusHistory.ts
+models/EnduroCollectionStatusTransition.ts
 models/EnduroCollectionWorkflowHistory.ts
 models/EnduroCollectionWorkflowStatus.ts
 models/EnduroDetailedStoredCollection.ts

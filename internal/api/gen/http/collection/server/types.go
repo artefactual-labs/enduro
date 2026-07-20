@@ -92,6 +92,14 @@ type WorkflowResponseBody struct {
 	History EnduroCollectionWorkflowHistoryResponseBodyCollection `form:"history,omitempty" json:"history,omitempty" xml:"history,omitempty"`
 }
 
+// StatusHistoryResponseBody is the type of the "collection" service
+// "status_history" endpoint HTTP response body.
+type StatusHistoryResponseBody struct {
+	// Whether complete history is available for the current workflow run
+	Availability string                                                 `form:"availability" json:"availability" xml:"availability"`
+	Transitions  EnduroCollectionStatusTransitionResponseBodyCollection `form:"transitions" json:"transitions" xml:"transitions"`
+}
+
 // BulkResponseBody is the type of the "collection" service "bulk" endpoint
 // HTTP response body.
 type BulkResponseBody struct {
@@ -185,6 +193,15 @@ type RetryNotRunningResponseBody struct {
 // WorkflowNotFoundResponseBody is the type of the "collection" service
 // "workflow" endpoint HTTP response body for the "not_found" error.
 type WorkflowNotFoundResponseBody struct {
+	// Message of error
+	Message string `form:"message" json:"message" xml:"message"`
+	// Identifier of missing collection
+	ID uint `form:"id" json:"id" xml:"id"`
+}
+
+// StatusHistoryNotFoundResponseBody is the type of the "collection" service
+// "status_history" endpoint HTTP response body for the "not_found" error.
+type StatusHistoryNotFoundResponseBody struct {
 	// Message of error
 	Message string `form:"message" json:"message" xml:"message"`
 	// Identifier of missing collection
@@ -311,6 +328,31 @@ type EnduroCollectionWorkflowHistoryResponseBody struct {
 	Details any `form:"details,omitempty" json:"details,omitempty" xml:"details,omitempty"`
 }
 
+// EnduroCollectionStatusTransitionResponseBodyCollection is used to define
+// fields on response body types.
+type EnduroCollectionStatusTransitionResponseBodyCollection []*EnduroCollectionStatusTransitionResponseBody
+
+// EnduroCollectionStatusTransitionResponseBody is used to define fields on
+// response body types.
+type EnduroCollectionStatusTransitionResponseBody struct {
+	// Identifier of the status transition
+	ID uint64 `form:"id" json:"id" xml:"id"`
+	// Identifier of the processing workflow
+	WorkflowID string `form:"workflow_id" json:"workflow_id" xml:"workflow_id"`
+	// Identifier of the processing workflow run
+	RunID string `form:"run_id" json:"run_id" xml:"run_id"`
+	// Status before the transition
+	PreviousStatus *string `form:"previous_status,omitempty" json:"previous_status,omitempty" xml:"previous_status,omitempty"`
+	// Status entered by the transition
+	Status string `form:"status" json:"status" xml:"status"`
+	// Transition datetime
+	OccurredAt string `form:"occurred_at" json:"occurred_at" xml:"occurred_at"`
+	// Whether the transition starts a fully recorded workflow run
+	IsRunStart bool `form:"is_run_start" json:"is_run_start" xml:"is_run_start"`
+	// Machine-readable reason for the transition
+	Reason *string `form:"reason,omitempty" json:"reason,omitempty" xml:"reason,omitempty"`
+}
+
 // NewMonitorResponseBody builds the HTTP response body from the result of the
 // "monitor" endpoint of the "collection" service.
 func NewMonitorResponseBody(res *collection.EnduroMonitorUpdate) *MonitorResponseBody {
@@ -394,6 +436,27 @@ func NewWorkflowResponseBody(res *collectionviews.EnduroCollectionWorkflowStatus
 			}
 			body.History[i] = marshalCollectionviewsEnduroCollectionWorkflowHistoryViewToEnduroCollectionWorkflowHistoryResponseBody(val)
 		}
+	}
+	return body
+}
+
+// NewStatusHistoryResponseBody builds the HTTP response body from the result
+// of the "status_history" endpoint of the "collection" service.
+func NewStatusHistoryResponseBody(res *collectionviews.EnduroCollectionStatusHistoryView) *StatusHistoryResponseBody {
+	body := &StatusHistoryResponseBody{
+		Availability: *res.Availability,
+	}
+	if res.Transitions != nil {
+		body.Transitions = make([]*EnduroCollectionStatusTransitionResponseBody, len(res.Transitions))
+		for i, val := range res.Transitions {
+			if val == nil {
+				body.Transitions[i] = nil
+				continue
+			}
+			body.Transitions[i] = marshalCollectionviewsEnduroCollectionStatusTransitionViewToEnduroCollectionStatusTransitionResponseBody(val)
+		}
+	} else {
+		body.Transitions = []*EnduroCollectionStatusTransitionResponseBody{}
 	}
 	return body
 }
@@ -494,6 +557,16 @@ func NewRetryNotRunningResponseBody(res *goa.ServiceError) *RetryNotRunningRespo
 // result of the "workflow" endpoint of the "collection" service.
 func NewWorkflowNotFoundResponseBody(res *collection.CollectionNotfound) *WorkflowNotFoundResponseBody {
 	body := &WorkflowNotFoundResponseBody{
+		Message: res.Message,
+		ID:      res.ID,
+	}
+	return body
+}
+
+// NewStatusHistoryNotFoundResponseBody builds the HTTP response body from the
+// result of the "status_history" endpoint of the "collection" service.
+func NewStatusHistoryNotFoundResponseBody(res *collection.CollectionNotfound) *StatusHistoryNotFoundResponseBody {
+	body := &StatusHistoryNotFoundResponseBody{
 		Message: res.Message,
 		ID:      res.ID,
 	}
@@ -613,6 +686,15 @@ func NewRetryPayload(id uint) *collection.RetryPayload {
 // NewWorkflowPayload builds a collection service workflow endpoint payload.
 func NewWorkflowPayload(id uint) *collection.WorkflowPayload {
 	v := &collection.WorkflowPayload{}
+	v.ID = id
+
+	return v
+}
+
+// NewStatusHistoryPayload builds a collection service status_history endpoint
+// payload.
+func NewStatusHistoryPayload(id uint) *collection.StatusHistoryPayload {
+	v := &collection.StatusHistoryPayload{}
 	v.ID = id
 
 	return v

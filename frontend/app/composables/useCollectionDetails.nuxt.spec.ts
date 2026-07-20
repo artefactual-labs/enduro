@@ -10,7 +10,7 @@ const { navigateToMock } = vi.hoisted(() => ({
 }))
 
 const route = ref({ params: { id: '55' } })
-const recentEvents = ref<Array<{ receivedAt: string, type: string, collectionId: number }>>([])
+const recentEvents = ref<Array<{ sequence: number, receivedAt: string, type: string, collectionId: number }>>([])
 const collectionData = ref({
   collection: {
     id: 77,
@@ -47,7 +47,8 @@ mockNuxtImport('useEnduroApi', () => () => ({
   }
 }))
 mockNuxtImport('useEnduroMonitor', () => () => ({
-  recentEvents
+  recentEvents,
+  start: vi.fn()
 }))
 mockNuxtImport('navigateTo', () => navigateToMock)
 
@@ -85,7 +86,7 @@ describe('useCollectionDetails', () => {
       }
     })
 
-    await mountSuspended(Harness)
+    const wrapper = await mountSuspended(Harness)
 
     await details.retry()
 
@@ -108,6 +109,7 @@ describe('useCollectionDetails', () => {
     expect(navigateToMock).toHaveBeenCalledWith('/collections')
     expect(reloadCollectionData).toHaveBeenCalledTimes(3)
     expect(details.retryModeMessage.value).toBe('')
+    wrapper.unmount()
   })
 
   it('allows cancellation for queued collections before Archivematica submission', () => {
@@ -150,5 +152,46 @@ describe('useCollectionDetails', () => {
       createdAt: new Date(),
       status: EnduroDetailedStoredCollectionStatusEnum.Done
     })).toBe(false)
+  })
+
+  it('serializes collection refreshes for matching SSE events', async () => {
+    let resolveFirstReload!: () => void
+    reloadCollectionData
+      .mockImplementationOnce(() => new Promise<void>((resolve) => {
+        resolveFirstReload = resolve
+      }))
+      .mockResolvedValue(undefined)
+
+    const Harness = defineComponent({
+      setup() {
+        useCollectionDetails()
+        return () => h('div')
+      }
+    })
+
+    const wrapper = await mountSuspended(Harness)
+    const receivedAt = '2026-07-19T08:00:00.000Z'
+
+    recentEvents.value = [{
+      sequence: 1,
+      receivedAt,
+      type: 'collection:updated',
+      collectionId: 55
+    }]
+    await vi.waitFor(() => expect(reloadCollectionData).toHaveBeenCalledTimes(1))
+
+    recentEvents.value = [{
+      sequence: 2,
+      receivedAt,
+      type: 'collection:updated',
+      collectionId: 55
+    }, ...recentEvents.value]
+    await nextTick()
+
+    expect(reloadCollectionData).toHaveBeenCalledTimes(1)
+
+    resolveFirstReload()
+    await vi.waitFor(() => expect(reloadCollectionData).toHaveBeenCalledTimes(2))
+    wrapper.unmount()
   })
 })

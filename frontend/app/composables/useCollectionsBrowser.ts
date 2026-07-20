@@ -300,7 +300,7 @@ export function useCollectionsBrowser() {
     activeFilterSignature.value = nextFilterSignature
   }, { immediate: true })
 
-  watch(() => monitor.recentEvents.value[0]?.receivedAt, () => {
+  watch(() => monitor.recentEvents.value[0]?.sequence, () => {
     const latest = monitor.recentEvents.value[0]
     if (!latest) return
     if (latest.type === 'collection:created' || latest.type === 'collection:updated') {

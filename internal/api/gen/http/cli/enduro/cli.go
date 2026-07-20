@@ -28,7 +28,7 @@ func UsageCommands() []string {
 	return []string{
 		"pipeline (list|show|processing)",
 		"batch (submit|status|hints|browse)",
-		"collection (monitor|list|show|delete|cancel|retry|workflow|download|decide|bulk|bulk-status)",
+		"collection (monitor|list|show|delete|cancel|retry|workflow|status-history|download|decide|bulk|bulk-status)",
 	}
 }
 
@@ -104,6 +104,9 @@ func ParseEndpoint(
 		collectionWorkflowFlags  = flag.NewFlagSet("workflow", flag.ExitOnError)
 		collectionWorkflowIDFlag = collectionWorkflowFlags.String("id", "REQUIRED", "Identifier of collection to look up")
 
+		collectionStatusHistoryFlags  = flag.NewFlagSet("status-history", flag.ExitOnError)
+		collectionStatusHistoryIDFlag = collectionStatusHistoryFlags.String("id", "REQUIRED", "Identifier of collection to look up")
+
 		collectionDownloadFlags  = flag.NewFlagSet("download", flag.ExitOnError)
 		collectionDownloadIDFlag = collectionDownloadFlags.String("id", "REQUIRED", "Identifier of collection to look up")
 
@@ -135,6 +138,7 @@ func ParseEndpoint(
 	collectionCancelFlags.Usage = collectionCancelUsage
 	collectionRetryFlags.Usage = collectionRetryUsage
 	collectionWorkflowFlags.Usage = collectionWorkflowUsage
+	collectionStatusHistoryFlags.Usage = collectionStatusHistoryUsage
 	collectionDownloadFlags.Usage = collectionDownloadUsage
 	collectionDecideFlags.Usage = collectionDecideUsage
 	collectionBulkFlags.Usage = collectionBulkUsage
@@ -228,6 +232,9 @@ func ParseEndpoint(
 			case "workflow":
 				epf = collectionWorkflowFlags
 
+			case "status-history":
+				epf = collectionStatusHistoryFlags
+
 			case "download":
 				epf = collectionDownloadFlags
 
@@ -312,6 +319,9 @@ func ParseEndpoint(
 			case "workflow":
 				endpoint = c.Workflow()
 				data, err = collectionc.BuildWorkflowPayload(*collectionWorkflowIDFlag)
+			case "status-history":
+				endpoint = c.StatusHistory()
+				data, err = collectionc.BuildStatusHistoryPayload(*collectionStatusHistoryIDFlag)
 			case "download":
 				endpoint = c.Download()
 				data, err = collectionc.BuildDownloadPayload(*collectionDownloadIDFlag)
@@ -495,6 +505,7 @@ func collectionUsage() {
 	fmt.Fprintln(os.Stderr, `    cancel: Cancel collection processing by ID`)
 	fmt.Fprintln(os.Stderr, `    retry: Retry collection processing by ID`)
 	fmt.Fprintln(os.Stderr, `    workflow: Retrieve workflow status by ID`)
+	fmt.Fprintln(os.Stderr, `    status-history: Retrieve the recorded status transition history for a collection`)
 	fmt.Fprintln(os.Stderr, `    download: Download collection by ID`)
 	fmt.Fprintln(os.Stderr, `    decide: Make decision for a pending collection by ID`)
 	fmt.Fprintln(os.Stderr, `    bulk: Bulk operations (retry, cancel...).`)
@@ -641,6 +652,24 @@ func collectionWorkflowUsage() {
 	fmt.Fprintln(os.Stderr)
 	fmt.Fprintln(os.Stderr, "Example:")
 	fmt.Fprintf(os.Stderr, "    %s %s\n", os.Args[0], "collection workflow --id 1")
+}
+
+func collectionStatusHistoryUsage() {
+	// Header with flags
+	fmt.Fprintf(os.Stderr, "%s [flags] collection status-history", os.Args[0])
+	fmt.Fprint(os.Stderr, " -id UINT")
+	fmt.Fprintln(os.Stderr)
+
+	// Description
+	fmt.Fprintln(os.Stderr)
+	fmt.Fprintln(os.Stderr, `Retrieve the recorded status transition history for a collection`)
+
+	// Flags list
+	fmt.Fprintln(os.Stderr, `    -id UINT: Identifier of collection to look up`)
+
+	fmt.Fprintln(os.Stderr)
+	fmt.Fprintln(os.Stderr, "Example:")
+	fmt.Fprintf(os.Stderr, "    %s %s\n", os.Args[0], "collection status-history --id 1")
 }
 
 func collectionDownloadUsage() {

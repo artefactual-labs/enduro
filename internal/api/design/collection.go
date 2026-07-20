@@ -126,6 +126,20 @@ var _ = Service("collection", func() {
 			Response("not_found", StatusNotFound)
 		})
 	})
+	Method("status_history", func() {
+		Description("Retrieve the recorded status transition history for a collection")
+		Payload(func() {
+			Attribute("id", UInt, "Identifier of collection to look up")
+			Required("id")
+		})
+		Result(StatusHistory)
+		Error("not_found", CollectionNotFound, "Collection not found")
+		HTTP(func() {
+			GET("/{id}/status-history")
+			Response(StatusOK)
+			Response("not_found", StatusNotFound)
+		})
+	})
 	Method("download", func() {
 		Description("Download collection by ID")
 		Payload(func() {
@@ -345,6 +359,38 @@ var WorkflowHistoryEvent = ResultType("application/vnd.enduro.collection-workflo
 		Attribute("type", String, "Type of the event")
 		Attribute("details", Any, "Contents of the event")
 	})
+})
+
+var StatusHistory = ResultType("application/vnd.enduro.collection-status-history", func() {
+	Description("StatusHistory describes recorded collection status transitions.")
+	Attributes(func() {
+		Attribute("availability", String, "Whether complete history is available for the current workflow run", func() {
+			Enum("available", "partial", "unavailable")
+		})
+		Attribute("transitions", CollectionOf(StatusTransition))
+	})
+	Required("availability", "transitions")
+})
+
+var StatusTransition = ResultType("application/vnd.enduro.collection-status-transition", func() {
+	Description("StatusTransition describes a committed collection status change.")
+	Attributes(func() {
+		Attribute("id", UInt64, "Identifier of the status transition")
+		Attribute("workflow_id", String, "Identifier of the processing workflow")
+		Attribute("run_id", String, "Identifier of the processing workflow run")
+		Attribute("previous_status", String, "Status before the transition", func() {
+			EnumCollectionStatus()
+		})
+		Attribute("status", String, "Status entered by the transition", func() {
+			EnumCollectionStatus()
+		})
+		Attribute("occurred_at", String, "Transition datetime", func() {
+			Format(FormatDateTime)
+		})
+		Attribute("is_run_start", Boolean, "Whether the transition starts a fully recorded workflow run")
+		Attribute("reason", String, "Machine-readable reason for the transition")
+	})
+	Required("id", "workflow_id", "run_id", "status", "occurred_at", "is_run_start")
 })
 
 var CollectionNotFound = Type("CollectionNotfound", func() {

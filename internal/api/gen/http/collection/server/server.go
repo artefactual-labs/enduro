@@ -22,19 +22,20 @@ import (
 
 // Server lists the collection service endpoint HTTP handlers.
 type Server struct {
-	Mounts     []*MountPoint
-	Monitor    http.Handler
-	List       http.Handler
-	Show       http.Handler
-	Delete     http.Handler
-	Cancel     http.Handler
-	Retry      http.Handler
-	Workflow   http.Handler
-	Download   http.Handler
-	Decide     http.Handler
-	Bulk       http.Handler
-	BulkStatus http.Handler
-	CORS       http.Handler
+	Mounts        []*MountPoint
+	Monitor       http.Handler
+	List          http.Handler
+	Show          http.Handler
+	Delete        http.Handler
+	Cancel        http.Handler
+	Retry         http.Handler
+	Workflow      http.Handler
+	StatusHistory http.Handler
+	Download      http.Handler
+	Decide        http.Handler
+	Bulk          http.Handler
+	BulkStatus    http.Handler
+	CORS          http.Handler
 }
 
 // MountPoint holds information about the mounted endpoints.
@@ -71,6 +72,7 @@ func New(
 			{"Cancel", "POST", "/collection/{id}/cancel"},
 			{"Retry", "POST", "/collection/{id}/retry"},
 			{"Workflow", "GET", "/collection/{id}/workflow"},
+			{"StatusHistory", "GET", "/collection/{id}/status-history"},
 			{"Download", "GET", "/collection/{id}/download"},
 			{"Decide", "POST", "/collection/{id}/decision"},
 			{"Bulk", "POST", "/collection/bulk"},
@@ -81,22 +83,24 @@ func New(
 			{"CORS", "OPTIONS", "/collection/{id}/cancel"},
 			{"CORS", "OPTIONS", "/collection/{id}/retry"},
 			{"CORS", "OPTIONS", "/collection/{id}/workflow"},
+			{"CORS", "OPTIONS", "/collection/{id}/status-history"},
 			{"CORS", "OPTIONS", "/collection/{id}/download"},
 			{"CORS", "OPTIONS", "/collection/{id}/decision"},
 			{"CORS", "OPTIONS", "/collection/bulk"},
 		},
-		Monitor:    NewMonitorHandler(e.Monitor, mux, decoder, encoder, errhandler, formatter),
-		List:       NewListHandler(e.List, mux, decoder, encoder, errhandler, formatter),
-		Show:       NewShowHandler(e.Show, mux, decoder, encoder, errhandler, formatter),
-		Delete:     NewDeleteHandler(e.Delete, mux, decoder, encoder, errhandler, formatter),
-		Cancel:     NewCancelHandler(e.Cancel, mux, decoder, encoder, errhandler, formatter),
-		Retry:      NewRetryHandler(e.Retry, mux, decoder, encoder, errhandler, formatter),
-		Workflow:   NewWorkflowHandler(e.Workflow, mux, decoder, encoder, errhandler, formatter),
-		Download:   NewDownloadHandler(e.Download, mux, decoder, encoder, errhandler, formatter),
-		Decide:     NewDecideHandler(e.Decide, mux, decoder, encoder, errhandler, formatter),
-		Bulk:       NewBulkHandler(e.Bulk, mux, decoder, encoder, errhandler, formatter),
-		BulkStatus: NewBulkStatusHandler(e.BulkStatus, mux, decoder, encoder, errhandler, formatter),
-		CORS:       NewCORSHandler(),
+		Monitor:       NewMonitorHandler(e.Monitor, mux, decoder, encoder, errhandler, formatter),
+		List:          NewListHandler(e.List, mux, decoder, encoder, errhandler, formatter),
+		Show:          NewShowHandler(e.Show, mux, decoder, encoder, errhandler, formatter),
+		Delete:        NewDeleteHandler(e.Delete, mux, decoder, encoder, errhandler, formatter),
+		Cancel:        NewCancelHandler(e.Cancel, mux, decoder, encoder, errhandler, formatter),
+		Retry:         NewRetryHandler(e.Retry, mux, decoder, encoder, errhandler, formatter),
+		Workflow:      NewWorkflowHandler(e.Workflow, mux, decoder, encoder, errhandler, formatter),
+		StatusHistory: NewStatusHistoryHandler(e.StatusHistory, mux, decoder, encoder, errhandler, formatter),
+		Download:      NewDownloadHandler(e.Download, mux, decoder, encoder, errhandler, formatter),
+		Decide:        NewDecideHandler(e.Decide, mux, decoder, encoder, errhandler, formatter),
+		Bulk:          NewBulkHandler(e.Bulk, mux, decoder, encoder, errhandler, formatter),
+		BulkStatus:    NewBulkStatusHandler(e.BulkStatus, mux, decoder, encoder, errhandler, formatter),
+		CORS:          NewCORSHandler(),
 	}
 }
 
@@ -112,6 +116,7 @@ func (s *Server) Use(m func(http.Handler) http.Handler) {
 	s.Cancel = m(s.Cancel)
 	s.Retry = m(s.Retry)
 	s.Workflow = m(s.Workflow)
+	s.StatusHistory = m(s.StatusHistory)
 	s.Download = m(s.Download)
 	s.Decide = m(s.Decide)
 	s.Bulk = m(s.Bulk)
@@ -131,6 +136,7 @@ func Mount(mux goahttp.Muxer, h *Server) {
 	MountCancelHandler(mux, h.Cancel)
 	MountRetryHandler(mux, h.Retry)
 	MountWorkflowHandler(mux, h.Workflow)
+	MountStatusHistoryHandler(mux, h.StatusHistory)
 	MountDownloadHandler(mux, h.Download)
 	MountDecideHandler(mux, h.Decide)
 	MountBulkHandler(mux, h.Bulk)
@@ -507,6 +513,59 @@ func NewWorkflowHandler(
 	})
 }
 
+// MountStatusHistoryHandler configures the mux to serve the "collection"
+// service "status_history" endpoint.
+func MountStatusHistoryHandler(mux goahttp.Muxer, h http.Handler) {
+	f, ok := HandleCollectionOrigin(h).(http.HandlerFunc)
+	if !ok {
+		f = func(w http.ResponseWriter, r *http.Request) {
+			h.ServeHTTP(w, r)
+		}
+	}
+	mux.Handle("GET", "/collection/{id}/status-history", f)
+}
+
+// NewStatusHistoryHandler creates a HTTP handler which loads the HTTP request
+// and calls the "collection" service "status_history" endpoint.
+func NewStatusHistoryHandler(
+	endpoint goa.Endpoint,
+	mux goahttp.Muxer,
+	decoder func(*http.Request) goahttp.Decoder,
+	encoder func(context.Context, http.ResponseWriter) goahttp.Encoder,
+	errhandler func(context.Context, http.ResponseWriter, error),
+	formatter func(ctx context.Context, err error) goahttp.Statuser,
+) http.Handler {
+	var (
+		decodeRequest  = DecodeStatusHistoryRequest(mux, decoder)
+		encodeResponse = EncodeStatusHistoryResponse(encoder)
+		encodeError    = EncodeStatusHistoryError(encoder, formatter)
+	)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
+		ctx = context.WithValue(ctx, goa.MethodKey, "status_history")
+		ctx = context.WithValue(ctx, goa.ServiceKey, "collection")
+		payload, err := decodeRequest(r)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil && errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		res, err := endpoint(ctx, payload)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil && errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		if err := encodeResponse(ctx, w, res); err != nil {
+			if errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+		}
+	})
+}
+
 // MountDownloadHandler configures the mux to serve the "collection" service
 // "download" endpoint.
 func MountDownloadHandler(mux goahttp.Muxer, h http.Handler) {
@@ -757,6 +816,7 @@ func MountCORSHandler(mux goahttp.Muxer, h http.Handler) {
 	mux.Handle("OPTIONS", "/collection/{id}/cancel", h.ServeHTTP)
 	mux.Handle("OPTIONS", "/collection/{id}/retry", h.ServeHTTP)
 	mux.Handle("OPTIONS", "/collection/{id}/workflow", h.ServeHTTP)
+	mux.Handle("OPTIONS", "/collection/{id}/status-history", h.ServeHTTP)
 	mux.Handle("OPTIONS", "/collection/{id}/download", h.ServeHTTP)
 	mux.Handle("OPTIONS", "/collection/{id}/decision", h.ServeHTTP)
 	mux.Handle("OPTIONS", "/collection/bulk", h.ServeHTTP)

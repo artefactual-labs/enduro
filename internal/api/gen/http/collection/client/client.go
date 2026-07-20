@@ -44,6 +44,10 @@ type Client struct {
 	// endpoint.
 	WorkflowDoer goahttp.Doer
 
+	// StatusHistory Doer is the HTTP client used to make requests to the
+	// status_history endpoint.
+	StatusHistoryDoer goahttp.Doer
+
 	// Download Doer is the HTTP client used to make requests to the download
 	// endpoint.
 	DownloadDoer goahttp.Doer
@@ -88,6 +92,7 @@ func NewClient(
 		CancelDoer:          doer,
 		RetryDoer:           doer,
 		WorkflowDoer:        doer,
+		StatusHistoryDoer:   doer,
 		DownloadDoer:        doer,
 		DecideDoer:          doer,
 		BulkDoer:            doer,
@@ -245,6 +250,25 @@ func (c *Client) Workflow() goa.Endpoint {
 		resp, err := c.WorkflowDoer.Do(req)
 		if err != nil {
 			return nil, goahttp.ErrRequestError("collection", "workflow", err)
+		}
+		return decodeResponse(resp)
+	}
+}
+
+// StatusHistory returns an endpoint that makes HTTP requests to the collection
+// service status_history server.
+func (c *Client) StatusHistory() goa.Endpoint {
+	var (
+		decodeResponse = DecodeStatusHistoryResponse(c.decoder, c.RestoreResponseBody)
+	)
+	return func(ctx context.Context, v any) (any, error) {
+		req, err := c.BuildStatusHistoryRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.StatusHistoryDoer.Do(req)
+		if err != nil {
+			return nil, goahttp.ErrRequestError("collection", "status_history", err)
 		}
 		return decodeResponse(resp)
 	}

@@ -11,6 +11,7 @@ import {
   type BulkResult,
   type BulkStatusResult,
   type CollectionApiCollectionListRequest,
+  type EnduroCollectionStatusHistory,
   type EnduroCollectionWorkflowStatus,
   type EnduroDetailedStoredCollection,
   type EnduroStoredPipeline,
@@ -45,6 +46,7 @@ export type EnduroApiClient = {
   collections: {
     list: (request?: CollectionApiCollectionListRequest, requestOptions?: RequestOptions) => Promise<ListResponseBody>
     show: (id: number, requestOptions?: RequestOptions) => Promise<EnduroDetailedStoredCollection>
+    statusHistory: (id: number, requestOptions?: RequestOptions) => Promise<EnduroCollectionStatusHistory>
     workflow: (id: number, requestOptions?: RequestOptions) => Promise<EnduroCollectionWorkflowStatus>
     retry: (id: number, requestOptions?: RequestOptions) => Promise<RetryResult>
     cancel: (id: number, requestOptions?: RequestOptions) => Promise<void>
@@ -136,6 +138,7 @@ export function createEnduroApiClient(basePath: string): EnduroApiClient {
     collections: {
       list: (request = {}, requestOptions) => collection.collectionList(request, requestOptions),
       show: (id, requestOptions) => collection.collectionShow({ id }, requestOptions),
+      statusHistory: (id, requestOptions) => collection.collectionStatusHistory({ id }, requestOptions),
       workflow: (id, requestOptions) => collection.collectionWorkflow({ id }, requestOptions),
       retry: (id, requestOptions) => collection.collectionRetry({ id }, requestOptions),
       cancel: (id, requestOptions) => collection.collectionCancel({ id }, requestOptions),

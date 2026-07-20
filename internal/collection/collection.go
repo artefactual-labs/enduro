@@ -61,6 +61,12 @@ func (svc *collectionImpl) Goa() goacollection.Service {
 }
 
 func (svc *collectionImpl) Create(ctx context.Context, col *Collection) error {
+	tx, err := svc.db.BeginTxx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("error beginning collection creation: %w", err)
+	}
+	defer func() { _ = tx.Rollback() }()
+
 	query := `INSERT INTO collection (name, workflow_id, run_id, transfer_id, aip_id, original_id, pipeline_id, decision_token, status) VALUES ((?), (?), (?), (?), (?), (?), (?), (?), (?))`
 	args := []any{
 		col.Name,
@@ -74,8 +80,8 @@ func (svc *collectionImpl) Create(ctx context.Context, col *Collection) error {
 		col.Status,
 	}
 
-	query = svc.db.Rebind(query)
-	res, err := svc.db.ExecContext(ctx, query, args...)
+	query = tx.Rebind(query)
+	res, err := tx.ExecContext(ctx, query, args...)
 	if err != nil {
 		return fmt.Errorf("error inserting collection: %w", err)
 	}
@@ -86,6 +92,17 @@ func (svc *collectionImpl) Create(ctx context.Context, col *Collection) error {
 	}
 
 	col.ID = uint(id)
+	if err := insertStatusTransition(ctx, tx, col.ID, nil, collectionStatusState{
+		WorkflowID: col.WorkflowID,
+		RunID:      col.RunID,
+		Status:     col.Status,
+	}, true, "collection_created"); err != nil {
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("error committing collection creation: %w", err)
+	}
 
 	publishEvent(ctx, svc.events, EventTypeCollectionCreated, col.ID)
 
@@ -137,7 +154,13 @@ func (svc *collectionImpl) UpdateWorkflowStatus(ctx context.Context, ID uint, na
 		ID,
 	}
 
-	if _, err := svc.updateRow(ctx, query, args); err != nil {
+	if err := svc.updateWithStatusTransition(ctx, ID, collectionStatusState{
+		WorkflowID: workflowID,
+		RunID:      runID,
+		Status:     status,
+	}, func(tx *sqlx.Tx) error {
+		return updateRowTx(ctx, tx, query, args)
+	}); err != nil {
 		return err
 	}
 
@@ -153,7 +176,7 @@ func (svc *collectionImpl) SetStatus(ctx context.Context, ID uint, status Status
 		ID,
 	}
 
-	if _, err := svc.updateRow(ctx, query, args); err != nil {
+	if err := svc.updateCurrentRunStatus(ctx, ID, status, query, args); err != nil {
 		return err
 	}
 
@@ -193,7 +216,7 @@ func (svc *collectionImpl) SetStatusInProgress(ctx context.Context, ID uint, sta
 		args = append(args, ID)
 	}
 
-	if _, err := svc.updateRow(ctx, query, args); err != nil {
+	if err := svc.updateCurrentRunStatus(ctx, ID, StatusInProgress, query, args); err != nil {
 		return err
 	}
 
@@ -210,7 +233,7 @@ func (svc *collectionImpl) SetStatusPending(ctx context.Context, ID uint, taskTo
 		ID,
 	}
 
-	if _, err := svc.updateRow(ctx, query, args); err != nil {
+	if err := svc.updateCurrentRunStatus(ctx, ID, StatusPending, query, args); err != nil {
 		return err
 	}
 
@@ -248,6 +271,20 @@ func (svc *collectionImpl) updateRow(ctx context.Context, query string, args []a
 	}
 
 	return n, nil
+}
+
+func (svc *collectionImpl) updateCurrentRunStatus(ctx context.Context, ID uint, status Status, query string, args []any) error {
+	return svc.updateWithStatusTransition(ctx, ID, collectionStatusState{Status: status}, func(tx *sqlx.Tx) error {
+		return updateRowTx(ctx, tx, query, args)
+	})
+}
+
+func updateRowTx(ctx context.Context, tx *sqlx.Tx, query string, args []any) error {
+	if _, err := tx.ExecContext(ctx, tx.Rebind(query), args...); err != nil {
+		return fmt.Errorf("error updating collection: %v", err)
+	}
+
+	return nil
 }
 
 func (svc *collectionImpl) read(ctx context.Context, ID uint) (*Collection, error) {
