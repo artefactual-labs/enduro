@@ -14,9 +14,14 @@ import (
 
 // Connect returns the database handler which is safe for concurrent access.
 func Connect(ds string) (db *sql.DB, err error) {
-	config, err := mysqldriver.ParseDSN(ds)
+	return ConnectWithConfig(Config{DSN: ds, AutoMigrate: true})
+}
+
+// ConnectWithConfig returns the database handler using the provided config.
+func ConnectWithConfig(cfg Config) (db *sql.DB, err error) {
+	config, err := mysqldriver.ParseDSN(cfg.DSN)
 	if err != nil {
-		return nil, fmt.Errorf("error parsing dsn: %w (%s)", err, ds)
+		return nil, fmt.Errorf("error parsing dsn: %w (%s)", err, cfg.DSN)
 	}
 	config.Collation = "utf8mb4_unicode_ci"
 	config.Loc = time.UTC
@@ -52,6 +57,13 @@ func Connect(ds string) (db *sql.DB, err error) {
 		},
 	)
 	prometheus.MustRegister(c)
+
+	if !cfg.AutoMigrate {
+		if err := db.Ping(); err != nil {
+			return nil, fmt.Errorf("error connecting to database: %w", err)
+		}
+		return db, nil
+	}
 
 	// Database migration.
 	m, err := newMigrate(db)

@@ -90,6 +90,11 @@ more about the configuration details
 [Security Configuration](./security-configuration.md) guide before exposing
 Enduro to operators.
 
+By default, Enduro applies pending database migrations automatically when it
+starts. See [Database Migrations](./database-migrations.md) to manage migrations
+manually or before downgrading Enduro to a release with an older database
+schema.
+
 ### API server
 
 The configuration attribute `api.listen` determines the address where Enduro
