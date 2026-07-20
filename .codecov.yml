@@ -39,3 +39,6 @@ ignore:
 - "website"
 - "fake"
 - "gen"
+- "internal/api/gen/**"
+- "frontend/app/openapi-generator/**"
+- "ui/src/openapi-generator/**"
