@@ -591,6 +591,90 @@ func DecodeWorkflowResponse(decoder func(*http.Response) goahttp.Decoder, restor
 	}
 }
 
+// BuildStatusHistoryRequest instantiates a HTTP request object with method and
+// path set to call the "collection" service "status_history" endpoint
+func (c *Client) BuildStatusHistoryRequest(ctx context.Context, v any) (*http.Request, error) {
+	var (
+		id uint
+	)
+	{
+		p, ok := v.(*collection.StatusHistoryPayload)
+		if !ok {
+			return nil, goahttp.ErrInvalidType("collection", "status_history", "*collection.StatusHistoryPayload", v)
+		}
+		id = p.ID
+	}
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: StatusHistoryCollectionPath(id)}
+	req, err := http.NewRequest("GET", u.String(), nil)
+	if err != nil {
+		return nil, goahttp.ErrInvalidURL("collection", "status_history", u.String(), err)
+	}
+	if ctx != nil {
+		req = req.WithContext(ctx)
+	}
+
+	return req, nil
+}
+
+// DecodeStatusHistoryResponse returns a decoder for responses returned by the
+// collection status_history endpoint. restoreBody controls whether the
+// response body should be restored after having been read.
+// DecodeStatusHistoryResponse may return the following errors:
+//   - "not_found" (type *collection.CollectionNotfound): http.StatusNotFound
+//   - error: internal error
+func DecodeStatusHistoryResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
+	return func(resp *http.Response) (any, error) {
+		if restoreBody {
+			b, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			defer func() {
+				resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			}()
+		} else {
+			defer resp.Body.Close()
+		}
+		switch resp.StatusCode {
+		case http.StatusOK:
+			var (
+				body StatusHistoryResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("collection", "status_history", err)
+			}
+			p := NewStatusHistoryEnduroCollectionStatusHistoryOK(&body)
+			view := "default"
+			vres := &collectionviews.EnduroCollectionStatusHistory{Projected: p, View: view}
+			if err = collectionviews.ValidateEnduroCollectionStatusHistory(vres); err != nil {
+				return nil, goahttp.ErrValidationError("collection", "status_history", err)
+			}
+			res := collection.NewEnduroCollectionStatusHistory(vres)
+			return res, nil
+		case http.StatusNotFound:
+			var (
+				body StatusHistoryNotFoundResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("collection", "status_history", err)
+			}
+			err = ValidateStatusHistoryNotFoundResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("collection", "status_history", err)
+			}
+			return nil, NewStatusHistoryNotFound(&body)
+		default:
+			body, _ := io.ReadAll(resp.Body)
+			return nil, goahttp.ErrInvalidResponse("collection", "status_history", resp.StatusCode, string(body))
+		}
+	}
+}
+
 // BuildDownloadRequest instantiates a HTTP request object with method and path
 // set to call the "collection" service "download" endpoint
 func (c *Client) BuildDownloadRequest(ctx context.Context, v any) (*http.Request, error) {
@@ -983,6 +1067,24 @@ func unmarshalEnduroCollectionWorkflowHistoryResponseBodyToCollectionviewsEnduro
 		ID:      v.ID,
 		Type:    v.Type,
 		Details: v.Details,
+	}
+
+	return res
+}
+
+// unmarshalEnduroCollectionStatusTransitionResponseBodyToCollectionviewsEnduroCollectionStatusTransitionView
+// builds a value of type *collectionviews.EnduroCollectionStatusTransitionView
+// from a value of type *EnduroCollectionStatusTransitionResponseBody.
+func unmarshalEnduroCollectionStatusTransitionResponseBodyToCollectionviewsEnduroCollectionStatusTransitionView(v *EnduroCollectionStatusTransitionResponseBody) *collectionviews.EnduroCollectionStatusTransitionView {
+	res := &collectionviews.EnduroCollectionStatusTransitionView{
+		ID:             v.ID,
+		WorkflowID:     v.WorkflowID,
+		RunID:          v.RunID,
+		PreviousStatus: v.PreviousStatus,
+		Status:         v.Status,
+		OccurredAt:     v.OccurredAt,
+		IsRunStart:     v.IsRunStart,
+		Reason:         v.Reason,
 	}
 
 	return res

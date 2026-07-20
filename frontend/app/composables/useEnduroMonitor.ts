@@ -3,6 +3,7 @@ import type { EnduroMonitorUpdate } from '~/openapi-generator'
 export type EnduroConnectionStatus = 'connected' | 'connecting' | 'failed'
 
 export type EnduroMonitorEvent = {
+  sequence: number
   receivedAt: string
   sourceTimestamp: string | null
   type: string
@@ -98,7 +99,10 @@ export function useEnduroMonitor() {
       type = 'invalid-json'
     }
 
+    totalEvents.value += 1
+
     const nextEvent: EnduroMonitorEvent = {
+      sequence: totalEvents.value,
       receivedAt,
       sourceTimestamp,
       type,
@@ -107,7 +111,6 @@ export function useEnduroMonitor() {
       raw
     }
 
-    totalEvents.value += 1
     lastEventAt.value = receivedAt
 
     if (type === 'ping' && sourceTimestamp) {

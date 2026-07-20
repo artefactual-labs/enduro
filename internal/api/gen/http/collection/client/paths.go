@@ -47,6 +47,11 @@ func WorkflowCollectionPath(id uint) string {
 	return fmt.Sprintf("/collection/%v/workflow", id)
 }
 
+// StatusHistoryCollectionPath returns the URL path to the collection service status_history HTTP endpoint.
+func StatusHistoryCollectionPath(id uint) string {
+	return fmt.Sprintf("/collection/%v/status-history", id)
+}
+
 // DownloadCollectionPath returns the URL path to the collection service download HTTP endpoint.
 func DownloadCollectionPath(id uint) string {
 	return fmt.Sprintf("/collection/%v/download", id)

@@ -895,6 +895,152 @@
       "title": "Mediatype identifier: application/vnd.goa.error; view=default",
       "type": "object"
     },
+    "EnduroCollectionStatusHistory": {
+      "description": "status_history_response_body result type (default view)",
+      "example": {
+        "availability": "partial",
+        "transitions": [
+          {
+            "id": 1,
+            "is_run_start": false,
+            "occurred_at": "1970-01-01T00:00:01Z",
+            "previous_status": "in progress",
+            "reason": "abc123",
+            "run_id": "abc123",
+            "status": "in progress",
+            "workflow_id": "abc123"
+          }
+        ]
+      },
+      "properties": {
+        "availability": {
+          "description": "Whether complete history is available for the current workflow run",
+          "enum": [
+            "available",
+            "partial",
+            "unavailable"
+          ],
+          "example": "partial",
+          "type": "string"
+        },
+        "transitions": {
+          "$ref": "#/definitions/EnduroCollectionStatusTransitionResponseBodyCollection"
+        }
+      },
+      "required": [
+        "availability",
+        "transitions"
+      ],
+      "title": "Mediatype identifier: application/vnd.enduro.collection-status-history; view=default",
+      "type": "object"
+    },
+    "EnduroCollectionStatusTransitionResponseBody": {
+      "description": "StatusTransition describes a committed collection status change. (default view)",
+      "example": {
+        "id": 1,
+        "is_run_start": false,
+        "occurred_at": "1970-01-01T00:00:01Z",
+        "previous_status": "in progress",
+        "reason": "abc123",
+        "run_id": "abc123",
+        "status": "in progress",
+        "workflow_id": "abc123"
+      },
+      "properties": {
+        "id": {
+          "description": "Identifier of the status transition",
+          "example": 1,
+          "format": "int64",
+          "type": "integer"
+        },
+        "is_run_start": {
+          "description": "Whether the transition starts a fully recorded workflow run",
+          "example": false,
+          "type": "boolean"
+        },
+        "occurred_at": {
+          "description": "Transition datetime",
+          "example": "1970-01-01T00:00:01Z",
+          "format": "date-time",
+          "type": "string"
+        },
+        "previous_status": {
+          "description": "Status before the transition",
+          "enum": [
+            "new",
+            "in progress",
+            "done",
+            "error",
+            "unknown",
+            "queued",
+            "pending",
+            "abandoned"
+          ],
+          "example": "in progress",
+          "type": "string"
+        },
+        "reason": {
+          "description": "Machine-readable reason for the transition",
+          "example": "abc123",
+          "type": "string"
+        },
+        "run_id": {
+          "description": "Identifier of the processing workflow run",
+          "example": "abc123",
+          "type": "string"
+        },
+        "status": {
+          "description": "Status entered by the transition",
+          "enum": [
+            "new",
+            "in progress",
+            "done",
+            "error",
+            "unknown",
+            "queued",
+            "pending",
+            "abandoned"
+          ],
+          "example": "in progress",
+          "type": "string"
+        },
+        "workflow_id": {
+          "description": "Identifier of the processing workflow",
+          "example": "abc123",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "workflow_id",
+        "run_id",
+        "status",
+        "occurred_at",
+        "is_run_start"
+      ],
+      "title": "Mediatype identifier: application/vnd.enduro.collection-status-transition; view=default",
+      "type": "object"
+    },
+    "EnduroCollectionStatusTransitionResponseBodyCollection": {
+      "description": "EnduroCollection-Status-TransitionCollectionResponseBody is the result type for an array of EnduroCollection-Status-TransitionResponseBody (default view)",
+      "example": [
+        {
+          "id": 1,
+          "is_run_start": false,
+          "occurred_at": "1970-01-01T00:00:01Z",
+          "previous_status": "in progress",
+          "reason": "abc123",
+          "run_id": "abc123",
+          "status": "in progress",
+          "workflow_id": "abc123"
+        }
+      ],
+      "items": {
+        "$ref": "#/definitions/EnduroCollectionStatusTransitionResponseBody"
+      },
+      "title": "Mediatype identifier: application/vnd.enduro.collection-status-transition; type=collection; view=default",
+      "type": "array"
+    },
     "EnduroCollectionWorkflowHistoryResponseBody": {
       "description": "WorkflowHistoryEvent describes a history event in Temporal. (default view)",
       "example": {
@@ -2094,6 +2240,47 @@
           "http"
         ],
         "summary": "retry collection",
+        "tags": [
+          "collection"
+        ]
+      }
+    },
+    "/collection/{id}/status-history": {
+      "get": {
+        "description": "Retrieve the recorded status transition history for a collection",
+        "operationId": "collection#status_history",
+        "parameters": [
+          {
+            "description": "Identifier of collection to look up",
+            "format": "int64",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK response.",
+            "schema": {
+              "$ref": "#/definitions/EnduroCollectionStatusHistory"
+            }
+          },
+          "404": {
+            "description": "Not Found response.",
+            "schema": {
+              "$ref": "#/definitions/CollectionNotfound",
+              "required": [
+                "message",
+                "id"
+              ]
+            }
+          }
+        },
+        "schemes": [
+          "http"
+        ],
+        "summary": "status_history collection",
         "tags": [
           "collection"
         ]

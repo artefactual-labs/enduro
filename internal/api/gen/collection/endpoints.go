@@ -17,17 +17,18 @@ import (
 
 // Endpoints wraps the "collection" service endpoints.
 type Endpoints struct {
-	Monitor    goa.Endpoint
-	List       goa.Endpoint
-	Show       goa.Endpoint
-	Delete     goa.Endpoint
-	Cancel     goa.Endpoint
-	Retry      goa.Endpoint
-	Workflow   goa.Endpoint
-	Download   goa.Endpoint
-	Decide     goa.Endpoint
-	Bulk       goa.Endpoint
-	BulkStatus goa.Endpoint
+	Monitor       goa.Endpoint
+	List          goa.Endpoint
+	Show          goa.Endpoint
+	Delete        goa.Endpoint
+	Cancel        goa.Endpoint
+	Retry         goa.Endpoint
+	Workflow      goa.Endpoint
+	StatusHistory goa.Endpoint
+	Download      goa.Endpoint
+	Decide        goa.Endpoint
+	Bulk          goa.Endpoint
+	BulkStatus    goa.Endpoint
 }
 
 // MonitorEndpointInput holds both the payload and the server stream of the
@@ -49,17 +50,18 @@ type DownloadResponseData struct {
 // NewEndpoints wraps the methods of the "collection" service with endpoints.
 func NewEndpoints(s Service) *Endpoints {
 	return &Endpoints{
-		Monitor:    NewMonitorEndpoint(s),
-		List:       NewListEndpoint(s),
-		Show:       NewShowEndpoint(s),
-		Delete:     NewDeleteEndpoint(s),
-		Cancel:     NewCancelEndpoint(s),
-		Retry:      NewRetryEndpoint(s),
-		Workflow:   NewWorkflowEndpoint(s),
-		Download:   NewDownloadEndpoint(s),
-		Decide:     NewDecideEndpoint(s),
-		Bulk:       NewBulkEndpoint(s),
-		BulkStatus: NewBulkStatusEndpoint(s),
+		Monitor:       NewMonitorEndpoint(s),
+		List:          NewListEndpoint(s),
+		Show:          NewShowEndpoint(s),
+		Delete:        NewDeleteEndpoint(s),
+		Cancel:        NewCancelEndpoint(s),
+		Retry:         NewRetryEndpoint(s),
+		Workflow:      NewWorkflowEndpoint(s),
+		StatusHistory: NewStatusHistoryEndpoint(s),
+		Download:      NewDownloadEndpoint(s),
+		Decide:        NewDecideEndpoint(s),
+		Bulk:          NewBulkEndpoint(s),
+		BulkStatus:    NewBulkStatusEndpoint(s),
 	}
 }
 
@@ -72,6 +74,7 @@ func (e *Endpoints) Use(m func(goa.Endpoint) goa.Endpoint) {
 	e.Cancel = m(e.Cancel)
 	e.Retry = m(e.Retry)
 	e.Workflow = m(e.Workflow)
+	e.StatusHistory = m(e.StatusHistory)
 	e.Download = m(e.Download)
 	e.Decide = m(e.Decide)
 	e.Bulk = m(e.Bulk)
@@ -147,6 +150,20 @@ func NewWorkflowEndpoint(s Service) goa.Endpoint {
 			return nil, err
 		}
 		vres := NewViewedEnduroCollectionWorkflowStatus(res, "default")
+		return vres, nil
+	}
+}
+
+// NewStatusHistoryEndpoint returns an endpoint function that calls the method
+// "status_history" of service "collection".
+func NewStatusHistoryEndpoint(s Service) goa.Endpoint {
+	return func(ctx context.Context, req any) (any, error) {
+		p := req.(*StatusHistoryPayload)
+		res, err := s.StatusHistory(ctx, p)
+		if err != nil {
+			return nil, err
+		}
+		vres := NewViewedEnduroCollectionStatusHistory(res, "default")
 		return vres, nil
 	}
 }

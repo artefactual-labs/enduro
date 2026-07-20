@@ -11,6 +11,8 @@ export * from './BulkStatusResult';
 export * from './Collection';
 export * from './CollectionDecideRequest';
 export * from './CollectionNotfound';
+export * from './EnduroCollectionStatusHistory';
+export * from './EnduroCollectionStatusTransition';
 export * from './EnduroCollectionWorkflowHistory';
 export * from './EnduroCollectionWorkflowStatus';
 export * from './EnduroDetailedStoredCollection';

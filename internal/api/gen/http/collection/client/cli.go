@@ -210,6 +210,25 @@ func BuildWorkflowPayload(collectionWorkflowID string) (*collection.WorkflowPayl
 	return v, nil
 }
 
+// BuildStatusHistoryPayload builds the payload for the collection
+// status_history endpoint from CLI flags.
+func BuildStatusHistoryPayload(collectionStatusHistoryID string) (*collection.StatusHistoryPayload, error) {
+	var err error
+	var id uint
+	{
+		var v uint64
+		v, err = strconv.ParseUint(collectionStatusHistoryID, 10, strconv.IntSize)
+		id = uint(v)
+		if err != nil {
+			return nil, fmt.Errorf("invalid value for id, must be UINT")
+		}
+	}
+	v := &collection.StatusHistoryPayload{}
+	v.ID = id
+
+	return v, nil
+}
+
 // BuildDownloadPayload builds the payload for the collection download endpoint
 // from CLI flags.
 func BuildDownloadPayload(collectionDownloadID string) (*collection.DownloadPayload, error) {

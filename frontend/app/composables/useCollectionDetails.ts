@@ -72,9 +72,26 @@ export function useCollectionDetails() {
 
   const collectionId = computed(() => parseCollectionId(route.params.id))
   const state = useState<CollectionDetailsState>('collection-details-state', createDefaultState)
+  let monitorRefreshRunning = false
+  let monitorRefreshPending = false
 
   async function loadCollection(_force = false): Promise<void> {
     await reloadCollectionData()
+  }
+
+  async function refreshCollectionFromMonitor(): Promise<void> {
+    monitorRefreshPending = true
+    if (monitorRefreshRunning) return
+
+    monitorRefreshRunning = true
+    try {
+      while (monitorRefreshPending) {
+        monitorRefreshPending = false
+        await loadCollection(true)
+      }
+    } finally {
+      monitorRefreshRunning = false
+    }
   }
 
   async function runAction(
@@ -189,11 +206,11 @@ export function useCollectionDetails() {
   const canRetry = computed(() => canRetryCollection(collection.value))
   const canCancel = computed(() => canCancelCollection(collection.value))
 
-  watch(() => monitor.recentEvents.value[0]?.receivedAt, () => {
+  watch(() => monitor.recentEvents.value[0]?.sequence, () => {
     const latest = monitor.recentEvents.value[0]
     if (!latest || latest.type !== 'collection:updated') return
     if (latest.collectionId !== collectionId.value) return
-    void loadCollection(true)
+    void refreshCollectionFromMonitor()
   })
 
   return {

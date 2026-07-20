@@ -20,6 +20,7 @@ import type {
   BulkStatusResult,
   CollectionDecideRequest,
   CollectionNotfound,
+  EnduroCollectionStatusHistory,
   EnduroCollectionWorkflowStatus,
   EnduroDetailedStoredCollection,
   EnduroMonitorUpdate,
@@ -37,6 +38,8 @@ import {
     CollectionDecideRequestToJSON,
     CollectionNotfoundFromJSON,
     CollectionNotfoundToJSON,
+    EnduroCollectionStatusHistoryFromJSON,
+    EnduroCollectionStatusHistoryToJSON,
     EnduroCollectionWorkflowStatusFromJSON,
     EnduroCollectionWorkflowStatusToJSON,
     EnduroDetailedStoredCollectionFromJSON,
@@ -87,6 +90,10 @@ export interface CollectionRetryRequest {
 }
 
 export interface CollectionShowRequest {
+    id: number;
+}
+
+export interface CollectionStatusHistoryRequest {
     id: number;
 }
 
@@ -266,6 +273,22 @@ export interface CollectionApiInterface {
      * show collection
      */
     collectionShow(requestParameters: CollectionShowRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EnduroDetailedStoredCollection>;
+
+    /**
+     * Retrieve the recorded status transition history for a collection
+     * @summary status_history collection
+     * @param {number} id Identifier of collection to look up
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof CollectionApiInterface
+     */
+    collectionStatusHistoryRaw(requestParameters: CollectionStatusHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EnduroCollectionStatusHistory>>;
+
+    /**
+     * Retrieve the recorded status transition history for a collection
+     * status_history collection
+     */
+    collectionStatusHistory(requestParameters: CollectionStatusHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EnduroCollectionStatusHistory>;
 
     /**
      * Retrieve workflow status by ID
@@ -695,6 +718,45 @@ export class CollectionApi extends runtime.BaseAPI implements CollectionApiInter
      */
     async collectionShow(requestParameters: CollectionShowRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EnduroDetailedStoredCollection> {
         const response = await this.collectionShowRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Retrieve the recorded status transition history for a collection
+     * status_history collection
+     */
+    async collectionStatusHistoryRaw(requestParameters: CollectionStatusHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EnduroCollectionStatusHistory>> {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError(
+                'id',
+                'Required parameter "id" was null or undefined when calling collectionStatusHistory().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+
+        let urlPath = `/collection/{id}/status-history`;
+        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => EnduroCollectionStatusHistoryFromJSON(jsonValue));
+    }
+
+    /**
+     * Retrieve the recorded status transition history for a collection
+     * status_history collection
+     */
+    async collectionStatusHistory(requestParameters: CollectionStatusHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EnduroCollectionStatusHistory> {
+        const response = await this.collectionStatusHistoryRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

@@ -401,6 +401,148 @@
         ],
         "type": "object"
       },
+      "EnduroCollectionStatusHistory": {
+        "description": "StatusHistory describes recorded collection status transitions.",
+        "example": {
+          "availability": "partial",
+          "transitions": [
+            {
+              "id": 1,
+              "is_run_start": false,
+              "occurred_at": "1970-01-01T00:00:01Z",
+              "previous_status": "in progress",
+              "reason": "abc123",
+              "run_id": "abc123",
+              "status": "in progress",
+              "workflow_id": "abc123"
+            }
+          ]
+        },
+        "properties": {
+          "availability": {
+            "description": "Whether complete history is available for the current workflow run",
+            "enum": [
+              "available",
+              "partial",
+              "unavailable"
+            ],
+            "example": "partial",
+            "type": "string"
+          },
+          "transitions": {
+            "$ref": "#/components/schemas/EnduroCollectionStatusTransitionCollection"
+          }
+        },
+        "required": [
+          "availability",
+          "transitions"
+        ],
+        "type": "object"
+      },
+      "EnduroCollectionStatusTransition": {
+        "description": "StatusTransition describes a committed collection status change.",
+        "example": {
+          "id": 1,
+          "is_run_start": false,
+          "occurred_at": "1970-01-01T00:00:01Z",
+          "previous_status": "in progress",
+          "reason": "abc123",
+          "run_id": "abc123",
+          "status": "in progress",
+          "workflow_id": "abc123"
+        },
+        "properties": {
+          "id": {
+            "description": "Identifier of the status transition",
+            "example": 1,
+            "format": "int64",
+            "type": "integer"
+          },
+          "is_run_start": {
+            "description": "Whether the transition starts a fully recorded workflow run",
+            "example": false,
+            "type": "boolean"
+          },
+          "occurred_at": {
+            "description": "Transition datetime",
+            "example": "1970-01-01T00:00:01Z",
+            "format": "date-time",
+            "type": "string"
+          },
+          "previous_status": {
+            "description": "Status before the transition",
+            "enum": [
+              "new",
+              "in progress",
+              "done",
+              "error",
+              "unknown",
+              "queued",
+              "pending",
+              "abandoned"
+            ],
+            "example": "in progress",
+            "type": "string"
+          },
+          "reason": {
+            "description": "Machine-readable reason for the transition",
+            "example": "abc123",
+            "type": "string"
+          },
+          "run_id": {
+            "description": "Identifier of the processing workflow run",
+            "example": "abc123",
+            "type": "string"
+          },
+          "status": {
+            "description": "Status entered by the transition",
+            "enum": [
+              "new",
+              "in progress",
+              "done",
+              "error",
+              "unknown",
+              "queued",
+              "pending",
+              "abandoned"
+            ],
+            "example": "in progress",
+            "type": "string"
+          },
+          "workflow_id": {
+            "description": "Identifier of the processing workflow",
+            "example": "abc123",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "workflow_id",
+          "run_id",
+          "status",
+          "occurred_at",
+          "is_run_start"
+        ],
+        "type": "object"
+      },
+      "EnduroCollectionStatusTransitionCollection": {
+        "example": [
+          {
+            "id": 1,
+            "is_run_start": false,
+            "occurred_at": "1970-01-01T00:00:01Z",
+            "previous_status": "in progress",
+            "reason": "abc123",
+            "run_id": "abc123",
+            "status": "in progress",
+            "workflow_id": "abc123"
+          }
+        ],
+        "items": {
+          "$ref": "#/components/schemas/EnduroCollectionStatusTransition"
+        },
+        "type": "array"
+      },
       "EnduroCollectionWorkflowHistory": {
         "description": "WorkflowHistoryEvent describes a history event in Temporal.",
         "example": {
@@ -1913,6 +2055,72 @@
           }
         },
         "summary": "retry collection",
+        "tags": [
+          "collection"
+        ]
+      }
+    },
+    "/collection/{id}/status-history": {
+      "get": {
+        "description": "Retrieve the recorded status transition history for a collection",
+        "operationId": "collection#status_history",
+        "parameters": [
+          {
+            "description": "Identifier of collection to look up",
+            "example": 1,
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "description": "Identifier of collection to look up",
+              "example": 1,
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "availability": "partial",
+                  "transitions": [
+                    {
+                      "id": 1,
+                      "is_run_start": false,
+                      "occurred_at": "1970-01-01T00:00:01Z",
+                      "previous_status": "in progress",
+                      "reason": "abc123",
+                      "run_id": "abc123",
+                      "status": "in progress",
+                      "workflow_id": "abc123"
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/EnduroCollectionStatusHistory"
+                }
+              }
+            },
+            "description": "OK response."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "id": 1,
+                  "message": "abc123"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CollectionNotfound"
+                }
+              }
+            },
+            "description": "not_found: Collection not found"
+          }
+        },
+        "summary": "status_history collection",
         "tags": [
           "collection"
         ]

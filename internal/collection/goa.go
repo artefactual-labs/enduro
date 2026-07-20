@@ -313,6 +313,46 @@ func retryModeForCollection(registry *pipeline.Registry, pipelineName string, co
 	return RetryModeFullReprocess
 }
 
+// StatusHistory retrieves recorded collection status transitions. It
+// implements goacollection.Service.
+func (w *goaWrapper) StatusHistory(ctx context.Context, payload *goacollection.StatusHistoryPayload) (*goacollection.EnduroCollectionStatusHistory, error) {
+	col, err := w.read(ctx, payload.ID)
+	if err == sql.ErrNoRows {
+		return nil, &goacollection.CollectionNotfound{ID: payload.ID, Message: "not_found"}
+	} else if err != nil {
+		return nil, err
+	}
+
+	transitions, err := w.readStatusTransitions(ctx, payload.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	result := &goacollection.EnduroCollectionStatusHistory{
+		Availability: statusHistoryAvailability(transitions, col.RunID),
+		Transitions:  make(goacollection.EnduroCollectionStatusTransitionCollection, 0, len(transitions)),
+	}
+	for _, transition := range transitions {
+		item := &goacollection.EnduroCollectionStatusTransition{
+			ID:         transition.ID,
+			WorkflowID: transition.WorkflowID,
+			RunID:      transition.RunID,
+			Status:     transition.Status.String(),
+			OccurredAt: transition.OccurredAt.UTC().Format(time.RFC3339Nano),
+			IsRunStart: transition.IsRunStart,
+		}
+		if transition.PreviousStatus.Valid {
+			item.PreviousStatus = new(Status(transition.PreviousStatus.Int64).String())
+		}
+		if transition.Reason.Valid {
+			item.Reason = new(transition.Reason.String)
+		}
+		result.Transitions = append(result.Transitions, item)
+	}
+
+	return result, nil
+}
+
 func (w *goaWrapper) Workflow(ctx context.Context, payload *goacollection.WorkflowPayload) (res *goacollection.EnduroCollectionWorkflowStatus, err error) {
 	var goacol *goacollection.EnduroDetailedStoredCollection
 	if goacol, err = w.Show(ctx, &goacollection.ShowPayload{ID: payload.ID}); err != nil {

@@ -369,6 +369,34 @@ paths:
                             - id
             schemes:
                 - http
+    /collection/{id}/status-history:
+        get:
+            tags:
+                - collection
+            summary: status_history collection
+            description: Retrieve the recorded status transition history for a collection
+            operationId: collection#status_history
+            parameters:
+                - name: id
+                  in: path
+                  description: Identifier of collection to look up
+                  required: true
+                  type: integer
+                  format: int64
+            responses:
+                "200":
+                    description: OK response.
+                    schema:
+                        $ref: '#/definitions/EnduroCollectionStatusHistory'
+                "404":
+                    description: Not Found response.
+                    schema:
+                        $ref: '#/definitions/CollectionNotfound'
+                        required:
+                            - message
+                            - id
+            schemes:
+                - http
     /collection/{id}/workflow:
         get:
             tags:
@@ -1264,6 +1292,123 @@ definitions:
             - temporary
             - timeout
             - fault
+    EnduroCollectionStatusHistory:
+        title: 'Mediatype identifier: application/vnd.enduro.collection-status-history; view=default'
+        type: object
+        properties:
+            availability:
+                type: string
+                description: Whether complete history is available for the current workflow run
+                example: partial
+                enum:
+                    - available
+                    - partial
+                    - unavailable
+            transitions:
+                $ref: '#/definitions/EnduroCollectionStatusTransitionResponseBodyCollection'
+        description: status_history_response_body result type (default view)
+        example:
+            availability: partial
+            transitions:
+                - id: 1
+                  is_run_start: false
+                  occurred_at: "1970-01-01T00:00:01Z"
+                  previous_status: in progress
+                  reason: abc123
+                  run_id: abc123
+                  status: in progress
+                  workflow_id: abc123
+        required:
+            - availability
+            - transitions
+    EnduroCollectionStatusTransitionResponseBody:
+        title: 'Mediatype identifier: application/vnd.enduro.collection-status-transition; view=default'
+        type: object
+        properties:
+            id:
+                type: integer
+                description: Identifier of the status transition
+                example: 1
+                format: int64
+            is_run_start:
+                type: boolean
+                description: Whether the transition starts a fully recorded workflow run
+                example: false
+            occurred_at:
+                type: string
+                description: Transition datetime
+                example: "1970-01-01T00:00:01Z"
+                format: date-time
+            previous_status:
+                type: string
+                description: Status before the transition
+                example: in progress
+                enum:
+                    - new
+                    - in progress
+                    - done
+                    - error
+                    - unknown
+                    - queued
+                    - pending
+                    - abandoned
+            reason:
+                type: string
+                description: Machine-readable reason for the transition
+                example: abc123
+            run_id:
+                type: string
+                description: Identifier of the processing workflow run
+                example: abc123
+            status:
+                type: string
+                description: Status entered by the transition
+                example: in progress
+                enum:
+                    - new
+                    - in progress
+                    - done
+                    - error
+                    - unknown
+                    - queued
+                    - pending
+                    - abandoned
+            workflow_id:
+                type: string
+                description: Identifier of the processing workflow
+                example: abc123
+        description: StatusTransition describes a committed collection status change. (default view)
+        example:
+            id: 1
+            is_run_start: false
+            occurred_at: "1970-01-01T00:00:01Z"
+            previous_status: in progress
+            reason: abc123
+            run_id: abc123
+            status: in progress
+            workflow_id: abc123
+        required:
+            - id
+            - workflow_id
+            - run_id
+            - status
+            - occurred_at
+            - is_run_start
+    EnduroCollectionStatusTransitionResponseBodyCollection:
+        title: 'Mediatype identifier: application/vnd.enduro.collection-status-transition; type=collection; view=default'
+        type: array
+        items:
+            $ref: '#/definitions/EnduroCollectionStatusTransitionResponseBody'
+        description: EnduroCollection-Status-TransitionCollectionResponseBody is the result type for an array of EnduroCollection-Status-TransitionResponseBody (default view)
+        example:
+            - id: 1
+              is_run_start: false
+              occurred_at: "1970-01-01T00:00:01Z"
+              previous_status: in progress
+              reason: abc123
+              run_id: abc123
+              status: in progress
+              workflow_id: abc123
     EnduroCollectionWorkflowHistoryResponseBody:
         title: 'Mediatype identifier: application/vnd.enduro.collection-workflow-history; view=default'
         type: object

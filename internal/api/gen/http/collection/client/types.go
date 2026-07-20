@@ -92,6 +92,14 @@ type WorkflowResponseBody struct {
 	History EnduroCollectionWorkflowHistoryResponseBodyCollection `form:"history,omitempty" json:"history,omitempty" xml:"history,omitempty"`
 }
 
+// StatusHistoryResponseBody is the type of the "collection" service
+// "status_history" endpoint HTTP response body.
+type StatusHistoryResponseBody struct {
+	// Whether complete history is available for the current workflow run
+	Availability *string                                                `form:"availability,omitempty" json:"availability,omitempty" xml:"availability,omitempty"`
+	Transitions  EnduroCollectionStatusTransitionResponseBodyCollection `form:"transitions,omitempty" json:"transitions,omitempty" xml:"transitions,omitempty"`
+}
+
 // BulkResponseBody is the type of the "collection" service "bulk" endpoint
 // HTTP response body.
 type BulkResponseBody struct {
@@ -185,6 +193,15 @@ type RetryNotRunningResponseBody struct {
 // WorkflowNotFoundResponseBody is the type of the "collection" service
 // "workflow" endpoint HTTP response body for the "not_found" error.
 type WorkflowNotFoundResponseBody struct {
+	// Message of error
+	Message *string `form:"message,omitempty" json:"message,omitempty" xml:"message,omitempty"`
+	// Identifier of missing collection
+	ID *uint `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
+}
+
+// StatusHistoryNotFoundResponseBody is the type of the "collection" service
+// "status_history" endpoint HTTP response body for the "not_found" error.
+type StatusHistoryNotFoundResponseBody struct {
 	// Message of error
 	Message *string `form:"message,omitempty" json:"message,omitempty" xml:"message,omitempty"`
 	// Identifier of missing collection
@@ -309,6 +326,31 @@ type EnduroCollectionWorkflowHistoryResponseBody struct {
 	Type *string `form:"type,omitempty" json:"type,omitempty" xml:"type,omitempty"`
 	// Contents of the event
 	Details any `form:"details,omitempty" json:"details,omitempty" xml:"details,omitempty"`
+}
+
+// EnduroCollectionStatusTransitionResponseBodyCollection is used to define
+// fields on response body types.
+type EnduroCollectionStatusTransitionResponseBodyCollection []*EnduroCollectionStatusTransitionResponseBody
+
+// EnduroCollectionStatusTransitionResponseBody is used to define fields on
+// response body types.
+type EnduroCollectionStatusTransitionResponseBody struct {
+	// Identifier of the status transition
+	ID *uint64 `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
+	// Identifier of the processing workflow
+	WorkflowID *string `form:"workflow_id,omitempty" json:"workflow_id,omitempty" xml:"workflow_id,omitempty"`
+	// Identifier of the processing workflow run
+	RunID *string `form:"run_id,omitempty" json:"run_id,omitempty" xml:"run_id,omitempty"`
+	// Status before the transition
+	PreviousStatus *string `form:"previous_status,omitempty" json:"previous_status,omitempty" xml:"previous_status,omitempty"`
+	// Status entered by the transition
+	Status *string `form:"status,omitempty" json:"status,omitempty" xml:"status,omitempty"`
+	// Transition datetime
+	OccurredAt *string `form:"occurred_at,omitempty" json:"occurred_at,omitempty" xml:"occurred_at,omitempty"`
+	// Whether the transition starts a fully recorded workflow run
+	IsRunStart *bool `form:"is_run_start,omitempty" json:"is_run_start,omitempty" xml:"is_run_start,omitempty"`
+	// Machine-readable reason for the transition
+	Reason *string `form:"reason,omitempty" json:"reason,omitempty" xml:"reason,omitempty"`
 }
 
 // NewBulkRequestBody builds the HTTP request body from the payload of the
@@ -491,6 +533,35 @@ func NewWorkflowEnduroCollectionWorkflowStatusOK(body *WorkflowResponseBody) *co
 // NewWorkflowNotFound builds a collection service workflow endpoint not_found
 // error.
 func NewWorkflowNotFound(body *WorkflowNotFoundResponseBody) *collection.CollectionNotfound {
+	v := &collection.CollectionNotfound{
+		Message: *body.Message,
+		ID:      *body.ID,
+	}
+
+	return v
+}
+
+// NewStatusHistoryEnduroCollectionStatusHistoryOK builds a "collection"
+// service "status_history" endpoint result from a HTTP "OK" response.
+func NewStatusHistoryEnduroCollectionStatusHistoryOK(body *StatusHistoryResponseBody) *collectionviews.EnduroCollectionStatusHistoryView {
+	v := &collectionviews.EnduroCollectionStatusHistoryView{
+		Availability: body.Availability,
+	}
+	v.Transitions = make([]*collectionviews.EnduroCollectionStatusTransitionView, len(body.Transitions))
+	for i, val := range body.Transitions {
+		if val == nil {
+			v.Transitions[i] = nil
+			continue
+		}
+		v.Transitions[i] = unmarshalEnduroCollectionStatusTransitionResponseBodyToCollectionviewsEnduroCollectionStatusTransitionView(val)
+	}
+
+	return v
+}
+
+// NewStatusHistoryNotFound builds a collection service status_history endpoint
+// not_found error.
+func NewStatusHistoryNotFound(body *StatusHistoryNotFoundResponseBody) *collection.CollectionNotfound {
 	v := &collection.CollectionNotfound{
 		Message: *body.Message,
 		ID:      *body.ID,
@@ -785,6 +856,18 @@ func ValidateWorkflowNotFoundResponseBody(body *WorkflowNotFoundResponseBody) (e
 	return
 }
 
+// ValidateStatusHistoryNotFoundResponseBody runs the validations defined on
+// status_history_not_found_response_body
+func ValidateStatusHistoryNotFoundResponseBody(body *StatusHistoryNotFoundResponseBody) (err error) {
+	if body.Message == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("message", "body"))
+	}
+	if body.ID == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("id", "body"))
+	}
+	return
+}
+
 // ValidateDownloadNotFoundResponseBody runs the validations defined on
 // download_not_found_response_body
 func ValidateDownloadNotFoundResponseBody(body *DownloadNotFoundResponseBody) (err error) {
@@ -934,6 +1017,57 @@ func ValidateEnduroStoredCollectionCollectionResponseBody(body EnduroStoredColle
 				err = goa.MergeErrors(err, err2)
 			}
 		}
+	}
+	return
+}
+
+// ValidateEnduroCollectionStatusTransitionResponseBodyCollection runs the
+// validations defined on
+// EnduroCollection-Status-TransitionResponseBodyCollection
+func ValidateEnduroCollectionStatusTransitionResponseBodyCollection(body EnduroCollectionStatusTransitionResponseBodyCollection) (err error) {
+	for _, e := range body {
+		if e != nil {
+			if err2 := ValidateEnduroCollectionStatusTransitionResponseBody(e); err2 != nil {
+				err = goa.MergeErrors(err, err2)
+			}
+		}
+	}
+	return
+}
+
+// ValidateEnduroCollectionStatusTransitionResponseBody runs the validations
+// defined on EnduroCollection-Status-TransitionResponseBody
+func ValidateEnduroCollectionStatusTransitionResponseBody(body *EnduroCollectionStatusTransitionResponseBody) (err error) {
+	if body.ID == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("id", "body"))
+	}
+	if body.WorkflowID == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("workflow_id", "body"))
+	}
+	if body.RunID == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("run_id", "body"))
+	}
+	if body.Status == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("status", "body"))
+	}
+	if body.OccurredAt == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("occurred_at", "body"))
+	}
+	if body.IsRunStart == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("is_run_start", "body"))
+	}
+	if body.PreviousStatus != nil {
+		if !(*body.PreviousStatus == "new" || *body.PreviousStatus == "in progress" || *body.PreviousStatus == "done" || *body.PreviousStatus == "error" || *body.PreviousStatus == "unknown" || *body.PreviousStatus == "queued" || *body.PreviousStatus == "pending" || *body.PreviousStatus == "abandoned") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.previous_status", *body.PreviousStatus, []any{"new", "in progress", "done", "error", "unknown", "queued", "pending", "abandoned"}))
+		}
+	}
+	if body.Status != nil {
+		if !(*body.Status == "new" || *body.Status == "in progress" || *body.Status == "done" || *body.Status == "error" || *body.Status == "unknown" || *body.Status == "queued" || *body.Status == "pending" || *body.Status == "abandoned") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.status", *body.Status, []any{"new", "in progress", "done", "error", "unknown", "queued", "pending", "abandoned"}))
+		}
+	}
+	if body.OccurredAt != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.occurred_at", *body.OccurredAt, goa.FormatDateTime))
 	}
 	return
 }
