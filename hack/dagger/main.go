@@ -40,6 +40,7 @@ type runtimeVolumes struct {
 	completed  *dagger.CacheVolume
 	transfers  *dagger.CacheVolume
 	processing *dagger.CacheVolume
+	receipts   *dagger.CacheVolume
 	storage    *dagger.CacheVolume
 	coverage   *dagger.CacheVolume
 }
@@ -148,6 +149,7 @@ func (m *EnduroE2E) smokeEnvironment(ctx context.Context, source *dagger.Directo
 		completed:  dag.CacheVolume("enduro-e2e-ambox-completed"),
 		transfers:  dag.CacheVolume("enduro-e2e-ambox-transfers"),
 		processing: dag.CacheVolume("enduro-e2e-ambox-processing"),
+		receipts:   dag.CacheVolume("enduro-e2e-ambox-receipts"),
 		storage:    dag.CacheVolume("enduro-e2e-ambox-storage"),
 		coverage:   dag.CacheVolume("enduro-e2e-ambox-coverage"),
 	}
@@ -200,6 +202,7 @@ func (m *EnduroE2E) objectStorageEnvironment(ctx context.Context, source *dagger
 		completed:  dag.CacheVolume(fmt.Sprintf("enduro-e2e-%s-completed", provider)),
 		transfers:  dag.CacheVolume(fmt.Sprintf("enduro-e2e-%s-transfers", provider)),
 		processing: dag.CacheVolume(fmt.Sprintf("enduro-e2e-%s-processing", provider)),
+		receipts:   dag.CacheVolume(fmt.Sprintf("enduro-e2e-%s-receipts", provider)),
 		storage:    dag.CacheVolume(fmt.Sprintf("enduro-e2e-%s-storage", provider)),
 		coverage:   dag.CacheVolume(fmt.Sprintf("enduro-e2e-%s-coverage", provider)),
 	}
@@ -299,14 +302,16 @@ func (m *EnduroE2E) runSmokeSuite(ctx context.Context, env *smokeEnvironment) (*
 		WithMountedCache("/runtime/batch", env.volumes.batch).
 		WithMountedCache("/runtime/watched", env.volumes.watched).
 		WithMountedCache("/runtime/completed", env.volumes.completed).
+		WithMountedCache("/runtime/receipts", env.volumes.receipts).
 		WithDirectory("/e2e", env.source.Directory("hack/dagger/smoke")).
 		WithEnvVariable("E2E_CACHE_BUSTER", env.cacheBuster).
 		WithEnvVariable("ENDURO_URL", "http://enduro:9000").
 		WithEnvVariable("TEMPORAL_ADDRESS", "temporal:7233").
 		WithEnvVariable("WATCHED_DIR", "/runtime/watched").
 		WithEnvVariable("BATCH_DIR", "/runtime/batch").
+		WithEnvVariable("RECEIPTS_DIR", "/runtime/receipts/out").
 		WithEnvVariable("ARTIFACTS_DIR", "/artifacts").
-		WithEnvVariable("BATCH_TRANSFER_NAME", fmt.Sprintf("batch-%s", env.cacheBuster)).
+		WithEnvVariable("BATCH_TRANSFER_NAME", fmt.Sprintf("avl-other-sip-2.16.578.1.39.100.11.%s-20260721", env.cacheBuster)).
 		WithEnvVariable("EXPECTED_PROCESSING_WORKFLOWS", "2").
 		WithEnvVariable("VERIFY_BATCH_WORKFLOW", "true").
 		WithEnvVariable("PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD", "1").
@@ -407,11 +412,12 @@ func (m *EnduroE2E) resetRuntime(ctx context.Context, volumes runtimeVolumes, ca
 		WithMountedCache("/runtime/completed", volumes.completed).
 		WithMountedCache("/runtime/transfers", volumes.transfers).
 		WithMountedCache("/runtime/processing", volumes.processing).
+		WithMountedCache("/runtime/receipts", volumes.receipts).
 		WithMountedCache("/runtime/storage", volumes.storage).
 		WithMountedCache("/runtime/coverage", volumes.coverage).
 		WithExec([]string{"sh", "-ceu", strings.TrimSpace(`
-			rm -rf /runtime/batch/* /runtime/watched/* /runtime/completed/* /runtime/transfers/* /runtime/processing/* /runtime/storage/* /runtime/coverage/*
-			mkdir -p /runtime/batch /runtime/watched /runtime/completed /runtime/transfers /runtime/processing /runtime/storage /runtime/coverage/raw
+			rm -rf /runtime/batch/* /runtime/watched/* /runtime/completed/* /runtime/transfers/* /runtime/processing/* /runtime/receipts/* /runtime/storage/* /runtime/coverage/*
+			mkdir -p /runtime/batch /runtime/watched /runtime/completed /runtime/transfers /runtime/processing /runtime/receipts /runtime/storage /runtime/coverage/raw
 		`)})
 
 	_, err := reset.Stdout(ctx)
@@ -628,6 +634,7 @@ func (m *EnduroE2E) enduroService(
 		WithMountedCache("/runtime/completed", volumes.completed).
 		WithMountedCache("/runtime/transfers", volumes.transfers).
 		WithMountedCache("/runtime/processing", volumes.processing).
+		WithMountedCache("/runtime/receipts", volumes.receipts).
 		WithMountedCache("/runtime/storage", volumes.storage).
 		WithMountedCache("/runtime/coverage", volumes.coverage).
 		WithEnvVariable("GOCOVERDIR", "/runtime/coverage/raw").
@@ -953,8 +960,8 @@ mock = true
 disabled = true
 
 [[hooks."prod"]]
-receiptPath = ""
-disabled = true
+receiptPath = "/runtime/receipts/out"
+disabled = false
 
 [metadata]
 processNameMetadata = false

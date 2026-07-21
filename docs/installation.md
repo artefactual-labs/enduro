@@ -90,8 +90,10 @@ more about the configuration details
 [Security Configuration](./security-configuration.md) guide before exposing
 Enduro to operators.
 
-By default, Enduro applies pending database migrations automatically when it
-starts. See [Database Migrations](./database-migrations.md) to manage migrations
+Before upgrading, follow the [Enduro upgrade procedure] to ensure that all
+Enduro Workflow Executions are closed. By default, Enduro applies pending
+database migrations automatically when it starts. See
+[Database migrations](./upgrades.md#database-migrations) to manage migrations
 manually or before downgrading Enduro to a release with an older database
 schema.
 
@@ -144,3 +146,4 @@ the API via cURL is `curl -Ls 127.0.0.1:9000/collection | jq`:
 [temporal-web-ui]: https://docs.temporal.io/web-ui
 [docker-restart-policy]: https://docs.docker.com/config/containers/start-containers-automatically/#use-a-restart-policy
 [enduro-release-page]: https://github.com/artefactual-labs/enduro/releases
+[Enduro upgrade procedure]: ./upgrades.md#upgrade-enduro

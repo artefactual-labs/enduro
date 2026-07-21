@@ -76,6 +76,11 @@ func HTTPServer(
 	collectionServer := collectionsvr.New(collectionEndpoints, mux, dec, enc, collectionErrorHandler, nil)
 	collectionServer.Monitor = middleware.WriteTimeout(0)(collectionServer.Monitor)
 	collectionServer.Download = middleware.WriteTimeout(0)(collectionServer.Download)
+	// TODO: Return 202 when Temporal accepts the update and expose completion
+	// status separately, so this handler can use a bounded write timeout.
+	// A decision waits for a worker to complete the durable workflow update, which
+	// can legitimately exceed the server's write timeout when workers are busy.
+	collectionServer.Decide = middleware.WriteTimeout(0)(collectionServer.Decide)
 	collectionsvr.Mount(mux, collectionServer)
 
 	// Swagger service.

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"go.uber.org/mock/gomock"
 	"gotest.tools/v3/assert"
@@ -40,7 +41,7 @@ func TestBulkWorkflowInputAction(t *testing.T) {
 				Status:    StatusPending,
 			},
 			wantAction:   bulkWorkflowActionDecide,
-			wantDecision: collectionDecisionRetryOnce,
+			wantDecision: string(ProcessingWorkflowDecisionRetryOnce),
 		},
 		"abandon pending collections via decision": {
 			params: BulkWorkflowInput{
@@ -48,7 +49,7 @@ func TestBulkWorkflowInputAction(t *testing.T) {
 				Status:    StatusPending,
 			},
 			wantAction:   bulkWorkflowActionDecide,
-			wantDecision: collectionDecisionAbandon,
+			wantDecision: string(ProcessingWorkflowDecisionAbandon),
 		},
 		"cancel queued collections": {
 			params: BulkWorkflowInput{
@@ -87,6 +88,30 @@ func TestBulkWorkflowInputAction(t *testing.T) {
 			assert.Equal(t, gotDecision, tc.wantDecision)
 		})
 	}
+}
+
+func TestBulkDecisionAllowsWorkflowUpdateRoundTrip(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+	colsvc := NewMockBulkCollectionService(ctrl)
+	colsvc.EXPECT().Decide(gomock.Any(), &goacollection.DecidePayload{
+		ID:     42,
+		Option: string(ProcessingWorkflowDecisionAbandon),
+	}).DoAndReturn(func(ctx context.Context, _ *goacollection.DecidePayload) error {
+		deadline, ok := ctx.Deadline()
+		assert.Assert(t, ok)
+		assert.Assert(t, time.Until(deadline) > time.Second)
+		return nil
+	})
+
+	err := newBulkActivity(colsvc).Decide(
+		context.Background(),
+		42,
+		string(ProcessingWorkflowDecisionAbandon),
+	)
+
+	assert.NilError(t, err)
 }
 
 func TestValidateBulkCancelCollection(t *testing.T) {

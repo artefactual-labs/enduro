@@ -9,7 +9,9 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/stretchr/testify/mock"
+	temporalsdk_client "go.temporal.io/sdk/client"
 	temporalsdk_mocks "go.temporal.io/sdk/mocks"
+	temporalsdk_temporal "go.temporal.io/sdk/temporal"
 	"gotest.tools/v3/assert"
 	"gotest.tools/v3/poll"
 
@@ -197,6 +199,140 @@ func TestGoaCancel(t *testing.T) {
 			assertGoaServiceErr(t, err, tc.wantErr, tc.wantNotFound)
 			assertCollectionEvent(t, sub, tc.wantEvent, EventTypeCollectionUpdated, 42)
 			client.AssertExpectations(t)
+		})
+	}
+}
+
+func TestGoaDecide(t *testing.T) {
+	t.Parallel()
+
+	errTemporal := errors.New("temporal error")
+	tests := map[string]struct {
+		row          *Collection
+		option       string
+		updateErr    error
+		resultErr    error
+		wantUpdate   bool
+		wantEvent    bool
+		wantNotFound bool
+		wantNotValid bool
+		wantErr      error
+	}{
+		"submits workflow update": {
+			row: &Collection{
+				ID:         42,
+				WorkflowID: "processing-workflow-42",
+				RunID:      "run-42",
+				Status:     StatusPending,
+			},
+			option:     string(ProcessingWorkflowDecisionRetryOnce),
+			wantUpdate: true,
+			wantEvent:  true,
+		},
+		"rejects collection that is not pending": {
+			row: &Collection{
+				ID:         42,
+				WorkflowID: "processing-workflow-42",
+				RunID:      "run-42",
+				Status:     StatusInProgress,
+			},
+			option:       string(ProcessingWorkflowDecisionRetryOnce),
+			wantNotValid: true,
+		},
+		"rejects unknown option": {
+			row: &Collection{
+				ID:         42,
+				WorkflowID: "processing-workflow-42",
+				RunID:      "run-42",
+				Status:     StatusPending,
+			},
+			option:       "UNKNOWN",
+			wantNotValid: true,
+		},
+		"returns workflow update error": {
+			row: &Collection{
+				ID:         42,
+				WorkflowID: "processing-workflow-42",
+				RunID:      "run-42",
+				Status:     StatusPending,
+			},
+			option:     string(ProcessingWorkflowDecisionAbandon),
+			updateErr:  errTemporal,
+			wantUpdate: true,
+			wantErr:    errTemporal,
+		},
+		"maps workflow rejection to not valid": {
+			row: &Collection{
+				ID:         42,
+				WorkflowID: "processing-workflow-42",
+				RunID:      "run-42",
+				Status:     StatusPending,
+			},
+			option:       string(ProcessingWorkflowDecisionAbandon),
+			resultErr:    temporalsdk_temporal.NewApplicationError("workflow is not awaiting an operator decision", ""),
+			wantUpdate:   true,
+			wantNotValid: true,
+		},
+		"returns not found": {
+			option:       string(ProcessingWorkflowDecisionAbandon),
+			wantNotFound: true,
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			ctx := context.Background()
+			recorder := newExecRecorderDB(t)
+			recorder.row = tc.row
+			client := &temporalsdk_mocks.Client{}
+			handle := &temporalsdk_mocks.WorkflowUpdateHandle{}
+
+			if tc.wantUpdate {
+				decision, err := ParseProcessingWorkflowDecision(tc.option)
+				assert.NilError(t, err)
+				client.On(
+					"UpdateWorkflow",
+					mock.Anything,
+					temporalsdk_client.UpdateWorkflowOptions{
+						WorkflowID:   tc.row.WorkflowID,
+						RunID:        tc.row.RunID,
+						UpdateName:   ProcessingWorkflowDecisionUpdateName,
+						Args:         []any{decision},
+						WaitForStage: temporalsdk_client.WorkflowUpdateStageCompleted,
+					},
+				).Return(handle, tc.updateErr).Once()
+				if tc.updateErr == nil {
+					handle.On("Get", mock.Anything, nil).Return(tc.resultErr).Once()
+				}
+			}
+
+			events := NewEventService()
+			sub, err := events.Subscribe(ctx)
+			assert.NilError(t, err)
+			defer sub.Close()
+
+			svc := NewService(testLogger(), recorder.db, client, "", nil)
+			svc.events = events
+			err = svc.Goa().Decide(ctx, &goacollection.DecidePayload{ID: 42, Option: tc.option})
+
+			if tc.wantNotFound {
+				var notFound *goacollection.CollectionNotfound
+				assert.Assert(t, errors.As(err, &notFound))
+			} else if tc.wantNotValid {
+				var named interface{ GoaErrorName() string }
+				assert.Assert(t, errors.As(err, &named))
+				assert.Equal(t, named.GoaErrorName(), "not_valid")
+			} else if tc.wantErr != nil {
+				assert.ErrorIs(t, err, tc.wantErr)
+			} else {
+				assert.NilError(t, err)
+			}
+
+			assertCollectionEvent(t, sub, tc.wantEvent, EventTypeCollectionUpdated, 42)
+			client.AssertExpectations(t)
+			handle.AssertExpectations(t)
 		})
 	}
 }

@@ -127,14 +127,14 @@ func TestSetStatusDoesNotDuplicateTransition(t *testing.T) {
 	assert.Assert(t, recorder.committed)
 }
 
-func TestSetStatusPendingRecordsOperatorDecision(t *testing.T) {
+func TestSetStatusRecordsOperatorDecision(t *testing.T) {
 	t.Parallel()
 
 	recorder := newExecRecorderDB(t)
 	recorder.row = &Collection{WorkflowID: "workflow-42", RunID: "run-42", Status: StatusInProgress}
 	svc := NewService(testLogger(), recorder.db, nil, "", nil)
 
-	err := svc.SetStatusPending(context.Background(), 42, []byte("task-token"))
+	err := svc.SetStatus(context.Background(), 42, StatusPending)
 
 	assert.NilError(t, err)
 	assert.DeepEqual(t, recorder.execArgsList[1], []any{
@@ -514,7 +514,6 @@ func (r *collectionRows) Columns() []string {
 		"aip_id",
 		"original_id",
 		"pipeline_id",
-		"decision_token",
 		"status",
 		"created_at",
 		"started_at",
@@ -545,7 +544,6 @@ func (r *collectionRows) Next(dest []driver.Value) error {
 		r.row.AIPID,
 		r.row.OriginalID,
 		r.row.PipelineID,
-		r.row.DecisionToken,
 		int64(r.row.Status),
 		r.row.CreatedAt,
 		nullTimeValue(r.row.StartedAt),

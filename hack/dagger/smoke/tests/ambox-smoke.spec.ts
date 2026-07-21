@@ -10,6 +10,7 @@ const enduroURL = process.env.ENDURO_URL ?? "http://enduro:9000";
 const temporalAddress = process.env.TEMPORAL_ADDRESS ?? "temporal:7233";
 const watchedDir = process.env.WATCHED_DIR ?? "/runtime/watched";
 const batchDir = process.env.BATCH_DIR ?? "/runtime/batch";
+const receiptsDir = process.env.RECEIPTS_DIR ?? "/runtime/receipts/out";
 const artifactsDir = process.env.ARTIFACTS_DIR ?? "/artifacts";
 const cacheBuster = process.env.E2E_CACHE_BUSTER ?? `${Date.now()}`;
 const expectedProcessingWorkflows = Number(
@@ -17,7 +18,8 @@ const expectedProcessingWorkflows = Number(
 );
 const verifyBatchWorkflow = process.env.VERIFY_BATCH_WORKFLOW === "true";
 const batchTransferName =
-  process.env.BATCH_TRANSFER_NAME ?? `batch-${cacheBuster}`;
+  process.env.BATCH_TRANSFER_NAME ??
+  `avl-other-sip-2.16.578.1.39.100.11.${cacheBuster}-20260721`;
 
 type Collection = {
   id: number;
@@ -30,13 +32,16 @@ test.beforeAll(async () => {
   await fs.mkdir(artifactsDir, { recursive: true });
 });
 
-test("filesystem watcher transfer completes and produces an AIP", async ({
+test("filesystem transfer resumes after a prod receipt decision", async ({
   request,
 }) => {
   const runID = `e2e-${Math.floor(Date.now() / 1000)}`;
-  const transferName = `${runID}.zip`;
+  const receiptIdentifier = `2.16.578.1.39.100.11.${Date.now()}`;
+  const transferName = `avl-other-sip-${receiptIdentifier}-20260721.xml.zip`;
 
   await test.step("submit a zipped transfer through the watched directory", async () => {
+    await fs.rm(receiptsDir, { recursive: true, force: true });
+
     const stageDir = `/tmp/${runID}`;
     await fs.rm(stageDir, { recursive: true, force: true });
     await fs.mkdir(path.join(stageDir, "objects"), { recursive: true });
@@ -56,10 +61,64 @@ test("filesystem watcher transfer completes and produces an AIP", async ({
     console.log(`submitted ${transferName}`);
   });
 
+  const pendingCollection = await waitForCollectionStatus(
+    request,
+    transferName,
+    "pending",
+    {
+      artifactPrefix: "",
+      logPrefix: "collection",
+    },
+  );
+
+  await test.step("repair prod delivery and submit a retry decision", async () => {
+    await fs.mkdir(receiptsDir, { recursive: true });
+
+    const response = await request.post(
+      `${enduroURL}/collection/${pendingCollection.id}/decision`,
+      { data: { option: "RETRY_ONCE" } },
+    );
+    const body = await response.text();
+    await writeTextArtifact(
+      "decision-response.txt",
+      [
+        `collection_id=${pendingCollection.id}`,
+        "option=RETRY_ONCE",
+        `status=${response.status()}`,
+        `status_text=${response.statusText()}`,
+        "body=",
+        body,
+      ].join("\n") + "\n",
+    );
+    expect(response.ok(), body).toBeTruthy();
+  });
+
   const collection = await waitForCollectionDone(request, transferName, {
     artifactPrefix: "",
     logPrefix: "collection",
   });
+
+  const receiptFiles = await fs.readdir(receiptsDir);
+  const receiptName = receiptFiles.find(
+    (name) =>
+      name.startsWith(`Receipt_${receiptIdentifier}_`) &&
+      name.endsWith(".mft"),
+  );
+  expect(receiptName).toBeTruthy();
+
+  const receiptPath = path.join(receiptsDir, receiptName ?? "");
+  const receipt = JSON.parse(await fs.readFile(receiptPath, "utf8"));
+  expect(receipt).toMatchObject({
+    identifier: receiptIdentifier,
+    type: "avlxml",
+    accepted: true,
+    message: "Package was processed by Archivematica pipeline ambox",
+  });
+  await fs.copyFile(
+    receiptPath,
+    path.join(artifactsDir, "production-receipt.mft"),
+  );
+  await writeJSONArtifact("production-receipt.json", receipt);
 
   await downloadAndInspectAIP(request, {
     collection,
@@ -75,6 +134,7 @@ test("filesystem watcher transfer completes and produces an AIP", async ({
       `transfer_name=${transferName}`,
       `collection_id=${collection.id}`,
       `status=${collection.status}`,
+      `receipt=${receiptName}`,
     ].join("\n") + "\n",
   );
 });
@@ -195,6 +255,7 @@ test("Temporal histories include the expected workflow activities", async () => 
     expectedProcessingWorkflows,
   );
 
+  let hasDecisionUpdate = false;
   for (const workflowID of processingIDs) {
     const history = await runTemporal([
       "workflow",
@@ -219,7 +280,19 @@ test("Temporal histories include the expected workflow activities", async () => 
     expect(history).toMatch(
       /WorkflowExecutionCompleted|EVENT_TYPE_WORKFLOW_EXECUTION_COMPLETED/,
     );
+
+    const hasAcceptedUpdate =
+      /WorkflowExecutionUpdateAccepted|EVENT_TYPE_WORKFLOW_EXECUTION_UPDATE_ACCEPTED/.test(
+        history,
+      );
+    const hasCompletedUpdate =
+      /WorkflowExecutionUpdateCompleted|EVENT_TYPE_WORKFLOW_EXECUTION_UPDATE_COMPLETED/.test(
+        history,
+      );
+    hasDecisionUpdate ||= hasAcceptedUpdate && hasCompletedUpdate;
   }
+
+  expect(hasDecisionUpdate).toBeTruthy();
 
   const firstHistoryPath = path.join(
     temporalArtifactsDir,
@@ -264,6 +337,7 @@ test("Temporal histories include the expected workflow activities", async () => 
     "has_publish_transfer_activity=true",
     "has_cleanup_published_transfer_activity=true",
     "has_transfer_activity=true",
+    `has_decision_update=${hasDecisionUpdate}`,
     `has_batch_activity=${hasBatchActivity}`,
     "workflow_completed=true",
   ].join("\n") + "\n";
@@ -275,6 +349,15 @@ test("Temporal histories include the expected workflow activities", async () => 
 async function waitForCollectionDone(
   request: APIRequestContext,
   transferName: string,
+  opts: { artifactPrefix: string; logPrefix: string },
+): Promise<Collection> {
+  return waitForCollectionStatus(request, transferName, "done", opts);
+}
+
+async function waitForCollectionStatus(
+  request: APIRequestContext,
+  transferName: string,
+  expectedStatus: string,
   opts: { artifactPrefix: string; logPrefix: string },
 ): Promise<Collection> {
   let lastStatus = "";
@@ -344,7 +427,7 @@ async function waitForCollectionDone(
       console.log(`${opts.logPrefix} poll error for ${transferName}: ${lastError}`);
     }
 
-    if (lastStatus === "done") {
+    if (lastStatus === expectedStatus) {
       return { id: lastCollectionID, status: lastStatus };
     }
 
@@ -361,7 +444,8 @@ async function waitForCollectionDone(
   }
 
   throw new Error(
-    `timed out waiting for ${transferName}; last status=${lastStatus || "missing"}`,
+    `timed out waiting for ${transferName} to become ${expectedStatus}; ` +
+      `last status=${lastStatus || "missing"}`,
   );
 }
 

@@ -290,6 +290,11 @@ func (w *ProcessingWorkflow) Execute(ctx temporalsdk_workflow.Context, req *coll
 		}
 	}()
 
+	decisions, err := newOperatorDecisionHandler(ctx)
+	if err != nil {
+		return err
+	}
+
 	// Reject duplicate collection if applicable.
 	{
 		if req.RejectDuplicates {
@@ -360,7 +365,7 @@ func (w *ProcessingWorkflow) Execute(ctx temporalsdk_workflow.Context, req *coll
 			// error is seen when the session worker dies.
 			timer := NewTimer()
 
-			sessErr = w.SessionHandler(sessCtx, attempt, tinfo, nameInfo, req.ValidationConfig, timer, req)
+			sessErr = w.SessionHandler(sessCtx, attempt, tinfo, nameInfo, req.ValidationConfig, timer, decisions, req)
 
 			// We want to retry the session if it has been canceled as a result
 			// of losing the worker but not otherwise. This scenario seems to be
@@ -392,7 +397,7 @@ func (w *ProcessingWorkflow) Execute(ctx temporalsdk_workflow.Context, req *coll
 		if sessErr != nil {
 			status = collection.StatusError
 
-			if errors.Is(sessErr, ErrAsyncCompletionAbandoned) {
+			if errors.Is(sessErr, ErrOperatorDecisionAbandoned) {
 				status = collection.StatusAbandoned
 			}
 
@@ -465,7 +470,7 @@ func finalCollectionStatus(status collection.Status, canceled bool) collection.S
 }
 
 // SessionHandler runs activities that belong to the same session.
-func (w *ProcessingWorkflow) SessionHandler(sessCtx temporalsdk_workflow.Context, attempt int, tinfo *TransferInfo, nameInfo nha.NameInfo, validationConfig validation.Config, timer *Timer, req *collection.ProcessingWorkflowRequest) error {
+func (w *ProcessingWorkflow) SessionHandler(sessCtx temporalsdk_workflow.Context, attempt int, tinfo *TransferInfo, nameInfo nha.NameInfo, validationConfig validation.Config, timer *Timer, decisions *operatorDecisionHandler, req *collection.ProcessingWorkflowRequest) error {
 	defer temporalsdk_workflow.CompleteSession(sessCtx)
 
 	var release releaser
@@ -513,7 +518,7 @@ func (w *ProcessingWorkflow) SessionHandler(sessCtx temporalsdk_workflow.Context
 			}
 			defer cleanupPreparedFiles()
 
-			err = w.sendReceipts(sessCtx, &sendReceiptsParams{
+			err = w.sendReceipts(sessCtx, decisions, &sendReceiptsParams{
 				SIPID:        tinfo.SIPID,
 				StoredAt:     tinfo.StoredAt,
 				FullPath:     tinfo.Bundle.FullPath,
@@ -635,7 +640,7 @@ func (w *ProcessingWorkflow) SessionHandler(sessCtx temporalsdk_workflow.Context
 
 	// Deliver receipts.
 	{
-		err := w.sendReceipts(sessCtx, &sendReceiptsParams{
+		err := w.sendReceipts(sessCtx, decisions, &sendReceiptsParams{
 			SIPID:        tinfo.SIPID,
 			StoredAt:     tinfo.StoredAt,
 			FullPath:     tinfo.Bundle.FullPath,

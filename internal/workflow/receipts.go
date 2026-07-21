@@ -21,7 +21,7 @@ type sendReceiptsParams struct {
 	CollectionID uint
 }
 
-func (w *ProcessingWorkflow) sendReceipts(ctx temporalsdk_workflow.Context, params *sendReceiptsParams) error {
+func (w *ProcessingWorkflow) sendReceipts(ctx temporalsdk_workflow.Context, decisions *operatorDecisionHandler, params *sendReceiptsParams) error {
 	if disabled, _ := hooks.HookAttrBool(w.hooks.Hooks, "hari", "disabled"); !disabled {
 		opts := temporalsdk_workflow.ActivityOptions{
 			StartToCloseTimeout: time.Minute * 20,
@@ -29,13 +29,13 @@ func (w *ProcessingWorkflow) sendReceipts(ctx temporalsdk_workflow.Context, para
 				MaximumAttempts: 1,
 			},
 		}
-		err := executeActivityWithAsyncErrorHandling(ctx, w.colsvc, params.CollectionID, opts, nha_activities.UpdateHARIActivityName, &nha_activities.UpdateHARIActivityParams{
+		err := executeActivityWithOperatorDecision(ctx, decisions, w.colsvc, params.CollectionID, opts, nha_activities.UpdateHARIActivityName, &nha_activities.UpdateHARIActivityParams{
 			SIPID:        params.SIPID,
 			StoredAt:     params.StoredAt,
 			FullPath:     params.FullPath,
 			PipelineName: params.PipelineName,
 			NameInfo:     params.NameInfo,
-		}).Get(ctx, nil)
+		})
 		if err != nil {
 			return fmt.Errorf("error sending hari receipt: %w", err)
 		}
@@ -48,12 +48,12 @@ func (w *ProcessingWorkflow) sendReceipts(ctx temporalsdk_workflow.Context, para
 				MaximumAttempts: 1,
 			},
 		}
-		err := executeActivityWithAsyncErrorHandling(ctx, w.colsvc, params.CollectionID, opts, nha_activities.UpdateProductionSystemActivityName, &nha_activities.UpdateProductionSystemActivityParams{
+		err := executeActivityWithOperatorDecision(ctx, decisions, w.colsvc, params.CollectionID, opts, nha_activities.UpdateProductionSystemActivityName, &nha_activities.UpdateProductionSystemActivityParams{
 			StoredAt:     params.StoredAt,
 			PipelineName: params.PipelineName,
 			NameInfo:     params.NameInfo,
 			FullPath:     params.FullPath,
-		}).Get(ctx, nil)
+		})
 		if err != nil {
 			return fmt.Errorf("error sending prod receipt: %w", err)
 		}
