@@ -1,10 +1,56 @@
-# Database Migrations
+# Upgrades
+
+Enduro upgrades require coordination between its durable Workflow Executions
+and database schema migrations.
+
+## Upgrade Enduro
+
+Enduro does not currently support rolling upgrades or mixed-version
+deployments. Before installing a new release, allow every Enduro Workflow
+Execution to close. Stopping Enduro does not close Workflow Executions;
+Temporal retains them and resumes them when a worker becomes available again.
+
+Use the following procedure for every upgrade:
+
+1. Pause all sources of new work, including watcher inputs, API submissions,
+   and batch or bulk operations. Keep the current Enduro workers running so
+   that existing work can finish.
+2. Resolve pending operator decisions and wait for every Enduro Workflow
+   Execution to close. A collection shown as `done` can still have an open
+   Workflow Execution while it waits on a retention timer.
+3. Use Temporal Web or the Temporal CLI to verify that the following Visibility
+   query returns no Workflow Executions:
+
+   ```text
+   ExecutionStatus = "Running" AND WorkflowType IN (
+     "processing-workflow",
+     "collection-bulk-workflow",
+     "batch-workflow"
+   )
+   ```
+
+4. Stop every Enduro instance, back up the Enduro database, and install the new
+   release. Apply its database migrations before starting the new release when
+   automatic migrations are disabled.
+
+Do not proceed with the upgrade while the query returns any Workflow
+Executions. Supporting mixed Enduro versions without this downtime requires
+additional workflow, worker, and schema compatibility work. Rolling-upgrade
+support is future work that must be planned and validated against customer
+deployment requirements.
+
+After upgrading, do not use Temporal Reset to reopen a Workflow Execution
+created by an earlier Enduro release. Its Event History belongs to the earlier
+workflow implementation and may not be compatible with the new release. Use
+Enduro's supported retry and recovery operations instead.
+
+## Database migrations
 
 Enduro uses [golang-migrate] to manage its MySQL schema. Migration files are
 embedded in the Enduro binary, and the current migration version is stored in
 the `schema_migrations` table.
 
-## Choose a migration mode
+### Choose a migration mode
 
 By default, `database.autoMigrate` is `true` and Enduro applies pending up
 migrations automatically when it starts. This is the recommended mode for
@@ -36,7 +82,7 @@ The standalone CLI needs migration files on disk; it cannot read the files
 embedded in the Enduro binary. Enduro release archives therefore include the
 `internal/db/migrations` directory.
 
-## Roll back migrations
+### Roll back migrations
 
 Enduro never rolls back migrations automatically, regardless of the migration
 mode. Use the `migrate` command from golang-migrate before installing an older

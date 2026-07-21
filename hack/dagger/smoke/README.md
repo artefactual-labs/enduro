@@ -9,6 +9,7 @@ the service after the scenarios complete, and exports a coverage profile with
 the rest of the artifacts. The tests own the user-visible scenarios:
 
 - submit a zip through the filesystem watcher,
+- recover a failed production-system receipt with an operator decision,
 - submit a directory through the Nuxt batch-import form,
 - wait for Enduro collections to complete,
 - download each generated AIP and inspect its METS file,

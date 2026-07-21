@@ -20,6 +20,7 @@ const (
 	BulkWorkflowID                = "collection-bulk-workflow"
 	BulkWorkflowStateQueryHandler = "collection-bulk-state"
 	BulkActivityName              = "collection-bulk-activity"
+	bulkDecisionTimeout           = 30 * time.Second
 )
 
 // BulkProgress reports bulk operation status - delivered as heartbeats.
@@ -43,11 +44,6 @@ const (
 	bulkWorkflowActionRetry bulkWorkflowAction = iota
 	bulkWorkflowActionDecide
 	bulkWorkflowActionCancel
-)
-
-const (
-	collectionDecisionAbandon   = "ABANDON"
-	collectionDecisionRetryOnce = "RETRY_ONCE"
 )
 
 var errBulkCancelSkipped = errors.New("bulk cancel skipped")
@@ -78,11 +74,11 @@ func bulkWorkflowInputAction(params BulkWorkflowInput) (bulkWorkflowAction, stri
 		case StatusError, StatusAbandoned:
 			return bulkWorkflowActionRetry, "", nil
 		case StatusPending:
-			return bulkWorkflowActionDecide, collectionDecisionRetryOnce, nil
+			return bulkWorkflowActionDecide, string(ProcessingWorkflowDecisionRetryOnce), nil
 		}
 	case BulkWorkflowOperationAbandon:
 		if params.Status == StatusPending {
-			return bulkWorkflowActionDecide, collectionDecisionAbandon, nil
+			return bulkWorkflowActionDecide, string(ProcessingWorkflowDecisionAbandon), nil
 		}
 	case BulkWorkflowOperationCancel:
 		if params.Status == StatusQueued {
@@ -261,7 +257,7 @@ func (a *BulkActivity) Retry(ctx context.Context, ID uint) error {
 }
 
 func (a *BulkActivity) Decide(ctx context.Context, ID uint, option string) error {
-	ctx, cancel := context.WithTimeout(ctx, time.Second)
+	ctx, cancel := context.WithTimeout(ctx, bulkDecisionTimeout)
 	defer cancel()
 
 	return a.colsvc.Decide(ctx, &collection.DecidePayload{

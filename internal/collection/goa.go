@@ -16,6 +16,7 @@ import (
 	temporalapi_enums "go.temporal.io/api/enums/v1"
 	temporalapi_serviceerror "go.temporal.io/api/serviceerror"
 	temporalsdk_client "go.temporal.io/sdk/client"
+	temporalsdk_temporal "go.temporal.io/sdk/temporal"
 
 	goacollection "github.com/artefactual-labs/enduro/internal/api/gen/collection"
 	"github.com/artefactual-labs/enduro/internal/pipeline"
@@ -445,15 +446,30 @@ func (w *goaWrapper) Decide(ctx context.Context, payload *goacollection.DecidePa
 		return err
 	}
 
-	if len(c.DecisionToken) == 0 || c.Status != StatusPending {
+	if c.Status != StatusPending {
 		return goacollection.MakeNotValid(errors.New("collection is not awaiting decision"))
 	}
 
-	if payload.Option == "" {
-		return goacollection.MakeNotValid(errors.New("missing decision option"))
+	decision, err := ParseProcessingWorkflowDecision(payload.Option)
+	if err != nil {
+		return goacollection.MakeNotValid(err)
 	}
 
-	if err := w.cc.CompleteActivity(ctx, []byte(c.DecisionToken), payload.Option, nil); err != nil {
+	handle, err := w.cc.UpdateWorkflow(ctx, temporalsdk_client.UpdateWorkflowOptions{
+		WorkflowID:   c.WorkflowID,
+		RunID:        c.RunID,
+		UpdateName:   ProcessingWorkflowDecisionUpdateName,
+		Args:         []any{decision},
+		WaitForStage: temporalsdk_client.WorkflowUpdateStageCompleted,
+	})
+	if err != nil {
+		return err
+	}
+	if err := handle.Get(ctx, nil); err != nil {
+		var applicationErr *temporalsdk_temporal.ApplicationError
+		if errors.As(err, &applicationErr) {
+			return goacollection.MakeNotValid(err)
+		}
 		return err
 	}
 

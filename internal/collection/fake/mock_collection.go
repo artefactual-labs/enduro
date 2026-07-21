@@ -272,44 +272,6 @@ func (c *MockServiceSetStatusInProgressCall) DoAndReturn(f func(context.Context,
 	return c
 }
 
-// SetStatusPending mocks base method.
-func (m *MockService) SetStatusPending(ctx context.Context, ID uint, taskToken []byte) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SetStatusPending", ctx, ID, taskToken)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// SetStatusPending indicates an expected call of SetStatusPending.
-func (mr *MockServiceMockRecorder) SetStatusPending(ctx, ID, taskToken any) *MockServiceSetStatusPendingCall {
-	mr.mock.ctrl.T.Helper()
-	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetStatusPending", reflect.TypeOf((*MockService)(nil).SetStatusPending), ctx, ID, taskToken)
-	return &MockServiceSetStatusPendingCall{Call: call}
-}
-
-// MockServiceSetStatusPendingCall wrap *gomock.Call
-type MockServiceSetStatusPendingCall struct {
-	*gomock.Call
-}
-
-// Return rewrite *gomock.Call.Return
-func (c *MockServiceSetStatusPendingCall) Return(arg0 error) *MockServiceSetStatusPendingCall {
-	c.Call = c.Call.Return(arg0)
-	return c
-}
-
-// Do rewrite *gomock.Call.Do
-func (c *MockServiceSetStatusPendingCall) Do(f func(context.Context, uint, []byte) error) *MockServiceSetStatusPendingCall {
-	c.Call = c.Call.Do(f)
-	return c
-}
-
-// DoAndReturn rewrite *gomock.Call.DoAndReturn
-func (c *MockServiceSetStatusPendingCall) DoAndReturn(f func(context.Context, uint, []byte) error) *MockServiceSetStatusPendingCall {
-	c.Call = c.Call.DoAndReturn(f)
-	return c
-}
-
 // UpdateReconciliationState mocks base method.
 func (m *MockService) UpdateReconciliationState(ctx context.Context, ID uint, aipStoredAt, checkedAt *time.Time, status, errMsg *string) error {
 	m.ctrl.T.Helper()

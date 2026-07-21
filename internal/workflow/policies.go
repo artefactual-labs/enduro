@@ -87,23 +87,11 @@ func withLocalActivityOpts(ctx temporalsdk_workflow.Context) temporalsdk_workflo
 	})
 }
 
-// withActivityOptsForAsyncCompletion returns a workflow context with activity
+// withLocalActivityWithoutRetriesOpts returns a workflow context with activity
 // options for local and short-lived activities that don't deserve retries.
 func withLocalActivityWithoutRetriesOpts(ctx temporalsdk_workflow.Context) temporalsdk_workflow.Context {
 	return temporalsdk_workflow.WithLocalActivityOptions(ctx, temporalsdk_workflow.LocalActivityOptions{
 		ScheduleToCloseTimeout: 5 * time.Second,
-		RetryPolicy: &temporalsdk_temporal.RetryPolicy{
-			MaximumAttempts: 1,
-		},
-	})
-}
-
-// withActivityOptsForAsyncCompletion returns a workflow context with activity
-// options suited for asynchronous completion, embracing the fact that users
-// can be away from keyboard for long periods (weekends, holidays...).
-func withActivityOptsForAsyncCompletion(ctx temporalsdk_workflow.Context) temporalsdk_workflow.Context {
-	return temporalsdk_workflow.WithActivityOptions(ctx, temporalsdk_workflow.ActivityOptions{
-		StartToCloseTimeout: time.Hour * 24 * 7,
 		RetryPolicy: &temporalsdk_temporal.RetryPolicy{
 			MaximumAttempts: 1,
 		},

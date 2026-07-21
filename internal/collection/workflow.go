@@ -19,6 +19,33 @@ import (
 // ProcessingWorkflowName is the name of the collection processing workflow.
 const ProcessingWorkflowName = "processing-workflow"
 
+// ProcessingWorkflowDecisionUpdateName identifies the Workflow Update used to
+// submit an operator decision to a running processing workflow.
+const ProcessingWorkflowDecisionUpdateName = "processing-workflow-decision"
+
+// ProcessingWorkflowDecision is an operator's response to a failed processing
+// activity.
+type ProcessingWorkflowDecision string
+
+const (
+	ProcessingWorkflowDecisionRetry     ProcessingWorkflowDecision = "RETRY"
+	ProcessingWorkflowDecisionRetryOnce ProcessingWorkflowDecision = "RETRY_ONCE"
+	ProcessingWorkflowDecisionAbandon   ProcessingWorkflowDecision = "ABANDON"
+)
+
+// ParseProcessingWorkflowDecision validates and converts a decision option.
+func ParseProcessingWorkflowDecision(option string) (ProcessingWorkflowDecision, error) {
+	decision := ProcessingWorkflowDecision(option)
+	switch decision {
+	case ProcessingWorkflowDecisionRetry,
+		ProcessingWorkflowDecisionRetryOnce,
+		ProcessingWorkflowDecisionAbandon:
+		return decision, nil
+	default:
+		return "", fmt.Errorf("unknown decision option %q", option)
+	}
+}
+
 type RetryMode string
 
 const (

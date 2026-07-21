@@ -25,7 +25,6 @@ type Service interface {
 	UpdateReconciliationState(ctx context.Context, ID uint, aipStoredAt, checkedAt *time.Time, status, errMsg *string) error
 	SetStatus(ctx context.Context, ID uint, status Status) error
 	SetStatusInProgress(ctx context.Context, ID uint, startedAt time.Time) error
-	SetStatusPending(ctx context.Context, ID uint, taskToken []byte) error
 	SetOriginalID(ctx context.Context, ID uint, originalID string) error
 }
 
@@ -67,7 +66,7 @@ func (svc *collectionImpl) Create(ctx context.Context, col *Collection) error {
 	}
 	defer func() { _ = tx.Rollback() }()
 
-	query := `INSERT INTO collection (name, workflow_id, run_id, transfer_id, aip_id, original_id, pipeline_id, decision_token, status) VALUES ((?), (?), (?), (?), (?), (?), (?), (?), (?))`
+	query := `INSERT INTO collection (name, workflow_id, run_id, transfer_id, aip_id, original_id, pipeline_id, status) VALUES ((?), (?), (?), (?), (?), (?), (?), (?))`
 	args := []any{
 		col.Name,
 		col.WorkflowID,
@@ -76,7 +75,6 @@ func (svc *collectionImpl) Create(ctx context.Context, col *Collection) error {
 		col.AIPID,
 		col.OriginalID,
 		col.PipelineID,
-		col.DecisionToken,
 		col.Status,
 	}
 
@@ -225,23 +223,6 @@ func (svc *collectionImpl) SetStatusInProgress(ctx context.Context, ID uint, sta
 	return nil
 }
 
-func (svc *collectionImpl) SetStatusPending(ctx context.Context, ID uint, taskToken []byte) error {
-	query := `UPDATE collection SET status = (?), decision_token = (?) WHERE id = (?)`
-	args := []any{
-		StatusPending,
-		taskToken,
-		ID,
-	}
-
-	if err := svc.updateCurrentRunStatus(ctx, ID, StatusPending, query, args); err != nil {
-		return err
-	}
-
-	publishEvent(ctx, svc.events, EventTypeCollectionUpdated, ID)
-
-	return nil
-}
-
 func (svc *collectionImpl) SetOriginalID(ctx context.Context, ID uint, originalID string) error {
 	query := `UPDATE collection SET original_id = (?) WHERE id = (?)`
 	args := []any{
@@ -288,7 +269,7 @@ func updateRowTx(ctx context.Context, tx *sqlx.Tx, query string, args []any) err
 }
 
 func (svc *collectionImpl) read(ctx context.Context, ID uint) (*Collection, error) {
-	query := "SELECT id, name, workflow_id, run_id, transfer_id, aip_id, original_id, pipeline_id, decision_token, status, CONVERT_TZ(created_at, @@session.time_zone, '+00:00') AS created_at, CONVERT_TZ(started_at, @@session.time_zone, '+00:00') AS started_at, CONVERT_TZ(completed_at, @@session.time_zone, '+00:00') AS completed_at, CONVERT_TZ(aip_stored_at, @@session.time_zone, '+00:00') AS aip_stored_at, reconciliation_status, CONVERT_TZ(reconciliation_checked_at, @@session.time_zone, '+00:00') AS reconciliation_checked_at, reconciliation_error FROM collection WHERE id = (?)"
+	query := "SELECT id, name, workflow_id, run_id, transfer_id, aip_id, original_id, pipeline_id, status, CONVERT_TZ(created_at, @@session.time_zone, '+00:00') AS created_at, CONVERT_TZ(started_at, @@session.time_zone, '+00:00') AS started_at, CONVERT_TZ(completed_at, @@session.time_zone, '+00:00') AS completed_at, CONVERT_TZ(aip_stored_at, @@session.time_zone, '+00:00') AS aip_stored_at, reconciliation_status, CONVERT_TZ(reconciliation_checked_at, @@session.time_zone, '+00:00') AS reconciliation_checked_at, reconciliation_error FROM collection WHERE id = (?)"
 	args := []any{ID}
 	c := Collection{}
 
