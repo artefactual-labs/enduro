@@ -447,8 +447,8 @@ github.com/yuin/gopher-lua v1.1.1 h1:kYKnWBjvbNP4XLT3+bPEwAXJx262OhaHDWDVOPjL46M
 github.com/yuin/gopher-lua v1.1.1/go.mod h1:GBR0iDaNXjAgGg9zfCvksxSRnQx76gclCIb7kdAd1Pw=
 github.com/zeebo/xxh3 v1.1.0 h1:s7DLGDK45Dyfg7++yxI0khrfwq9661w9EN78eP/UZVs=
 github.com/zeebo/xxh3 v1.1.0/go.mod h1:IisAie1LELR4xhVinxWS5+zf1lA4p0MW4T+w+W07F5s=
-go.artefactual.dev/amclient v0.4.0 h1:B/VeBJ72R5zTzcSk5ErrQnrcUYkUd+M30I5ga+YZkjI=
-go.artefactual.dev/amclient v0.4.0/go.mod h1:oAOlZHC78IWjWDCqRM1/8K1x/WYmRUL3peujKCdoXaA=
+go.artefactual.dev/amclient v0.5.0 h1:qMxc/9VRRONtRIAXs+qHs3PCDhClGZjQHqjBwjsv/w8=
+go.artefactual.dev/amclient v0.5.0/go.mod h1:v2rDC3LY33Yaf8CYB+dP7Q0Rkwco6orEpvbnFMtiuL4=
 go.artefactual.dev/ssclient v0.11.0 h1:mRjB8J0IQ+gjg6ICtZxJm+whG56tvIyxT+x4bO6CQGc=
 go.artefactual.dev/ssclient v0.11.0/go.mod h1:0tO5nOwQ8naw+GcPBi2A7lXzPt4HUn7MPXqQwi7H3jY=
 go.artefactual.dev/tools v0.25.1 h1:kpnaIyv+60ip0IdaY4V1S6B6A+NQzVOHS+CGubp/kWw=
