@@ -14,7 +14,7 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request body for submit.
  * @export
  * @interface SubmitRequestBody
  */

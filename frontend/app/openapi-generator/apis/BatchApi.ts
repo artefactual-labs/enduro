@@ -98,7 +98,7 @@ export interface BatchApiInterface {
     /**
      * Submit a new batch
      * @summary submit batch
-     * @param {SubmitRequestBody} submitRequestBody 
+     * @param {SubmitRequestBody} submitRequestBody Request body for submit.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof BatchApiInterface

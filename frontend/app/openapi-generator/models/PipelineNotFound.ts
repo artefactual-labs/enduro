@@ -14,7 +14,7 @@
 
 import { mapValues } from '../runtime';
 /**
- * Pipeline not found.
+ * Pipeline not found
  * @export
  * @interface PipelineNotFound
  */

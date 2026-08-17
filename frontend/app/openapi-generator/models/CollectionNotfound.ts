@@ -14,7 +14,7 @@
 
 import { mapValues } from '../runtime';
 /**
- * Collection not found.
+ * Collection not found
  * @export
  * @interface CollectionNotfound
  */

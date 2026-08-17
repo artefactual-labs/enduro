@@ -111,7 +111,7 @@ export interface CollectionApiInterface {
     /**
      * Bulk operations (retry, cancel...).
      * @summary bulk collection
-     * @param {BulkRequestBody} bulkRequestBody 
+     * @param {BulkRequestBody} bulkRequestBody Request body for bulk.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof CollectionApiInterface
@@ -159,7 +159,7 @@ export interface CollectionApiInterface {
      * Make decision for a pending collection by ID
      * @summary decide collection
      * @param {number} id Identifier of collection to look up
-     * @param {CollectionDecideRequest} collectionDecideRequest 
+     * @param {CollectionDecideRequest} collectionDecideRequest Request body for decide.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof CollectionApiInterface
@@ -235,12 +235,12 @@ export interface CollectionApiInterface {
      * @throws {RequiredError}
      * @memberof CollectionApiInterface
      */
-    collectionMonitorRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>>;
+    collectionMonitorRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EnduroMonitorUpdate>>;
 
     /**
      * monitor collection
      */
-    collectionMonitor(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void>;
+    collectionMonitor(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EnduroMonitorUpdate>;
 
     /**
      * Retry collection processing by ID
@@ -618,7 +618,7 @@ export class CollectionApi extends runtime.BaseAPI implements CollectionApiInter
     /**
      * monitor collection
      */
-    async collectionMonitorRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async collectionMonitorRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EnduroMonitorUpdate>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -633,14 +633,15 @@ export class CollectionApi extends runtime.BaseAPI implements CollectionApiInter
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.VoidApiResponse(response);
+        return new runtime.JSONApiResponse(response, (jsonValue) => EnduroMonitorUpdateFromJSON(jsonValue));
     }
 
     /**
      * monitor collection
      */
-    async collectionMonitor(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.collectionMonitorRaw(initOverrides);
+    async collectionMonitor(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EnduroMonitorUpdate> {
+        const response = await this.collectionMonitorRaw(initOverrides);
+        return await response.value();
     }
 
     /**
