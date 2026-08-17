@@ -21,7 +21,7 @@ const (
 	minioLatestImage  = "minio/minio:RELEASE.2025-09-07T16-13-09Z"
 	seaweedFSImage    = "chrislusf/seaweedfs:4.39"
 	amboxImage        = "ghcr.io/sevein/ambox:latest"
-	playwrightImage   = "mcr.microsoft.com/playwright:v1.61.1-noble"
+	playwrightImage   = "mcr.microsoft.com/playwright:v1.62.1-noble"
 )
 
 type EnduroE2E struct{}
