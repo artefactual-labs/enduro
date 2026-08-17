@@ -81,7 +81,7 @@ export interface EnduroDetailedStoredCollection {
     reconciliationError?: string;
     /**
      * Latest storage reconciliation status
-     * @type {string}
+     * @type {EnduroDetailedStoredCollectionReconciliationStatusEnum}
      * @memberof EnduroDetailedStoredCollection
      */
     reconciliationStatus?: EnduroDetailedStoredCollectionReconciliationStatusEnum;
@@ -99,7 +99,7 @@ export interface EnduroDetailedStoredCollection {
     startedAt?: Date;
     /**
      * Status of the collection
-     * @type {string}
+     * @type {EnduroDetailedStoredCollectionStatusEnum}
      * @memberof EnduroDetailedStoredCollection
      */
     status: EnduroDetailedStoredCollectionStatusEnum;
@@ -149,7 +149,7 @@ export type EnduroDetailedStoredCollectionStatusEnum = typeof EnduroDetailedStor
  * Check if a given object implements the EnduroDetailedStoredCollection interface.
  */
 export function instanceOfEnduroDetailedStoredCollection(value: object): value is EnduroDetailedStoredCollection {
-    if (!('createdAt' in value) || value['createdAt'] === undefined) return false;
+    if ((!('createdAt' in (value as Record<string, any>)) && !('created_at' in (value as Record<string, any>))) || ((value as Record<string, any>)['createdAt'] === undefined && (value as Record<string, any>)['created_at'] === undefined)) return false;
     if (!('id' in value) || value['id'] === undefined) return false;
     if (!('status' in value) || value['status'] === undefined) return false;
     return true;

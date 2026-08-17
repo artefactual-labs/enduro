@@ -12,27 +12,32 @@
  * Do not edit the class manually.
  */
 
-
 import * as runtime from '../runtime';
-import type {
-  BatchBrowseResult,
-  BatchHintsResult,
-  BatchResult,
-  BatchStatusResult,
-  SubmitRequestBody,
-} from '../models/index';
 import {
+    type BatchBrowseResult,
     BatchBrowseResultFromJSON,
     BatchBrowseResultToJSON,
+} from '../models/BatchBrowseResult';
+import {
+    type BatchHintsResult,
     BatchHintsResultFromJSON,
     BatchHintsResultToJSON,
+} from '../models/BatchHintsResult';
+import {
+    type BatchResult,
     BatchResultFromJSON,
     BatchResultToJSON,
+} from '../models/BatchResult';
+import {
+    type BatchStatusResult,
     BatchStatusResultFromJSON,
     BatchStatusResultToJSON,
+} from '../models/BatchStatusResult';
+import {
+    type SubmitRequestBody,
     SubmitRequestBodyFromJSON,
     SubmitRequestBodyToJSON,
-} from '../models/index';
+} from '../models/SubmitRequestBody';
 
 export interface BatchBrowseRequest {
     path?: string;
@@ -50,6 +55,14 @@ export interface BatchSubmitRequest {
  */
 export interface BatchApiInterface {
     /**
+     * Creates request options for batchBrowse without sending the request
+     * @param {string} [path] Root-relative directory path to list
+     * @throws {RequiredError}
+     * @memberof BatchApiInterface
+     */
+    batchBrowseRequestOpts(requestParameters: BatchBrowseRequest): Promise<runtime.RequestOpts>;
+
+    /**
      * Browse batch source directories
      * @summary browse batch
      * @param {string} [path] Root-relative directory path to list
@@ -64,6 +77,13 @@ export interface BatchApiInterface {
      * browse batch
      */
     batchBrowse(requestParameters: BatchBrowseRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BatchBrowseResult>;
+
+    /**
+     * Creates request options for batchHints without sending the request
+     * @throws {RequiredError}
+     * @memberof BatchApiInterface
+     */
+    batchHintsRequestOpts(): Promise<runtime.RequestOpts>;
 
     /**
      * Retrieve form hints
@@ -81,6 +101,13 @@ export interface BatchApiInterface {
     batchHints(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BatchHintsResult>;
 
     /**
+     * Creates request options for batchStatus without sending the request
+     * @throws {RequiredError}
+     * @memberof BatchApiInterface
+     */
+    batchStatusRequestOpts(): Promise<runtime.RequestOpts>;
+
+    /**
      * Retrieve status of current batch operation.
      * @summary status batch
      * @param {*} [options] Override http request option.
@@ -94,6 +121,14 @@ export interface BatchApiInterface {
      * status batch
      */
     batchStatus(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BatchStatusResult>;
+
+    /**
+     * Creates request options for batchSubmit without sending the request
+     * @param {SubmitRequestBody} submitRequestBody Request body for submit.
+     * @throws {RequiredError}
+     * @memberof BatchApiInterface
+     */
+    batchSubmitRequestOpts(requestParameters: BatchSubmitRequest): Promise<runtime.RequestOpts>;
 
     /**
      * Submit a new batch
@@ -119,10 +154,9 @@ export interface BatchApiInterface {
 export class BatchApi extends runtime.BaseAPI implements BatchApiInterface {
 
     /**
-     * Browse batch source directories
-     * browse batch
+     * Creates request options for batchBrowse without sending the request
      */
-    async batchBrowseRaw(requestParameters: BatchBrowseRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BatchBrowseResult>> {
+    async batchBrowseRequestOpts(requestParameters: BatchBrowseRequest): Promise<runtime.RequestOpts> {
         const queryParameters: any = {};
 
         if (requestParameters['path'] != null) {
@@ -134,12 +168,21 @@ export class BatchApi extends runtime.BaseAPI implements BatchApiInterface {
 
         let urlPath = `/batch/browser`;
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Browse batch source directories
+     * browse batch
+     */
+    async batchBrowseRaw(requestParameters: BatchBrowseRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BatchBrowseResult>> {
+        const requestOptions = await this.batchBrowseRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => BatchBrowseResultFromJSON(jsonValue));
     }
@@ -154,10 +197,9 @@ export class BatchApi extends runtime.BaseAPI implements BatchApiInterface {
     }
 
     /**
-     * Retrieve form hints
-     * hints batch
+     * Creates request options for batchHints without sending the request
      */
-    async batchHintsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BatchHintsResult>> {
+    async batchHintsRequestOpts(): Promise<runtime.RequestOpts> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -165,12 +207,21 @@ export class BatchApi extends runtime.BaseAPI implements BatchApiInterface {
 
         let urlPath = `/batch/hints`;
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Retrieve form hints
+     * hints batch
+     */
+    async batchHintsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BatchHintsResult>> {
+        const requestOptions = await this.batchHintsRequestOpts();
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => BatchHintsResultFromJSON(jsonValue));
     }
@@ -185,10 +236,9 @@ export class BatchApi extends runtime.BaseAPI implements BatchApiInterface {
     }
 
     /**
-     * Retrieve status of current batch operation.
-     * status batch
+     * Creates request options for batchStatus without sending the request
      */
-    async batchStatusRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BatchStatusResult>> {
+    async batchStatusRequestOpts(): Promise<runtime.RequestOpts> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -196,12 +246,21 @@ export class BatchApi extends runtime.BaseAPI implements BatchApiInterface {
 
         let urlPath = `/batch`;
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Retrieve status of current batch operation.
+     * status batch
+     */
+    async batchStatusRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BatchStatusResult>> {
+        const requestOptions = await this.batchStatusRequestOpts();
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => BatchStatusResultFromJSON(jsonValue));
     }
@@ -216,10 +275,9 @@ export class BatchApi extends runtime.BaseAPI implements BatchApiInterface {
     }
 
     /**
-     * Submit a new batch
-     * submit batch
+     * Creates request options for batchSubmit without sending the request
      */
-    async batchSubmitRaw(requestParameters: BatchSubmitRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BatchResult>> {
+    async batchSubmitRequestOpts(requestParameters: BatchSubmitRequest): Promise<runtime.RequestOpts> {
         if (requestParameters['submitRequestBody'] == null) {
             throw new runtime.RequiredError(
                 'submitRequestBody',
@@ -236,13 +294,22 @@ export class BatchApi extends runtime.BaseAPI implements BatchApiInterface {
 
         let urlPath = `/batch`;
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
             body: SubmitRequestBodyToJSON(requestParameters['submitRequestBody']),
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Submit a new batch
+     * submit batch
+     */
+    async batchSubmitRaw(requestParameters: BatchSubmitRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BatchResult>> {
+        const requestOptions = await this.batchSubmitRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => BatchResultFromJSON(jsonValue));
     }

@@ -56,7 +56,7 @@ export function EnduroCollectionWorkflowHistoryFromJSONTyped(json: any, ignoreDi
     }
     return {
         
-        'details': json['details'] == null ? undefined : json['details'],
+        'details': json['details'] === undefined ? undefined : json['details'] === null ? null : json['details'],
         'id': json['id'] == null ? undefined : json['id'],
         'type': json['type'] == null ? undefined : json['type'],
     };

@@ -142,7 +142,7 @@ frontend-dev: # @HELP Serves the frontend app for development.
 ui-client: # @HELP Generates the UI client using openapi-generator-cli.
 ui-client:
 	rm -rf $(CURDIR)/ui/src/client
-	docker container run --rm --user $(shell id -u):$(shell id -g) --volume $(CURDIR):/local openapitools/openapi-generator-cli:v7.19.0 \
+	docker container run --rm --user $(shell id -u):$(shell id -g) --volume $(CURDIR):/local openapitools/openapi-generator-cli:v7.24.0 \
 		generate \
 			--input-spec /local/internal/api/gen/http/openapi3.json \
 			--generator-name typescript-fetch \
@@ -156,7 +156,7 @@ ui-client:
 frontend-client: # @HELP Generates the frontend client using openapi-generator-cli.
 frontend-client:
 	rm -rf $(CURDIR)/frontend/app/openapi-generator
-	docker container run --rm --user $(shell id -u):$(shell id -g) --volume $(CURDIR):/local openapitools/openapi-generator-cli:v7.19.0 \
+	docker container run --rm --user $(shell id -u):$(shell id -g) --volume $(CURDIR):/local openapitools/openapi-generator-cli:v7.24.0 \
 		generate \
 			--input-spec /local/internal/api/gen/http/openapi3.json \
 			--generator-name typescript-fetch \

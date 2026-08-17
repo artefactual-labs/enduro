@@ -39,7 +39,7 @@ export interface EnduroCollectionStatusTransition {
     occurredAt: Date;
     /**
      * Status before the transition
-     * @type {string}
+     * @type {EnduroCollectionStatusTransitionPreviousStatusEnum}
      * @memberof EnduroCollectionStatusTransition
      */
     previousStatus?: EnduroCollectionStatusTransitionPreviousStatusEnum;
@@ -57,7 +57,7 @@ export interface EnduroCollectionStatusTransition {
     runId: string;
     /**
      * Status entered by the transition
-     * @type {string}
+     * @type {EnduroCollectionStatusTransitionStatusEnum}
      * @memberof EnduroCollectionStatusTransition
      */
     status: EnduroCollectionStatusTransitionStatusEnum;
@@ -106,11 +106,11 @@ export type EnduroCollectionStatusTransitionStatusEnum = typeof EnduroCollection
  */
 export function instanceOfEnduroCollectionStatusTransition(value: object): value is EnduroCollectionStatusTransition {
     if (!('id' in value) || value['id'] === undefined) return false;
-    if (!('isRunStart' in value) || value['isRunStart'] === undefined) return false;
-    if (!('occurredAt' in value) || value['occurredAt'] === undefined) return false;
-    if (!('runId' in value) || value['runId'] === undefined) return false;
+    if ((!('isRunStart' in (value as Record<string, any>)) && !('is_run_start' in (value as Record<string, any>))) || ((value as Record<string, any>)['isRunStart'] === undefined && (value as Record<string, any>)['is_run_start'] === undefined)) return false;
+    if ((!('occurredAt' in (value as Record<string, any>)) && !('occurred_at' in (value as Record<string, any>))) || ((value as Record<string, any>)['occurredAt'] === undefined && (value as Record<string, any>)['occurred_at'] === undefined)) return false;
+    if ((!('runId' in (value as Record<string, any>)) && !('run_id' in (value as Record<string, any>))) || ((value as Record<string, any>)['runId'] === undefined && (value as Record<string, any>)['run_id'] === undefined)) return false;
     if (!('status' in value) || value['status'] === undefined) return false;
-    if (!('workflowId' in value) || value['workflowId'] === undefined) return false;
+    if ((!('workflowId' in (value as Record<string, any>)) && !('workflow_id' in (value as Record<string, any>))) || ((value as Record<string, any>)['workflowId'] === undefined && (value as Record<string, any>)['workflow_id'] === undefined)) return false;
     return true;
 }
 

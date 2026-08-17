@@ -12,45 +12,62 @@
  * Do not edit the class manually.
  */
 
-
 import * as runtime from '../runtime';
-import type {
-  BulkRequestBody,
-  BulkResult,
-  BulkStatusResult,
-  CollectionDecideRequest,
-  CollectionNotfound,
-  EnduroCollectionStatusHistory,
-  EnduroCollectionWorkflowStatus,
-  EnduroDetailedStoredCollection,
-  EnduroMonitorUpdate,
-  ListResponseBody,
-  RetryResult,
-} from '../models/index';
 import {
+    type BulkRequestBody,
     BulkRequestBodyFromJSON,
     BulkRequestBodyToJSON,
+} from '../models/BulkRequestBody';
+import {
+    type BulkResult,
     BulkResultFromJSON,
     BulkResultToJSON,
+} from '../models/BulkResult';
+import {
+    type BulkStatusResult,
     BulkStatusResultFromJSON,
     BulkStatusResultToJSON,
+} from '../models/BulkStatusResult';
+import {
+    type CollectionDecideRequest,
     CollectionDecideRequestFromJSON,
     CollectionDecideRequestToJSON,
+} from '../models/CollectionDecideRequest';
+import {
+    type CollectionNotfound,
     CollectionNotfoundFromJSON,
     CollectionNotfoundToJSON,
+} from '../models/CollectionNotfound';
+import {
+    type EnduroCollectionStatusHistory,
     EnduroCollectionStatusHistoryFromJSON,
     EnduroCollectionStatusHistoryToJSON,
+} from '../models/EnduroCollectionStatusHistory';
+import {
+    type EnduroCollectionWorkflowStatus,
     EnduroCollectionWorkflowStatusFromJSON,
     EnduroCollectionWorkflowStatusToJSON,
+} from '../models/EnduroCollectionWorkflowStatus';
+import {
+    type EnduroDetailedStoredCollection,
     EnduroDetailedStoredCollectionFromJSON,
     EnduroDetailedStoredCollectionToJSON,
+} from '../models/EnduroDetailedStoredCollection';
+import {
+    type EnduroMonitorUpdate,
     EnduroMonitorUpdateFromJSON,
     EnduroMonitorUpdateToJSON,
+} from '../models/EnduroMonitorUpdate';
+import {
+    type ListResponseBody,
     ListResponseBodyFromJSON,
     ListResponseBodyToJSON,
+} from '../models/ListResponseBody';
+import {
+    type RetryResult,
     RetryResultFromJSON,
     RetryResultToJSON,
-} from '../models/index';
+} from '../models/RetryResult';
 
 export interface CollectionApiCollectionBulkRequest {
     bulkRequestBody: BulkRequestBody;
@@ -109,6 +126,14 @@ export interface CollectionApiCollectionWorkflowRequest {
  */
 export interface CollectionApiInterface {
     /**
+     * Creates request options for collectionBulk without sending the request
+     * @param {BulkRequestBody} bulkRequestBody Request body for bulk.
+     * @throws {RequiredError}
+     * @memberof CollectionApiInterface
+     */
+    collectionBulkRequestOpts(requestParameters: CollectionApiCollectionBulkRequest): Promise<runtime.RequestOpts>;
+
+    /**
      * Bulk operations (retry, cancel...).
      * @summary bulk collection
      * @param {BulkRequestBody} bulkRequestBody Request body for bulk.
@@ -123,6 +148,13 @@ export interface CollectionApiInterface {
      * bulk collection
      */
     collectionBulk(requestParameters: CollectionApiCollectionBulkRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BulkResult>;
+
+    /**
+     * Creates request options for collectionBulkStatus without sending the request
+     * @throws {RequiredError}
+     * @memberof CollectionApiInterface
+     */
+    collectionBulkStatusRequestOpts(): Promise<runtime.RequestOpts>;
 
     /**
      * Retrieve status of current bulk operation.
@@ -140,6 +172,14 @@ export interface CollectionApiInterface {
     collectionBulkStatus(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BulkStatusResult>;
 
     /**
+     * Creates request options for collectionCancel without sending the request
+     * @param {number} id Identifier of collection to remove
+     * @throws {RequiredError}
+     * @memberof CollectionApiInterface
+     */
+    collectionCancelRequestOpts(requestParameters: CollectionApiCollectionCancelRequest): Promise<runtime.RequestOpts>;
+
+    /**
      * Cancel collection processing by ID
      * @summary cancel collection
      * @param {number} id Identifier of collection to remove
@@ -154,6 +194,15 @@ export interface CollectionApiInterface {
      * cancel collection
      */
     collectionCancel(requestParameters: CollectionApiCollectionCancelRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void>;
+
+    /**
+     * Creates request options for collectionDecide without sending the request
+     * @param {number} id Identifier of collection to look up
+     * @param {CollectionDecideRequest} collectionDecideRequest Request body for decide.
+     * @throws {RequiredError}
+     * @memberof CollectionApiInterface
+     */
+    collectionDecideRequestOpts(requestParameters: CollectionApiCollectionDecideOperationRequest): Promise<runtime.RequestOpts>;
 
     /**
      * Make decision for a pending collection by ID
@@ -173,6 +222,14 @@ export interface CollectionApiInterface {
     collectionDecide(requestParameters: CollectionApiCollectionDecideOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void>;
 
     /**
+     * Creates request options for collectionDelete without sending the request
+     * @param {number} id Identifier of collection to delete
+     * @throws {RequiredError}
+     * @memberof CollectionApiInterface
+     */
+    collectionDeleteRequestOpts(requestParameters: CollectionApiCollectionDeleteRequest): Promise<runtime.RequestOpts>;
+
+    /**
      * Delete collection by ID
      * @summary delete collection
      * @param {number} id Identifier of collection to delete
@@ -189,6 +246,14 @@ export interface CollectionApiInterface {
     collectionDelete(requestParameters: CollectionApiCollectionDeleteRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void>;
 
     /**
+     * Creates request options for collectionDownload without sending the request
+     * @param {number} id Identifier of collection to look up
+     * @throws {RequiredError}
+     * @memberof CollectionApiInterface
+     */
+    collectionDownloadRequestOpts(requestParameters: CollectionApiCollectionDownloadRequest): Promise<runtime.RequestOpts>;
+
+    /**
      * Download collection by ID
      * @summary download collection
      * @param {number} id Identifier of collection to look up
@@ -203,6 +268,22 @@ export interface CollectionApiInterface {
      * download collection
      */
     collectionDownload(requestParameters: CollectionApiCollectionDownloadRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Blob>;
+
+    /**
+     * Creates request options for collectionList without sending the request
+     * @param {string} [name] 
+     * @param {string} [originalId] 
+     * @param {string} [transferId] Identifier of Archivematica tranfser
+     * @param {string} [aipId] Identifier of Archivematica AIP
+     * @param {string} [pipelineId] Identifier of Archivematica pipeline
+     * @param {Date} [earliestCreatedTime] 
+     * @param {Date} [latestCreatedTime] 
+     * @param {'new' | 'in progress' | 'done' | 'error' | 'unknown' | 'queued' | 'pending' | 'abandoned'} [status] 
+     * @param {string} [cursor] Pagination cursor
+     * @throws {RequiredError}
+     * @memberof CollectionApiInterface
+     */
+    collectionListRequestOpts(requestParameters: CollectionApiCollectionListRequest): Promise<runtime.RequestOpts>;
 
     /**
      * List all stored collections
@@ -229,6 +310,13 @@ export interface CollectionApiInterface {
     collectionList(requestParameters: CollectionApiCollectionListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ListResponseBody>;
 
     /**
+     * Creates request options for collectionMonitor without sending the request
+     * @throws {RequiredError}
+     * @memberof CollectionApiInterface
+     */
+    collectionMonitorRequestOpts(): Promise<runtime.RequestOpts>;
+
+    /**
      * 
      * @summary monitor collection
      * @param {*} [options] Override http request option.
@@ -241,6 +329,14 @@ export interface CollectionApiInterface {
      * monitor collection
      */
     collectionMonitor(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EnduroMonitorUpdate>;
+
+    /**
+     * Creates request options for collectionRetry without sending the request
+     * @param {number} id Identifier of collection to retry
+     * @throws {RequiredError}
+     * @memberof CollectionApiInterface
+     */
+    collectionRetryRequestOpts(requestParameters: CollectionApiCollectionRetryRequest): Promise<runtime.RequestOpts>;
 
     /**
      * Retry collection processing by ID
@@ -259,6 +355,14 @@ export interface CollectionApiInterface {
     collectionRetry(requestParameters: CollectionApiCollectionRetryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RetryResult>;
 
     /**
+     * Creates request options for collectionShow without sending the request
+     * @param {number} id Identifier of collection to show
+     * @throws {RequiredError}
+     * @memberof CollectionApiInterface
+     */
+    collectionShowRequestOpts(requestParameters: CollectionApiCollectionShowRequest): Promise<runtime.RequestOpts>;
+
+    /**
      * Show collection by ID
      * @summary show collection
      * @param {number} id Identifier of collection to show
@@ -275,6 +379,14 @@ export interface CollectionApiInterface {
     collectionShow(requestParameters: CollectionApiCollectionShowRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EnduroDetailedStoredCollection>;
 
     /**
+     * Creates request options for collectionStatusHistory without sending the request
+     * @param {number} id Identifier of collection to look up
+     * @throws {RequiredError}
+     * @memberof CollectionApiInterface
+     */
+    collectionStatusHistoryRequestOpts(requestParameters: CollectionApiCollectionStatusHistoryRequest): Promise<runtime.RequestOpts>;
+
+    /**
      * Retrieve the recorded status transition history for a collection
      * @summary status_history collection
      * @param {number} id Identifier of collection to look up
@@ -289,6 +401,14 @@ export interface CollectionApiInterface {
      * status_history collection
      */
     collectionStatusHistory(requestParameters: CollectionApiCollectionStatusHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EnduroCollectionStatusHistory>;
+
+    /**
+     * Creates request options for collectionWorkflow without sending the request
+     * @param {number} id Identifier of collection to look up
+     * @throws {RequiredError}
+     * @memberof CollectionApiInterface
+     */
+    collectionWorkflowRequestOpts(requestParameters: CollectionApiCollectionWorkflowRequest): Promise<runtime.RequestOpts>;
 
     /**
      * Retrieve workflow status by ID
@@ -314,10 +434,9 @@ export interface CollectionApiInterface {
 export class CollectionApi extends runtime.BaseAPI implements CollectionApiInterface {
 
     /**
-     * Bulk operations (retry, cancel...).
-     * bulk collection
+     * Creates request options for collectionBulk without sending the request
      */
-    async collectionBulkRaw(requestParameters: CollectionApiCollectionBulkRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BulkResult>> {
+    async collectionBulkRequestOpts(requestParameters: CollectionApiCollectionBulkRequest): Promise<runtime.RequestOpts> {
         if (requestParameters['bulkRequestBody'] == null) {
             throw new runtime.RequiredError(
                 'bulkRequestBody',
@@ -334,13 +453,22 @@ export class CollectionApi extends runtime.BaseAPI implements CollectionApiInter
 
         let urlPath = `/collection/bulk`;
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
             body: BulkRequestBodyToJSON(requestParameters['bulkRequestBody']),
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Bulk operations (retry, cancel...).
+     * bulk collection
+     */
+    async collectionBulkRaw(requestParameters: CollectionApiCollectionBulkRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BulkResult>> {
+        const requestOptions = await this.collectionBulkRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => BulkResultFromJSON(jsonValue));
     }
@@ -355,10 +483,9 @@ export class CollectionApi extends runtime.BaseAPI implements CollectionApiInter
     }
 
     /**
-     * Retrieve status of current bulk operation.
-     * bulk_status collection
+     * Creates request options for collectionBulkStatus without sending the request
      */
-    async collectionBulkStatusRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BulkStatusResult>> {
+    async collectionBulkStatusRequestOpts(): Promise<runtime.RequestOpts> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -366,12 +493,21 @@ export class CollectionApi extends runtime.BaseAPI implements CollectionApiInter
 
         let urlPath = `/collection/bulk`;
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Retrieve status of current bulk operation.
+     * bulk_status collection
+     */
+    async collectionBulkStatusRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BulkStatusResult>> {
+        const requestOptions = await this.collectionBulkStatusRequestOpts();
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => BulkStatusResultFromJSON(jsonValue));
     }
@@ -386,10 +522,9 @@ export class CollectionApi extends runtime.BaseAPI implements CollectionApiInter
     }
 
     /**
-     * Cancel collection processing by ID
-     * cancel collection
+     * Creates request options for collectionCancel without sending the request
      */
-    async collectionCancelRaw(requestParameters: CollectionApiCollectionCancelRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async collectionCancelRequestOpts(requestParameters: CollectionApiCollectionCancelRequest): Promise<runtime.RequestOpts> {
         if (requestParameters['id'] == null) {
             throw new runtime.RequiredError(
                 'id',
@@ -403,14 +538,23 @@ export class CollectionApi extends runtime.BaseAPI implements CollectionApiInter
 
 
         let urlPath = `/collection/{id}/cancel`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
+        urlPath = urlPath.replace('{id}', encodeURIComponent(String(requestParameters['id'])));
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Cancel collection processing by ID
+     * cancel collection
+     */
+    async collectionCancelRaw(requestParameters: CollectionApiCollectionCancelRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        const requestOptions = await this.collectionCancelRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.VoidApiResponse(response);
     }
@@ -424,10 +568,9 @@ export class CollectionApi extends runtime.BaseAPI implements CollectionApiInter
     }
 
     /**
-     * Make decision for a pending collection by ID
-     * decide collection
+     * Creates request options for collectionDecide without sending the request
      */
-    async collectionDecideRaw(requestParameters: CollectionApiCollectionDecideOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async collectionDecideRequestOpts(requestParameters: CollectionApiCollectionDecideOperationRequest): Promise<runtime.RequestOpts> {
         if (requestParameters['id'] == null) {
             throw new runtime.RequiredError(
                 'id',
@@ -450,15 +593,24 @@ export class CollectionApi extends runtime.BaseAPI implements CollectionApiInter
 
 
         let urlPath = `/collection/{id}/decision`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
+        urlPath = urlPath.replace('{id}', encodeURIComponent(String(requestParameters['id'])));
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
             body: CollectionDecideRequestToJSON(requestParameters['collectionDecideRequest']),
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Make decision for a pending collection by ID
+     * decide collection
+     */
+    async collectionDecideRaw(requestParameters: CollectionApiCollectionDecideOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        const requestOptions = await this.collectionDecideRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.VoidApiResponse(response);
     }
@@ -472,10 +624,9 @@ export class CollectionApi extends runtime.BaseAPI implements CollectionApiInter
     }
 
     /**
-     * Delete collection by ID
-     * delete collection
+     * Creates request options for collectionDelete without sending the request
      */
-    async collectionDeleteRaw(requestParameters: CollectionApiCollectionDeleteRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async collectionDeleteRequestOpts(requestParameters: CollectionApiCollectionDeleteRequest): Promise<runtime.RequestOpts> {
         if (requestParameters['id'] == null) {
             throw new runtime.RequiredError(
                 'id',
@@ -489,14 +640,23 @@ export class CollectionApi extends runtime.BaseAPI implements CollectionApiInter
 
 
         let urlPath = `/collection/{id}`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
+        urlPath = urlPath.replace('{id}', encodeURIComponent(String(requestParameters['id'])));
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'DELETE',
             headers: headerParameters,
             query: queryParameters,
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Delete collection by ID
+     * delete collection
+     */
+    async collectionDeleteRaw(requestParameters: CollectionApiCollectionDeleteRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        const requestOptions = await this.collectionDeleteRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.VoidApiResponse(response);
     }
@@ -510,10 +670,9 @@ export class CollectionApi extends runtime.BaseAPI implements CollectionApiInter
     }
 
     /**
-     * Download collection by ID
-     * download collection
+     * Creates request options for collectionDownload without sending the request
      */
-    async collectionDownloadRaw(requestParameters: CollectionApiCollectionDownloadRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Blob>> {
+    async collectionDownloadRequestOpts(requestParameters: CollectionApiCollectionDownloadRequest): Promise<runtime.RequestOpts> {
         if (requestParameters['id'] == null) {
             throw new runtime.RequiredError(
                 'id',
@@ -527,14 +686,23 @@ export class CollectionApi extends runtime.BaseAPI implements CollectionApiInter
 
 
         let urlPath = `/collection/{id}/download`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
+        urlPath = urlPath.replace('{id}', encodeURIComponent(String(requestParameters['id'])));
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Download collection by ID
+     * download collection
+     */
+    async collectionDownloadRaw(requestParameters: CollectionApiCollectionDownloadRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Blob>> {
+        const requestOptions = await this.collectionDownloadRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.BlobApiResponse(response);
     }
@@ -549,10 +717,9 @@ export class CollectionApi extends runtime.BaseAPI implements CollectionApiInter
     }
 
     /**
-     * List all stored collections
-     * list collection
+     * Creates request options for collectionList without sending the request
      */
-    async collectionListRaw(requestParameters: CollectionApiCollectionListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ListResponseBody>> {
+    async collectionListRequestOpts(requestParameters: CollectionApiCollectionListRequest): Promise<runtime.RequestOpts> {
         const queryParameters: any = {};
 
         if (requestParameters['name'] != null) {
@@ -596,12 +763,21 @@ export class CollectionApi extends runtime.BaseAPI implements CollectionApiInter
 
         let urlPath = `/collection`;
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * List all stored collections
+     * list collection
+     */
+    async collectionListRaw(requestParameters: CollectionApiCollectionListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ListResponseBody>> {
+        const requestOptions = await this.collectionListRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => ListResponseBodyFromJSON(jsonValue));
     }
@@ -616,9 +792,9 @@ export class CollectionApi extends runtime.BaseAPI implements CollectionApiInter
     }
 
     /**
-     * monitor collection
+     * Creates request options for collectionMonitor without sending the request
      */
-    async collectionMonitorRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EnduroMonitorUpdate>> {
+    async collectionMonitorRequestOpts(): Promise<runtime.RequestOpts> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -626,12 +802,20 @@ export class CollectionApi extends runtime.BaseAPI implements CollectionApiInter
 
         let urlPath = `/collection/monitor`;
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * monitor collection
+     */
+    async collectionMonitorRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EnduroMonitorUpdate>> {
+        const requestOptions = await this.collectionMonitorRequestOpts();
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => EnduroMonitorUpdateFromJSON(jsonValue));
     }
@@ -645,10 +829,9 @@ export class CollectionApi extends runtime.BaseAPI implements CollectionApiInter
     }
 
     /**
-     * Retry collection processing by ID
-     * retry collection
+     * Creates request options for collectionRetry without sending the request
      */
-    async collectionRetryRaw(requestParameters: CollectionApiCollectionRetryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RetryResult>> {
+    async collectionRetryRequestOpts(requestParameters: CollectionApiCollectionRetryRequest): Promise<runtime.RequestOpts> {
         if (requestParameters['id'] == null) {
             throw new runtime.RequiredError(
                 'id',
@@ -662,14 +845,23 @@ export class CollectionApi extends runtime.BaseAPI implements CollectionApiInter
 
 
         let urlPath = `/collection/{id}/retry`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
+        urlPath = urlPath.replace('{id}', encodeURIComponent(String(requestParameters['id'])));
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Retry collection processing by ID
+     * retry collection
+     */
+    async collectionRetryRaw(requestParameters: CollectionApiCollectionRetryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RetryResult>> {
+        const requestOptions = await this.collectionRetryRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => RetryResultFromJSON(jsonValue));
     }
@@ -684,10 +876,9 @@ export class CollectionApi extends runtime.BaseAPI implements CollectionApiInter
     }
 
     /**
-     * Show collection by ID
-     * show collection
+     * Creates request options for collectionShow without sending the request
      */
-    async collectionShowRaw(requestParameters: CollectionApiCollectionShowRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EnduroDetailedStoredCollection>> {
+    async collectionShowRequestOpts(requestParameters: CollectionApiCollectionShowRequest): Promise<runtime.RequestOpts> {
         if (requestParameters['id'] == null) {
             throw new runtime.RequiredError(
                 'id',
@@ -701,14 +892,23 @@ export class CollectionApi extends runtime.BaseAPI implements CollectionApiInter
 
 
         let urlPath = `/collection/{id}`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
+        urlPath = urlPath.replace('{id}', encodeURIComponent(String(requestParameters['id'])));
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Show collection by ID
+     * show collection
+     */
+    async collectionShowRaw(requestParameters: CollectionApiCollectionShowRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EnduroDetailedStoredCollection>> {
+        const requestOptions = await this.collectionShowRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => EnduroDetailedStoredCollectionFromJSON(jsonValue));
     }
@@ -723,10 +923,9 @@ export class CollectionApi extends runtime.BaseAPI implements CollectionApiInter
     }
 
     /**
-     * Retrieve the recorded status transition history for a collection
-     * status_history collection
+     * Creates request options for collectionStatusHistory without sending the request
      */
-    async collectionStatusHistoryRaw(requestParameters: CollectionApiCollectionStatusHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EnduroCollectionStatusHistory>> {
+    async collectionStatusHistoryRequestOpts(requestParameters: CollectionApiCollectionStatusHistoryRequest): Promise<runtime.RequestOpts> {
         if (requestParameters['id'] == null) {
             throw new runtime.RequiredError(
                 'id',
@@ -740,14 +939,23 @@ export class CollectionApi extends runtime.BaseAPI implements CollectionApiInter
 
 
         let urlPath = `/collection/{id}/status-history`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
+        urlPath = urlPath.replace('{id}', encodeURIComponent(String(requestParameters['id'])));
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Retrieve the recorded status transition history for a collection
+     * status_history collection
+     */
+    async collectionStatusHistoryRaw(requestParameters: CollectionApiCollectionStatusHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EnduroCollectionStatusHistory>> {
+        const requestOptions = await this.collectionStatusHistoryRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => EnduroCollectionStatusHistoryFromJSON(jsonValue));
     }
@@ -762,10 +970,9 @@ export class CollectionApi extends runtime.BaseAPI implements CollectionApiInter
     }
 
     /**
-     * Retrieve workflow status by ID
-     * workflow collection
+     * Creates request options for collectionWorkflow without sending the request
      */
-    async collectionWorkflowRaw(requestParameters: CollectionApiCollectionWorkflowRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EnduroCollectionWorkflowStatus>> {
+    async collectionWorkflowRequestOpts(requestParameters: CollectionApiCollectionWorkflowRequest): Promise<runtime.RequestOpts> {
         if (requestParameters['id'] == null) {
             throw new runtime.RequiredError(
                 'id',
@@ -779,14 +986,23 @@ export class CollectionApi extends runtime.BaseAPI implements CollectionApiInter
 
 
         let urlPath = `/collection/{id}/workflow`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
+        urlPath = urlPath.replace('{id}', encodeURIComponent(String(requestParameters['id'])));
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Retrieve workflow status by ID
+     * workflow collection
+     */
+    async collectionWorkflowRaw(requestParameters: CollectionApiCollectionWorkflowRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EnduroCollectionWorkflowStatus>> {
+        const requestOptions = await this.collectionWorkflowRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => EnduroCollectionWorkflowStatusFromJSON(jsonValue));
     }

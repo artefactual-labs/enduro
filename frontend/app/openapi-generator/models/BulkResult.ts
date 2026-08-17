@@ -37,8 +37,8 @@ export interface BulkResult {
  * Check if a given object implements the BulkResult interface.
  */
 export function instanceOfBulkResult(value: object): value is BulkResult {
-    if (!('runId' in value) || value['runId'] === undefined) return false;
-    if (!('workflowId' in value) || value['workflowId'] === undefined) return false;
+    if ((!('runId' in (value as Record<string, any>)) && !('run_id' in (value as Record<string, any>))) || ((value as Record<string, any>)['runId'] === undefined && (value as Record<string, any>)['run_id'] === undefined)) return false;
+    if ((!('workflowId' in (value as Record<string, any>)) && !('workflow_id' in (value as Record<string, any>))) || ((value as Record<string, any>)['workflowId'] === undefined && (value as Record<string, any>)['workflow_id'] === undefined)) return false;
     return true;
 }
 

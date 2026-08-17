@@ -75,7 +75,7 @@ export interface EnduroStoredCollection {
     startedAt?: Date;
     /**
      * Status of the collection
-     * @type {string}
+     * @type {EnduroStoredCollectionStatusEnum}
      * @memberof EnduroStoredCollection
      */
     status: EnduroStoredCollectionStatusEnum;
@@ -114,7 +114,7 @@ export type EnduroStoredCollectionStatusEnum = typeof EnduroStoredCollectionStat
  * Check if a given object implements the EnduroStoredCollection interface.
  */
 export function instanceOfEnduroStoredCollection(value: object): value is EnduroStoredCollection {
-    if (!('createdAt' in value) || value['createdAt'] === undefined) return false;
+    if ((!('createdAt' in (value as Record<string, any>)) && !('created_at' in (value as Record<string, any>))) || ((value as Record<string, any>)['createdAt'] === undefined && (value as Record<string, any>)['created_at'] === undefined)) return false;
     if (!('id' in value) || value['id'] === undefined) return false;
     if (!('status' in value) || value['status'] === undefined) return false;
     return true;

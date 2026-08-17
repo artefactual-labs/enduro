@@ -12,7 +12,6 @@
  * Do not edit the class manually.
  */
 
-
 import * as runtime from '../runtime';
 
 /**
@@ -22,6 +21,13 @@ import * as runtime from '../runtime';
  * @interface SwaggerApiInterface
  */
 export interface SwaggerApiInterface {
+    /**
+     * Creates request options for swaggerSwaggerSwaggerJson without sending the request
+     * @throws {RequiredError}
+     * @memberof SwaggerApiInterface
+     */
+    swaggerSwaggerSwaggerJsonRequestOpts(): Promise<runtime.RequestOpts>;
+
     /**
      * JSON document containing the API swagger definition.
      * @summary Download internal/api/gen/http/openapi.json
@@ -45,10 +51,9 @@ export interface SwaggerApiInterface {
 export class SwaggerApi extends runtime.BaseAPI implements SwaggerApiInterface {
 
     /**
-     * JSON document containing the API swagger definition.
-     * Download internal/api/gen/http/openapi.json
+     * Creates request options for swaggerSwaggerSwaggerJson without sending the request
      */
-    async swaggerSwaggerSwaggerJsonRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async swaggerSwaggerSwaggerJsonRequestOpts(): Promise<runtime.RequestOpts> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -56,12 +61,21 @@ export class SwaggerApi extends runtime.BaseAPI implements SwaggerApiInterface {
 
         let urlPath = `/swagger/swagger.json`;
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * JSON document containing the API swagger definition.
+     * Download internal/api/gen/http/openapi.json
+     */
+    async swaggerSwaggerSwaggerJsonRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        const requestOptions = await this.swaggerSwaggerSwaggerJsonRequestOpts();
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.VoidApiResponse(response);
     }

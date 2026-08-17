@@ -29,7 +29,7 @@ import {
 export interface EnduroCollectionStatusHistory {
     /**
      * Whether complete history is available for the current workflow run
-     * @type {string}
+     * @type {EnduroCollectionStatusHistoryAvailabilityEnum}
      * @memberof EnduroCollectionStatusHistory
      */
     availability: EnduroCollectionStatusHistoryAvailabilityEnum;

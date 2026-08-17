@@ -12,18 +12,17 @@
  * Do not edit the class manually.
  */
 
-
 import * as runtime from '../runtime';
-import type {
-  EnduroStoredPipeline,
-  PipelineNotFound,
-} from '../models/index';
 import {
+    type EnduroStoredPipeline,
     EnduroStoredPipelineFromJSON,
     EnduroStoredPipelineToJSON,
+} from '../models/EnduroStoredPipeline';
+import {
+    type PipelineNotFound,
     PipelineNotFoundFromJSON,
     PipelineNotFoundToJSON,
-} from '../models/index';
+} from '../models/PipelineNotFound';
 
 export interface PipelineListRequest {
     name?: string;
@@ -46,6 +45,15 @@ export interface PipelineShowRequest {
  */
 export interface PipelineApiInterface {
     /**
+     * Creates request options for pipelineList without sending the request
+     * @param {string} [name] 
+     * @param {boolean} [status] 
+     * @throws {RequiredError}
+     * @memberof PipelineApiInterface
+     */
+    pipelineListRequestOpts(requestParameters: PipelineListRequest): Promise<runtime.RequestOpts>;
+
+    /**
      * List all known pipelines
      * @summary list pipeline
      * @param {string} [name] 
@@ -63,6 +71,14 @@ export interface PipelineApiInterface {
     pipelineList(requestParameters: PipelineListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<EnduroStoredPipeline>>;
 
     /**
+     * Creates request options for pipelineProcessing without sending the request
+     * @param {string} id Identifier of pipeline
+     * @throws {RequiredError}
+     * @memberof PipelineApiInterface
+     */
+    pipelineProcessingRequestOpts(requestParameters: PipelineProcessingRequest): Promise<runtime.RequestOpts>;
+
+    /**
      * List all processing configurations of a pipeline given its ID
      * @summary processing pipeline
      * @param {string} id Identifier of pipeline
@@ -77,6 +93,14 @@ export interface PipelineApiInterface {
      * processing pipeline
      */
     pipelineProcessing(requestParameters: PipelineProcessingRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<string>>;
+
+    /**
+     * Creates request options for pipelineShow without sending the request
+     * @param {string} id Identifier of pipeline to show
+     * @throws {RequiredError}
+     * @memberof PipelineApiInterface
+     */
+    pipelineShowRequestOpts(requestParameters: PipelineShowRequest): Promise<runtime.RequestOpts>;
 
     /**
      * Show pipeline by ID
@@ -102,10 +126,9 @@ export interface PipelineApiInterface {
 export class PipelineApi extends runtime.BaseAPI implements PipelineApiInterface {
 
     /**
-     * List all known pipelines
-     * list pipeline
+     * Creates request options for pipelineList without sending the request
      */
-    async pipelineListRaw(requestParameters: PipelineListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<EnduroStoredPipeline>>> {
+    async pipelineListRequestOpts(requestParameters: PipelineListRequest): Promise<runtime.RequestOpts> {
         const queryParameters: any = {};
 
         if (requestParameters['name'] != null) {
@@ -121,12 +144,21 @@ export class PipelineApi extends runtime.BaseAPI implements PipelineApiInterface
 
         let urlPath = `/pipeline`;
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * List all known pipelines
+     * list pipeline
+     */
+    async pipelineListRaw(requestParameters: PipelineListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<EnduroStoredPipeline>>> {
+        const requestOptions = await this.pipelineListRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(EnduroStoredPipelineFromJSON));
     }
@@ -141,10 +173,9 @@ export class PipelineApi extends runtime.BaseAPI implements PipelineApiInterface
     }
 
     /**
-     * List all processing configurations of a pipeline given its ID
-     * processing pipeline
+     * Creates request options for pipelineProcessing without sending the request
      */
-    async pipelineProcessingRaw(requestParameters: PipelineProcessingRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<string>>> {
+    async pipelineProcessingRequestOpts(requestParameters: PipelineProcessingRequest): Promise<runtime.RequestOpts> {
         if (requestParameters['id'] == null) {
             throw new runtime.RequiredError(
                 'id',
@@ -158,14 +189,23 @@ export class PipelineApi extends runtime.BaseAPI implements PipelineApiInterface
 
 
         let urlPath = `/pipeline/{id}/processing`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
+        urlPath = urlPath.replace('{id}', encodeURIComponent(String(requestParameters['id'])));
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * List all processing configurations of a pipeline given its ID
+     * processing pipeline
+     */
+    async pipelineProcessingRaw(requestParameters: PipelineProcessingRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<string>>> {
+        const requestOptions = await this.pipelineProcessingRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.JSONApiResponse<any>(response);
     }
@@ -180,10 +220,9 @@ export class PipelineApi extends runtime.BaseAPI implements PipelineApiInterface
     }
 
     /**
-     * Show pipeline by ID
-     * show pipeline
+     * Creates request options for pipelineShow without sending the request
      */
-    async pipelineShowRaw(requestParameters: PipelineShowRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EnduroStoredPipeline>> {
+    async pipelineShowRequestOpts(requestParameters: PipelineShowRequest): Promise<runtime.RequestOpts> {
         if (requestParameters['id'] == null) {
             throw new runtime.RequiredError(
                 'id',
@@ -197,14 +236,23 @@ export class PipelineApi extends runtime.BaseAPI implements PipelineApiInterface
 
 
         let urlPath = `/pipeline/{id}`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
+        urlPath = urlPath.replace('{id}', encodeURIComponent(String(requestParameters['id'])));
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Show pipeline by ID
+     * show pipeline
+     */
+    async pipelineShowRaw(requestParameters: PipelineShowRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EnduroStoredPipeline>> {
+        const requestOptions = await this.pipelineShowRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => EnduroStoredPipelineFromJSON(jsonValue));
     }

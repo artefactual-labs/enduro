@@ -21,7 +21,7 @@ import { mapValues } from '../runtime';
 export interface BulkRequestBody {
     /**
      * 
-     * @type {string}
+     * @type {BulkRequestBodyOperationEnum}
      * @memberof BulkRequestBody
      */
     operation: BulkRequestBodyOperationEnum;
@@ -33,7 +33,7 @@ export interface BulkRequestBody {
     size?: number;
     /**
      * 
-     * @type {string}
+     * @type {BulkRequestBodyStatusEnum}
      * @memberof BulkRequestBody
      */
     status: BulkRequestBodyStatusEnum;

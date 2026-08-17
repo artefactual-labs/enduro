@@ -57,7 +57,7 @@ export interface BatchBrowseResult {
  * Check if a given object implements the BatchBrowseResult interface.
  */
 export function instanceOfBatchBrowseResult(value: object): value is BatchBrowseResult {
-    if (!('absolutePath' in value) || value['absolutePath'] === undefined) return false;
+    if ((!('absolutePath' in (value as Record<string, any>)) && !('absolute_path' in (value as Record<string, any>))) || ((value as Record<string, any>)['absolutePath'] === undefined && (value as Record<string, any>)['absolute_path'] === undefined)) return false;
     if (!('entries' in value) || value['entries'] === undefined) return false;
     if (!('path' in value) || value['path'] === undefined) return false;
     if (!('truncated' in value) || value['truncated'] === undefined) return false;
