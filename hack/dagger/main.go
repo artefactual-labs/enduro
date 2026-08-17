@@ -11,15 +11,15 @@ import (
 )
 
 const (
-	mysqlImage        = "mysql:8.4.10-oraclelinux9"
+	mysqlImage        = "mysql:8.4.11-oraclelinux9"
 	temporalImage     = "temporalio/server:1.31.2"
 	temporalToolImage = "temporalio/admin-tools:1.31.2"
 	goImage           = "golang:1.26.6-bookworm"
-	nodeImage         = "node:24-bookworm"
-	redisImage        = "redis:8.2.7-alpine3.22"
+	nodeImage         = "node:24.19.0-bookworm"
+	redisImage        = "redis:8.2.8-alpine3.22"
 	minioLegacyImage  = "minio/minio:RELEASE.2020-04-28T23-56-56Z"
 	minioLatestImage  = "minio/minio:RELEASE.2025-09-07T16-13-09Z"
-	seaweedFSImage    = "chrislusf/seaweedfs:4.39"
+	seaweedFSImage    = "chrislusf/seaweedfs:4.42"
 	amboxImage        = "ghcr.io/sevein/ambox:latest"
 	playwrightImage   = "mcr.microsoft.com/playwright:v1.62.1-noble"
 )
@@ -405,7 +405,7 @@ func (m *EnduroE2E) runObjectStorageSmokeSuite(ctx context.Context, env *smokeEn
 
 func (m *EnduroE2E) resetRuntime(ctx context.Context, volumes runtimeVolumes, cacheBuster string) error {
 	reset := dag.Container().
-		From("alpine:3.22").
+		From("alpine:3.24.1").
 		WithEnvVariable("E2E_CACHE_BUSTER", cacheBuster).
 		WithMountedCache("/runtime/batch", volumes.batch).
 		WithMountedCache("/runtime/watched", volumes.watched).
@@ -536,7 +536,7 @@ func (m *EnduroE2E) amboxService() *dagger.Service {
 
 func (m *EnduroE2E) settleAmbox(ctx context.Context, ambox *dagger.Service, cacheBuster string) error {
 	waiter := dag.Container().
-		From("alpine:3.22").
+		From("alpine:3.24.1").
 		WithServiceBinding("ambox", ambox).
 		WithEnvVariable("E2E_CACHE_BUSTER", cacheBuster).
 		WithExec([]string{"sh", "-ceu", "sleep 45"})
