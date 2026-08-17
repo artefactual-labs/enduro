@@ -1067,7 +1067,7 @@
     "title": "Enduro API",
     "version": "0.0.1"
   },
-  "openapi": "3.0.3",
+  "openapi": "3.2.0",
   "paths": {
     "/batch": {
       "get": {
@@ -1514,27 +1514,20 @@
           "200": {
             "content": {
               "text/event-stream": {
-                "example": {
-                  "id": 1,
-                  "item": {
-                    "aip_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
-                    "completed_at": "1970-01-01T00:00:01Z",
-                    "created_at": "1970-01-01T00:00:01Z",
-                    "id": 1,
-                    "name": "abc123",
-                    "original_id": "abc123",
-                    "pipeline_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
-                    "run_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
-                    "started_at": "1970-01-01T00:00:01Z",
-                    "status": "in progress",
-                    "transfer_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
-                    "workflow_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5"
+                "itemSchema": {
+                  "properties": {
+                    "data": {
+                      "contentMediaType": "application/json",
+                      "contentSchema": {
+                        "$ref": "#/components/schemas/EnduroMonitorUpdate"
+                      },
+                      "type": "string"
+                    }
                   },
-                  "timestamp": "1970-01-01T00:00:01Z",
-                  "type": "abc123"
-                },
-                "schema": {
-                  "$ref": "#/components/schemas/EnduroMonitorUpdate"
+                  "required": [
+                    "data"
+                  ],
+                  "type": "object"
                 }
               }
             },
@@ -2260,6 +2253,7 @@
   },
   "servers": [
     {
+      "name": "enduro",
       "url": "http://localhost:9000"
     }
   ],

@@ -100,8 +100,9 @@ lint: tool-golangci-lint
 	golangci-lint run -v --fix
 
 gen-goa: # @HELP Generates Goa assets.
+gen-goa: GOA = $(shell go tool bine get goa)
 gen-goa: tool-goa
-	goa gen github.com/artefactual-labs/enduro/internal/api/design -o internal/api
+	$(GOA) gen github.com/artefactual-labs/enduro/internal/api/design -o internal/api
 	@$(MAKE) gen-goa-json-pretty
 
 gen-goa-json-pretty: goa_http_dir = "internal/api/gen/http"
