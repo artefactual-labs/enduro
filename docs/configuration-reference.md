@@ -119,17 +119,9 @@ Configuration of the Enduro API server.
 
 #### `listen` (String)
 
-Address of the primary Enduro server. It serves the API and the new Nuxt web UI.
+Address of the Enduro server. It serves the API and web UI.
 
 E.g.: `"127.0.0.1:9000"`
-
-#### `legacyListen` (String)
-
-Optional address of a second Enduro server that serves the API and the legacy
-web UI. Leave this unset unless operators still need access to the old
-interface alongside the new default frontend.
-
-E.g.: `"127.0.0.1:9002"`
 
 #### `debug` (Boolean)
 
@@ -199,16 +191,10 @@ contentSecurityPolicy = ""
 contentSecurityPolicy = "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; connect-src 'self'; img-src 'self' data:; font-src 'self' data:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'"
 ```
 
-The example policy is compatible with the bundled dashboard and legacy UI while
-limiting resource loading to the same origin. Deployments that intentionally
-load assets or connect to APIs on other origins should extend the relevant CSP
-directives before enabling it.
-
-Enduro does not enable a default CSP yet because the policy must remain
-compatible with both the new dashboard and the legacy Vue 2 UI. We intend to
-define and enable stronger default browser security headers after the legacy UI
-is phased out and the new dashboard can be validated against the stricter
-policy.
+The example policy is compatible with the bundled dashboard while limiting
+resource loading to the same origin. Deployments that intentionally load assets
+or connect to APIs on other origins should extend the relevant CSP directives
+before enabling it.
 
 E.g.: `"default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; connect-src 'self'; img-src 'self' data:; font-src 'self' data:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'"`
 

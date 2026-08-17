@@ -23,7 +23,7 @@ import (
 	goahttpmwr "goa.design/goa/v3/http/middleware"
 	goamiddleware "goa.design/goa/v3/middleware"
 
-	frontendui "github.com/artefactual-labs/enduro/frontend"
+	"github.com/artefactual-labs/enduro/frontend"
 	"github.com/artefactual-labs/enduro/internal/api/gen/batch"
 	"github.com/artefactual-labs/enduro/internal/api/gen/collection"
 	batchsvr "github.com/artefactual-labs/enduro/internal/api/gen/http/batch/server"
@@ -34,14 +34,6 @@ import (
 	intbatch "github.com/artefactual-labs/enduro/internal/batch"
 	intcol "github.com/artefactual-labs/enduro/internal/collection"
 	intpipe "github.com/artefactual-labs/enduro/internal/pipeline"
-	"github.com/artefactual-labs/enduro/ui"
-)
-
-type UIMode int
-
-const (
-	UIModeLegacy UIMode = iota
-	UIModeNuxt
 )
 
 func HTTPServer(
@@ -51,7 +43,6 @@ func HTTPServer(
 	pipesvc intpipe.Service,
 	batchsvc intbatch.Service,
 	colsvc intcol.Service,
-	uiMode UIMode,
 ) *http.Server {
 	dec := goahttp.RequestDecoder
 	enc := goahttp.ResponseEncoder
@@ -87,16 +78,9 @@ func HTTPServer(
 	swaggerService := swaggersvr.New(nil, nil, nil, nil, nil, nil, nil)
 	swaggersvr.Mount(mux, swaggerService)
 
-	switch uiMode {
-	case UIModeNuxt:
-		nuxt := frontendui.SPAHandler("/")
-		mux.Handle("GET", "/", nuxt)
-		mux.Handle("GET", "/{*filename}", nuxt)
-	case UIModeLegacy:
-		legacy := ui.SPAHandler()
-		mux.Handle("GET", "/", legacy)
-		mux.Handle("GET", "/{*filename}", legacy)
-	}
+	frontend := frontend.SPAHandler("/")
+	mux.Handle("GET", "/", frontend)
+	mux.Handle("GET", "/{*filename}", frontend)
 
 	// Global middlewares.
 	var handler http.Handler = mux

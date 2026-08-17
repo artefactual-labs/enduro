@@ -205,12 +205,12 @@ func main() {
 
 	// API server.
 	{
-		addServer := func(cfg api.Config, uiMode api.UIMode) {
+		addServer := func(cfg api.Config) {
 			var srv *http.Server
 
 			g.Add(
 				func() error {
-					srv = api.HTTPServer(logger, tp, &cfg, pipesvc, batchsvc, colsvc, uiMode)
+					srv = api.HTTPServer(logger, tp, &cfg, pipesvc, batchsvc, colsvc)
 					return srv.ListenAndServe()
 				},
 				func(err error) {
@@ -224,14 +224,7 @@ func main() {
 			)
 		}
 
-		addServer(config.API, api.UIModeNuxt)
-
-		if config.API.LegacyListen != "" {
-			legacyConfig := config.API
-			legacyConfig.Listen = config.API.LegacyListen
-			legacyConfig.LegacyListen = ""
-			addServer(legacyConfig, api.UIModeLegacy)
-		}
+		addServer(config.API)
 	}
 
 	// Object event webhook server.
@@ -489,7 +482,6 @@ func configureViper(v *viper.Viper) {
 	v.SetConfigName(appName)
 	v.SetDefault("debugListen", "127.0.0.1:9001")
 	v.SetDefault("api.listen", "127.0.0.1:9000")
-	v.SetDefault("api.legacyListen", "")
 	v.SetDefault("api.allowedOrigins", []string{"*"})
 	v.SetDefault("api.contentSecurityPolicy", "")
 	v.Set("api.appVersion", version)

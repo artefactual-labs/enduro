@@ -31,7 +31,7 @@ Spin up the environment with the following command:
 
 Build the web-based user interface:
 
-    make ui
+    make frontend
 
 Finall, build and run Enduro with:
 
@@ -244,8 +244,9 @@ It's now up to the developer to implement the expected functionality.
 ### Frontend development
 
 We use `openapi-generator-cli` to generate the client code after the OpenAPI
-description of the API. Run `make ui-client` to generate all the TypeScript
-code under `ui/src/client` which is used by the Enduro frontend.
+description of the API. Run `make frontend-client` to generate all the
+TypeScript code under `frontend/app/openapi-generator` which is used by the
+Enduro frontend.
 
 You should see new models and methods added, like the new `collectionDelete`
 method:
@@ -270,11 +271,13 @@ When updating Goa, make sure `hack/make/dep_goa.mk` is using the same version.
 
 ### OpenAPI Generator
 
-In Makefile (target `ui-client`), as a Docker container.
+In Makefile (target `frontend-client`), as a Docker container.
 
 ### UI
 
-Use `npm run deps-minor` to install available updates.
+Use `npm run upgrade:deps --prefix frontend` to select compatible dependency
+updates, then `npm install --prefix frontend` to install them and update the
+lockfile.
 
 ### Other tools
 

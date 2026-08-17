@@ -773,7 +773,6 @@ func (m *EnduroE2E) enduroBase(source *dagger.Directory, volumes runtimeVolumes)
 				"hack/dagger/runtime",
 				"hack/minio-data",
 				"hack/seaweedfs-data",
-				"ui/node_modules",
 			},
 		}).
 		WithWorkdir("/src").
@@ -823,7 +822,6 @@ func (m *EnduroE2E) s3PutBinary(source *dagger.Directory) *dagger.File {
 				"hack/dagger/runtime",
 				"hack/minio-data",
 				"hack/seaweedfs-data",
-				"ui/node_modules",
 			},
 		}).
 		WithWorkdir("/src").
@@ -848,7 +846,6 @@ func (m *EnduroE2E) s3SetupBinary(source *dagger.Directory) *dagger.File {
 				"hack/dagger/runtime",
 				"hack/minio-data",
 				"hack/seaweedfs-data",
-				"ui/node_modules",
 			},
 		}).
 		WithWorkdir("/src").
@@ -898,7 +895,6 @@ taskQueue = "global"
 
 [api]
 listen = "0.0.0.0:9000"
-legacyListen = ""
 debug = false
 
 [database]
@@ -1010,7 +1006,6 @@ taskQueue = "global"
 
 [api]
 listen = "0.0.0.0:9000"
-legacyListen = ""
 debug = false
 
 [database]

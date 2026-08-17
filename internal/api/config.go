@@ -4,7 +4,6 @@ import "fmt"
 
 type Config struct {
 	Listen                string
-	LegacyListen          string
 	Debug                 bool
 	AppVersion            string
 	AllowedOrigins        []string
