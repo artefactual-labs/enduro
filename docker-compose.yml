@@ -1,6 +1,6 @@
 services:
   mysql:
-    image: "mysql:8.4.10-oraclelinux9"
+    image: "mysql:8.4.11-oraclelinux9"
     environment:
       MYSQL_ROOT_PASSWORD: "root123"
       MYSQL_USER: "enduro"
@@ -83,7 +83,7 @@ services:
     command: "/compose/create-namespace.sh"
 
   temporal-ui:
-    image: "temporalio/ui:2.52.1"
+    image: "temporalio/ui:2.53.3"
     depends_on:
       temporal:
         condition: service_healthy
@@ -94,7 +94,7 @@ services:
       - "127.0.0.1:7440:8080"
 
   seaweedfs:
-    image: "chrislusf/seaweedfs:4.39"
+    image: "chrislusf/seaweedfs:4.42"
     command: "mini -dir=/data -ip.bind=0.0.0.0 -bucket=sips -master.volumeSizeLimitMB=64 -webdav=false -admin.ui=false -s3.port.iceberg=0"
     extra_hosts:
       - "host.docker.internal:host-gateway"
@@ -113,6 +113,6 @@ services:
     # Redis 8.2 is the current Redis 8 LTS line. Redis policy marks the
     # second and last minor releases in a major version as LTS; newer interim
     # minors, such as 8.4, are STS.
-    image: "redis:8.2.7-alpine3.22"
+    image: "redis:8.2.8-alpine3.22"
     ports:
       - "127.0.0.1:7470:6379"
