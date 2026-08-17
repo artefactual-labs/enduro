@@ -14,7 +14,7 @@ const (
 	mysqlImage        = "mysql:8.4.10-oraclelinux9"
 	temporalImage     = "temporalio/server:1.31.2"
 	temporalToolImage = "temporalio/admin-tools:1.31.2"
-	goImage           = "golang:1.26.5-bookworm"
+	goImage           = "golang:1.26.6-bookworm"
 	nodeImage         = "node:24-bookworm"
 	redisImage        = "redis:8.2.7-alpine3.22"
 	minioLegacyImage  = "minio/minio:RELEASE.2020-04-28T23-56-56Z"
