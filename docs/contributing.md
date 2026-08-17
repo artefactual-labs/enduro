@@ -195,7 +195,8 @@ Robert C. Martin in [The Clean Architecture][clean-arch].
 
 See also:
 
-- [OpenAPI schema (`openapi3.json`)][openapi3-json]
+- [OpenAPI 3.2 schema][openapi3-2-json]
+- [OpenAPI 3.0 schema][openapi3-json]
 
 ### API design
 
@@ -227,7 +228,9 @@ authentication methods or streaming of contents.
 After making new changes to the API design, the developer should run:
 `make gen-goa` which generates all the code under `internal/api/gen`, including
 the OpenAPI description of the API for the HTTP transport:
-[`openapi3.json`][openapi3-json].
+[`openapi3.2.json`][openapi3-2-json] and [`openapi3.json`][openapi3-json].
+The 3.0 document remains the input for the generated UI clients because it is
+supported by more client-generation tools.
 
 In the example above, we added a `Delete` method to the `Collection` service.
 The corresponding Go interface gets a new method:
@@ -307,6 +310,7 @@ the [workflow run][first-release-run] that made our very first release.
 [goa-dsl]: https://godoc.org/goa.design/goa/dsl
 [design-pkg]: https://github.com/artefactual-labs/enduro/tree/main/internal/api/design
 [clean-arch]: https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html
+[openapi3-2-json]: https://github.com/artefactual-labs/enduro/blob/main/internal/api/gen/http/openapi3.2.json
 [openapi3-json]: https://github.com/artefactual-labs/enduro/blob/main/internal/api/gen/http/openapi3.json
 [release-workflow]: https://github.com/artefactual-labs/enduro/blob/main/.github/workflows/release.yml
 [release-github-page]: https://github.com/artefactual-labs/enduro/releases

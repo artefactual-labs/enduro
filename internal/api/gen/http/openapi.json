@@ -44,7 +44,7 @@
       "type": "object"
     },
     "BatchBrowseNotAvailableResponseBody": {
-      "description": "browse_not_available_response_body result type (default view)",
+      "description": "Error response result type (default view)",
       "example": {
         "fault": false,
         "id": "123abc",
@@ -97,7 +97,7 @@
       "type": "object"
     },
     "BatchBrowseNotValidResponseBody": {
-      "description": "browse_not_valid_response_body result type (default view)",
+      "description": "Error response result type (default view)",
       "example": {
         "fault": false,
         "id": "123abc",
@@ -288,7 +288,7 @@
       "type": "object"
     },
     "BatchSubmitNotAvailableResponseBody": {
-      "description": "submit_not_available_response_body result type (default view)",
+      "description": "Error response result type (default view)",
       "example": {
         "fault": false,
         "id": "123abc",
@@ -341,7 +341,7 @@
       "type": "object"
     },
     "BatchSubmitNotValidResponseBody": {
-      "description": "submit_not_valid_response_body result type (default view)",
+      "description": "Error response result type (default view)",
       "example": {
         "fault": false,
         "id": "123abc",
@@ -526,7 +526,7 @@
       "type": "object"
     },
     "CollectionBulkNotAvailableResponseBody": {
-      "description": "bulk_not_available_response_body result type (default view)",
+      "description": "Error response result type (default view)",
       "example": {
         "fault": false,
         "id": "123abc",
@@ -579,7 +579,7 @@
       "type": "object"
     },
     "CollectionBulkNotValidResponseBody": {
-      "description": "bulk_not_valid_response_body result type (default view)",
+      "description": "Error response result type (default view)",
       "example": {
         "fault": false,
         "id": "123abc",
@@ -676,7 +676,7 @@
       "type": "object"
     },
     "CollectionCancelNotRunningResponseBody": {
-      "description": "cancel_not_running_response_body result type (default view)",
+      "description": "Error response result type (default view)",
       "example": {
         "fault": false,
         "id": "123abc",
@@ -729,7 +729,7 @@
       "type": "object"
     },
     "CollectionDecideNotValidResponseBody": {
-      "description": "decide_not_valid_response_body result type (default view)",
+      "description": "Error response result type (default view)",
       "example": {
         "fault": false,
         "id": "123abc",
@@ -843,7 +843,7 @@
       "type": "object"
     },
     "CollectionRetryNotRunningResponseBody": {
-      "description": "retry_not_running_response_body result type (default view)",
+      "description": "Error response result type (default view)",
       "example": {
         "fault": false,
         "id": "123abc",
@@ -896,7 +896,7 @@
       "type": "object"
     },
     "EnduroCollectionStatusHistory": {
-      "description": "status_history_response_body result type (default view)",
+      "description": "StatusHistory describes recorded collection status transitions. (default view)",
       "example": {
         "availability": "partial",
         "transitions": [
@@ -1084,7 +1084,7 @@
       "type": "array"
     },
     "EnduroCollectionWorkflowStatus": {
-      "description": "WorkflowResponseBody result type (default view)",
+      "description": "WorkflowStatus describes the processing workflow status of a collection. (default view)",
       "example": {
         "history": [
           {
@@ -1108,7 +1108,7 @@
       "type": "object"
     },
     "EnduroDetailedStoredCollection": {
-      "description": "ShowResponseBody result type (default view)",
+      "description": "DetailedStoredCollection describes a collection retrieved by the service detail view. (default view)",
       "example": {
         "aip_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
         "aip_stored_at": "1970-01-01T00:00:01Z",
@@ -1600,6 +1600,7 @@
       "type": "object"
     },
     "RetryResult": {
+      "description": "RetryResult describes how retry processing was restarted.",
       "example": {
         "mode": "reconcile_existing_aip"
       },
@@ -1944,8 +1945,8 @@
       "get": {
         "operationId": "collection#monitor",
         "responses": {
-          "101": {
-            "description": "Switching Protocols response.",
+          "200": {
+            "description": "OK response.",
             "schema": {
               "$ref": "#/definitions/EnduroMonitorUpdate",
               "required": [
@@ -1957,7 +1958,7 @@
           }
         },
         "schemes": [
-          "ws"
+          "http"
         ],
         "summary": "monitor collection",
         "tags": [
