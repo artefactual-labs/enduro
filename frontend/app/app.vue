@@ -30,7 +30,6 @@ useSeoMeta({
 <template>
   <UApp>
     <div class="min-h-svh flex flex-col">
-      <AppFrontendChangeBanner />
       <AppHeader />
 
       <main class="flex-1 min-h-0">
