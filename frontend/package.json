@@ -20,9 +20,9 @@
   },
   "dependencies": {
     "@iconify-json/entypo": "^1.2.1",
-    "@iconify-json/lucide": "^1.2.123",
+    "@iconify-json/lucide": "^1.2.126",
     "@iconify-json/simple-icons": "^1.2.93",
-    "@nuxt/ui": "^4.10.0",
+    "@nuxt/ui": "^4.11.0",
     "nuxt": "^4.5.2",
     "tailwindcss": "^4.3.3",
     "vue-router": "^5.2.0"
@@ -38,12 +38,12 @@
   "devDependencies": {
     "@nuxt/eslint": "^1.17.0",
     "@nuxt/test-utils": "^4.1.0",
-    "@vitest/coverage-v8": "^4.1.10",
+    "@vitest/coverage-v8": "^4.1.11",
     "@vue/test-utils": "^2.4.11",
-    "eslint": "^10.8.1",
-    "happy-dom": "^20.11.2",
-    "typescript": "^6.0.3",
+    "eslint": "^10.9.1",
+    "happy-dom": "^20.11.8",
+    "typescript": "^7.0.2",
     "vitest": "^4.1.10",
-    "vue-tsc": "^3.3.10"
+    "vue-tsc": "^3.3.11"
   }
 }
