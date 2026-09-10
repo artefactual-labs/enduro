@@ -20,30 +20,27 @@
   },
   "dependencies": {
     "@iconify-json/entypo": "^1.2.1",
-    "@iconify-json/lucide": "^1.2.123",
-    "@iconify-json/simple-icons": "^1.2.93",
-    "@nuxt/ui": "^4.10.0",
+    "@iconify-json/lucide": "^1.2.131",
+    "@iconify-json/simple-icons": "^1.2.95",
+    "@nuxt/ui": "^4.11.1",
     "nuxt": "^4.5.2",
     "tailwindcss": "^4.3.3",
-    "vue-router": "^5.2.0"
+    "vue-router": "^5.3.1"
   },
   "overrides": {
     "fontless": {
-      "esbuild": "0.28.1"
-    },
-    "vite": {
       "esbuild": "0.28.1"
     }
   },
   "devDependencies": {
     "@nuxt/eslint": "^1.17.0",
-    "@nuxt/test-utils": "^4.1.0",
-    "@vitest/coverage-v8": "^4.1.10",
-    "@vue/test-utils": "^2.4.11",
-    "eslint": "^10.8.1",
-    "happy-dom": "^20.11.2",
+    "@nuxt/test-utils": "^4.3.2",
+    "@vitest/coverage-v8": "^5.0.0",
+    "@vue/test-utils": "^2.5.0",
+    "eslint": "^10.10.0",
+    "happy-dom": "^20.14.3",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.10",
-    "vue-tsc": "^3.3.10"
+    "vitest": "^5.0.0",
+    "vue-tsc": "^3.3.11"
   }
 }

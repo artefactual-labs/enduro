@@ -1,6 +1,6 @@
 module github.com/artefactual-labs/enduro
 
-go 1.26.6
+go 1.26.8
 
 require (
 	github.com/alicebob/miniredis/v2 v2.38.0
@@ -46,7 +46,7 @@ require (
 	goa.design/goa/v3 v3.29.2
 	goa.design/plugins/v3 v3.29.2
 	gocloud.dev v0.46.0
-	golang.org/x/crypto v0.55.0
+	golang.org/x/crypto v0.56.0
 	golang.org/x/sync v0.22.0
 	gotest.tools/v3 v3.5.2
 )
@@ -157,7 +157,7 @@ require (
 	google.golang.org/api v0.272.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260803160001-6ac0973c030d // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260810153831-ec0a7760b754 // indirect
-	google.golang.org/grpc v1.83.0 // indirect
+	google.golang.org/grpc v1.83.2 // indirect
 	google.golang.org/protobuf v1.36.12 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
