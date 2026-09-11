@@ -95,8 +95,9 @@ fmt: tool-golangci-lint
 	golangci-lint fmt -v
 
 lint: # @HELP Lints the code using golangci-lint.
+lint: LINT_FLAGS ?= --fix=1
 lint: tool-golangci-lint
-	golangci-lint run -v --fix
+	golangci-lint run -v $(LINT_FLAGS)
 
 gen-goa: # @HELP Generates Goa assets.
 gen-goa: GOA = $(shell go tool bine get goa)

@@ -27,8 +27,23 @@ jobs:
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version-file: go.mod
+      - name: Get date
+        shell: bash
+        run: |
+          echo "DATE=$(date -u '+%Y-%m')" >> $GITHUB_ENV
+      - name: Restore golangci-lint cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        timeout-minutes: 10
+        continue-on-error: true
+        with:
+          path: ${{ runner.temp }}/golangci-lint-cache
+          key: ${{ runner.os }}-golangci-lint-cache-${{ env.DATE }}
+          restore-keys: |
+            ${{ runner.os }}-golangci-lint-cache-
       - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
+        run: make lint LINT_FLAGS=--fix=0
+        env:
+          GOLANGCI_LINT_CACHE: ${{ runner.temp }}/golangci-lint-cache
   test:
     runs-on: ubuntu-latest
     steps:
