@@ -145,8 +145,10 @@ func TestProdActivity(t *testing.T) {
 					fs.WithFile(
 						base+".mft",
 						tc.wantContent,
-						fs.WithMode(os.FileMode(0o644))),
-				)))
+						fs.WithMode(os.FileMode(0o644)),
+					),
+				),
+			))
 		})
 	}
 }

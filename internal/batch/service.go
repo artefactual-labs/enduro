@@ -99,7 +99,8 @@ func (s *batchImpl) Submit(ctx context.Context, payload *goabatch.SubmitPayload)
 		case *temporalapi_serviceerror.WorkflowExecutionAlreadyStarted:
 			return nil, goabatch.MakeNotAvailable(
 				fmt.Errorf("error starting batch - operation is already in progress (workflowID=%s runID=%s)",
-					BatchWorkflowID, err.RunId))
+					BatchWorkflowID, err.RunId),
+			)
 		default:
 			s.logger.Info("error starting batch", "err", err)
 			return nil, fmt.Errorf("error starting batch")

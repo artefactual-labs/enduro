@@ -466,8 +466,7 @@ func (w *goaWrapper) Decide(ctx context.Context, payload *goacollection.DecidePa
 		return err
 	}
 	if err := handle.Get(ctx, nil); err != nil {
-		var applicationErr *temporalsdk_temporal.ApplicationError
-		if errors.As(err, &applicationErr) {
+		if _, ok := errors.AsType[*temporalsdk_temporal.ApplicationError](err); ok {
 			return goacollection.MakeNotValid(err)
 		}
 		return err

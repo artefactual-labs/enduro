@@ -3,7 +3,7 @@ project = "enduro"
 [[bins]]
 name = "golangci-lint"
 url = "https://github.com/golangci/golangci-lint"
-version = "2.12.2"
+version = "2.13.2"
 
 [[bins]]
 name = "goreleaser"

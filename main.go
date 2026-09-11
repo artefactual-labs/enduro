@@ -80,7 +80,8 @@ func main() {
 	if v, _ := p.GetBool("version"); v {
 		fmt.Printf(
 			"%s version %s (commit=%s) built on %s using %s\n",
-			appName, version, gitCommit, buildTime, goVersion)
+			appName, version, gitCommit, buildTime, goVersion,
+		)
 		os.Exit(0)
 	}
 
