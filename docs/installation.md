@@ -135,6 +135,55 @@ the API via cURL is `curl -Ls 127.0.0.1:9000/collection | jq`:
 ]
 ```
 
+### Live updates behind proxies
+
+`/collection/monitor` uses Server-Sent Events (SSE), a long-lived HTTP response
+that delivers collection updates. Proxies and security appliances must forward
+messages promptly; buffering or inspection that waits for a complete response
+can stall delivery. A proxy that supported Enduro's previous WebSocket connection
+may still buffer SSE responses. The [Connection monitor] shows whether the
+browser is connected and receiving events.
+
+For Nginx, apply these directives in the existing location serving this endpoint,
+preserving its upstream, authentication, and forwarding settings:
+
+```nginx
+proxy_buffering off;
+proxy_cache off;
+proxy_read_timeout 60s;  # Already the Nginx default.
+```
+
+[`proxy_buffering off`] forwards data as it arrives.
+[`proxy_read_timeout`] measures inactivity between upstream
+reads, not total connection duration. Enduro's ten-second heartbeats should
+keep it open; increasing the timeout does not fix buffering. If creating a
+separate location, retain the existing access controls: sibling locations do
+not inherit each other's settings.
+
+If compression is enabled for event streams, try [`gzip off;`] to
+rule out Nginx's own compression. Other appliances may need separate changes.
+Validate with `nginx -t` before reloading.
+
+To check delivery, replace the hostname below and authenticate if required:
+
+```sh
+curl --no-buffer --include --max-time 35 --header 'Accept: text/event-stream' https://enduro.example.org/collection/monitor
+```
+
+Expect HTTP 200, `Content-Type: text/event-stream`, an immediate `data:` message
+containing `"type":"hello"`, then `"type":"ping"` about every ten seconds.
+`--no-buffer` disables cURL's output buffering. The command deliberately times out after
+35 seconds because the stream stays open.
+
+Where access permits, compare direct backend access with the public address.
+Events delayed, batched, or absent only through the proxy suggest a problem in
+that access path. In browser network tools, an open request is normal; check
+for arriving messages. Buffering can stall delivery without a browser error.
+
+[Connection monitor]: ./user-manual.md#connection-monitor
+[`proxy_buffering off`]: https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_buffering
+[`proxy_read_timeout`]: https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_read_timeout
+[`gzip off;`]: https://nginx.org/en/docs/http/ngx_http_gzip_module.html#gzip
 [multiple ways to run a Temporal Cluster]: https://docs.temporal.io/kb/all-the-ways-to-run-a-cluster
 [Ansible role]: https://github.com/artefactual-labs/ansible-enduro-temporal
 [temporal-deployment]: https://docs.temporal.io/cluster-deployment-guide

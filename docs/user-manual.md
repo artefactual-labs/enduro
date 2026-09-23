@@ -19,6 +19,26 @@ ingests and shows their processing status.
 
 ![Enduro dashboard](./assets/dashboard.png)
 
+### Connection monitor
+
+The widget in the lower-right corner shows the connection to
+`/collection/monitor`, which delivers live collection updates. It helps spot
+connection problems even when ingests and ordinary API requests still work.
+Without this stream, collection information may stay stale until refreshed.
+
+- **Connected**: the event stream is open.
+- **Connecting**: opening or retrying the connection.
+- **Failed**: at least four consecutive failures after a successful connection;
+  automatic retries continue.
+
+Click the widget for event counts, last-event time, and **Reconnect now**.
+Heartbeats should arrive about every ten seconds. A stalled first connection
+can remain **Connecting** indefinitely without reporting a failure. The widget
+reports this connection's status, not Enduro's overall health.
+
+There is currently no setting to hide the widget. See [Live updates behind
+proxies] for setup and troubleshooting.
+
 ### Watching filesystem and object stores
 
 It is possible to configure watchers that monitor filesystems or object stores
@@ -244,3 +264,5 @@ Common entry points:
 - [Workflow configuration](./configuration-reference.md#workflow)
 - [Recovery Guide](./user-manual-recovery.md)
 - [Example `enduro.toml`](https://github.com/artefactual-labs/enduro/blob/main/enduro.toml)
+
+[Live updates behind proxies]: ./installation.md#live-updates-behind-proxies

@@ -44,6 +44,12 @@ created by an earlier Enduro release. Its Event History belongs to the earlier
 workflow implementation and may not be compatible with the new release. Use
 Enduro's supported retry and recovery operations instead.
 
+## Live-update connection
+
+Since v0.42.0, `/collection/monitor` uses SSE instead of WebSockets. When
+upgrading from an earlier release, check the [proxy requirements] and verify
+live updates through the address operators use.
+
 ## Database migrations
 
 Enduro uses [golang-migrate] to manage its MySQL schema. Migration files are
@@ -134,3 +140,4 @@ failed statement before proceeding.
 [golang-migrate]: https://github.com/golang-migrate/migrate
 [Install the golang-migrate CLI]: https://github.com/golang-migrate/migrate/tree/master/cmd/migrate
 [release page]: https://github.com/artefactual-labs/enduro/releases
+[proxy requirements]: ./installation.md#live-updates-behind-proxies
