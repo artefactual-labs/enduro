@@ -30,8 +30,6 @@ dagger -m hack/dagger call smoke-tests --source . export --path hack/dagger/runt
 The object-storage smoke suite exercises S3 watcher ingestion through the
 supported local object storage paths:
 
-- `minio-legacy`: fixture-backed MinIO native Redis notifications
-  (`eventFormat = "minio"`),
 - `minio-latest`: env-configured MinIO native Redis notifications
   (`eventFormat = "minio"`),
 - `seaweedfs`: SeaweedFS filer webhooks through Enduro's object event webhook
