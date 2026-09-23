@@ -17,7 +17,7 @@ const (
 	goImage           = "golang:1.26.8-bookworm"
 	nodeImage         = "node:24.19.0-bookworm"
 	redisImage        = "redis:8.2.8-alpine3.22"
-	minioLatestImage  = "minio/minio:RELEASE.2025-09-07T16-13-09Z"
+	minioLatestImage  = "quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z"
 	argminBuildImage  = "rust:1.95.0-bookworm"
 	argminRevision    = "627113c61b786475cc9a6da42b3721bc7e57eb47"
 	seaweedFSImage    = "chrislusf/seaweedfs:4.42"
