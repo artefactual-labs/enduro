@@ -64,7 +64,13 @@ func main() {
 }
 
 func setupBucket(ctx context.Context, client *s3.Client, bucket, notificationARN string) error {
-	_, err := client.CreateBucket(ctx, &s3.CreateBucketInput{Bucket: &bucket})
+	input := &s3.CreateBucketInput{Bucket: &bucket}
+	if region := client.Options().Region; region != "" && region != "us-east-1" {
+		input.CreateBucketConfiguration = &types.CreateBucketConfiguration{
+			LocationConstraint: types.BucketLocationConstraint(region),
+		}
+	}
+	_, err := client.CreateBucket(ctx, input)
 	if err != nil && !bucketExists(err) {
 		return fmt.Errorf("create bucket: %w", err)
 	}

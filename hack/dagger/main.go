@@ -19,6 +19,8 @@ const (
 	redisImage        = "redis:8.2.8-alpine3.22"
 	minioLegacyImage  = "minio/minio:RELEASE.2020-04-28T23-56-56Z"
 	minioLatestImage  = "minio/minio:RELEASE.2025-09-07T16-13-09Z"
+	argminBuildImage  = "rust:1.95.0-bookworm"
+	argminRevision    = "627113c61b786475cc9a6da42b3721bc7e57eb47"
 	seaweedFSImage    = "chrislusf/seaweedfs:4.42"
 	amboxImage        = "ghcr.io/sevein/ambox:latest"
 	playwrightImage   = "mcr.microsoft.com/playwright:v1.62.1-noble"
@@ -32,6 +34,7 @@ const (
 	objectStorageProviderMinioLegacy objectStorageProvider = "minio-legacy"
 	objectStorageProviderMinioLatest objectStorageProvider = "minio-latest"
 	objectStorageProviderSeaweedFS   objectStorageProvider = "seaweedfs"
+	objectStorageProviderArgmin      objectStorageProvider = "argmin"
 )
 
 type runtimeVolumes struct {
@@ -83,13 +86,14 @@ func (m *EnduroE2E) SmokeTests(ctx context.Context, source *dagger.Directory) (*
 	return m.runSmokeSuite(ctx, env)
 }
 
-// Run S3 watcher smoke tests against MinIO and SeaweedFS.
+// Run S3 watcher smoke tests against MinIO, SeaweedFS, and argmin.
 //
 // The MinIO scenarios exercise native MinIO Redis notifications with both the
 // legacy fixture-backed image and the newer env-configured image. The SeaweedFS
 // scenario exercises SeaweedFS filer webhooks, Enduro's object event webhook,
 // normalized Redis events, and the S3 watcher path. All scenarios publish the
-// transfer to ambox and verify the resulting AIP.
+// transfer to ambox and verify the resulting AIP. Argmin uses a synthetic
+// normalized Redis event after upload because it has no native notifications.
 //
 // Call from the repository root with:
 //
@@ -110,7 +114,13 @@ func (m *EnduroE2E) ObjectStorageSmokeTests(ctx context.Context, source *dagger.
 		return nil, err
 	}
 
+	argminArtifacts, err := m.objectStorageSmokeTest(ctx, source, objectStorageProviderArgmin)
+	if err != nil {
+		return nil, err
+	}
+
 	return dag.Directory().
+		WithDirectory("argmin", argminArtifacts).
 		WithDirectory(string(objectStorageProviderMinioLegacy), minioLegacyArtifacts).
 		WithDirectory(string(objectStorageProviderMinioLatest), minioLatestArtifacts).
 		WithDirectory("seaweedfs", seaweedFSArtifacts), nil
@@ -118,13 +128,15 @@ func (m *EnduroE2E) ObjectStorageSmokeTests(ctx context.Context, source *dagger.
 
 // Run one S3 watcher smoke test provider.
 //
-// Provider must be "minio-legacy", "minio-latest", or "seaweedfs".
+// Provider must be "minio-legacy", "minio-latest", "seaweedfs", or "argmin".
 func (m *EnduroE2E) ObjectStorageSmokeTest(ctx context.Context, source *dagger.Directory, provider string) (*dagger.Directory, error) {
 	switch objectStorageProvider(provider) {
 	case objectStorageProviderMinioLegacy:
 		return m.objectStorageSmokeTest(ctx, source, objectStorageProviderMinioLegacy)
 	case objectStorageProviderMinioLatest:
 		return m.objectStorageSmokeTest(ctx, source, objectStorageProviderMinioLatest)
+	case objectStorageProviderArgmin:
+		return m.objectStorageSmokeTest(ctx, source, objectStorageProviderArgmin)
 	case objectStorageProviderSeaweedFS:
 		return m.objectStorageSmokeTest(ctx, source, objectStorageProviderSeaweedFS)
 	default:
@@ -238,18 +250,23 @@ func (m *EnduroE2E) objectStorageEnvironment(ctx context.Context, source *dagger
 
 	var enduro *dagger.Service
 	switch provider {
-	case objectStorageProviderMinioLegacy, objectStorageProviderMinioLatest:
-		minio := m.minioService(source, volumes, redis, provider)
-		minio, err = minio.Start(ctx)
+	case objectStorageProviderMinioLegacy, objectStorageProviderMinioLatest, objectStorageProviderArgmin:
+		var storage *dagger.Service
+		if provider == objectStorageProviderArgmin {
+			storage = m.argminService(cacheBuster)
+		} else {
+			storage = m.minioService(source, volumes, redis, provider)
+		}
+		storage, err = storage.Start(ctx)
 		if err != nil {
 			return nil, err
 		}
-		if provider == objectStorageProviderMinioLatest {
-			if err := m.setupMinIOBucketNotification(ctx, source, minio, provider, cacheBuster); err != nil {
+		if provider == objectStorageProviderMinioLatest || provider == objectStorageProviderArgmin {
+			if err := m.setupObjectStorageBucket(ctx, source, storage, provider, cacheBuster); err != nil {
 				return nil, err
 			}
 		}
-		enduro = m.enduroObjectStorageService(source, volumes, mysql, temporal, ambox, redis, minio, provider)
+		enduro = m.enduroObjectStorageService(source, volumes, mysql, temporal, ambox, redis, storage, provider)
 		enduro, err = enduro.Start(ctx)
 		if err != nil {
 			return nil, err
@@ -263,7 +280,7 @@ func (m *EnduroE2E) objectStorageEnvironment(ctx context.Context, source *dagger
 			ambox:       ambox,
 			enduro:      enduro,
 			redis:       redis,
-			storage:     minio,
+			storage:     storage,
 		}, nil
 	case objectStorageProviderSeaweedFS:
 		enduro = m.enduroSeaweedFSService(source, volumes, mysql, temporal, ambox, redis)
@@ -348,6 +365,9 @@ func (m *EnduroE2E) runObjectStorageSmokeSuite(ctx context.Context, env *smokeEn
 	s3put := m.s3PutBinary(env.source)
 	s3Endpoint := fmt.Sprintf("http://%s:9000", provider)
 	redisList := "minio-events"
+	if provider == objectStorageProviderArgmin {
+		redisList = "object-events"
+	}
 	if provider == objectStorageProviderSeaweedFS {
 		s3Endpoint = "http://enduro:8333"
 		redisList = "object-events"
@@ -383,7 +403,7 @@ func (m *EnduroE2E) runObjectStorageSmokeSuite(ctx context.Context, env *smokeEn
 		WithExec([]string{"sh", "-ceu", "apt-get update && apt-get install -y --no-install-recommends curl jq zip p7zip-full ca-certificates redis-tools && rm -rf /var/lib/apt/lists/*"}).
 		WithExec([]string{"npm", "install"})
 
-	if isMinIOProvider(provider) && env.storage != nil {
+	if env.storage != nil {
 		tester = tester.WithServiceBinding(string(provider), env.storage)
 	}
 
@@ -552,6 +572,44 @@ func (m *EnduroE2E) redisService() *dagger.Service {
 		AsService(dagger.ContainerAsServiceOpts{UseEntrypoint: true})
 }
 
+// Build independently of Enduro's source and per-run cache buster. Copy the
+// executable out of the target cache so it is part of Dagger's immutable output.
+func (m *EnduroE2E) argminBinary() *dagger.File {
+	source := dag.Git("https://github.com/justincormack/argmin.git").Commit(argminRevision).Tree()
+	return dag.Container().
+		From(argminBuildImage).
+		WithDirectory("/src", source).
+		WithWorkdir("/src").
+		WithMountedCache("/usr/local/cargo/registry", dag.CacheVolume("enduro-argmin-cargo-registry")).
+		WithMountedCache("/usr/local/cargo/git", dag.CacheVolume("enduro-argmin-cargo-git")).
+		WithMountedCache("/src/target", dag.CacheVolume("enduro-argmin-cargo-target"), dagger.ContainerWithMountedCacheOpts{
+			Sharing: dagger.CacheSharingModeLocked,
+		}).
+		WithExec([]string{"cargo", "build", "--locked", "--release", "-p", "argmin-s3"}).
+		WithExec([]string{"install", "-D", "target/release/argmin-s3", "/out/argmin-s3"}).
+		File("/out/argmin-s3")
+}
+
+func (m *EnduroE2E) argminService(cacheBuster string) *dagger.Service {
+	return dag.Container().
+		From("debian:bookworm-slim").
+		WithFile("/usr/local/bin/argmin-s3", m.argminBinary()).
+		WithExec([]string{"sh", "-ceu", "mkdir /data && chown 1000:1000 /data"}).
+		WithUser("1000:1000").
+		WithEnvVariable("ARGMIN_ACCOUNT_ID", "111122223333").
+		WithEnvVariable("ARGMIN_ACCESS_KEY_ID", "minio").
+		WithEnvVariable("ARGMIN_SECRET_ACCESS_KEY", "minio123").
+		// Fixed test-only key; each run has fresh ephemeral storage.
+		WithEnvVariable("ARGMIN_SSE_S3_WRAPPING_KEY", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=").
+		WithEnvVariable("ARGMIN_REGION", "us-west-1").
+		WithEnvVariable("ARGMIN_DATA_DIR", "/data").
+		WithEnvVariable("ARGMIN_LISTEN_ADDR", "0.0.0.0:9000").
+		WithEnvVariable("E2E_CACHE_BUSTER", cacheBuster).
+		WithExposedPort(9000).
+		WithDefaultArgs([]string{"argmin-s3"}).
+		AsService()
+}
+
 func (m *EnduroE2E) minioService(source *dagger.Directory, volumes runtimeVolumes, redis *dagger.Service, provider objectStorageProvider) *dagger.Service {
 	var minio *dagger.Container
 	switch provider {
@@ -586,16 +644,20 @@ func (m *EnduroE2E) minioService(source *dagger.Directory, volumes runtimeVolume
 	return minio.AsService(dagger.ContainerAsServiceOpts{UseEntrypoint: true})
 }
 
-func (m *EnduroE2E) setupMinIOBucketNotification(
+func (m *EnduroE2E) setupObjectStorageBucket(
 	ctx context.Context,
 	source *dagger.Directory,
-	minio *dagger.Service,
+	storage *dagger.Service,
 	provider objectStorageProvider,
 	cacheBuster string,
 ) error {
+	notificationARN := ""
+	if isMinIOProvider(provider) {
+		notificationARN = "arn:minio:sqs::PRIMARY:redis"
+	}
 	setup := dag.Container().
 		From(goImage).
-		WithServiceBinding(string(provider), minio).
+		WithServiceBinding(string(provider), storage).
 		WithEnvVariable("E2E_CACHE_BUSTER", cacheBuster).
 		WithFile("/usr/local/bin/s3setup", m.s3SetupBinary(source), dagger.ContainerWithFileOpts{
 			Permissions: 0o755,
@@ -607,7 +669,7 @@ func (m *EnduroE2E) setupMinIOBucketNotification(
 			"-bucket", "sips",
 			"-access-key", "minio",
 			"-secret-key", "minio123",
-			"-notification-arn", "arn:minio:sqs::PRIMARY:redis",
+			"-notification-arn", notificationARN,
 		})
 
 	_, err := setup.Stdout(ctx)
@@ -976,6 +1038,10 @@ func enduroObjectStorageConfig(provider objectStorageProvider, endpoint string) 
 	var webhookConfig string
 	eventFormat := "minio"
 	redisList := "minio-events"
+	if provider == objectStorageProviderArgmin {
+		eventFormat = "enduro"
+		redisList = "object-events"
+	}
 	if provider == objectStorageProviderSeaweedFS {
 		eventFormat = "enduro"
 		redisList = "object-events"
