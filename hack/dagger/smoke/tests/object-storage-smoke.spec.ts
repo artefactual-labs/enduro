@@ -80,6 +80,23 @@ test(`${scenario} S3 watcher transfer completes and produces an AIP`, async ({
     await logRedisListLength("after upload");
   });
 
+  if (scenario === "argmin") {
+    await test.step("inject an object-created event for argmin", async () => {
+      // Argmin has no native notifications. Exercise the real S3 upload and
+      // download while explicitly supplying the watcher trigger in the test.
+      await exec("redis-cli", [
+        "-h", "redis", "RPUSH", redisList,
+        JSON.stringify({
+          version: "1",
+          type: "object.created",
+          bucket: s3Bucket,
+          key: transferName,
+          source: "argmin-smoke-test",
+        }),
+      ]);
+    });
+  }
+
   const collection = await waitForCollectionDone(request, transferName);
   await downloadAndInspectAIP(request, collection, transferName);
   await inspectTemporalHistory(collection, transferName);
