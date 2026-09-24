@@ -23,6 +23,7 @@
     "@iconify-json/lucide": "^1.2.131",
     "@iconify-json/simple-icons": "^1.2.95",
     "@nuxt/ui": "^4.11.1",
+    "@vueuse/core": "^14.4.0",
     "nuxt": "^4.5.2",
     "tailwindcss": "^4.3.3",
     "vue-router": "^5.3.1"

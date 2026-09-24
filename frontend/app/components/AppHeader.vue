@@ -38,7 +38,7 @@ const items = computed<NavigationMenuItem[]>(() => [
       :items="items"
     />
     <template #right>
-      <UColorModeButton />
+      <AppSettings />
     </template>
     <template #body>
       <UNavigationMenu
