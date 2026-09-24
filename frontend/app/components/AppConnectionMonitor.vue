@@ -1,11 +1,12 @@
 <script setup lang="ts">
+import { useTimestamp } from '@vueuse/core'
+
 const open = ref(false)
 const monitor = useEnduroMonitor()
 const versionLabel = useState<string>('enduroVersion', () => '')
 const monitorVersionLabel = computed(() => versionLabel.value || '(version unavailable)')
 
-const now = ref(Date.now())
-let timer: number | null = null
+const now = useTimestamp({ interval: 1000 })
 
 function openMonitor() {
   open.value = true
@@ -14,18 +15,6 @@ function openMonitor() {
 function closeMonitor() {
   open.value = false
 }
-
-onMounted(() => {
-  timer = window.setInterval(() => {
-    now.value = Date.now()
-  }, 1000)
-})
-
-onBeforeUnmount(() => {
-  if (!timer) return
-  window.clearInterval(timer)
-  timer = null
-})
 
 const shortDateFormatter = new Intl.DateTimeFormat(undefined, {
   hour: '2-digit',

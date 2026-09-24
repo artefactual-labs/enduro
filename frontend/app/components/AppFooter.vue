@@ -1,5 +1,6 @@
 <script setup lang="ts">
 const runtimeConfig = useRuntimeConfig()
+const { showConnectionMonitor } = useDisplaySettings()
 const versionLabel = useState<string>('enduroVersion', () => '')
 const appBaseUrl = String(runtimeConfig.app.baseURL || '/')
 const normalizedAppBaseUrl = appBaseUrl.endsWith('/') ? appBaseUrl : `${appBaseUrl}/`
@@ -31,7 +32,7 @@ const footerAvatarSrc = `${normalizedAppBaseUrl}favicon-artefactual.ico`
 
     <template #right>
       <div class="flex items-center gap-1">
-        <AppConnectionMonitor />
+        <AppConnectionMonitor v-if="showConnectionMonitor" />
         <UButton
           to="https://github.com/artefactual-labs/enduro"
           target="_blank"
