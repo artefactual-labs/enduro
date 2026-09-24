@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "@nuxt/ui";
+@import "./cursor.css";
 
 :root {
   --ui-container: 1180px;

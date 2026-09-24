@@ -1,0 +1,13 @@
+@layer base {
+  /* Restore pointer cursors for enabled buttons after Tailwind v4's reset.
+     Base styles let component-specific cursor utilities take precedence. */
+  button:not(:disabled):not([aria-disabled="true"]),
+  [role="button"]:not(:disabled):not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
+
+  /* Nuxt UI's segmented radio options use a label as the full click target. */
+  label:has([role="radio"]:not(:disabled):not([aria-disabled="true"])) {
+    cursor: pointer;
+  }
+}
