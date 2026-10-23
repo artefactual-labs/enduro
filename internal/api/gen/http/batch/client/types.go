@@ -349,7 +349,7 @@ func ValidateBrowseResponseBody(body *BrowseResponseBody) (err error) {
 	}
 	for _, e := range body.Entries {
 		if e != nil {
-			if err2 := ValidateBatchBrowseEntryResponseBody(e); err2 != nil {
+			if err2 := validateBatchBrowseEntryResponseBody(e, "body.entries[*]"); err2 != nil {
 				err = goa.MergeErrors(err, err2)
 			}
 		}
@@ -358,7 +358,7 @@ func ValidateBrowseResponseBody(body *BrowseResponseBody) (err error) {
 }
 
 // ValidateSubmitNotAvailableResponseBody runs the validations defined on
-// submit_not_available_response_body
+// SubmitNotAvailableResponseBody
 func ValidateSubmitNotAvailableResponseBody(body *SubmitNotAvailableResponseBody) (err error) {
 	if body.Name == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("name", "body"))
@@ -382,7 +382,7 @@ func ValidateSubmitNotAvailableResponseBody(body *SubmitNotAvailableResponseBody
 }
 
 // ValidateSubmitNotValidResponseBody runs the validations defined on
-// submit_not_valid_response_body
+// SubmitNotValidResponseBody
 func ValidateSubmitNotValidResponseBody(body *SubmitNotValidResponseBody) (err error) {
 	if body.Name == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("name", "body"))
@@ -406,7 +406,7 @@ func ValidateSubmitNotValidResponseBody(body *SubmitNotValidResponseBody) (err e
 }
 
 // ValidateBrowseNotAvailableResponseBody runs the validations defined on
-// browse_not_available_response_body
+// BrowseNotAvailableResponseBody
 func ValidateBrowseNotAvailableResponseBody(body *BrowseNotAvailableResponseBody) (err error) {
 	if body.Name == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("name", "body"))
@@ -430,7 +430,7 @@ func ValidateBrowseNotAvailableResponseBody(body *BrowseNotAvailableResponseBody
 }
 
 // ValidateBrowseNotValidResponseBody runs the validations defined on
-// browse_not_valid_response_body
+// BrowseNotValidResponseBody
 func ValidateBrowseNotValidResponseBody(body *BrowseNotValidResponseBody) (err error) {
 	if body.Name == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("name", "body"))
@@ -454,7 +454,7 @@ func ValidateBrowseNotValidResponseBody(body *BrowseNotValidResponseBody) (err e
 }
 
 // ValidateBatchBrowseEntryResponseBody runs the validations defined on
-// BatchBrowseEntryResponseBody
+// BatchBrowseEntry
 func ValidateBatchBrowseEntryResponseBody(body *BatchBrowseEntryResponseBody) (err error) {
 	if body.Name == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("name", "body"))
@@ -467,6 +467,24 @@ func ValidateBatchBrowseEntryResponseBody(body *BatchBrowseEntryResponseBody) (e
 	}
 	if body.ModifiedAt != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("body.modified_at", *body.ModifiedAt, goa.FormatDateTime))
+	}
+	return
+}
+
+// validateBatchBrowseEntryResponseBody checks BatchBrowseEntry and reports
+// errors using the path supplied by its caller
+func validateBatchBrowseEntryResponseBody(body *BatchBrowseEntryResponseBody, path string) (err error) {
+	if body.Name == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("name", path))
+	}
+	if body.Path == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("path", path))
+	}
+	if body.AbsolutePath == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("absolute_path", path))
+	}
+	if body.ModifiedAt != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat(path+".modified_at", *body.ModifiedAt, goa.FormatDateTime))
 	}
 	return
 }

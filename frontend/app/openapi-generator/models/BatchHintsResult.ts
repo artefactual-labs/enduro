@@ -21,14 +21,10 @@ import { mapValues } from '../runtime';
 export interface BatchHintsResult {
     /**
      * Whether the batch source directory browser is configured.
-     * @type {boolean}
-     * @memberof BatchHintsResult
      */
     browserEnabled?: boolean;
     /**
      * A list of known values of completedDir used by existing watchers.
-     * @type {Array<string>}
-     * @memberof BatchHintsResult
      */
     completedDirs?: Array<string>;
 }

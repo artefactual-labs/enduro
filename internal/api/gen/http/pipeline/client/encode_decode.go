@@ -11,10 +11,12 @@ package client
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
+	"strconv"
 
 	pipeline "github.com/artefactual-labs/enduro/internal/api/gen/pipeline"
 	pipelineviews "github.com/artefactual-labs/enduro/internal/api/gen/pipeline/views"
@@ -49,7 +51,7 @@ func EncodeListRequest(encoder func(*http.Request) goahttp.Encoder) func(*http.R
 		if p.Name != nil {
 			values.Add("name", *p.Name)
 		}
-		values.Add("status", fmt.Sprintf("%v", p.Status))
+		values.Add("status", strconv.FormatBool(p.Status))
 		req.URL.RawQuery = values.Encode()
 		return nil
 	}
@@ -59,18 +61,24 @@ func EncodeListRequest(encoder func(*http.Request) goahttp.Encoder) func(*http.R
 // list endpoint. restoreBody controls whether the response body should be
 // restored after having been read.
 func DecodeListResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
-	return func(resp *http.Response) (any, error) {
+	return func(resp *http.Response) (result any, decodeErr error) {
+		responseBody := resp.Body
 		if restoreBody {
-			b, err := io.ReadAll(resp.Body)
-			if err != nil {
-				return nil, err
+			b, readErr := io.ReadAll(responseBody)
+			closeErr := responseBody.Close()
+			if err := errors.Join(readErr, closeErr); err != nil {
+				return nil, goahttp.ErrDecodingError("pipeline", "list", err)
 			}
 			resp.Body = io.NopCloser(bytes.NewBuffer(b))
 			defer func() {
 				resp.Body = io.NopCloser(bytes.NewBuffer(b))
 			}()
 		} else {
-			defer resp.Body.Close()
+			defer func() {
+				if err := responseBody.Close(); err != nil {
+					decodeErr = errors.Join(decodeErr, goahttp.ErrDecodingError("pipeline", "list", err))
+				}
+			}()
 		}
 		switch resp.StatusCode {
 		case http.StatusOK:
@@ -84,7 +92,7 @@ func DecodeListResponse(decoder func(*http.Response) goahttp.Decoder, restoreBod
 			}
 			for _, e := range body {
 				if e != nil {
-					if err2 := ValidateEnduroStoredPipelineResponse(e); err2 != nil {
+					if err2 := validateEnduroStoredPipelineResponse(e, "body[*]"); err2 != nil {
 						err = goa.MergeErrors(err, err2)
 					}
 				}
@@ -95,7 +103,10 @@ func DecodeListResponse(decoder func(*http.Response) goahttp.Decoder, restoreBod
 			res := NewListEnduroStoredPipelineOK(body)
 			return res, nil
 		default:
-			body, _ := io.ReadAll(resp.Body)
+			body, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("pipeline", "list", err)
+			}
 			return nil, goahttp.ErrInvalidResponse("pipeline", "list", resp.StatusCode, string(body))
 		}
 	}
@@ -114,7 +125,9 @@ func (c *Client) BuildShowRequest(ctx context.Context, v any) (*http.Request, er
 		}
 		id = p.ID
 	}
-	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: ShowPipelinePath(id)}
+
+	rawPath := fmt.Sprintf("/pipeline/%v", url.PathEscape(fmt.Sprint(id)))
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: ShowPipelinePath(id), RawPath: rawPath}
 	req, err := http.NewRequest("GET", u.String(), nil)
 	if err != nil {
 		return nil, goahttp.ErrInvalidURL("pipeline", "show", u.String(), err)
@@ -133,18 +146,24 @@ func (c *Client) BuildShowRequest(ctx context.Context, v any) (*http.Request, er
 //   - "not_found" (type *pipeline.PipelineNotFound): http.StatusNotFound
 //   - error: internal error
 func DecodeShowResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
-	return func(resp *http.Response) (any, error) {
+	return func(resp *http.Response) (result any, decodeErr error) {
+		responseBody := resp.Body
 		if restoreBody {
-			b, err := io.ReadAll(resp.Body)
-			if err != nil {
-				return nil, err
+			b, readErr := io.ReadAll(responseBody)
+			closeErr := responseBody.Close()
+			if err := errors.Join(readErr, closeErr); err != nil {
+				return nil, goahttp.ErrDecodingError("pipeline", "show", err)
 			}
 			resp.Body = io.NopCloser(bytes.NewBuffer(b))
 			defer func() {
 				resp.Body = io.NopCloser(bytes.NewBuffer(b))
 			}()
 		} else {
-			defer resp.Body.Close()
+			defer func() {
+				if err := responseBody.Close(); err != nil {
+					decodeErr = errors.Join(decodeErr, goahttp.ErrDecodingError("pipeline", "show", err))
+				}
+			}()
 		}
 		switch resp.StatusCode {
 		case http.StatusOK:
@@ -155,6 +174,10 @@ func DecodeShowResponse(decoder func(*http.Response) goahttp.Decoder, restoreBod
 			err = decoder(resp).Decode(&body)
 			if err != nil {
 				return nil, goahttp.ErrDecodingError("pipeline", "show", err)
+			}
+			err = ValidateShowResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("pipeline", "show", err)
 			}
 			p := NewShowEnduroStoredPipelineOK(&body)
 			view := "default"
@@ -179,7 +202,10 @@ func DecodeShowResponse(decoder func(*http.Response) goahttp.Decoder, restoreBod
 			}
 			return nil, NewShowNotFound(&body)
 		default:
-			body, _ := io.ReadAll(resp.Body)
+			body, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("pipeline", "show", err)
+			}
 			return nil, goahttp.ErrInvalidResponse("pipeline", "show", resp.StatusCode, string(body))
 		}
 	}
@@ -198,7 +224,9 @@ func (c *Client) BuildProcessingRequest(ctx context.Context, v any) (*http.Reque
 		}
 		id = p.ID
 	}
-	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: ProcessingPipelinePath(id)}
+
+	rawPath := fmt.Sprintf("/pipeline/%v/processing", url.PathEscape(fmt.Sprint(id)))
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: ProcessingPipelinePath(id), RawPath: rawPath}
 	req, err := http.NewRequest("GET", u.String(), nil)
 	if err != nil {
 		return nil, goahttp.ErrInvalidURL("pipeline", "processing", u.String(), err)
@@ -217,18 +245,24 @@ func (c *Client) BuildProcessingRequest(ctx context.Context, v any) (*http.Reque
 //   - "not_found" (type *pipeline.PipelineNotFound): http.StatusNotFound
 //   - error: internal error
 func DecodeProcessingResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
-	return func(resp *http.Response) (any, error) {
+	return func(resp *http.Response) (result any, decodeErr error) {
+		responseBody := resp.Body
 		if restoreBody {
-			b, err := io.ReadAll(resp.Body)
-			if err != nil {
-				return nil, err
+			b, readErr := io.ReadAll(responseBody)
+			closeErr := responseBody.Close()
+			if err := errors.Join(readErr, closeErr); err != nil {
+				return nil, goahttp.ErrDecodingError("pipeline", "processing", err)
 			}
 			resp.Body = io.NopCloser(bytes.NewBuffer(b))
 			defer func() {
 				resp.Body = io.NopCloser(bytes.NewBuffer(b))
 			}()
 		} else {
-			defer resp.Body.Close()
+			defer func() {
+				if err := responseBody.Close(); err != nil {
+					decodeErr = errors.Join(decodeErr, goahttp.ErrDecodingError("pipeline", "processing", err))
+				}
+			}()
 		}
 		switch resp.StatusCode {
 		case http.StatusOK:
@@ -256,7 +290,10 @@ func DecodeProcessingResponse(decoder func(*http.Response) goahttp.Decoder, rest
 			}
 			return nil, NewProcessingNotFound(&body)
 		default:
-			body, _ := io.ReadAll(resp.Body)
+			body, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("pipeline", "processing", err)
+			}
 			return nil, goahttp.ErrInvalidResponse("pipeline", "processing", resp.StatusCode, string(body))
 		}
 	}

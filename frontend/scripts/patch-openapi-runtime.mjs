@@ -8,17 +8,22 @@ const runtimePath = path.resolve(scriptDir, '../app/openapi-generator/runtime.ts
 // Nuxt enables TypeScript's noImplicitOverride option. OpenAPI Generator's
 // typescript-fetch runtime extends Error with a cause parameter property, so it
 // needs the explicit override modifier to pass Nuxt type checking.
-const needle = 'constructor(public cause: Error, msg?: string) {'
-const replacement = 'constructor(public override cause: Error, msg?: string) {'
+const replacements = [
+  ['constructor(public cause: Error, msg?: string) {', 'constructor(public override cause: Error, msg?: string) {'],
+  // These capture groups always participate in their successful regex matches.
+  // OpenAPI Generator 7.26 needs assertions for noUncheckedIndexedAccess.
+  ['decodeURIComponent(match[1])', 'decodeURIComponent(match[1]!)'],
+  ['const name = match[1].toLowerCase();', 'const name = match[1]!.toLowerCase();'],
+  ['match[3].trim()', 'match[3]!.trim()']
+]
 
-const source = await readFile(runtimePath, 'utf8')
-
-if (source.includes(replacement)) {
-  process.exit(0)
+let source = await readFile(runtimePath, 'utf8')
+for (const [needle, replacement] of replacements) {
+  if (source.includes(replacement)) continue
+  if (!source.includes(needle)) {
+    throw new Error(`Expected to find ${needle} in ${runtimePath}`)
+  }
+  source = source.replace(needle, replacement)
 }
 
-if (!source.includes(needle)) {
-  throw new Error(`Expected to find FetchError constructor in ${runtimePath}`)
-}
-
-await writeFile(runtimePath, source.replace(needle, replacement))
+await writeFile(runtimePath, source)

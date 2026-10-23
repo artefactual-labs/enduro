@@ -29,15 +29,15 @@ import {
     BulkStatusResultToJSON,
 } from '../models/BulkStatusResult';
 import {
-    type CollectionDecideRequest,
-    CollectionDecideRequestFromJSON,
-    CollectionDecideRequestToJSON,
-} from '../models/CollectionDecideRequest';
-import {
     type CollectionNotfound,
     CollectionNotfoundFromJSON,
     CollectionNotfoundToJSON,
 } from '../models/CollectionNotfound';
+import {
+    type DecideRequestBody,
+    DecideRequestBodyFromJSON,
+    DecideRequestBodyToJSON,
+} from '../models/DecideRequestBody';
 import {
     type EnduroCollectionStatusHistory,
     EnduroCollectionStatusHistoryFromJSON,
@@ -70,51 +70,108 @@ import {
 } from '../models/RetryResult';
 
 export interface CollectionApiCollectionBulkRequest {
+    /**
+     * 
+     */
     bulkRequestBody: BulkRequestBody;
 }
 
 export interface CollectionApiCollectionCancelRequest {
+    /**
+     * Identifier of collection to remove
+     */
     id: number;
 }
 
-export interface CollectionApiCollectionDecideOperationRequest {
+export interface CollectionApiCollectionDecideRequest {
+    /**
+     * Identifier of collection to look up
+     */
     id: number;
-    collectionDecideRequest: CollectionDecideRequest;
+    /**
+     * 
+     */
+    decideRequestBody: DecideRequestBody;
 }
 
 export interface CollectionApiCollectionDeleteRequest {
+    /**
+     * Identifier of collection to delete
+     */
     id: number;
 }
 
 export interface CollectionApiCollectionDownloadRequest {
+    /**
+     * Identifier of collection to look up
+     */
     id: number;
 }
 
 export interface CollectionApiCollectionListRequest {
+    /**
+     * 
+     */
     name?: string;
+    /**
+     * 
+     */
     originalId?: string;
+    /**
+     * Identifier of Archivematica tranfser
+     */
     transferId?: string;
+    /**
+     * Identifier of Archivematica AIP
+     */
     aipId?: string;
+    /**
+     * Identifier of Archivematica pipeline
+     */
     pipelineId?: string;
+    /**
+     * 
+     */
     earliestCreatedTime?: Date;
+    /**
+     * 
+     */
     latestCreatedTime?: Date;
+    /**
+     * 
+     */
     status?: CollectionListStatusEnum;
+    /**
+     * Pagination cursor
+     */
     cursor?: string;
 }
 
 export interface CollectionApiCollectionRetryRequest {
+    /**
+     * Identifier of collection to retry
+     */
     id: number;
 }
 
 export interface CollectionApiCollectionShowRequest {
+    /**
+     * Identifier of collection to show
+     */
     id: number;
 }
 
 export interface CollectionApiCollectionStatusHistoryRequest {
+    /**
+     * Identifier of collection to look up
+     */
     id: number;
 }
 
 export interface CollectionApiCollectionWorkflowRequest {
+    /**
+     * Identifier of collection to look up
+     */
     id: number;
 }
 
@@ -198,28 +255,28 @@ export interface CollectionApiInterface {
     /**
      * Creates request options for collectionDecide without sending the request
      * @param {number} id Identifier of collection to look up
-     * @param {CollectionDecideRequest} collectionDecideRequest Request body for decide.
+     * @param {DecideRequestBody} decideRequestBody Request body for decide.
      * @throws {RequiredError}
      * @memberof CollectionApiInterface
      */
-    collectionDecideRequestOpts(requestParameters: CollectionApiCollectionDecideOperationRequest): Promise<runtime.RequestOpts>;
+    collectionDecideRequestOpts(requestParameters: CollectionApiCollectionDecideRequest): Promise<runtime.RequestOpts>;
 
     /**
      * Make decision for a pending collection by ID
      * @summary decide collection
      * @param {number} id Identifier of collection to look up
-     * @param {CollectionDecideRequest} collectionDecideRequest Request body for decide.
+     * @param {DecideRequestBody} decideRequestBody Request body for decide.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof CollectionApiInterface
      */
-    collectionDecideRaw(requestParameters: CollectionApiCollectionDecideOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>>;
+    collectionDecideRaw(requestParameters: CollectionApiCollectionDecideRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>>;
 
     /**
      * Make decision for a pending collection by ID
      * decide collection
      */
-    collectionDecide(requestParameters: CollectionApiCollectionDecideOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void>;
+    collectionDecide(requestParameters: CollectionApiCollectionDecideRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void>;
 
     /**
      * Creates request options for collectionDelete without sending the request
@@ -261,13 +318,13 @@ export interface CollectionApiInterface {
      * @throws {RequiredError}
      * @memberof CollectionApiInterface
      */
-    collectionDownloadRaw(requestParameters: CollectionApiCollectionDownloadRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Blob>>;
+    collectionDownloadRaw(requestParameters: CollectionApiCollectionDownloadRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<runtime.HttpFile>>;
 
     /**
      * Download collection by ID
      * download collection
      */
-    collectionDownload(requestParameters: CollectionApiCollectionDownloadRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Blob>;
+    collectionDownload(requestParameters: CollectionApiCollectionDownloadRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.HttpFile>;
 
     /**
      * Creates request options for collectionList without sending the request
@@ -570,7 +627,7 @@ export class CollectionApi extends runtime.BaseAPI implements CollectionApiInter
     /**
      * Creates request options for collectionDecide without sending the request
      */
-    async collectionDecideRequestOpts(requestParameters: CollectionApiCollectionDecideOperationRequest): Promise<runtime.RequestOpts> {
+    async collectionDecideRequestOpts(requestParameters: CollectionApiCollectionDecideRequest): Promise<runtime.RequestOpts> {
         if (requestParameters['id'] == null) {
             throw new runtime.RequiredError(
                 'id',
@@ -578,10 +635,10 @@ export class CollectionApi extends runtime.BaseAPI implements CollectionApiInter
             );
         }
 
-        if (requestParameters['collectionDecideRequest'] == null) {
+        if (requestParameters['decideRequestBody'] == null) {
             throw new runtime.RequiredError(
-                'collectionDecideRequest',
-                'Required parameter "collectionDecideRequest" was null or undefined when calling collectionDecide().'
+                'decideRequestBody',
+                'Required parameter "decideRequestBody" was null or undefined when calling collectionDecide().'
             );
         }
 
@@ -600,7 +657,7 @@ export class CollectionApi extends runtime.BaseAPI implements CollectionApiInter
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: CollectionDecideRequestToJSON(requestParameters['collectionDecideRequest']),
+            body: DecideRequestBodyToJSON(requestParameters['decideRequestBody']),
         };
     }
 
@@ -608,7 +665,7 @@ export class CollectionApi extends runtime.BaseAPI implements CollectionApiInter
      * Make decision for a pending collection by ID
      * decide collection
      */
-    async collectionDecideRaw(requestParameters: CollectionApiCollectionDecideOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async collectionDecideRaw(requestParameters: CollectionApiCollectionDecideRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         const requestOptions = await this.collectionDecideRequestOpts(requestParameters);
         const response = await this.request(requestOptions, initOverrides);
 
@@ -619,7 +676,7 @@ export class CollectionApi extends runtime.BaseAPI implements CollectionApiInter
      * Make decision for a pending collection by ID
      * decide collection
      */
-    async collectionDecide(requestParameters: CollectionApiCollectionDecideOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+    async collectionDecide(requestParameters: CollectionApiCollectionDecideRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.collectionDecideRaw(requestParameters, initOverrides);
     }
 
@@ -700,7 +757,7 @@ export class CollectionApi extends runtime.BaseAPI implements CollectionApiInter
      * Download collection by ID
      * download collection
      */
-    async collectionDownloadRaw(requestParameters: CollectionApiCollectionDownloadRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Blob>> {
+    async collectionDownloadRaw(requestParameters: CollectionApiCollectionDownloadRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<runtime.HttpFile>> {
         const requestOptions = await this.collectionDownloadRequestOpts(requestParameters);
         const response = await this.request(requestOptions, initOverrides);
 
@@ -711,7 +768,7 @@ export class CollectionApi extends runtime.BaseAPI implements CollectionApiInter
      * Download collection by ID
      * download collection
      */
-    async collectionDownload(requestParameters: CollectionApiCollectionDownloadRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Blob> {
+    async collectionDownload(requestParameters: CollectionApiCollectionDownloadRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.HttpFile> {
         const response = await this.collectionDownloadRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -743,11 +800,11 @@ export class CollectionApi extends runtime.BaseAPI implements CollectionApiInter
         }
 
         if (requestParameters['earliestCreatedTime'] != null) {
-            queryParameters['earliest_created_time'] = (requestParameters['earliestCreatedTime'] as any).toISOString();
+            queryParameters['earliest_created_time'] = runtime.serializeDateTime(requestParameters['earliestCreatedTime'] as any);
         }
 
         if (requestParameters['latestCreatedTime'] != null) {
-            queryParameters['latest_created_time'] = (requestParameters['latestCreatedTime'] as any).toISOString();
+            queryParameters['latest_created_time'] = runtime.serializeDateTime(requestParameters['latestCreatedTime'] as any);
         }
 
         if (requestParameters['status'] != null) {
@@ -1031,5 +1088,5 @@ export enum CollectionListStatusEnum {
     Queued = 'queued',
     Pending = 'pending',
     Abandoned = 'abandoned',
-    UnknownDefaultOpenApi = '11184809'
+    UnknownDefaultOpenApi = '11184809',
 }

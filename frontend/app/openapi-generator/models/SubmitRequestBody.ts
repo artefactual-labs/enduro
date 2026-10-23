@@ -21,62 +21,42 @@ import { mapValues } from '../runtime';
 export interface SubmitRequestBody {
     /**
      * 
-     * @type {string}
-     * @memberof SubmitRequestBody
      */
     completedDir?: string;
     /**
      * 
-     * @type {number}
-     * @memberof SubmitRequestBody
      */
     depth?: number;
     /**
      * 
-     * @type {boolean}
-     * @memberof SubmitRequestBody
      */
     excludeHiddenFiles?: boolean;
     /**
      * 
-     * @type {string}
-     * @memberof SubmitRequestBody
      */
     path: string;
     /**
      * 
-     * @type {string}
-     * @memberof SubmitRequestBody
      */
     pipeline?: string;
     /**
      * 
-     * @type {boolean}
-     * @memberof SubmitRequestBody
      */
     processNameMetadata?: boolean;
     /**
      * 
-     * @type {string}
-     * @memberof SubmitRequestBody
      */
     processingConfig?: string;
     /**
      * 
-     * @type {boolean}
-     * @memberof SubmitRequestBody
      */
     rejectDuplicates?: boolean;
     /**
      * 
-     * @type {string}
-     * @memberof SubmitRequestBody
      */
     retentionPeriod?: string;
     /**
      * 
-     * @type {string}
-     * @memberof SubmitRequestBody
      */
     transferType?: string;
 }

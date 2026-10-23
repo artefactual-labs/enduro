@@ -10,9 +10,10 @@ package client
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"mime"
 	"net/http"
-	"strings"
 
 	collection "github.com/artefactual-labs/enduro/internal/api/gen/collection"
 	goahttp "goa.design/goa/v3/http"
@@ -62,9 +63,6 @@ type Client struct {
 	// endpoint.
 	BulkStatusDoer goahttp.Doer
 
-	// CORS Doer is the HTTP client used to make requests to the  endpoint.
-	CORSDoer goahttp.Doer
-
 	// RestoreResponseBody controls whether the response bodies are reset after
 	// decoding so they can be read again.
 	RestoreResponseBody bool
@@ -97,7 +95,6 @@ func NewClient(
 		DecideDoer:          doer,
 		BulkDoer:            doer,
 		BulkStatusDoer:      doer,
-		CORSDoer:            doer,
 		RestoreResponseBody: restoreBody,
 		scheme:              scheme,
 		host:                host,
@@ -129,9 +126,13 @@ func (c *Client) Monitor() goa.Endpoint {
 		}
 
 		contentType := resp.Header.Get("Content-Type")
-		if contentType != "" && !strings.HasPrefix(contentType, "text/event-stream") {
-			resp.Body.Close()
-			return nil, fmt.Errorf("unexpected content type: %s (expected text/event-stream)", contentType)
+		mediaType, _, mediaTypeErr := mime.ParseMediaType(contentType)
+		if mediaTypeErr != nil || mediaType != "text/event-stream" {
+			contentTypeErr := fmt.Errorf("unexpected content type: %s (expected text/event-stream)", contentType)
+			if err := resp.Body.Close(); err != nil {
+				return nil, errors.Join(contentTypeErr, goahttp.ErrDecodingError("collection", "monitor", err))
+			}
+			return nil, contentTypeErr
 		}
 
 		return NewMonitorStream(resp, c.decoder), nil
@@ -293,7 +294,9 @@ func (c *Client) Download() goa.Endpoint {
 		}
 		res, err := decodeResponse(resp)
 		if err != nil {
-			resp.Body.Close()
+			if closeErr := resp.Body.Close(); closeErr != nil {
+				return nil, errors.Join(err, goahttp.ErrDecodingError("collection", "download", closeErr))
+			}
 			return nil, err
 		}
 		return &collection.DownloadResponseData{Result: res.(*collection.DownloadResult), Body: resp.Body}, nil

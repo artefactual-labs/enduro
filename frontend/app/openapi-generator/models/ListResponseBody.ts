@@ -29,14 +29,10 @@ import {
 export interface ListResponseBody {
     /**
      * 
-     * @type {Array<EnduroStoredCollection>}
-     * @memberof ListResponseBody
      */
     items: Array<EnduroStoredCollection>;
     /**
      * 
-     * @type {string}
-     * @memberof ListResponseBody
      */
     nextCursor?: string;
 }

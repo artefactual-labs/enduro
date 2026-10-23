@@ -16,9 +16,6 @@ import (
 
 // Client lists the swagger service endpoint HTTP clients.
 type Client struct {
-	// CORS Doer is the HTTP client used to make requests to the  endpoint.
-	CORSDoer goahttp.Doer
-
 	// RestoreResponseBody controls whether the response bodies are reset after
 	// decoding so they can be read again.
 	RestoreResponseBody bool
@@ -39,7 +36,6 @@ func NewClient(
 	restoreBody bool,
 ) *Client {
 	return &Client{
-		CORSDoer:            doer,
 		RestoreResponseBody: restoreBody,
 		scheme:              scheme,
 		host:                host,

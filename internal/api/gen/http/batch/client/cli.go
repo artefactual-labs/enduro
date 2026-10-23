@@ -18,11 +18,14 @@ import (
 
 // BuildSubmitPayload builds the payload for the batch submit endpoint from CLI
 // flags.
-func BuildSubmitPayload(batchSubmitBody string) (*batch.SubmitPayload, error) {
+func BuildSubmitPayload(batchSubmitBody *string) (*batch.SubmitPayload, error) {
 	var err error
 	var body SubmitRequestBody
 	{
-		err = json.Unmarshal([]byte(batchSubmitBody), &body)
+		if batchSubmitBody == nil {
+			return nil, fmt.Errorf("missing required flag --body")
+		}
+		err = json.Unmarshal([]byte(*batchSubmitBody), &body)
 		if err != nil {
 			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"completed_dir\": \"abc123\",\n      \"depth\": 1,\n      \"exclude_hidden_files\": false,\n      \"path\": \"abc123\",\n      \"pipeline\": \"abc123\",\n      \"process_name_metadata\": false,\n      \"processing_config\": \"abc123\",\n      \"reject_duplicates\": false,\n      \"retention_period\": \"abc123\",\n      \"transfer_type\": \"abc123\"\n   }'")
 		}
@@ -75,11 +78,11 @@ func BuildSubmitPayload(batchSubmitBody string) (*batch.SubmitPayload, error) {
 
 // BuildBrowsePayload builds the payload for the batch browse endpoint from CLI
 // flags.
-func BuildBrowsePayload(batchBrowsePath string) (*batch.BrowsePayload, error) {
+func BuildBrowsePayload(batchBrowsePath *string) (*batch.BrowsePayload, error) {
 	var path *string
 	{
-		if batchBrowsePath != "" {
-			path = &batchBrowsePath
+		if batchBrowsePath != nil {
+			path = batchBrowsePath
 		}
 	}
 	v := &batch.BrowsePayload{}

@@ -8,9 +8,7 @@
 
 package client
 
-import (
-	"fmt"
-)
+import "fmt"
 
 // ListPipelinePath returns the URL path to the pipeline service list HTTP endpoint.
 func ListPipelinePath() string {

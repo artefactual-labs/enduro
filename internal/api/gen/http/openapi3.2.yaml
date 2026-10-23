@@ -65,12 +65,26 @@ paths:
                         application/vnd.goa.error:
                             schema:
                                 $ref: '#/components/schemas/Error'
+                            example:
+                                fault: false
+                                id: 123abc
+                                message: parameter 'p' must be an integer
+                                name: not_valid
+                                temporary: false
+                                timeout: false
                 "409":
                     description: 'not_available: Conflict response.'
                     content:
                         application/vnd.goa.error:
                             schema:
                                 $ref: '#/components/schemas/Error'
+                            example:
+                                fault: false
+                                id: 123abc
+                                message: parameter 'p' must be an integer
+                                name: not_available
+                                temporary: false
+                                timeout: false
     /batch/browser:
         get:
             tags:
@@ -110,12 +124,26 @@ paths:
                         application/vnd.goa.error:
                             schema:
                                 $ref: '#/components/schemas/Error'
+                            example:
+                                fault: false
+                                id: 123abc
+                                message: parameter 'p' must be an integer
+                                name: not_valid
+                                temporary: false
+                                timeout: false
                 "404":
                     description: 'not_available: Not Found response.'
                     content:
                         application/vnd.goa.error:
                             schema:
                                 $ref: '#/components/schemas/Error'
+                            example:
+                                fault: false
+                                id: 123abc
+                                message: parameter 'p' must be an integer
+                                name: not_available
+                                temporary: false
+                                timeout: false
     /batch/hints:
         get:
             tags:
@@ -247,7 +275,7 @@ paths:
                                       started_at: "1970-01-01T00:00:01Z"
                                       status: in progress
                                       transfer_id: d1845cb6-a5ea-474a-9ab8-26f9bcd919f5
-                                      workflow_id: d1845cb6-a5ea-474a-9ab8-26f9bcd919f5
+                                      workflow_id: processing-workflow-d1845cb6-a5ea-474a-9ab8-26f9bcd919f5
                                 next_cursor: abc123
     /collection/{id}:
         delete:
@@ -319,7 +347,7 @@ paths:
                                 started_at: "1970-01-01T00:00:01Z"
                                 status: in progress
                                 transfer_id: d1845cb6-a5ea-474a-9ab8-26f9bcd919f5
-                                workflow_id: d1845cb6-a5ea-474a-9ab8-26f9bcd919f5
+                                workflow_id: processing-workflow-d1845cb6-a5ea-474a-9ab8-26f9bcd919f5
                 "404":
                     description: 'not_found: Collection not found'
                     content:
@@ -356,6 +384,13 @@ paths:
                         application/vnd.goa.error:
                             schema:
                                 $ref: '#/components/schemas/Error'
+                            example:
+                                fault: false
+                                id: 123abc
+                                message: parameter 'p' must be an integer
+                                name: not_running
+                                temporary: false
+                                timeout: false
                 "404":
                     description: 'not_found: Collection not found'
                     content:
@@ -389,14 +424,7 @@ paths:
                 content:
                     application/json:
                         schema:
-                            type: object
-                            properties:
-                                option:
-                                    type: string
-                                    description: Decision option to proceed with
-                                    example: abc123
-                            example:
-                                option: abc123
+                            $ref: '#/components/schemas/DecideRequestBody'
                         example:
                             option: abc123
             responses:
@@ -408,6 +436,13 @@ paths:
                         application/vnd.goa.error:
                             schema:
                                 $ref: '#/components/schemas/Error'
+                            example:
+                                fault: false
+                                id: 123abc
+                                message: parameter 'p' must be an integer
+                                name: not_valid
+                                temporary: false
+                                timeout: false
                 "404":
                     description: 'not_found: Collection not found'
                     content:
@@ -502,6 +537,13 @@ paths:
                         application/vnd.goa.error:
                             schema:
                                 $ref: '#/components/schemas/Error'
+                            example:
+                                fault: false
+                                id: 123abc
+                                message: parameter 'p' must be an integer
+                                name: not_running
+                                temporary: false
+                                timeout: false
                 "404":
                     description: 'not_found: Collection not found'
                     content:
@@ -650,12 +692,26 @@ paths:
                         application/vnd.goa.error:
                             schema:
                                 $ref: '#/components/schemas/Error'
+                            example:
+                                fault: false
+                                id: 123abc
+                                message: parameter 'p' must be an integer
+                                name: not_valid
+                                temporary: false
+                                timeout: false
                 "409":
                     description: 'not_available: Conflict response.'
                     content:
                         application/vnd.goa.error:
                             schema:
                                 $ref: '#/components/schemas/Error'
+                            example:
+                                fault: false
+                                id: 123abc
+                                message: parameter 'p' must be an integer
+                                name: not_available
+                                temporary: false
+                                timeout: false
     /collection/monitor:
         get:
             tags:
@@ -1034,13 +1090,23 @@ components:
                     type: string
                     description: Message of error
                     example: abc123
-            description: Collection not found
+            description: Collection not found.
             example:
                 id: 1
                 message: abc123
             required:
                 - message
                 - id
+        DecideRequestBody:
+            type: object
+            properties:
+                option:
+                    type: string
+                    description: Decision option to proceed with
+                    example: abc123
+            description: Request body for decide.
+            example:
+                option: abc123
         EnduroCollectionStatusHistory:
             type: object
             properties:
@@ -1288,8 +1354,7 @@ components:
                 workflow_id:
                     type: string
                     description: Identifier of processing workflow
-                    example: d1845cb6-a5ea-474a-9ab8-26f9bcd919f5
-                    format: uuid
+                    example: processing-workflow-d1845cb6-a5ea-474a-9ab8-26f9bcd919f5
             description: DetailedStoredCollection describes a collection retrieved by the service detail view.
             example:
                 aip_id: d1845cb6-a5ea-474a-9ab8-26f9bcd919f5
@@ -1307,7 +1372,7 @@ components:
                 started_at: "1970-01-01T00:00:01Z"
                 status: in progress
                 transfer_id: d1845cb6-a5ea-474a-9ab8-26f9bcd919f5
-                workflow_id: d1845cb6-a5ea-474a-9ab8-26f9bcd919f5
+                workflow_id: processing-workflow-d1845cb6-a5ea-474a-9ab8-26f9bcd919f5
             required:
                 - id
                 - status
@@ -1344,7 +1409,7 @@ components:
                     started_at: "1970-01-01T00:00:01Z"
                     status: in progress
                     transfer_id: d1845cb6-a5ea-474a-9ab8-26f9bcd919f5
-                    workflow_id: d1845cb6-a5ea-474a-9ab8-26f9bcd919f5
+                    workflow_id: processing-workflow-d1845cb6-a5ea-474a-9ab8-26f9bcd919f5
                 timestamp: "1970-01-01T00:00:01Z"
                 type: abc123
             required:
@@ -1419,8 +1484,7 @@ components:
                 workflow_id:
                     type: string
                     description: Identifier of processing workflow
-                    example: d1845cb6-a5ea-474a-9ab8-26f9bcd919f5
-                    format: uuid
+                    example: processing-workflow-d1845cb6-a5ea-474a-9ab8-26f9bcd919f5
             description: StoredCollection describes a collection retrieved by the service.
             example:
                 aip_id: d1845cb6-a5ea-474a-9ab8-26f9bcd919f5
@@ -1434,7 +1498,7 @@ components:
                 started_at: "1970-01-01T00:00:01Z"
                 status: in progress
                 transfer_id: d1845cb6-a5ea-474a-9ab8-26f9bcd919f5
-                workflow_id: d1845cb6-a5ea-474a-9ab8-26f9bcd919f5
+                workflow_id: processing-workflow-d1845cb6-a5ea-474a-9ab8-26f9bcd919f5
             required:
                 - id
                 - status
@@ -1455,7 +1519,7 @@ components:
                   started_at: "1970-01-01T00:00:01Z"
                   status: in progress
                   transfer_id: d1845cb6-a5ea-474a-9ab8-26f9bcd919f5
-                  workflow_id: d1845cb6-a5ea-474a-9ab8-26f9bcd919f5
+                  workflow_id: processing-workflow-d1845cb6-a5ea-474a-9ab8-26f9bcd919f5
         EnduroStoredPipeline:
             type: object
             properties:
@@ -1553,7 +1617,7 @@ components:
                       started_at: "1970-01-01T00:00:01Z"
                       status: in progress
                       transfer_id: d1845cb6-a5ea-474a-9ab8-26f9bcd919f5
-                      workflow_id: d1845cb6-a5ea-474a-9ab8-26f9bcd919f5
+                      workflow_id: processing-workflow-d1845cb6-a5ea-474a-9ab8-26f9bcd919f5
                 next_cursor: abc123
             required:
                 - items
@@ -1568,7 +1632,7 @@ components:
                     type: string
                     description: Message of error
                     example: abc123
-            description: Pipeline not found
+            description: Pipeline not found.
             example:
                 id: abc123
                 message: abc123

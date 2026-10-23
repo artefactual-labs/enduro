@@ -14,21 +14,17 @@
 
 import { mapValues } from '../runtime';
 /**
- * Collection not found
+ * Collection not found.
  * @export
  * @interface CollectionNotfound
  */
 export interface CollectionNotfound {
     /**
      * Identifier of missing collection
-     * @type {number}
-     * @memberof CollectionNotfound
      */
     id: number;
     /**
      * Message of error
-     * @type {string}
-     * @memberof CollectionNotfound
      */
     message: string;
 }

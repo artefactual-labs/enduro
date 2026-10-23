@@ -14,6 +14,13 @@ import (
 	goa "goa.design/goa/v3/pkg"
 )
 
+// DecideRequestBody is the type of the "collection" service "decide" endpoint
+// HTTP request body.
+type DecideRequestBody struct {
+	// Decision option to proceed with
+	Option *string `form:"option,omitempty" json:"option,omitempty" xml:"option,omitempty"`
+}
+
 // BulkRequestBody is the type of the "collection" service "bulk" endpoint HTTP
 // request body.
 type BulkRequestBody struct {
@@ -353,6 +360,15 @@ type EnduroCollectionStatusTransitionResponseBody struct {
 	Reason *string `form:"reason,omitempty" json:"reason,omitempty" xml:"reason,omitempty"`
 }
 
+// NewDecideRequestBody builds the HTTP request body from the payload of the
+// "decide" endpoint of the "collection" service.
+func NewDecideRequestBody(p *collection.DecidePayload) *DecideRequestBody {
+	body := &DecideRequestBody{
+		Option: &p.Option,
+	}
+	return body
+}
+
 // NewBulkRequestBody builds the HTTP request body from the payload of the
 // "bulk" endpoint of the "collection" service.
 func NewBulkRequestBody(p *collection.BulkPayload) *BulkRequestBody {
@@ -391,14 +407,7 @@ func NewListResultOK(body *ListResponseBody) *collection.ListResult {
 	v := &collection.ListResult{
 		NextCursor: body.NextCursor,
 	}
-	v.Items = make([]*collection.EnduroStoredCollection, len(body.Items))
-	for i, val := range body.Items {
-		if val == nil {
-			v.Items[i] = nil
-			continue
-		}
-		v.Items[i] = unmarshalEnduroStoredCollectionResponseBodyToCollectionEnduroStoredCollection(val)
-	}
+	v.Items = unmarshalEnduroStoredCollectionCollectionResponseBodyToCollectionEnduroStoredCollectionCollection(body.Items)
 
 	return v
 }
@@ -517,14 +526,7 @@ func NewWorkflowEnduroCollectionWorkflowStatusOK(body *WorkflowResponseBody) *co
 		Status: body.Status,
 	}
 	if body.History != nil {
-		v.History = make([]*collectionviews.EnduroCollectionWorkflowHistoryView, len(body.History))
-		for i, val := range body.History {
-			if val == nil {
-				v.History[i] = nil
-				continue
-			}
-			v.History[i] = unmarshalEnduroCollectionWorkflowHistoryResponseBodyToCollectionviewsEnduroCollectionWorkflowHistoryView(val)
-		}
+		v.History = unmarshalEnduroCollectionWorkflowHistoryResponseBodyCollectionToCollectionviewsEnduroCollectionWorkflowHistoryCollectionView(body.History)
 	}
 
 	return v
@@ -547,14 +549,7 @@ func NewStatusHistoryEnduroCollectionStatusHistoryOK(body *StatusHistoryResponse
 	v := &collectionviews.EnduroCollectionStatusHistoryView{
 		Availability: body.Availability,
 	}
-	v.Transitions = make([]*collectionviews.EnduroCollectionStatusTransitionView, len(body.Transitions))
-	for i, val := range body.Transitions {
-		if val == nil {
-			v.Transitions[i] = nil
-			continue
-		}
-		v.Transitions[i] = unmarshalEnduroCollectionStatusTransitionResponseBodyToCollectionviewsEnduroCollectionStatusTransitionView(val)
-	}
+	v.Transitions = unmarshalEnduroCollectionStatusTransitionResponseBodyCollectionToCollectionviewsEnduroCollectionStatusTransitionCollectionView(body.Transitions)
 
 	return v
 }
@@ -689,7 +684,7 @@ func ValidateMonitorResponseBody(body *MonitorResponseBody) (err error) {
 		err = goa.MergeErrors(err, goa.ValidateFormat("body.timestamp", *body.Timestamp, goa.FormatDateTime))
 	}
 	if body.Item != nil {
-		if err2 := ValidateEnduroStoredCollectionResponseBody(body.Item); err2 != nil {
+		if err2 := validateEnduroStoredCollectionResponseBody(body.Item, "body.item"); err2 != nil {
 			err = goa.MergeErrors(err, err2)
 		}
 	}
@@ -702,9 +697,60 @@ func ValidateListResponseBody(body *ListResponseBody) (err error) {
 		err = goa.MergeErrors(err, goa.MissingFieldError("items", "body"))
 	}
 	if body.Items != nil {
-		if err2 := ValidateEnduroStoredCollectionCollectionResponseBody(body.Items); err2 != nil {
+		if err2 := validateEnduroStoredCollectionCollectionResponseBody(body.Items, "body.items"); err2 != nil {
 			err = goa.MergeErrors(err, err2)
 		}
+	}
+	return
+}
+
+// ValidateShowResponseBody runs the validations defined on ShowResponseBody
+func ValidateShowResponseBody(body *ShowResponseBody) (err error) {
+	if body.ID == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("id", "body"))
+	}
+	if body.Status == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("status", "body"))
+	}
+	if body.CreatedAt == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("created_at", "body"))
+	}
+	if body.Status != nil {
+		if !(*body.Status == "new" || *body.Status == "in progress" || *body.Status == "done" || *body.Status == "error" || *body.Status == "unknown" || *body.Status == "queued" || *body.Status == "pending" || *body.Status == "abandoned") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.status", *body.Status, []any{"new", "in progress", "done", "error", "unknown", "queued", "pending", "abandoned"}))
+		}
+	}
+	if body.RunID != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.run_id", *body.RunID, goa.FormatUUID))
+	}
+	if body.TransferID != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.transfer_id", *body.TransferID, goa.FormatUUID))
+	}
+	if body.AipID != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.aip_id", *body.AipID, goa.FormatUUID))
+	}
+	if body.PipelineID != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.pipeline_id", *body.PipelineID, goa.FormatUUID))
+	}
+	if body.CreatedAt != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.created_at", *body.CreatedAt, goa.FormatDateTime))
+	}
+	if body.StartedAt != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.started_at", *body.StartedAt, goa.FormatDateTime))
+	}
+	if body.CompletedAt != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.completed_at", *body.CompletedAt, goa.FormatDateTime))
+	}
+	if body.AipStoredAt != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.aip_stored_at", *body.AipStoredAt, goa.FormatDateTime))
+	}
+	if body.ReconciliationStatus != nil {
+		if !(*body.ReconciliationStatus == "pending" || *body.ReconciliationStatus == "partial" || *body.ReconciliationStatus == "complete" || *body.ReconciliationStatus == "unknown") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.reconciliation_status", *body.ReconciliationStatus, []any{"pending", "partial", "complete", "unknown"}))
+		}
+	}
+	if body.ReconciliationCheckedAt != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.reconciliation_checked_at", *body.ReconciliationCheckedAt, goa.FormatDateTime))
 	}
 	return
 }
@@ -722,6 +768,28 @@ func ValidateRetryResponseBody(body *RetryResponseBody) (err error) {
 	return
 }
 
+// ValidateStatusHistoryResponseBody runs the validations defined on
+// StatusHistoryResponseBody
+func ValidateStatusHistoryResponseBody(body *StatusHistoryResponseBody) (err error) {
+	if body.Availability == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("availability", "body"))
+	}
+	if body.Transitions == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("transitions", "body"))
+	}
+	if body.Availability != nil {
+		if !(*body.Availability == "available" || *body.Availability == "partial" || *body.Availability == "unavailable") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.availability", *body.Availability, []any{"available", "partial", "unavailable"}))
+		}
+	}
+	if body.Transitions != nil {
+		if err2 := validateEnduroCollectionStatusTransitionResponseBodyCollection(body.Transitions, "body.transitions"); err2 != nil {
+			err = goa.MergeErrors(err, err2)
+		}
+	}
+	return
+}
+
 // ValidateBulkResponseBody runs the validations defined on BulkResponseBody
 func ValidateBulkResponseBody(body *BulkResponseBody) (err error) {
 	if body.WorkflowID == nil {
@@ -734,7 +802,7 @@ func ValidateBulkResponseBody(body *BulkResponseBody) (err error) {
 }
 
 // ValidateBulkStatusResponseBody runs the validations defined on
-// bulk_status_response_body
+// BulkStatusResponseBody
 func ValidateBulkStatusResponseBody(body *BulkStatusResponseBody) (err error) {
 	if body.Running == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("running", "body"))
@@ -749,7 +817,7 @@ func ValidateBulkStatusResponseBody(body *BulkStatusResponseBody) (err error) {
 }
 
 // ValidateShowNotFoundResponseBody runs the validations defined on
-// show_not_found_response_body
+// ShowNotFoundResponseBody
 func ValidateShowNotFoundResponseBody(body *ShowNotFoundResponseBody) (err error) {
 	if body.Message == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("message", "body"))
@@ -761,7 +829,7 @@ func ValidateShowNotFoundResponseBody(body *ShowNotFoundResponseBody) (err error
 }
 
 // ValidateDeleteNotFoundResponseBody runs the validations defined on
-// delete_not_found_response_body
+// DeleteNotFoundResponseBody
 func ValidateDeleteNotFoundResponseBody(body *DeleteNotFoundResponseBody) (err error) {
 	if body.Message == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("message", "body"))
@@ -773,7 +841,7 @@ func ValidateDeleteNotFoundResponseBody(body *DeleteNotFoundResponseBody) (err e
 }
 
 // ValidateCancelNotFoundResponseBody runs the validations defined on
-// cancel_not_found_response_body
+// CancelNotFoundResponseBody
 func ValidateCancelNotFoundResponseBody(body *CancelNotFoundResponseBody) (err error) {
 	if body.Message == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("message", "body"))
@@ -785,7 +853,7 @@ func ValidateCancelNotFoundResponseBody(body *CancelNotFoundResponseBody) (err e
 }
 
 // ValidateCancelNotRunningResponseBody runs the validations defined on
-// cancel_not_running_response_body
+// CancelNotRunningResponseBody
 func ValidateCancelNotRunningResponseBody(body *CancelNotRunningResponseBody) (err error) {
 	if body.Name == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("name", "body"))
@@ -809,7 +877,7 @@ func ValidateCancelNotRunningResponseBody(body *CancelNotRunningResponseBody) (e
 }
 
 // ValidateRetryNotFoundResponseBody runs the validations defined on
-// retry_not_found_response_body
+// RetryNotFoundResponseBody
 func ValidateRetryNotFoundResponseBody(body *RetryNotFoundResponseBody) (err error) {
 	if body.Message == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("message", "body"))
@@ -821,7 +889,7 @@ func ValidateRetryNotFoundResponseBody(body *RetryNotFoundResponseBody) (err err
 }
 
 // ValidateRetryNotRunningResponseBody runs the validations defined on
-// retry_not_running_response_body
+// RetryNotRunningResponseBody
 func ValidateRetryNotRunningResponseBody(body *RetryNotRunningResponseBody) (err error) {
 	if body.Name == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("name", "body"))
@@ -845,7 +913,7 @@ func ValidateRetryNotRunningResponseBody(body *RetryNotRunningResponseBody) (err
 }
 
 // ValidateWorkflowNotFoundResponseBody runs the validations defined on
-// workflow_not_found_response_body
+// WorkflowNotFoundResponseBody
 func ValidateWorkflowNotFoundResponseBody(body *WorkflowNotFoundResponseBody) (err error) {
 	if body.Message == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("message", "body"))
@@ -857,7 +925,7 @@ func ValidateWorkflowNotFoundResponseBody(body *WorkflowNotFoundResponseBody) (e
 }
 
 // ValidateStatusHistoryNotFoundResponseBody runs the validations defined on
-// status_history_not_found_response_body
+// StatusHistoryNotFoundResponseBody
 func ValidateStatusHistoryNotFoundResponseBody(body *StatusHistoryNotFoundResponseBody) (err error) {
 	if body.Message == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("message", "body"))
@@ -869,7 +937,7 @@ func ValidateStatusHistoryNotFoundResponseBody(body *StatusHistoryNotFoundRespon
 }
 
 // ValidateDownloadNotFoundResponseBody runs the validations defined on
-// download_not_found_response_body
+// DownloadNotFoundResponseBody
 func ValidateDownloadNotFoundResponseBody(body *DownloadNotFoundResponseBody) (err error) {
 	if body.Message == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("message", "body"))
@@ -881,7 +949,7 @@ func ValidateDownloadNotFoundResponseBody(body *DownloadNotFoundResponseBody) (e
 }
 
 // ValidateDecideNotFoundResponseBody runs the validations defined on
-// decide_not_found_response_body
+// DecideNotFoundResponseBody
 func ValidateDecideNotFoundResponseBody(body *DecideNotFoundResponseBody) (err error) {
 	if body.Message == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("message", "body"))
@@ -893,7 +961,7 @@ func ValidateDecideNotFoundResponseBody(body *DecideNotFoundResponseBody) (err e
 }
 
 // ValidateDecideNotValidResponseBody runs the validations defined on
-// decide_not_valid_response_body
+// DecideNotValidResponseBody
 func ValidateDecideNotValidResponseBody(body *DecideNotValidResponseBody) (err error) {
 	if body.Name == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("name", "body"))
@@ -917,7 +985,7 @@ func ValidateDecideNotValidResponseBody(body *DecideNotValidResponseBody) (err e
 }
 
 // ValidateBulkNotAvailableResponseBody runs the validations defined on
-// bulk_not_available_response_body
+// BulkNotAvailableResponseBody
 func ValidateBulkNotAvailableResponseBody(body *BulkNotAvailableResponseBody) (err error) {
 	if body.Name == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("name", "body"))
@@ -941,7 +1009,7 @@ func ValidateBulkNotAvailableResponseBody(body *BulkNotAvailableResponseBody) (e
 }
 
 // ValidateBulkNotValidResponseBody runs the validations defined on
-// bulk_not_valid_response_body
+// BulkNotValidResponseBody
 func ValidateBulkNotValidResponseBody(body *BulkNotValidResponseBody) (err error) {
 	if body.Name == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("name", "body"))
@@ -965,7 +1033,7 @@ func ValidateBulkNotValidResponseBody(body *BulkNotValidResponseBody) (err error
 }
 
 // ValidateEnduroStoredCollectionResponseBody runs the validations defined on
-// EnduroStored-CollectionResponseBody
+// EnduroStored-Collection
 func ValidateEnduroStoredCollectionResponseBody(body *EnduroStoredCollectionResponseBody) (err error) {
 	if body.ID == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("id", "body"))
@@ -980,9 +1048,6 @@ func ValidateEnduroStoredCollectionResponseBody(body *EnduroStoredCollectionResp
 		if !(*body.Status == "new" || *body.Status == "in progress" || *body.Status == "done" || *body.Status == "error" || *body.Status == "unknown" || *body.Status == "queued" || *body.Status == "pending" || *body.Status == "abandoned") {
 			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.status", *body.Status, []any{"new", "in progress", "done", "error", "unknown", "queued", "pending", "abandoned"}))
 		}
-	}
-	if body.WorkflowID != nil {
-		err = goa.MergeErrors(err, goa.ValidateFormat("body.workflow_id", *body.WorkflowID, goa.FormatUUID))
 	}
 	if body.RunID != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("body.run_id", *body.RunID, goa.FormatUUID))
@@ -1008,12 +1073,67 @@ func ValidateEnduroStoredCollectionResponseBody(body *EnduroStoredCollectionResp
 	return
 }
 
+// validateEnduroStoredCollectionResponseBody checks EnduroStored-Collection
+// and reports errors using the path supplied by its caller
+func validateEnduroStoredCollectionResponseBody(body *EnduroStoredCollectionResponseBody, path string) (err error) {
+	if body.ID == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("id", path))
+	}
+	if body.Status == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("status", path))
+	}
+	if body.CreatedAt == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("created_at", path))
+	}
+	if body.Status != nil {
+		if !(*body.Status == "new" || *body.Status == "in progress" || *body.Status == "done" || *body.Status == "error" || *body.Status == "unknown" || *body.Status == "queued" || *body.Status == "pending" || *body.Status == "abandoned") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError(path+".status", *body.Status, []any{"new", "in progress", "done", "error", "unknown", "queued", "pending", "abandoned"}))
+		}
+	}
+	if body.RunID != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat(path+".run_id", *body.RunID, goa.FormatUUID))
+	}
+	if body.TransferID != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat(path+".transfer_id", *body.TransferID, goa.FormatUUID))
+	}
+	if body.AipID != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat(path+".aip_id", *body.AipID, goa.FormatUUID))
+	}
+	if body.PipelineID != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat(path+".pipeline_id", *body.PipelineID, goa.FormatUUID))
+	}
+	if body.CreatedAt != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat(path+".created_at", *body.CreatedAt, goa.FormatDateTime))
+	}
+	if body.StartedAt != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat(path+".started_at", *body.StartedAt, goa.FormatDateTime))
+	}
+	if body.CompletedAt != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat(path+".completed_at", *body.CompletedAt, goa.FormatDateTime))
+	}
+	return
+}
+
 // ValidateEnduroStoredCollectionCollectionResponseBody runs the validations
-// defined on EnduroStored-CollectionCollectionResponseBody
+// defined on EnduroStored-CollectionCollection
 func ValidateEnduroStoredCollectionCollectionResponseBody(body EnduroStoredCollectionCollectionResponseBody) (err error) {
 	for _, e := range body {
 		if e != nil {
-			if err2 := ValidateEnduroStoredCollectionResponseBody(e); err2 != nil {
+			if err2 := validateEnduroStoredCollectionResponseBody(e, "body[*]"); err2 != nil {
+				err = goa.MergeErrors(err, err2)
+			}
+		}
+	}
+	return
+}
+
+// validateEnduroStoredCollectionCollectionResponseBody checks
+// EnduroStored-CollectionCollection and reports errors using the path supplied
+// by its caller
+func validateEnduroStoredCollectionCollectionResponseBody(body EnduroStoredCollectionCollectionResponseBody, path string) (err error) {
+	for _, e := range body {
+		if e != nil {
+			if err2 := validateEnduroStoredCollectionResponseBody(e, path+"[*]"); err2 != nil {
 				err = goa.MergeErrors(err, err2)
 			}
 		}
@@ -1022,12 +1142,25 @@ func ValidateEnduroStoredCollectionCollectionResponseBody(body EnduroStoredColle
 }
 
 // ValidateEnduroCollectionStatusTransitionResponseBodyCollection runs the
-// validations defined on
-// EnduroCollection-Status-TransitionResponseBodyCollection
+// validations defined on EnduroCollection-Status-TransitionCollection
 func ValidateEnduroCollectionStatusTransitionResponseBodyCollection(body EnduroCollectionStatusTransitionResponseBodyCollection) (err error) {
 	for _, e := range body {
 		if e != nil {
-			if err2 := ValidateEnduroCollectionStatusTransitionResponseBody(e); err2 != nil {
+			if err2 := validateEnduroCollectionStatusTransitionResponseBody(e, "body[*]"); err2 != nil {
+				err = goa.MergeErrors(err, err2)
+			}
+		}
+	}
+	return
+}
+
+// validateEnduroCollectionStatusTransitionResponseBodyCollection checks
+// EnduroCollection-Status-TransitionCollection and reports errors using the
+// path supplied by its caller
+func validateEnduroCollectionStatusTransitionResponseBodyCollection(body EnduroCollectionStatusTransitionResponseBodyCollection, path string) (err error) {
+	for _, e := range body {
+		if e != nil {
+			if err2 := validateEnduroCollectionStatusTransitionResponseBody(e, path+"[*]"); err2 != nil {
 				err = goa.MergeErrors(err, err2)
 			}
 		}
@@ -1036,7 +1169,7 @@ func ValidateEnduroCollectionStatusTransitionResponseBodyCollection(body EnduroC
 }
 
 // ValidateEnduroCollectionStatusTransitionResponseBody runs the validations
-// defined on EnduroCollection-Status-TransitionResponseBody
+// defined on EnduroCollection-Status-Transition
 func ValidateEnduroCollectionStatusTransitionResponseBody(body *EnduroCollectionStatusTransitionResponseBody) (err error) {
 	if body.ID == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("id", "body"))
@@ -1068,6 +1201,44 @@ func ValidateEnduroCollectionStatusTransitionResponseBody(body *EnduroCollection
 	}
 	if body.OccurredAt != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("body.occurred_at", *body.OccurredAt, goa.FormatDateTime))
+	}
+	return
+}
+
+// validateEnduroCollectionStatusTransitionResponseBody checks
+// EnduroCollection-Status-Transition and reports errors using the path
+// supplied by its caller
+func validateEnduroCollectionStatusTransitionResponseBody(body *EnduroCollectionStatusTransitionResponseBody, path string) (err error) {
+	if body.ID == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("id", path))
+	}
+	if body.WorkflowID == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("workflow_id", path))
+	}
+	if body.RunID == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("run_id", path))
+	}
+	if body.Status == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("status", path))
+	}
+	if body.OccurredAt == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("occurred_at", path))
+	}
+	if body.IsRunStart == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("is_run_start", path))
+	}
+	if body.PreviousStatus != nil {
+		if !(*body.PreviousStatus == "new" || *body.PreviousStatus == "in progress" || *body.PreviousStatus == "done" || *body.PreviousStatus == "error" || *body.PreviousStatus == "unknown" || *body.PreviousStatus == "queued" || *body.PreviousStatus == "pending" || *body.PreviousStatus == "abandoned") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError(path+".previous_status", *body.PreviousStatus, []any{"new", "in progress", "done", "error", "unknown", "queued", "pending", "abandoned"}))
+		}
+	}
+	if body.Status != nil {
+		if !(*body.Status == "new" || *body.Status == "in progress" || *body.Status == "done" || *body.Status == "error" || *body.Status == "unknown" || *body.Status == "queued" || *body.Status == "pending" || *body.Status == "abandoned") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError(path+".status", *body.Status, []any{"new", "in progress", "done", "error", "unknown", "queued", "pending", "abandoned"}))
+		}
+	}
+	if body.OccurredAt != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat(path+".occurred_at", *body.OccurredAt, goa.FormatDateTime))
 	}
 	return
 }

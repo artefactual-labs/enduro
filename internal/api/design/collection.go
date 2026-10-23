@@ -228,7 +228,9 @@ var Collection = Type("Collection", func() {
 		EnumCollectionStatus()
 		Default("new")
 	})
-	AttributeUUID("workflow_id", "Identifier of processing workflow")
+	Attribute("workflow_id", String, "Identifier of processing workflow", func() {
+		Example("processing-workflow-d1845cb6-a5ea-474a-9ab8-26f9bcd919f5")
+	})
 	AttributeUUID("run_id", "Identifier of latest processing workflow run")
 	AttributeUUID("transfer_id", "Identifier of Archivematica tranfser")
 	AttributeUUID("aip_id", "Identifier of Archivematica AIP")

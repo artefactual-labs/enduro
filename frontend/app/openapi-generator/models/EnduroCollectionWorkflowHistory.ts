@@ -21,20 +21,14 @@ import { mapValues } from '../runtime';
 export interface EnduroCollectionWorkflowHistory {
     /**
      * Contents of the event
-     * @type {any}
-     * @memberof EnduroCollectionWorkflowHistory
      */
     details?: any | null;
     /**
      * Identifier of collection
-     * @type {number}
-     * @memberof EnduroCollectionWorkflowHistory
      */
     id?: number;
     /**
      * Type of the event
-     * @type {string}
-     * @memberof EnduroCollectionWorkflowHistory
      */
     type?: string;
 }

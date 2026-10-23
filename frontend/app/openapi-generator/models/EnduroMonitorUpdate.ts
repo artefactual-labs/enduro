@@ -12,7 +12,7 @@
  * Do not edit the class manually.
  */
 
-import { mapValues } from '../runtime';
+import { mapValues, parseDate, parseDateTime, serializeDate, serializeDateTime } from '../runtime';
 import type { EnduroStoredCollection } from './EnduroStoredCollection';
 import {
     EnduroStoredCollectionFromJSON,
@@ -29,26 +29,18 @@ import {
 export interface EnduroMonitorUpdate {
     /**
      * Identifier of collection
-     * @type {number}
-     * @memberof EnduroMonitorUpdate
      */
     id: number;
     /**
      * 
-     * @type {EnduroStoredCollection}
-     * @memberof EnduroMonitorUpdate
      */
     item?: EnduroStoredCollection;
     /**
      * 
-     * @type {Date}
-     * @memberof EnduroMonitorUpdate
      */
     timestamp: Date;
     /**
      * Type of the event
-     * @type {string}
-     * @memberof EnduroMonitorUpdate
      */
     type: string;
 }
@@ -75,7 +67,7 @@ export function EnduroMonitorUpdateFromJSONTyped(json: any, ignoreDiscriminator:
         
         'id': json['id'],
         'item': json['item'] == null ? undefined : EnduroStoredCollectionFromJSON(json['item']),
-        'timestamp': (new Date(json['timestamp'])),
+        'timestamp': (json['timestamp'] == null ? json['timestamp'] : parseDateTime(json['timestamp'])),
         'type': json['type'],
     };
 }
@@ -93,7 +85,7 @@ export function EnduroMonitorUpdateToJSONTyped(value?: EnduroMonitorUpdate | nul
         
         'id': value['id'],
         'item': EnduroStoredCollectionToJSON(value['item']),
-        'timestamp': value['timestamp'].toISOString(),
+        'timestamp': value['timestamp'] == null ? value['timestamp'] : serializeDateTime(value['timestamp']),
         'type': value['type'],
     };
 }

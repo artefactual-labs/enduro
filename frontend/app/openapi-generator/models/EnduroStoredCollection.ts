@@ -12,7 +12,7 @@
  * Do not edit the class manually.
  */
 
-import { mapValues } from '../runtime';
+import { mapValues, parseDate, parseDateTime, serializeDate, serializeDateTime } from '../runtime';
 /**
  * StoredCollection describes a collection retrieved by the service.
  * @export
@@ -21,74 +21,50 @@ import { mapValues } from '../runtime';
 export interface EnduroStoredCollection {
     /**
      * Identifier of Archivematica AIP
-     * @type {string}
-     * @memberof EnduroStoredCollection
      */
     aipId?: string;
     /**
      * Completion datetime
-     * @type {Date}
-     * @memberof EnduroStoredCollection
      */
     completedAt?: Date;
     /**
      * Creation datetime
-     * @type {Date}
-     * @memberof EnduroStoredCollection
      */
     createdAt: Date;
     /**
      * Identifier of collection
-     * @type {number}
-     * @memberof EnduroStoredCollection
      */
     id: number;
     /**
      * Name of the collection
-     * @type {string}
-     * @memberof EnduroStoredCollection
      */
     name?: string;
     /**
      * Identifier provided by the client
-     * @type {string}
-     * @memberof EnduroStoredCollection
      */
     originalId?: string;
     /**
      * Identifier of Archivematica pipeline
-     * @type {string}
-     * @memberof EnduroStoredCollection
      */
     pipelineId?: string;
     /**
      * Identifier of latest processing workflow run
-     * @type {string}
-     * @memberof EnduroStoredCollection
      */
     runId?: string;
     /**
      * Start datetime
-     * @type {Date}
-     * @memberof EnduroStoredCollection
      */
     startedAt?: Date;
     /**
      * Status of the collection
-     * @type {EnduroStoredCollectionStatusEnum}
-     * @memberof EnduroStoredCollection
      */
     status: EnduroStoredCollectionStatusEnum;
     /**
      * Identifier of Archivematica tranfser
-     * @type {string}
-     * @memberof EnduroStoredCollection
      */
     transferId?: string;
     /**
      * Identifier of processing workflow
-     * @type {string}
-     * @memberof EnduroStoredCollection
      */
     workflowId?: string;
 }
@@ -131,14 +107,14 @@ export function EnduroStoredCollectionFromJSONTyped(json: any, ignoreDiscriminat
     return {
         
         'aipId': json['aip_id'] == null ? undefined : json['aip_id'],
-        'completedAt': json['completed_at'] == null ? undefined : (new Date(json['completed_at'])),
-        'createdAt': (new Date(json['created_at'])),
+        'completedAt': json['completed_at'] == null ? undefined : (parseDateTime(json['completed_at'])),
+        'createdAt': (json['created_at'] == null ? json['created_at'] : parseDateTime(json['created_at'])),
         'id': json['id'],
         'name': json['name'] == null ? undefined : json['name'],
         'originalId': json['original_id'] == null ? undefined : json['original_id'],
         'pipelineId': json['pipeline_id'] == null ? undefined : json['pipeline_id'],
         'runId': json['run_id'] == null ? undefined : json['run_id'],
-        'startedAt': json['started_at'] == null ? undefined : (new Date(json['started_at'])),
+        'startedAt': json['started_at'] == null ? undefined : (parseDateTime(json['started_at'])),
         'status': json['status'],
         'transferId': json['transfer_id'] == null ? undefined : json['transfer_id'],
         'workflowId': json['workflow_id'] == null ? undefined : json['workflow_id'],
@@ -157,14 +133,14 @@ export function EnduroStoredCollectionToJSONTyped(value?: EnduroStoredCollection
     return {
         
         'aip_id': value['aipId'],
-        'completed_at': value['completedAt'] == null ? value['completedAt'] : value['completedAt'].toISOString(),
-        'created_at': value['createdAt'].toISOString(),
+        'completed_at': value['completedAt'] == null ? value['completedAt'] : serializeDateTime(value['completedAt']),
+        'created_at': value['createdAt'] == null ? value['createdAt'] : serializeDateTime(value['createdAt']),
         'id': value['id'],
         'name': value['name'],
         'original_id': value['originalId'],
         'pipeline_id': value['pipelineId'],
         'run_id': value['runId'],
-        'started_at': value['startedAt'] == null ? value['startedAt'] : value['startedAt'].toISOString(),
+        'started_at': value['startedAt'] == null ? value['startedAt'] : serializeDateTime(value['startedAt']),
         'status': value['status'],
         'transfer_id': value['transferId'],
         'workflow_id': value['workflowId'],

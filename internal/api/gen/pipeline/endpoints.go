@@ -11,6 +11,7 @@ package pipeline
 import (
 	"context"
 
+	pipelineviews "github.com/artefactual-labs/enduro/internal/api/gen/pipeline/views"
 	goa "goa.design/goa/v3/pkg"
 )
 
@@ -55,7 +56,15 @@ func NewShowEndpoint(s Service) goa.Endpoint {
 		if err != nil {
 			return nil, err
 		}
+		if res == nil {
+			return nil, goa.Fault("service returned a missing result")
+		}
 		vres := NewViewedEnduroStoredPipeline(res, "default")
+		if err := pipelineviews.ValidateEnduroStoredPipeline(vres); err != nil {
+			// The returned fields failed the selected view. Report a server fault
+			// and keep the validation error available through errors.Unwrap.
+			return nil, goa.NewServiceError(err, "fault", false, false, true)
+		}
 		return vres, nil
 	}
 }

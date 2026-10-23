@@ -25,15 +25,27 @@ import {
 } from '../models/PipelineNotFound';
 
 export interface PipelineApiPipelineListRequest {
+    /**
+     * 
+     */
     name?: string;
+    /**
+     * 
+     */
     status?: boolean;
 }
 
 export interface PipelineApiPipelineProcessingRequest {
+    /**
+     * Identifier of pipeline
+     */
     id: string;
 }
 
 export interface PipelineApiPipelineShowRequest {
+    /**
+     * Identifier of pipeline to show
+     */
     id: string;
 }
 

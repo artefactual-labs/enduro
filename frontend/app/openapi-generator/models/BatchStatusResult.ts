@@ -21,26 +21,18 @@ import { mapValues } from '../runtime';
 export interface BatchStatusResult {
     /**
      * 
-     * @type {string}
-     * @memberof BatchStatusResult
      */
     runId?: string;
     /**
      * 
-     * @type {boolean}
-     * @memberof BatchStatusResult
      */
     running: boolean;
     /**
      * 
-     * @type {string}
-     * @memberof BatchStatusResult
      */
     status?: string;
     /**
      * 
-     * @type {string}
-     * @memberof BatchStatusResult
      */
     workflowId?: string;
 }

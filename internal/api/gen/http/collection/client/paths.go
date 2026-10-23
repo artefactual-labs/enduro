@@ -8,9 +8,7 @@
 
 package client
 
-import (
-	"fmt"
-)
+import "fmt"
 
 // MonitorCollectionPath returns the URL path to the collection service monitor HTTP endpoint.
 func MonitorCollectionPath() string {

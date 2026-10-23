@@ -635,6 +635,8 @@ func newEnduroCollectionStatusHistoryView(res *EnduroCollectionStatusHistory) *c
 	}
 	if res.Transitions != nil {
 		vres.Transitions = newEnduroCollectionStatusTransitionCollectionView(res.Transitions)
+	} else {
+		vres.Transitions = collectionviews.EnduroCollectionStatusTransitionCollectionView{}
 	}
 	return vres
 }

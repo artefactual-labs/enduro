@@ -18,21 +18,19 @@ import (
 
 // BuildListPayload builds the payload for the pipeline list endpoint from CLI
 // flags.
-func BuildListPayload(pipelineListName string, pipelineListStatus string) (*pipeline.ListPayload, error) {
+func BuildListPayload(pipelineListName *string, pipelineListStatus string) (*pipeline.ListPayload, error) {
 	var err error
 	var name *string
 	{
-		if pipelineListName != "" {
-			name = &pipelineListName
+		if pipelineListName != nil {
+			name = pipelineListName
 		}
 	}
 	var status bool
 	{
-		if pipelineListStatus != "" {
-			status, err = strconv.ParseBool(pipelineListStatus)
-			if err != nil {
-				return nil, fmt.Errorf("invalid value for status, must be BOOL")
-			}
+		status, err = strconv.ParseBool(pipelineListStatus)
+		if err != nil {
+			return nil, fmt.Errorf("invalid value for status, must be BOOL")
 		}
 	}
 	v := &pipeline.ListPayload{}
@@ -44,11 +42,14 @@ func BuildListPayload(pipelineListName string, pipelineListStatus string) (*pipe
 
 // BuildShowPayload builds the payload for the pipeline show endpoint from CLI
 // flags.
-func BuildShowPayload(pipelineShowID string) (*pipeline.ShowPayload, error) {
+func BuildShowPayload(pipelineShowID *string) (*pipeline.ShowPayload, error) {
 	var err error
 	var id string
 	{
-		id = pipelineShowID
+		if pipelineShowID == nil {
+			return nil, fmt.Errorf("missing required flag --id")
+		}
+		id = *pipelineShowID
 		err = goa.MergeErrors(err, goa.ValidateFormat("id", id, goa.FormatUUID))
 		if err != nil {
 			return nil, err
@@ -62,11 +63,14 @@ func BuildShowPayload(pipelineShowID string) (*pipeline.ShowPayload, error) {
 
 // BuildProcessingPayload builds the payload for the pipeline processing
 // endpoint from CLI flags.
-func BuildProcessingPayload(pipelineProcessingID string) (*pipeline.ProcessingPayload, error) {
+func BuildProcessingPayload(pipelineProcessingID *string) (*pipeline.ProcessingPayload, error) {
 	var err error
 	var id string
 	{
-		id = pipelineProcessingID
+		if pipelineProcessingID == nil {
+			return nil, fmt.Errorf("missing required flag --id")
+		}
+		id = *pipelineProcessingID
 		err = goa.MergeErrors(err, goa.ValidateFormat("id", id, goa.FormatUUID))
 		if err != nil {
 			return nil, err

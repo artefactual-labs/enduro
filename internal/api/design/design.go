@@ -17,7 +17,7 @@ import (
 var _ = API("enduro", func() {
 	Title("Enduro API")
 	Meta("openapi:versions", "2.0", "3.0", "3.2")
-	Randomizer(expr.NewDeterministicRandomizer())
+	Randomizer(expr.NewDeterministicRandomizerFactory())
 	Server("enduro", func() {
 		Services("pipeline", "batch", "collection", "swagger")
 		Host("localhost", func() {

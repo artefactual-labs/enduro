@@ -11,6 +11,7 @@ package client
 import (
 	"bytes"
 	"context"
+	"errors"
 	"io"
 	"net/http"
 	"net/url"
@@ -58,18 +59,24 @@ func EncodeSubmitRequest(encoder func(*http.Request) goahttp.Encoder) func(*http
 //   - "not_valid" (type *goa.ServiceError): http.StatusBadRequest
 //   - error: internal error
 func DecodeSubmitResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
-	return func(resp *http.Response) (any, error) {
+	return func(resp *http.Response) (result any, decodeErr error) {
+		responseBody := resp.Body
 		if restoreBody {
-			b, err := io.ReadAll(resp.Body)
-			if err != nil {
-				return nil, err
+			b, readErr := io.ReadAll(responseBody)
+			closeErr := responseBody.Close()
+			if err := errors.Join(readErr, closeErr); err != nil {
+				return nil, goahttp.ErrDecodingError("batch", "submit", err)
 			}
 			resp.Body = io.NopCloser(bytes.NewBuffer(b))
 			defer func() {
 				resp.Body = io.NopCloser(bytes.NewBuffer(b))
 			}()
 		} else {
-			defer resp.Body.Close()
+			defer func() {
+				if err := responseBody.Close(); err != nil {
+					decodeErr = errors.Join(decodeErr, goahttp.ErrDecodingError("batch", "submit", err))
+				}
+			}()
 		}
 		switch resp.StatusCode {
 		case http.StatusAccepted:
@@ -116,7 +123,10 @@ func DecodeSubmitResponse(decoder func(*http.Response) goahttp.Decoder, restoreB
 			}
 			return nil, NewSubmitNotValid(&body)
 		default:
-			body, _ := io.ReadAll(resp.Body)
+			body, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("batch", "submit", err)
+			}
 			return nil, goahttp.ErrInvalidResponse("batch", "submit", resp.StatusCode, string(body))
 		}
 	}
@@ -141,18 +151,24 @@ func (c *Client) BuildStatusRequest(ctx context.Context, v any) (*http.Request, 
 // status endpoint. restoreBody controls whether the response body should be
 // restored after having been read.
 func DecodeStatusResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
-	return func(resp *http.Response) (any, error) {
+	return func(resp *http.Response) (result any, decodeErr error) {
+		responseBody := resp.Body
 		if restoreBody {
-			b, err := io.ReadAll(resp.Body)
-			if err != nil {
-				return nil, err
+			b, readErr := io.ReadAll(responseBody)
+			closeErr := responseBody.Close()
+			if err := errors.Join(readErr, closeErr); err != nil {
+				return nil, goahttp.ErrDecodingError("batch", "status", err)
 			}
 			resp.Body = io.NopCloser(bytes.NewBuffer(b))
 			defer func() {
 				resp.Body = io.NopCloser(bytes.NewBuffer(b))
 			}()
 		} else {
-			defer resp.Body.Close()
+			defer func() {
+				if err := responseBody.Close(); err != nil {
+					decodeErr = errors.Join(decodeErr, goahttp.ErrDecodingError("batch", "status", err))
+				}
+			}()
 		}
 		switch resp.StatusCode {
 		case http.StatusOK:
@@ -171,7 +187,10 @@ func DecodeStatusResponse(decoder func(*http.Response) goahttp.Decoder, restoreB
 			res := NewStatusBatchStatusResultOK(&body)
 			return res, nil
 		default:
-			body, _ := io.ReadAll(resp.Body)
+			body, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("batch", "status", err)
+			}
 			return nil, goahttp.ErrInvalidResponse("batch", "status", resp.StatusCode, string(body))
 		}
 	}
@@ -196,18 +215,24 @@ func (c *Client) BuildHintsRequest(ctx context.Context, v any) (*http.Request, e
 // hints endpoint. restoreBody controls whether the response body should be
 // restored after having been read.
 func DecodeHintsResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
-	return func(resp *http.Response) (any, error) {
+	return func(resp *http.Response) (result any, decodeErr error) {
+		responseBody := resp.Body
 		if restoreBody {
-			b, err := io.ReadAll(resp.Body)
-			if err != nil {
-				return nil, err
+			b, readErr := io.ReadAll(responseBody)
+			closeErr := responseBody.Close()
+			if err := errors.Join(readErr, closeErr); err != nil {
+				return nil, goahttp.ErrDecodingError("batch", "hints", err)
 			}
 			resp.Body = io.NopCloser(bytes.NewBuffer(b))
 			defer func() {
 				resp.Body = io.NopCloser(bytes.NewBuffer(b))
 			}()
 		} else {
-			defer resp.Body.Close()
+			defer func() {
+				if err := responseBody.Close(); err != nil {
+					decodeErr = errors.Join(decodeErr, goahttp.ErrDecodingError("batch", "hints", err))
+				}
+			}()
 		}
 		switch resp.StatusCode {
 		case http.StatusOK:
@@ -222,7 +247,10 @@ func DecodeHintsResponse(decoder func(*http.Response) goahttp.Decoder, restoreBo
 			res := NewHintsBatchHintsResultOK(&body)
 			return res, nil
 		default:
-			body, _ := io.ReadAll(resp.Body)
+			body, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("batch", "hints", err)
+			}
 			return nil, goahttp.ErrInvalidResponse("batch", "hints", resp.StatusCode, string(body))
 		}
 	}
@@ -268,18 +296,24 @@ func EncodeBrowseRequest(encoder func(*http.Request) goahttp.Encoder) func(*http
 //   - "not_valid" (type *goa.ServiceError): http.StatusBadRequest
 //   - error: internal error
 func DecodeBrowseResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
-	return func(resp *http.Response) (any, error) {
+	return func(resp *http.Response) (result any, decodeErr error) {
+		responseBody := resp.Body
 		if restoreBody {
-			b, err := io.ReadAll(resp.Body)
-			if err != nil {
-				return nil, err
+			b, readErr := io.ReadAll(responseBody)
+			closeErr := responseBody.Close()
+			if err := errors.Join(readErr, closeErr); err != nil {
+				return nil, goahttp.ErrDecodingError("batch", "browse", err)
 			}
 			resp.Body = io.NopCloser(bytes.NewBuffer(b))
 			defer func() {
 				resp.Body = io.NopCloser(bytes.NewBuffer(b))
 			}()
 		} else {
-			defer resp.Body.Close()
+			defer func() {
+				if err := responseBody.Close(); err != nil {
+					decodeErr = errors.Join(decodeErr, goahttp.ErrDecodingError("batch", "browse", err))
+				}
+			}()
 		}
 		switch resp.StatusCode {
 		case http.StatusOK:
@@ -326,7 +360,10 @@ func DecodeBrowseResponse(decoder func(*http.Response) goahttp.Decoder, restoreB
 			}
 			return nil, NewBrowseNotValid(&body)
 		default:
-			body, _ := io.ReadAll(resp.Body)
+			body, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("batch", "browse", err)
+			}
 			return nil, goahttp.ErrInvalidResponse("batch", "browse", resp.StatusCode, string(body))
 		}
 	}

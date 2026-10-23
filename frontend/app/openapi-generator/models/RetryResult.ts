@@ -21,8 +21,6 @@ import { mapValues } from '../runtime';
 export interface RetryResult {
     /**
      * Selected retry mode
-     * @type {RetryResultModeEnum}
-     * @memberof RetryResult
      */
     mode: RetryResultModeEnum;
 }

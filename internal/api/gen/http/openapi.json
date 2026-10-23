@@ -781,6 +781,20 @@
       "title": "Mediatype identifier: application/vnd.goa.error; view=default",
       "type": "object"
     },
+    "CollectionDecideRequestBody": {
+      "example": {
+        "option": "abc123"
+      },
+      "properties": {
+        "option": {
+          "description": "Decision option to proceed with",
+          "example": "abc123",
+          "type": "string"
+        }
+      },
+      "title": "CollectionDecideRequestBody",
+      "type": "object"
+    },
     "CollectionListResponseBody": {
       "example": {
         "items": [
@@ -796,14 +810,14 @@
             "started_at": "1970-01-01T00:00:01Z",
             "status": "in progress",
             "transfer_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
-            "workflow_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5"
+            "workflow_id": "processing-workflow-d1845cb6-a5ea-474a-9ab8-26f9bcd919f5"
           }
         ],
         "next_cursor": "abc123"
       },
       "properties": {
         "items": {
-          "$ref": "#/definitions/EnduroStoredCollectionResponseBodyCollection"
+          "$ref": "#/definitions/EnduroStoredCollectionCollection"
         },
         "next_cursor": {
           "example": "abc123",
@@ -817,7 +831,7 @@
       "type": "object"
     },
     "CollectionNotfound": {
-      "description": "Collection not found",
+      "description": "Collection not found.",
       "example": {
         "id": 1,
         "message": "abc123"
@@ -924,7 +938,7 @@
           "type": "string"
         },
         "transitions": {
-          "$ref": "#/definitions/EnduroCollectionStatusTransitionResponseBodyCollection"
+          "$ref": "#/definitions/EnduroCollectionStatusTransitionCollection"
         }
       },
       "required": [
@@ -934,7 +948,7 @@
       "title": "Mediatype identifier: application/vnd.enduro.collection-status-history; view=default",
       "type": "object"
     },
-    "EnduroCollectionStatusTransitionResponseBody": {
+    "EnduroCollectionStatusTransition": {
       "description": "StatusTransition describes a committed collection status change. (default view)",
       "example": {
         "id": 1,
@@ -1021,8 +1035,8 @@
       "title": "Mediatype identifier: application/vnd.enduro.collection-status-transition; view=default",
       "type": "object"
     },
-    "EnduroCollectionStatusTransitionResponseBodyCollection": {
-      "description": "EnduroCollection-Status-TransitionCollectionResponseBody is the result type for an array of EnduroCollection-Status-TransitionResponseBody (default view)",
+    "EnduroCollectionStatusTransitionCollection": {
+      "description": "EnduroCollection-Status-TransitionCollection is the result type for an array of EnduroCollection-Status-Transition (default view)",
       "example": [
         {
           "id": 1,
@@ -1036,12 +1050,12 @@
         }
       ],
       "items": {
-        "$ref": "#/definitions/EnduroCollectionStatusTransitionResponseBody"
+        "$ref": "#/definitions/EnduroCollectionStatusTransition"
       },
       "title": "Mediatype identifier: application/vnd.enduro.collection-status-transition; type=collection; view=default",
       "type": "array"
     },
-    "EnduroCollectionWorkflowHistoryResponseBody": {
+    "EnduroCollectionWorkflowHistory": {
       "description": "WorkflowHistoryEvent describes a history event in Temporal. (default view)",
       "example": {
         "details": "abc123",
@@ -1068,8 +1082,8 @@
       "title": "Mediatype identifier: application/vnd.enduro.collection-workflow-history; view=default",
       "type": "object"
     },
-    "EnduroCollectionWorkflowHistoryResponseBodyCollection": {
-      "description": "EnduroCollection-Workflow-HistoryCollectionResponseBody is the result type for an array of EnduroCollection-Workflow-HistoryResponseBody (default view)",
+    "EnduroCollectionWorkflowHistoryCollection": {
+      "description": "EnduroCollection-Workflow-HistoryCollection is the result type for an array of EnduroCollection-Workflow-History (default view)",
       "example": [
         {
           "details": "abc123",
@@ -1078,7 +1092,7 @@
         }
       ],
       "items": {
-        "$ref": "#/definitions/EnduroCollectionWorkflowHistoryResponseBody"
+        "$ref": "#/definitions/EnduroCollectionWorkflowHistory"
       },
       "title": "Mediatype identifier: application/vnd.enduro.collection-workflow-history; type=collection; view=default",
       "type": "array"
@@ -1097,7 +1111,7 @@
       },
       "properties": {
         "history": {
-          "$ref": "#/definitions/EnduroCollectionWorkflowHistoryResponseBodyCollection"
+          "$ref": "#/definitions/EnduroCollectionWorkflowHistoryCollection"
         },
         "status": {
           "example": "abc123",
@@ -1125,7 +1139,7 @@
         "started_at": "1970-01-01T00:00:01Z",
         "status": "in progress",
         "transfer_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
-        "workflow_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5"
+        "workflow_id": "processing-workflow-d1845cb6-a5ea-474a-9ab8-26f9bcd919f5"
       },
       "properties": {
         "aip_id": {
@@ -1232,8 +1246,7 @@
         },
         "workflow_id": {
           "description": "Identifier of processing workflow",
-          "example": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
-          "format": "uuid",
+          "example": "processing-workflow-d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
           "type": "string"
         }
       },
@@ -1260,7 +1273,7 @@
           "started_at": "1970-01-01T00:00:01Z",
           "status": "in progress",
           "transfer_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
-          "workflow_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5"
+          "workflow_id": "processing-workflow-d1845cb6-a5ea-474a-9ab8-26f9bcd919f5"
         },
         "timestamp": "1970-01-01T00:00:01Z",
         "type": "abc123"
@@ -1308,7 +1321,7 @@
         "started_at": "1970-01-01T00:00:01Z",
         "status": "in progress",
         "transfer_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
-        "workflow_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5"
+        "workflow_id": "processing-workflow-d1845cb6-a5ea-474a-9ab8-26f9bcd919f5"
       },
       "properties": {
         "aip_id": {
@@ -1387,8 +1400,7 @@
         },
         "workflow_id": {
           "description": "Identifier of processing workflow",
-          "example": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
-          "format": "uuid",
+          "example": "processing-workflow-d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
           "type": "string"
         }
       },
@@ -1400,114 +1412,8 @@
       "title": "Mediatype identifier: application/vnd.enduro.stored-collection; view=default",
       "type": "object"
     },
-    "EnduroStoredCollectionResponseBody": {
-      "description": "StoredCollection describes a collection retrieved by the service. (default view)",
-      "example": {
-        "aip_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
-        "completed_at": "1970-01-01T00:00:01Z",
-        "created_at": "1970-01-01T00:00:01Z",
-        "id": 1,
-        "name": "abc123",
-        "original_id": "abc123",
-        "pipeline_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
-        "run_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
-        "started_at": "1970-01-01T00:00:01Z",
-        "status": "in progress",
-        "transfer_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
-        "workflow_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5"
-      },
-      "properties": {
-        "aip_id": {
-          "description": "Identifier of Archivematica AIP",
-          "example": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
-          "format": "uuid",
-          "type": "string"
-        },
-        "completed_at": {
-          "description": "Completion datetime",
-          "example": "1970-01-01T00:00:01Z",
-          "format": "date-time",
-          "type": "string"
-        },
-        "created_at": {
-          "description": "Creation datetime",
-          "example": "1970-01-01T00:00:01Z",
-          "format": "date-time",
-          "type": "string"
-        },
-        "id": {
-          "description": "Identifier of collection",
-          "example": 1,
-          "format": "int64",
-          "type": "integer"
-        },
-        "name": {
-          "description": "Name of the collection",
-          "example": "abc123",
-          "type": "string"
-        },
-        "original_id": {
-          "description": "Identifier provided by the client",
-          "example": "abc123",
-          "type": "string"
-        },
-        "pipeline_id": {
-          "description": "Identifier of Archivematica pipeline",
-          "example": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
-          "format": "uuid",
-          "type": "string"
-        },
-        "run_id": {
-          "description": "Identifier of latest processing workflow run",
-          "example": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
-          "format": "uuid",
-          "type": "string"
-        },
-        "started_at": {
-          "description": "Start datetime",
-          "example": "1970-01-01T00:00:01Z",
-          "format": "date-time",
-          "type": "string"
-        },
-        "status": {
-          "default": "new",
-          "description": "Status of the collection",
-          "enum": [
-            "new",
-            "in progress",
-            "done",
-            "error",
-            "unknown",
-            "queued",
-            "pending",
-            "abandoned"
-          ],
-          "example": "in progress",
-          "type": "string"
-        },
-        "transfer_id": {
-          "description": "Identifier of Archivematica tranfser",
-          "example": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
-          "format": "uuid",
-          "type": "string"
-        },
-        "workflow_id": {
-          "description": "Identifier of processing workflow",
-          "example": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
-          "format": "uuid",
-          "type": "string"
-        }
-      },
-      "required": [
-        "id",
-        "status",
-        "created_at"
-      ],
-      "title": "Mediatype identifier: application/vnd.enduro.stored-collection; view=default",
-      "type": "object"
-    },
-    "EnduroStoredCollectionResponseBodyCollection": {
-      "description": "EnduroStored-CollectionCollectionResponseBody is the result type for an array of EnduroStored-CollectionResponseBody (default view)",
+    "EnduroStoredCollectionCollection": {
+      "description": "EnduroStored-CollectionCollection is the result type for an array of EnduroStored-Collection (default view)",
       "example": [
         {
           "aip_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
@@ -1521,11 +1427,11 @@
           "started_at": "1970-01-01T00:00:01Z",
           "status": "in progress",
           "transfer_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
-          "workflow_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5"
+          "workflow_id": "processing-workflow-d1845cb6-a5ea-474a-9ab8-26f9bcd919f5"
         }
       ],
       "items": {
-        "$ref": "#/definitions/EnduroStoredCollectionResponseBody"
+        "$ref": "#/definitions/EnduroStoredCollection"
       },
       "title": "Mediatype identifier: application/vnd.enduro.stored-collection; type=collection; view=default",
       "type": "array"
@@ -1575,7 +1481,7 @@
       "type": "object"
     },
     "PipelineNotFound": {
-      "description": "Pipeline not found",
+      "description": "Pipeline not found.",
       "example": {
         "id": "abc123",
         "message": "abc123"
@@ -1679,13 +1585,33 @@
             }
           },
           "400": {
-            "description": "Bad Request response.",
+            "description": "not_valid: Bad Request response.",
+            "examples": {
+              "application/vnd.goa.error": {
+                "fault": false,
+                "id": "123abc",
+                "message": "parameter 'p' must be an integer",
+                "name": "not_valid",
+                "temporary": false,
+                "timeout": false
+              }
+            },
             "schema": {
               "$ref": "#/definitions/BatchSubmitNotValidResponseBody"
             }
           },
           "409": {
-            "description": "Conflict response.",
+            "description": "not_available: Conflict response.",
+            "examples": {
+              "application/vnd.goa.error": {
+                "fault": false,
+                "id": "123abc",
+                "message": "parameter 'p' must be an integer",
+                "name": "not_available",
+                "temporary": false,
+                "timeout": false
+              }
+            },
             "schema": {
               "$ref": "#/definitions/BatchSubmitNotAvailableResponseBody"
             }
@@ -1727,13 +1653,33 @@
             }
           },
           "400": {
-            "description": "Bad Request response.",
+            "description": "not_valid: Bad Request response.",
+            "examples": {
+              "application/vnd.goa.error": {
+                "fault": false,
+                "id": "123abc",
+                "message": "parameter 'p' must be an integer",
+                "name": "not_valid",
+                "temporary": false,
+                "timeout": false
+              }
+            },
             "schema": {
               "$ref": "#/definitions/BatchBrowseNotValidResponseBody"
             }
           },
           "404": {
-            "description": "Not Found response.",
+            "description": "not_available: Not Found response.",
+            "examples": {
+              "application/vnd.goa.error": {
+                "fault": false,
+                "id": "123abc",
+                "message": "parameter 'p' must be an integer",
+                "name": "not_available",
+                "temporary": false,
+                "timeout": false
+              }
+            },
             "schema": {
               "$ref": "#/definitions/BatchBrowseNotAvailableResponseBody"
             }
@@ -1920,13 +1866,33 @@
             }
           },
           "400": {
-            "description": "Bad Request response.",
+            "description": "not_valid: Bad Request response.",
+            "examples": {
+              "application/vnd.goa.error": {
+                "fault": false,
+                "id": "123abc",
+                "message": "parameter 'p' must be an integer",
+                "name": "not_valid",
+                "temporary": false,
+                "timeout": false
+              }
+            },
             "schema": {
               "$ref": "#/definitions/CollectionBulkNotValidResponseBody"
             }
           },
           "409": {
-            "description": "Conflict response.",
+            "description": "not_available: Conflict response.",
+            "examples": {
+              "application/vnd.goa.error": {
+                "fault": false,
+                "id": "123abc",
+                "message": "parameter 'p' must be an integer",
+                "name": "not_available",
+                "temporary": false,
+                "timeout": false
+              }
+            },
             "schema": {
               "$ref": "#/definitions/CollectionBulkNotAvailableResponseBody"
             }
@@ -1985,7 +1951,7 @@
             "description": "No Content response."
           },
           "404": {
-            "description": "Not Found response.",
+            "description": "not_found: Collection not found",
             "schema": {
               "$ref": "#/definitions/CollectionNotfound",
               "required": [
@@ -2024,7 +1990,7 @@
             }
           },
           "404": {
-            "description": "Not Found response.",
+            "description": "not_found: Collection not found",
             "schema": {
               "$ref": "#/definitions/CollectionNotfound",
               "required": [
@@ -2062,13 +2028,23 @@
             "description": "OK response."
           },
           "400": {
-            "description": "Bad Request response.",
+            "description": "not_running: Bad Request response.",
+            "examples": {
+              "application/vnd.goa.error": {
+                "fault": false,
+                "id": "123abc",
+                "message": "parameter 'p' must be an integer",
+                "name": "not_running",
+                "temporary": false,
+                "timeout": false
+              }
+            },
             "schema": {
               "$ref": "#/definitions/CollectionCancelNotRunningResponseBody"
             }
           },
           "404": {
-            "description": "Not Found response.",
+            "description": "not_found: Collection not found",
             "schema": {
               "$ref": "#/definitions/CollectionNotfound",
               "required": [
@@ -2102,17 +2078,10 @@
           },
           {
             "in": "body",
-            "name": "object",
+            "name": "DecideRequestBody",
             "required": true,
             "schema": {
-              "properties": {
-                "option": {
-                  "description": "Decision option to proceed with",
-                  "example": "abc123",
-                  "type": "string"
-                }
-              },
-              "type": "object"
+              "$ref": "#/definitions/CollectionDecideRequestBody"
             }
           }
         ],
@@ -2121,13 +2090,23 @@
             "description": "OK response."
           },
           "400": {
-            "description": "Bad Request response.",
+            "description": "not_valid: Bad Request response.",
+            "examples": {
+              "application/vnd.goa.error": {
+                "fault": false,
+                "id": "123abc",
+                "message": "parameter 'p' must be an integer",
+                "name": "not_valid",
+                "temporary": false,
+                "timeout": false
+              }
+            },
             "schema": {
               "$ref": "#/definitions/CollectionDecideNotValidResponseBody"
             }
           },
           "404": {
-            "description": "Not Found response.",
+            "description": "not_found: Collection not found",
             "schema": {
               "$ref": "#/definitions/CollectionNotfound",
               "required": [
@@ -2177,7 +2156,7 @@
             }
           },
           "404": {
-            "description": "Not Found response.",
+            "description": "not_found: Collection not found",
             "schema": {
               "$ref": "#/definitions/CollectionNotfound",
               "required": [
@@ -2221,13 +2200,23 @@
             }
           },
           "400": {
-            "description": "Bad Request response.",
+            "description": "not_running: Bad Request response.",
+            "examples": {
+              "application/vnd.goa.error": {
+                "fault": false,
+                "id": "123abc",
+                "message": "parameter 'p' must be an integer",
+                "name": "not_running",
+                "temporary": false,
+                "timeout": false
+              }
+            },
             "schema": {
               "$ref": "#/definitions/CollectionRetryNotRunningResponseBody"
             }
           },
           "404": {
-            "description": "Not Found response.",
+            "description": "not_found: Collection not found",
             "schema": {
               "$ref": "#/definitions/CollectionNotfound",
               "required": [
@@ -2268,7 +2257,7 @@
             }
           },
           "404": {
-            "description": "Not Found response.",
+            "description": "not_found: Collection not found",
             "schema": {
               "$ref": "#/definitions/CollectionNotfound",
               "required": [
@@ -2309,7 +2298,7 @@
             }
           },
           "404": {
-            "description": "Not Found response.",
+            "description": "not_found: Collection not found",
             "schema": {
               "$ref": "#/definitions/CollectionNotfound",
               "required": [
@@ -2389,7 +2378,7 @@
             }
           },
           "404": {
-            "description": "Not Found response.",
+            "description": "not_found: Pipeline not found",
             "schema": {
               "$ref": "#/definitions/PipelineNotFound",
               "required": [
@@ -2434,7 +2423,7 @@
             }
           },
           "404": {
-            "description": "Not Found response.",
+            "description": "not_found: Pipeline not found",
             "schema": {
               "$ref": "#/definitions/PipelineNotFound",
               "required": [

@@ -14,21 +14,17 @@
 
 import { mapValues } from '../runtime';
 /**
- * Pipeline not found
+ * Pipeline not found.
  * @export
  * @interface PipelineNotFound
  */
 export interface PipelineNotFound {
     /**
      * Identifier of missing pipeline
-     * @type {string}
-     * @memberof PipelineNotFound
      */
     id: string;
     /**
      * Message of error
-     * @type {string}
-     * @memberof PipelineNotFound
      */
     message: string;
 }

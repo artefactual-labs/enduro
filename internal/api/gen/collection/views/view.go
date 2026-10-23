@@ -8,9 +8,7 @@
 
 package views
 
-import (
-	goa "goa.design/goa/v3/pkg"
-)
+import goa "goa.design/goa/v3/pkg"
 
 // EnduroDetailedStoredCollection is the viewed result type that is projected
 // based on a view.
@@ -315,7 +313,6 @@ func ValidateEnduroDetailedStoredCollection(result *EnduroDetailedStoredCollecti
 func ValidateEnduroCollectionWorkflowStatus(result *EnduroCollectionWorkflowStatus) (err error) {
 	switch result.View {
 	case "default", "":
-		err = ValidateEnduroCollectionWorkflowStatusView(result.Projected)
 	default:
 		err = goa.InvalidEnumValueError("view", result.View, []any{"default"})
 	}
@@ -374,9 +371,6 @@ func ValidateEnduroStoredCollectionView(result *EnduroStoredCollectionView) (err
 			err = goa.MergeErrors(err, goa.InvalidEnumValueError("result.status", *result.Status, []any{"new", "in progress", "done", "error", "unknown", "queued", "pending", "abandoned"}))
 		}
 	}
-	if result.WorkflowID != nil {
-		err = goa.MergeErrors(err, goa.ValidateFormat("result.workflow_id", *result.WorkflowID, goa.FormatUUID))
-	}
 	if result.RunID != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("result.run_id", *result.RunID, goa.FormatUUID))
 	}
@@ -429,9 +423,6 @@ func ValidateEnduroDetailedStoredCollectionView(result *EnduroDetailedStoredColl
 			err = goa.MergeErrors(err, goa.InvalidEnumValueError("result.status", *result.Status, []any{"new", "in progress", "done", "error", "unknown", "queued", "pending", "abandoned"}))
 		}
 	}
-	if result.WorkflowID != nil {
-		err = goa.MergeErrors(err, goa.ValidateFormat("result.workflow_id", *result.WorkflowID, goa.FormatUUID))
-	}
 	if result.RunID != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("result.run_id", *result.RunID, goa.FormatUUID))
 	}
@@ -467,37 +458,6 @@ func ValidateEnduroDetailedStoredCollectionView(result *EnduroDetailedStoredColl
 	return
 }
 
-// ValidateEnduroCollectionWorkflowStatusView runs the validations defined on
-// EnduroCollectionWorkflowStatusView using the "default" view.
-func ValidateEnduroCollectionWorkflowStatusView(result *EnduroCollectionWorkflowStatusView) (err error) {
-
-	if result.History != nil {
-		if err2 := ValidateEnduroCollectionWorkflowHistoryCollectionView(result.History); err2 != nil {
-			err = goa.MergeErrors(err, err2)
-		}
-	}
-	return
-}
-
-// ValidateEnduroCollectionWorkflowHistoryCollectionView runs the validations
-// defined on EnduroCollectionWorkflowHistoryCollectionView using the "default"
-// view.
-func ValidateEnduroCollectionWorkflowHistoryCollectionView(result EnduroCollectionWorkflowHistoryCollectionView) (err error) {
-	for _, item := range result {
-		if err2 := ValidateEnduroCollectionWorkflowHistoryView(item); err2 != nil {
-			err = goa.MergeErrors(err, err2)
-		}
-	}
-	return
-}
-
-// ValidateEnduroCollectionWorkflowHistoryView runs the validations defined on
-// EnduroCollectionWorkflowHistoryView using the "default" view.
-func ValidateEnduroCollectionWorkflowHistoryView(result *EnduroCollectionWorkflowHistoryView) (err error) {
-
-	return
-}
-
 // ValidateEnduroCollectionStatusHistoryView runs the validations defined on
 // EnduroCollectionStatusHistoryView using the "default" view.
 func ValidateEnduroCollectionStatusHistoryView(result *EnduroCollectionStatusHistoryView) (err error) {
@@ -508,6 +468,9 @@ func ValidateEnduroCollectionStatusHistoryView(result *EnduroCollectionStatusHis
 		if !(*result.Availability == "available" || *result.Availability == "partial" || *result.Availability == "unavailable") {
 			err = goa.MergeErrors(err, goa.InvalidEnumValueError("result.availability", *result.Availability, []any{"available", "partial", "unavailable"}))
 		}
+	}
+	if result.Transitions == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("transitions", "result"))
 	}
 	if result.Transitions != nil {
 		if err2 := ValidateEnduroCollectionStatusTransitionCollectionView(result.Transitions); err2 != nil {

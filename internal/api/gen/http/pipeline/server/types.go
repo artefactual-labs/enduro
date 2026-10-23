@@ -64,7 +64,7 @@ type EnduroStoredPipelineResponse struct {
 
 // NewListResponseBody builds the HTTP response body from the result of the
 // "list" endpoint of the "pipeline" service.
-func NewListResponseBody(res []*pipeline.EnduroStoredPipeline) ListResponseBody {
+func NewListResponseBody(res []*pipeline.EnduroStoredPipeline) []*EnduroStoredPipelineResponse {
 	body := make([]*EnduroStoredPipelineResponse, len(res))
 	for i, val := range res {
 		if val == nil {

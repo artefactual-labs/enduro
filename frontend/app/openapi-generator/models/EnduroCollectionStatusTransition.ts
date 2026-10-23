@@ -12,7 +12,7 @@
  * Do not edit the class manually.
  */
 
-import { mapValues } from '../runtime';
+import { mapValues, parseDate, parseDateTime, serializeDate, serializeDateTime } from '../runtime';
 /**
  * StatusTransition describes a committed collection status change.
  * @export
@@ -21,50 +21,34 @@ import { mapValues } from '../runtime';
 export interface EnduroCollectionStatusTransition {
     /**
      * Identifier of the status transition
-     * @type {number}
-     * @memberof EnduroCollectionStatusTransition
      */
     id: number;
     /**
      * Whether the transition starts a fully recorded workflow run
-     * @type {boolean}
-     * @memberof EnduroCollectionStatusTransition
      */
     isRunStart: boolean;
     /**
      * Transition datetime
-     * @type {Date}
-     * @memberof EnduroCollectionStatusTransition
      */
     occurredAt: Date;
     /**
      * Status before the transition
-     * @type {EnduroCollectionStatusTransitionPreviousStatusEnum}
-     * @memberof EnduroCollectionStatusTransition
      */
     previousStatus?: EnduroCollectionStatusTransitionPreviousStatusEnum;
     /**
      * Machine-readable reason for the transition
-     * @type {string}
-     * @memberof EnduroCollectionStatusTransition
      */
     reason?: string;
     /**
      * Identifier of the processing workflow run
-     * @type {string}
-     * @memberof EnduroCollectionStatusTransition
      */
     runId: string;
     /**
      * Status entered by the transition
-     * @type {EnduroCollectionStatusTransitionStatusEnum}
-     * @memberof EnduroCollectionStatusTransition
      */
     status: EnduroCollectionStatusTransitionStatusEnum;
     /**
      * Identifier of the processing workflow
-     * @type {string}
-     * @memberof EnduroCollectionStatusTransition
      */
     workflowId: string;
 }
@@ -126,7 +110,7 @@ export function EnduroCollectionStatusTransitionFromJSONTyped(json: any, ignoreD
         
         'id': json['id'],
         'isRunStart': json['is_run_start'],
-        'occurredAt': (new Date(json['occurred_at'])),
+        'occurredAt': (json['occurred_at'] == null ? json['occurred_at'] : parseDateTime(json['occurred_at'])),
         'previousStatus': json['previous_status'] == null ? undefined : json['previous_status'],
         'reason': json['reason'] == null ? undefined : json['reason'],
         'runId': json['run_id'],
@@ -148,7 +132,7 @@ export function EnduroCollectionStatusTransitionToJSONTyped(value?: EnduroCollec
         
         'id': value['id'],
         'is_run_start': value['isRunStart'],
-        'occurred_at': value['occurredAt'].toISOString(),
+        'occurred_at': value['occurredAt'] == null ? value['occurredAt'] : serializeDateTime(value['occurredAt']),
         'previous_status': value['previousStatus'],
         'reason': value['reason'],
         'run_id': value['runId'],

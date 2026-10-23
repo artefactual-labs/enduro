@@ -109,8 +109,19 @@ func NewProcessingNotFound(body *ProcessingNotFoundResponseBody) *pipeline.Pipel
 	return v
 }
 
+// ValidateShowResponseBody runs the validations defined on ShowResponseBody
+func ValidateShowResponseBody(body *ShowResponseBody) (err error) {
+	if body.Name == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("name", "body"))
+	}
+	if body.ID != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.id", *body.ID, goa.FormatUUID))
+	}
+	return
+}
+
 // ValidateShowNotFoundResponseBody runs the validations defined on
-// show_not_found_response_body
+// ShowNotFoundResponseBody
 func ValidateShowNotFoundResponseBody(body *ShowNotFoundResponseBody) (err error) {
 	if body.Message == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("message", "body"))
@@ -122,7 +133,7 @@ func ValidateShowNotFoundResponseBody(body *ShowNotFoundResponseBody) (err error
 }
 
 // ValidateProcessingNotFoundResponseBody runs the validations defined on
-// processing_not_found_response_body
+// ProcessingNotFoundResponseBody
 func ValidateProcessingNotFoundResponseBody(body *ProcessingNotFoundResponseBody) (err error) {
 	if body.Message == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("message", "body"))
@@ -134,13 +145,25 @@ func ValidateProcessingNotFoundResponseBody(body *ProcessingNotFoundResponseBody
 }
 
 // ValidateEnduroStoredPipelineResponse runs the validations defined on
-// EnduroStored-PipelineResponse
+// EnduroStored-Pipeline
 func ValidateEnduroStoredPipelineResponse(body *EnduroStoredPipelineResponse) (err error) {
 	if body.Name == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("name", "body"))
 	}
 	if body.ID != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("body.id", *body.ID, goa.FormatUUID))
+	}
+	return
+}
+
+// validateEnduroStoredPipelineResponse checks EnduroStored-Pipeline and
+// reports errors using the path supplied by its caller
+func validateEnduroStoredPipelineResponse(body *EnduroStoredPipelineResponse, path string) (err error) {
+	if body.Name == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("name", path))
+	}
+	if body.ID != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat(path+".id", *body.ID, goa.FormatUUID))
 	}
 	return
 }
