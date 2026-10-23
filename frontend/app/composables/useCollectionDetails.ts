@@ -70,7 +70,7 @@ export function useCollectionDetails() {
     reload: reloadCollectionData
   } = useCollectionPageData()
 
-  const collectionId = computed(() => parseCollectionId(route.params.id))
+  const collectionId = computed(() => parseCollectionId('id' in route.params ? route.params.id : undefined))
   const state = useState<CollectionDetailsState>('collection-details-state', createDefaultState)
   let monitorRefreshRunning = false
   let monitorRefreshPending = false

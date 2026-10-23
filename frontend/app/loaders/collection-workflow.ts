@@ -12,7 +12,7 @@ export class CollectionWorkflowLoadError extends Error {
 
 export const useCollectionWorkflowData = defineBasicLoader<CollectionWorkflowData>(
   async (to, { signal }) => {
-    const collectionId = parseCollectionId(to.params.id)
+    const collectionId = parseCollectionId('id' in to.params ? to.params.id : undefined)
     if (collectionId <= 0) {
       throw new CollectionWorkflowLoadError('The collection identifier is invalid.')
     }

@@ -15,7 +15,7 @@ type PipelinePageData = {
 
 export const usePipelinePageData = defineBasicLoader<PipelinePageData>(
   async (to, { signal }) => {
-    const pipelineId = normalizeRouteStringParam(to.params.id)
+    const pipelineId = normalizeRouteStringParam('id' in to.params ? to.params.id : undefined)
     if (!pipelineId) {
       throw new PipelineLoadError('The pipeline identifier is invalid.')
     }

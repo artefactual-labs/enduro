@@ -14,7 +14,7 @@ type CollectionPageData = {
 
 export const useCollectionPageData = defineBasicLoader<CollectionPageData>(
   async (to, { signal }) => {
-    const collectionId = parseCollectionId(to.params.id)
+    const collectionId = parseCollectionId('id' in to.params ? to.params.id : undefined)
     if (collectionId <= 0) {
       throw new CollectionDetailsLoadError('The collection identifier is invalid.')
     }
