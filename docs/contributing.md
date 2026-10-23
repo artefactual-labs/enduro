@@ -162,6 +162,47 @@ the transfer publishing workaround rather than a replacement for unit or
 workflow tests. The harness also exports Go coverage from the Enduro process; CI
 uploads that profile to Codecov under the `go-smoke` flag.
 
+#### MinIO compatibility tests (local only)
+
+CI runs the object storage smoke tests against SeaweedFS and argmin. MinIO is
+excluded because its [community server is no longer maintained][minio-status]
+and the legacy releases have known security vulnerabilities. Compatibility with
+MinIO is checked manually when investigating reports or changing its
+integration; a passing CI run does not verify MinIO compatibility.
+
+The local scenario uploads a transfer through S3, exercises MinIO's native Redis
+notifications and Enduro's S3 watcher, and verifies the resulting Archivematica
+AIP. It starts its own services with dummy credentials. Use disposable test data
+and keep these services separate from production systems.
+
+With Docker running and Dagger installed, run this command from the repository
+root:
+
+```sh
+dagger -m hack/dagger call object-storage-smoke-test \
+  --source . \
+  --provider minio-latest \
+  export --path hack/dagger/runtime/object-storage-artifacts-minio-latest
+```
+
+On success, the output directory contains the downloaded AIP, Temporal workflow
+history, and coverage artifacts. The test starts Archivematica and can take
+several minutes. `make test-smoke-object-storage` runs all three providers
+locally, including MinIO; it is broader than the CI matrix.
+
+The image is selected by `minioLatestImage` in `hack/dagger/main.go`. To
+investigate a compatibility report, set that constant locally to the reported
+image tag or digest and rerun the command. Record the image reference, Enduro
+revision, and test output with the report. A result applies to the tested
+version and scenario, not every MinIO deployment.
+
+Legacy image availability is a separate limitation: on October 23, 2026, the
+pinned Quay image and the Quay and Docker Hub `latest` tags returned
+authorization errors. If image resolution fails, obtain an accessible image from
+your existing deployment or a trusted registry and update `minioLatestImage`
+before retrying. An image-pull failure does not establish an Enduro
+compatibility failure.
+
 ### Enable tracing
 
 Enable the observability services by editing the root `.env` file as follows:
@@ -324,7 +365,16 @@ lockfile.
 
 ### Other tools
 
-See `hack/make/dep_*.mk`.
+See `.bine.toml` for pinned build and development tools. Dagger's engine and Go
+dependencies are configured in `hack/dagger/dagger.json` and
+`hack/dagger/go.mod`. Keep the Playwright version in
+`hack/dagger/smoke/package.json` aligned with its container image in
+`hack/dagger/main.go`.
+
+The MinIO smoke-test server uses the published Quay image pinned in
+`hack/dagger/main.go`. The `minio-latest` provider name is a legacy label; it
+does not track a moving `latest` tag. This image predates the October 2025
+security fix and is retained only for legacy compatibility testing.
 
 ## Releases
 
@@ -359,6 +409,7 @@ the [workflow run][first-release-run] that made our very first release.
 [issue-118]: https://github.com/artefactual-labs/enduro/issues/118
 [make]: https://www.gnu.org/software/make/
 [mc]: https://docs.min.io/docs/minio-client-quickstart-guide.html
+[minio-status]: https://github.com/minio/minio
 [nodejs]: https://nodejs.org
 [openapi3-2-json]: https://github.com/artefactual-labs/enduro/blob/main/internal/api/gen/http/openapi3.2.json
 [openapi3-json]: https://github.com/artefactual-labs/enduro/blob/main/internal/api/gen/http/openapi3.json

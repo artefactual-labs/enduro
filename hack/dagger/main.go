@@ -11,18 +11,18 @@ import (
 )
 
 const (
-	mysqlImage        = "mysql:8.4.11-oraclelinux9"
-	temporalImage     = "temporalio/server:1.31.2"
-	temporalToolImage = "temporalio/admin-tools:1.31.2"
+	mysqlImage        = "mysql:8.4.13-oraclelinux9"
+	temporalImage     = "temporalio/server:1.32.1"
+	temporalToolImage = "temporalio/admin-tools:1.32.1"
 	goImage           = "golang:1.27.3-bookworm"
-	nodeImage         = "node:24.19.0-bookworm"
-	redisImage        = "redis:8.2.8-alpine3.22"
+	nodeImage         = "node:24.22.1-bookworm"
+	redisImage        = "redis:8.2.10-alpine3.22"
 	minioLatestImage  = "quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z"
-	argminBuildImage  = "rust:1.95.0-bookworm"
-	argminRevision    = "627113c61b786475cc9a6da42b3721bc7e57eb47"
-	seaweedFSImage    = "chrislusf/seaweedfs:4.42"
+	argminBuildImage  = "rust:1.99.1-bookworm"
+	argminRevision    = "8ebbf735460e1e6e38333571853b460c40d09879"
+	seaweedFSImage    = "chrislusf/seaweedfs:4.48"
 	amboxImage        = "ghcr.io/sevein/ambox:latest"
-	playwrightImage   = "mcr.microsoft.com/playwright:v1.62.1-noble"
+	playwrightImage   = "mcr.microsoft.com/playwright:v1.64.1-noble"
 )
 
 type EnduroE2E struct{}

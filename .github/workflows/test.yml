@@ -134,7 +134,7 @@ jobs:
       fail-fast: false
       matrix:
         provider:
-          - minio-latest
+          # MinIO is tested locally only; see docs/contributing.md.
           - seaweedfs
           - argmin
     steps:
