@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { useTimestamp } from '@vueuse/core'
+import { useIntervalFn, useTimestamp } from '@vueuse/core'
 
 const open = ref(false)
 const monitor = useEnduroMonitor()
 const versionLabel = useState<string>('enduroVersion', () => '')
 const monitorVersionLabel = computed(() => versionLabel.value || '(version unavailable)')
 
-const now = useTimestamp({ interval: 1000 })
+const now = useTimestamp({ scheduler: callback => useIntervalFn(callback, 1000) })
 
 function openMonitor() {
   open.value = true
