@@ -170,17 +170,28 @@ Enable the observability services by editing the root `.env` file as follows:
 COMPOSE_FILE=docker-compose.yml:docker-compose.observability.yml
 ```
 
-Start all services again:
+Start all services again, removing containers for services that are no longer
+defined in this Compose project:
 
 ```
-docker compose up -d
+docker compose up -d --remove-orphans
 ```
 
 Three new services should be ready:
 
 - Grafana (listens on `127.0.0.1:3000`),
-- Grafana Agent (listens on `127.0.0.1:12345`), and
+- Grafana Alloy (accepts OTLP/gRPC on `127.0.0.1:12345`), and
 - Grafana Tempo (listens on `127.0.0.1:4317`).
+
+Alloy replaces the retired Grafana Agent and keeps the same OTLP/gRPC endpoint.
+The `--remove-orphans` flag removes the old `grafana-agent` container, if
+present, so that it releases port `12345` before Alloy starts.
+
+Tempo runs in monolithic mode and stores traces in the `tempo-data` named
+volume. Docker initializes this volume with the ownership required by Tempo's
+container user. Existing traces in `hack/stuff/tempo-data` are left untouched
+and are not imported into the new volume. The Alloy debug exporter logs received
+spans and requires the experimental stability flag set in Compose.
 
 Enable tracing in `enduro.toml`:
 
@@ -199,10 +210,10 @@ make run
 
 Things that you can do:
 
-- Observe that `grafana-agent` logs received traces:
+- Observe that `grafana-alloy` logs received traces:
 
   ```
-  docker compose logs -f grafana-agent
+  docker compose logs -f grafana-alloy
   ```
 
 - Observe that `grafana-tempo` logs stored traces:
@@ -211,8 +222,7 @@ Things that you can do:
   docker compose logs -f grafana-tempo
   ```
 
-- Use the [Grafana explorer](http://127.0.0.1:3000/explore) to search and
-  visualize traces.
+- Use the [Grafana explorer] to search and visualize traces.
 
 ## API changes
 
@@ -345,6 +355,7 @@ the [workflow run][first-release-run] that made our very first release.
 [goa]: https://goa.design/
 [goa-dsl]: https://godoc.org/goa.design/goa/dsl
 [gopls]: https://github.com/golang/tools/blob/master/gopls/README.md
+[grafana explorer]: http://127.0.0.1:3000/explore
 [issue-118]: https://github.com/artefactual-labs/enduro/issues/118
 [make]: https://www.gnu.org/software/make/
 [mc]: https://docs.min.io/docs/minio-client-quickstart-guide.html
