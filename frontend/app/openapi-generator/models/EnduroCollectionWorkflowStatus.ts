@@ -29,14 +29,10 @@ import {
 export interface EnduroCollectionWorkflowStatus {
     /**
      * 
-     * @type {Array<EnduroCollectionWorkflowHistory>}
-     * @memberof EnduroCollectionWorkflowStatus
      */
     history?: Array<EnduroCollectionWorkflowHistory>;
     /**
      * 
-     * @type {string}
-     * @memberof EnduroCollectionWorkflowStatus
      */
     status?: string;
 }

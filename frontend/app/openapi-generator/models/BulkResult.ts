@@ -21,14 +21,10 @@ import { mapValues } from '../runtime';
 export interface BulkResult {
     /**
      * 
-     * @type {string}
-     * @memberof BulkResult
      */
     runId: string;
     /**
      * 
-     * @type {string}
-     * @memberof BulkResult
      */
     workflowId: string;
 }

@@ -40,6 +40,25 @@ func UsageExamples() string {
 		""
 }
 
+// cliStringFlag keeps an omitted command-line flag distinct from an explicitly empty flag.
+type cliStringFlag struct {
+	value *string
+}
+
+// String returns the flag text shown by the standard flag package.
+func (f *cliStringFlag) String() string {
+	if f.value == nil {
+		return ""
+	}
+	return *f.value
+}
+
+// Set records that the user supplied the flag, even when value is empty.
+func (f *cliStringFlag) Set(value string) error {
+	f.value = &value
+	return nil
+}
+
 // ParseEndpoint returns the endpoint and payload as specified on the command
 // line.
 func ParseEndpoint(
@@ -53,72 +72,97 @@ func ParseEndpoint(
 		pipelineFlags = flag.NewFlagSet("pipeline", flag.ContinueOnError)
 
 		pipelineListFlags      = flag.NewFlagSet("list", flag.ExitOnError)
-		pipelineListNameFlag   = pipelineListFlags.String("name", "", "")
-		pipelineListStatusFlag = pipelineListFlags.String("status", "", "")
+		pipelineListNameFlag   = new(cliStringFlag)
+		pipelineListStatusFlag = pipelineListFlags.String("status", "false", "")
 
 		pipelineShowFlags  = flag.NewFlagSet("show", flag.ExitOnError)
-		pipelineShowIDFlag = pipelineShowFlags.String("id", "REQUIRED", "Identifier of pipeline to show")
+		pipelineShowIDFlag = new(cliStringFlag)
 
 		pipelineProcessingFlags  = flag.NewFlagSet("processing", flag.ExitOnError)
-		pipelineProcessingIDFlag = pipelineProcessingFlags.String("id", "REQUIRED", "Identifier of pipeline")
+		pipelineProcessingIDFlag = new(cliStringFlag)
 
 		batchFlags = flag.NewFlagSet("batch", flag.ContinueOnError)
 
 		batchSubmitFlags    = flag.NewFlagSet("submit", flag.ExitOnError)
-		batchSubmitBodyFlag = batchSubmitFlags.String("body", "REQUIRED", "")
+		batchSubmitBodyFlag = new(cliStringFlag)
 
 		batchStatusFlags = flag.NewFlagSet("status", flag.ExitOnError)
 
 		batchHintsFlags = flag.NewFlagSet("hints", flag.ExitOnError)
 
 		batchBrowseFlags    = flag.NewFlagSet("browse", flag.ExitOnError)
-		batchBrowsePathFlag = batchBrowseFlags.String("path", "", "")
+		batchBrowsePathFlag = new(cliStringFlag)
 
 		collectionFlags = flag.NewFlagSet("collection", flag.ContinueOnError)
 
 		collectionMonitorFlags = flag.NewFlagSet("monitor", flag.ExitOnError)
 
 		collectionListFlags                   = flag.NewFlagSet("list", flag.ExitOnError)
-		collectionListNameFlag                = collectionListFlags.String("name", "", "")
-		collectionListOriginalIDFlag          = collectionListFlags.String("original-id", "", "")
-		collectionListTransferIDFlag          = collectionListFlags.String("transfer-id", "", "")
-		collectionListAipIDFlag               = collectionListFlags.String("aip-id", "", "")
-		collectionListPipelineIDFlag          = collectionListFlags.String("pipeline-id", "", "")
-		collectionListEarliestCreatedTimeFlag = collectionListFlags.String("earliest-created-time", "", "")
-		collectionListLatestCreatedTimeFlag   = collectionListFlags.String("latest-created-time", "", "")
-		collectionListStatusFlag              = collectionListFlags.String("status", "", "")
-		collectionListCursorFlag              = collectionListFlags.String("cursor", "", "")
+		collectionListNameFlag                = new(cliStringFlag)
+		collectionListOriginalIDFlag          = new(cliStringFlag)
+		collectionListTransferIDFlag          = new(cliStringFlag)
+		collectionListAipIDFlag               = new(cliStringFlag)
+		collectionListPipelineIDFlag          = new(cliStringFlag)
+		collectionListEarliestCreatedTimeFlag = new(cliStringFlag)
+		collectionListLatestCreatedTimeFlag   = new(cliStringFlag)
+		collectionListStatusFlag              = new(cliStringFlag)
+		collectionListCursorFlag              = new(cliStringFlag)
 
 		collectionShowFlags  = flag.NewFlagSet("show", flag.ExitOnError)
-		collectionShowIDFlag = collectionShowFlags.String("id", "REQUIRED", "Identifier of collection to show")
+		collectionShowIDFlag = new(cliStringFlag)
 
 		collectionDeleteFlags  = flag.NewFlagSet("delete", flag.ExitOnError)
-		collectionDeleteIDFlag = collectionDeleteFlags.String("id", "REQUIRED", "Identifier of collection to delete")
+		collectionDeleteIDFlag = new(cliStringFlag)
 
 		collectionCancelFlags  = flag.NewFlagSet("cancel", flag.ExitOnError)
-		collectionCancelIDFlag = collectionCancelFlags.String("id", "REQUIRED", "Identifier of collection to remove")
+		collectionCancelIDFlag = new(cliStringFlag)
 
 		collectionRetryFlags  = flag.NewFlagSet("retry", flag.ExitOnError)
-		collectionRetryIDFlag = collectionRetryFlags.String("id", "REQUIRED", "Identifier of collection to retry")
+		collectionRetryIDFlag = new(cliStringFlag)
 
 		collectionWorkflowFlags  = flag.NewFlagSet("workflow", flag.ExitOnError)
-		collectionWorkflowIDFlag = collectionWorkflowFlags.String("id", "REQUIRED", "Identifier of collection to look up")
+		collectionWorkflowIDFlag = new(cliStringFlag)
 
 		collectionStatusHistoryFlags  = flag.NewFlagSet("status-history", flag.ExitOnError)
-		collectionStatusHistoryIDFlag = collectionStatusHistoryFlags.String("id", "REQUIRED", "Identifier of collection to look up")
+		collectionStatusHistoryIDFlag = new(cliStringFlag)
 
 		collectionDownloadFlags  = flag.NewFlagSet("download", flag.ExitOnError)
-		collectionDownloadIDFlag = collectionDownloadFlags.String("id", "REQUIRED", "Identifier of collection to look up")
+		collectionDownloadIDFlag = new(cliStringFlag)
 
 		collectionDecideFlags    = flag.NewFlagSet("decide", flag.ExitOnError)
-		collectionDecideBodyFlag = collectionDecideFlags.String("body", "REQUIRED", "")
-		collectionDecideIDFlag   = collectionDecideFlags.String("id", "REQUIRED", "Identifier of collection to look up")
+		collectionDecideBodyFlag = new(cliStringFlag)
+		collectionDecideIDFlag   = new(cliStringFlag)
 
 		collectionBulkFlags    = flag.NewFlagSet("bulk", flag.ExitOnError)
-		collectionBulkBodyFlag = collectionBulkFlags.String("body", "REQUIRED", "")
+		collectionBulkBodyFlag = new(cliStringFlag)
 
 		collectionBulkStatusFlags = flag.NewFlagSet("bulk-status", flag.ExitOnError)
 	)
+	pipelineListFlags.Var(pipelineListNameFlag, "name", "")
+	pipelineShowFlags.Var(pipelineShowIDFlag, "id", "Identifier of pipeline to show")
+	pipelineProcessingFlags.Var(pipelineProcessingIDFlag, "id", "Identifier of pipeline")
+	batchSubmitFlags.Var(batchSubmitBodyFlag, "body", "")
+	batchBrowseFlags.Var(batchBrowsePathFlag, "path", "")
+	collectionListFlags.Var(collectionListNameFlag, "name", "")
+	collectionListFlags.Var(collectionListOriginalIDFlag, "original-id", "")
+	collectionListFlags.Var(collectionListTransferIDFlag, "transfer-id", "")
+	collectionListFlags.Var(collectionListAipIDFlag, "aip-id", "")
+	collectionListFlags.Var(collectionListPipelineIDFlag, "pipeline-id", "")
+	collectionListFlags.Var(collectionListEarliestCreatedTimeFlag, "earliest-created-time", "")
+	collectionListFlags.Var(collectionListLatestCreatedTimeFlag, "latest-created-time", "")
+	collectionListFlags.Var(collectionListStatusFlag, "status", "")
+	collectionListFlags.Var(collectionListCursorFlag, "cursor", "")
+	collectionShowFlags.Var(collectionShowIDFlag, "id", "Identifier of collection to show")
+	collectionDeleteFlags.Var(collectionDeleteIDFlag, "id", "Identifier of collection to delete")
+	collectionCancelFlags.Var(collectionCancelIDFlag, "id", "Identifier of collection to remove")
+	collectionRetryFlags.Var(collectionRetryIDFlag, "id", "Identifier of collection to retry")
+	collectionWorkflowFlags.Var(collectionWorkflowIDFlag, "id", "Identifier of collection to look up")
+	collectionStatusHistoryFlags.Var(collectionStatusHistoryIDFlag, "id", "Identifier of collection to look up")
+	collectionDownloadFlags.Var(collectionDownloadIDFlag, "id", "Identifier of collection to look up")
+	collectionDecideFlags.Var(collectionDecideBodyFlag, "body", "")
+	collectionDecideFlags.Var(collectionDecideIDFlag, "id", "Identifier of collection to look up")
+	collectionBulkFlags.Var(collectionBulkBodyFlag, "body", "")
+
 	pipelineFlags.Usage = pipelineUsage
 	pipelineListFlags.Usage = pipelineListUsage
 	pipelineShowFlags.Usage = pipelineShowUsage
@@ -274,27 +318,27 @@ func ParseEndpoint(
 			switch epn {
 			case "list":
 				endpoint = c.List()
-				data, err = pipelinec.BuildListPayload(*pipelineListNameFlag, *pipelineListStatusFlag)
+				data, err = pipelinec.BuildListPayload(pipelineListNameFlag.value, *pipelineListStatusFlag)
 			case "show":
 				endpoint = c.Show()
-				data, err = pipelinec.BuildShowPayload(*pipelineShowIDFlag)
+				data, err = pipelinec.BuildShowPayload(pipelineShowIDFlag.value)
 			case "processing":
 				endpoint = c.Processing()
-				data, err = pipelinec.BuildProcessingPayload(*pipelineProcessingIDFlag)
+				data, err = pipelinec.BuildProcessingPayload(pipelineProcessingIDFlag.value)
 			}
 		case "batch":
 			c := batchc.NewClient(scheme, host, doer, enc, dec, restore)
 			switch epn {
 			case "submit":
 				endpoint = c.Submit()
-				data, err = batchc.BuildSubmitPayload(*batchSubmitBodyFlag)
+				data, err = batchc.BuildSubmitPayload(batchSubmitBodyFlag.value)
 			case "status":
 				endpoint = c.Status()
 			case "hints":
 				endpoint = c.Hints()
 			case "browse":
 				endpoint = c.Browse()
-				data, err = batchc.BuildBrowsePayload(*batchBrowsePathFlag)
+				data, err = batchc.BuildBrowsePayload(batchBrowsePathFlag.value)
 			}
 		case "collection":
 			c := collectionc.NewClient(scheme, host, doer, enc, dec, restore)
@@ -303,34 +347,34 @@ func ParseEndpoint(
 				endpoint = c.Monitor()
 			case "list":
 				endpoint = c.List()
-				data, err = collectionc.BuildListPayload(*collectionListNameFlag, *collectionListOriginalIDFlag, *collectionListTransferIDFlag, *collectionListAipIDFlag, *collectionListPipelineIDFlag, *collectionListEarliestCreatedTimeFlag, *collectionListLatestCreatedTimeFlag, *collectionListStatusFlag, *collectionListCursorFlag)
+				data, err = collectionc.BuildListPayload(collectionListNameFlag.value, collectionListOriginalIDFlag.value, collectionListTransferIDFlag.value, collectionListAipIDFlag.value, collectionListPipelineIDFlag.value, collectionListEarliestCreatedTimeFlag.value, collectionListLatestCreatedTimeFlag.value, collectionListStatusFlag.value, collectionListCursorFlag.value)
 			case "show":
 				endpoint = c.Show()
-				data, err = collectionc.BuildShowPayload(*collectionShowIDFlag)
+				data, err = collectionc.BuildShowPayload(collectionShowIDFlag.value)
 			case "delete":
 				endpoint = c.Delete()
-				data, err = collectionc.BuildDeletePayload(*collectionDeleteIDFlag)
+				data, err = collectionc.BuildDeletePayload(collectionDeleteIDFlag.value)
 			case "cancel":
 				endpoint = c.Cancel()
-				data, err = collectionc.BuildCancelPayload(*collectionCancelIDFlag)
+				data, err = collectionc.BuildCancelPayload(collectionCancelIDFlag.value)
 			case "retry":
 				endpoint = c.Retry()
-				data, err = collectionc.BuildRetryPayload(*collectionRetryIDFlag)
+				data, err = collectionc.BuildRetryPayload(collectionRetryIDFlag.value)
 			case "workflow":
 				endpoint = c.Workflow()
-				data, err = collectionc.BuildWorkflowPayload(*collectionWorkflowIDFlag)
+				data, err = collectionc.BuildWorkflowPayload(collectionWorkflowIDFlag.value)
 			case "status-history":
 				endpoint = c.StatusHistory()
-				data, err = collectionc.BuildStatusHistoryPayload(*collectionStatusHistoryIDFlag)
+				data, err = collectionc.BuildStatusHistoryPayload(collectionStatusHistoryIDFlag.value)
 			case "download":
 				endpoint = c.Download()
-				data, err = collectionc.BuildDownloadPayload(*collectionDownloadIDFlag)
+				data, err = collectionc.BuildDownloadPayload(collectionDownloadIDFlag.value)
 			case "decide":
 				endpoint = c.Decide()
-				data, err = collectionc.BuildDecidePayload(*collectionDecideBodyFlag, *collectionDecideIDFlag)
+				data, err = collectionc.BuildDecidePayload(collectionDecideBodyFlag.value, collectionDecideIDFlag.value)
 			case "bulk":
 				endpoint = c.Bulk()
-				data, err = collectionc.BuildBulkPayload(*collectionBulkBodyFlag)
+				data, err = collectionc.BuildBulkPayload(collectionBulkBodyFlag.value)
 			case "bulk-status":
 				endpoint = c.BulkStatus()
 			}

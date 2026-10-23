@@ -12,7 +12,7 @@
  * Do not edit the class manually.
  */
 
-import { mapValues } from '../runtime';
+import { mapValues, parseDate, parseDateTime, serializeDate, serializeDateTime } from '../runtime';
 /**
  * 
  * @export
@@ -21,26 +21,18 @@ import { mapValues } from '../runtime';
 export interface BatchBrowseEntry {
     /**
      * Absolute path of the directory.
-     * @type {string}
-     * @memberof BatchBrowseEntry
      */
     absolutePath: string;
     /**
      * Directory modification time.
-     * @type {Date}
-     * @memberof BatchBrowseEntry
      */
     modifiedAt?: Date;
     /**
      * Directory name.
-     * @type {string}
-     * @memberof BatchBrowseEntry
      */
     name: string;
     /**
      * Root-relative path of the directory.
-     * @type {string}
-     * @memberof BatchBrowseEntry
      */
     path: string;
 }
@@ -66,7 +58,7 @@ export function BatchBrowseEntryFromJSONTyped(json: any, ignoreDiscriminator: bo
     return {
         
         'absolutePath': json['absolute_path'],
-        'modifiedAt': json['modified_at'] == null ? undefined : (new Date(json['modified_at'])),
+        'modifiedAt': json['modified_at'] == null ? undefined : (parseDateTime(json['modified_at'])),
         'name': json['name'],
         'path': json['path'],
     };
@@ -84,7 +76,7 @@ export function BatchBrowseEntryToJSONTyped(value?: BatchBrowseEntry | null, ign
     return {
         
         'absolute_path': value['absolutePath'],
-        'modified_at': value['modifiedAt'] == null ? value['modifiedAt'] : value['modifiedAt'].toISOString(),
+        'modified_at': value['modifiedAt'] == null ? value['modifiedAt'] : serializeDateTime(value['modifiedAt']),
         'name': value['name'],
         'path': value['path'],
     };

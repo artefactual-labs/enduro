@@ -19,25 +19,25 @@ import (
 
 // BuildListPayload builds the payload for the collection list endpoint from
 // CLI flags.
-func BuildListPayload(collectionListName string, collectionListOriginalID string, collectionListTransferID string, collectionListAipID string, collectionListPipelineID string, collectionListEarliestCreatedTime string, collectionListLatestCreatedTime string, collectionListStatus string, collectionListCursor string) (*collection.ListPayload, error) {
+func BuildListPayload(collectionListName *string, collectionListOriginalID *string, collectionListTransferID *string, collectionListAipID *string, collectionListPipelineID *string, collectionListEarliestCreatedTime *string, collectionListLatestCreatedTime *string, collectionListStatus *string, collectionListCursor *string) (*collection.ListPayload, error) {
 	var err error
 	var name *string
 	{
-		if collectionListName != "" {
-			name = &collectionListName
+		if collectionListName != nil {
+			name = collectionListName
 		}
 	}
 	var originalID *string
 	{
-		if collectionListOriginalID != "" {
-			originalID = &collectionListOriginalID
+		if collectionListOriginalID != nil {
+			originalID = collectionListOriginalID
 		}
 	}
 	var transferID *string
 	{
-		if collectionListTransferID != "" {
-			transferID = &collectionListTransferID
-			err = goa.MergeErrors(err, goa.ValidateFormat("transfer_id", *transferID, goa.FormatUUID))
+		if collectionListTransferID != nil {
+			transferID = collectionListTransferID
+			err = goa.MergeErrors(err, goa.ValidateFormat("transfer_id", *collectionListTransferID, goa.FormatUUID))
 			if err != nil {
 				return nil, err
 			}
@@ -45,9 +45,9 @@ func BuildListPayload(collectionListName string, collectionListOriginalID string
 	}
 	var aipID *string
 	{
-		if collectionListAipID != "" {
-			aipID = &collectionListAipID
-			err = goa.MergeErrors(err, goa.ValidateFormat("aip_id", *aipID, goa.FormatUUID))
+		if collectionListAipID != nil {
+			aipID = collectionListAipID
+			err = goa.MergeErrors(err, goa.ValidateFormat("aip_id", *collectionListAipID, goa.FormatUUID))
 			if err != nil {
 				return nil, err
 			}
@@ -55,9 +55,9 @@ func BuildListPayload(collectionListName string, collectionListOriginalID string
 	}
 	var pipelineID *string
 	{
-		if collectionListPipelineID != "" {
-			pipelineID = &collectionListPipelineID
-			err = goa.MergeErrors(err, goa.ValidateFormat("pipeline_id", *pipelineID, goa.FormatUUID))
+		if collectionListPipelineID != nil {
+			pipelineID = collectionListPipelineID
+			err = goa.MergeErrors(err, goa.ValidateFormat("pipeline_id", *collectionListPipelineID, goa.FormatUUID))
 			if err != nil {
 				return nil, err
 			}
@@ -65,9 +65,9 @@ func BuildListPayload(collectionListName string, collectionListOriginalID string
 	}
 	var earliestCreatedTime *string
 	{
-		if collectionListEarliestCreatedTime != "" {
-			earliestCreatedTime = &collectionListEarliestCreatedTime
-			err = goa.MergeErrors(err, goa.ValidateFormat("earliest_created_time", *earliestCreatedTime, goa.FormatDateTime))
+		if collectionListEarliestCreatedTime != nil {
+			earliestCreatedTime = collectionListEarliestCreatedTime
+			err = goa.MergeErrors(err, goa.ValidateFormat("earliest_created_time", *collectionListEarliestCreatedTime, goa.FormatDateTime))
 			if err != nil {
 				return nil, err
 			}
@@ -75,9 +75,9 @@ func BuildListPayload(collectionListName string, collectionListOriginalID string
 	}
 	var latestCreatedTime *string
 	{
-		if collectionListLatestCreatedTime != "" {
-			latestCreatedTime = &collectionListLatestCreatedTime
-			err = goa.MergeErrors(err, goa.ValidateFormat("latest_created_time", *latestCreatedTime, goa.FormatDateTime))
+		if collectionListLatestCreatedTime != nil {
+			latestCreatedTime = collectionListLatestCreatedTime
+			err = goa.MergeErrors(err, goa.ValidateFormat("latest_created_time", *collectionListLatestCreatedTime, goa.FormatDateTime))
 			if err != nil {
 				return nil, err
 			}
@@ -85,10 +85,10 @@ func BuildListPayload(collectionListName string, collectionListOriginalID string
 	}
 	var status *string
 	{
-		if collectionListStatus != "" {
-			status = &collectionListStatus
-			if !(*status == "new" || *status == "in progress" || *status == "done" || *status == "error" || *status == "unknown" || *status == "queued" || *status == "pending" || *status == "abandoned") {
-				err = goa.MergeErrors(err, goa.InvalidEnumValueError("status", *status, []any{"new", "in progress", "done", "error", "unknown", "queued", "pending", "abandoned"}))
+		if collectionListStatus != nil {
+			status = collectionListStatus
+			if !(*collectionListStatus == "new" || *collectionListStatus == "in progress" || *collectionListStatus == "done" || *collectionListStatus == "error" || *collectionListStatus == "unknown" || *collectionListStatus == "queued" || *collectionListStatus == "pending" || *collectionListStatus == "abandoned") {
+				err = goa.MergeErrors(err, goa.InvalidEnumValueError("status", *collectionListStatus, []any{"new", "in progress", "done", "error", "unknown", "queued", "pending", "abandoned"}))
 			}
 			if err != nil {
 				return nil, err
@@ -97,8 +97,8 @@ func BuildListPayload(collectionListName string, collectionListOriginalID string
 	}
 	var cursor *string
 	{
-		if collectionListCursor != "" {
-			cursor = &collectionListCursor
+		if collectionListCursor != nil {
+			cursor = collectionListCursor
 		}
 	}
 	v := &collection.ListPayload{}
@@ -117,12 +117,15 @@ func BuildListPayload(collectionListName string, collectionListOriginalID string
 
 // BuildShowPayload builds the payload for the collection show endpoint from
 // CLI flags.
-func BuildShowPayload(collectionShowID string) (*collection.ShowPayload, error) {
+func BuildShowPayload(collectionShowID *string) (*collection.ShowPayload, error) {
 	var err error
 	var id uint
 	{
+		if collectionShowID == nil {
+			return nil, fmt.Errorf("missing required flag --id")
+		}
 		var v uint64
-		v, err = strconv.ParseUint(collectionShowID, 10, strconv.IntSize)
+		v, err = strconv.ParseUint(*collectionShowID, 10, strconv.IntSize)
 		id = uint(v)
 		if err != nil {
 			return nil, fmt.Errorf("invalid value for id, must be UINT")
@@ -136,12 +139,15 @@ func BuildShowPayload(collectionShowID string) (*collection.ShowPayload, error) 
 
 // BuildDeletePayload builds the payload for the collection delete endpoint
 // from CLI flags.
-func BuildDeletePayload(collectionDeleteID string) (*collection.DeletePayload, error) {
+func BuildDeletePayload(collectionDeleteID *string) (*collection.DeletePayload, error) {
 	var err error
 	var id uint
 	{
+		if collectionDeleteID == nil {
+			return nil, fmt.Errorf("missing required flag --id")
+		}
 		var v uint64
-		v, err = strconv.ParseUint(collectionDeleteID, 10, strconv.IntSize)
+		v, err = strconv.ParseUint(*collectionDeleteID, 10, strconv.IntSize)
 		id = uint(v)
 		if err != nil {
 			return nil, fmt.Errorf("invalid value for id, must be UINT")
@@ -155,12 +161,15 @@ func BuildDeletePayload(collectionDeleteID string) (*collection.DeletePayload, e
 
 // BuildCancelPayload builds the payload for the collection cancel endpoint
 // from CLI flags.
-func BuildCancelPayload(collectionCancelID string) (*collection.CancelPayload, error) {
+func BuildCancelPayload(collectionCancelID *string) (*collection.CancelPayload, error) {
 	var err error
 	var id uint
 	{
+		if collectionCancelID == nil {
+			return nil, fmt.Errorf("missing required flag --id")
+		}
 		var v uint64
-		v, err = strconv.ParseUint(collectionCancelID, 10, strconv.IntSize)
+		v, err = strconv.ParseUint(*collectionCancelID, 10, strconv.IntSize)
 		id = uint(v)
 		if err != nil {
 			return nil, fmt.Errorf("invalid value for id, must be UINT")
@@ -174,12 +183,15 @@ func BuildCancelPayload(collectionCancelID string) (*collection.CancelPayload, e
 
 // BuildRetryPayload builds the payload for the collection retry endpoint from
 // CLI flags.
-func BuildRetryPayload(collectionRetryID string) (*collection.RetryPayload, error) {
+func BuildRetryPayload(collectionRetryID *string) (*collection.RetryPayload, error) {
 	var err error
 	var id uint
 	{
+		if collectionRetryID == nil {
+			return nil, fmt.Errorf("missing required flag --id")
+		}
 		var v uint64
-		v, err = strconv.ParseUint(collectionRetryID, 10, strconv.IntSize)
+		v, err = strconv.ParseUint(*collectionRetryID, 10, strconv.IntSize)
 		id = uint(v)
 		if err != nil {
 			return nil, fmt.Errorf("invalid value for id, must be UINT")
@@ -193,12 +205,15 @@ func BuildRetryPayload(collectionRetryID string) (*collection.RetryPayload, erro
 
 // BuildWorkflowPayload builds the payload for the collection workflow endpoint
 // from CLI flags.
-func BuildWorkflowPayload(collectionWorkflowID string) (*collection.WorkflowPayload, error) {
+func BuildWorkflowPayload(collectionWorkflowID *string) (*collection.WorkflowPayload, error) {
 	var err error
 	var id uint
 	{
+		if collectionWorkflowID == nil {
+			return nil, fmt.Errorf("missing required flag --id")
+		}
 		var v uint64
-		v, err = strconv.ParseUint(collectionWorkflowID, 10, strconv.IntSize)
+		v, err = strconv.ParseUint(*collectionWorkflowID, 10, strconv.IntSize)
 		id = uint(v)
 		if err != nil {
 			return nil, fmt.Errorf("invalid value for id, must be UINT")
@@ -212,12 +227,15 @@ func BuildWorkflowPayload(collectionWorkflowID string) (*collection.WorkflowPayl
 
 // BuildStatusHistoryPayload builds the payload for the collection
 // status_history endpoint from CLI flags.
-func BuildStatusHistoryPayload(collectionStatusHistoryID string) (*collection.StatusHistoryPayload, error) {
+func BuildStatusHistoryPayload(collectionStatusHistoryID *string) (*collection.StatusHistoryPayload, error) {
 	var err error
 	var id uint
 	{
+		if collectionStatusHistoryID == nil {
+			return nil, fmt.Errorf("missing required flag --id")
+		}
 		var v uint64
-		v, err = strconv.ParseUint(collectionStatusHistoryID, 10, strconv.IntSize)
+		v, err = strconv.ParseUint(*collectionStatusHistoryID, 10, strconv.IntSize)
 		id = uint(v)
 		if err != nil {
 			return nil, fmt.Errorf("invalid value for id, must be UINT")
@@ -231,12 +249,15 @@ func BuildStatusHistoryPayload(collectionStatusHistoryID string) (*collection.St
 
 // BuildDownloadPayload builds the payload for the collection download endpoint
 // from CLI flags.
-func BuildDownloadPayload(collectionDownloadID string) (*collection.DownloadPayload, error) {
+func BuildDownloadPayload(collectionDownloadID *string) (*collection.DownloadPayload, error) {
 	var err error
 	var id uint
 	{
+		if collectionDownloadID == nil {
+			return nil, fmt.Errorf("missing required flag --id")
+		}
 		var v uint64
-		v, err = strconv.ParseUint(collectionDownloadID, 10, strconv.IntSize)
+		v, err = strconv.ParseUint(*collectionDownloadID, 10, strconv.IntSize)
 		id = uint(v)
 		if err != nil {
 			return nil, fmt.Errorf("invalid value for id, must be UINT")
@@ -250,22 +271,25 @@ func BuildDownloadPayload(collectionDownloadID string) (*collection.DownloadPayl
 
 // BuildDecidePayload builds the payload for the collection decide endpoint
 // from CLI flags.
-func BuildDecidePayload(collectionDecideBody string, collectionDecideID string) (*collection.DecidePayload, error) {
+func BuildDecidePayload(collectionDecideBody *string, collectionDecideID *string) (*collection.DecidePayload, error) {
 	var err error
-	var body struct {
-		// Decision option to proceed with
-		Option *string `form:"option" json:"option" xml:"option"`
-	}
+	var body DecideRequestBody
 	{
-		err = json.Unmarshal([]byte(collectionDecideBody), &body)
+		if collectionDecideBody == nil {
+			return nil, fmt.Errorf("missing required flag --body")
+		}
+		err = json.Unmarshal([]byte(*collectionDecideBody), &body)
 		if err != nil {
 			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"option\": \"abc123\"\n   }'")
 		}
 	}
 	var id uint
 	{
+		if collectionDecideID == nil {
+			return nil, fmt.Errorf("missing required flag --id")
+		}
 		var v uint64
-		v, err = strconv.ParseUint(collectionDecideID, 10, strconv.IntSize)
+		v, err = strconv.ParseUint(*collectionDecideID, 10, strconv.IntSize)
 		id = uint(v)
 		if err != nil {
 			return nil, fmt.Errorf("invalid value for id, must be UINT")
@@ -282,11 +306,14 @@ func BuildDecidePayload(collectionDecideBody string, collectionDecideID string) 
 
 // BuildBulkPayload builds the payload for the collection bulk endpoint from
 // CLI flags.
-func BuildBulkPayload(collectionBulkBody string) (*collection.BulkPayload, error) {
+func BuildBulkPayload(collectionBulkBody *string) (*collection.BulkPayload, error) {
 	var err error
 	var body BulkRequestBody
 	{
-		err = json.Unmarshal([]byte(collectionBulkBody), &body)
+		if collectionBulkBody == nil {
+			return nil, fmt.Errorf("missing required flag --body")
+		}
+		err = json.Unmarshal([]byte(*collectionBulkBody), &body)
 		if err != nil {
 			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"operation\": \"cancel\",\n      \"size\": 1,\n      \"status\": \"in progress\"\n   }'")
 		}

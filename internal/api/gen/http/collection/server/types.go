@@ -14,6 +14,13 @@ import (
 	goa "goa.design/goa/v3/pkg"
 )
 
+// DecideRequestBody is the type of the "collection" service "decide" endpoint
+// HTTP request body.
+type DecideRequestBody struct {
+	// Decision option to proceed with
+	Option *string `form:"option,omitempty" json:"option,omitempty" xml:"option,omitempty"`
+}
+
 // BulkRequestBody is the type of the "collection" service "bulk" endpoint HTTP
 // request body.
 type BulkRequestBody struct {
@@ -374,16 +381,9 @@ func NewListResponseBody(res *collection.ListResult) *ListResponseBody {
 		NextCursor: res.NextCursor,
 	}
 	if res.Items != nil {
-		body.Items = make([]*EnduroStoredCollectionResponseBody, len(res.Items))
-		for i, val := range res.Items {
-			if val == nil {
-				body.Items[i] = nil
-				continue
-			}
-			body.Items[i] = marshalCollectionEnduroStoredCollectionToEnduroStoredCollectionResponseBody(val)
-		}
+		body.Items = marshalCollectionEnduroStoredCollectionCollectionToEnduroStoredCollectionCollectionResponseBody(res.Items)
 	} else {
-		body.Items = []*EnduroStoredCollectionResponseBody{}
+		body.Items = EnduroStoredCollectionCollectionResponseBody{}
 	}
 	return body
 }
@@ -428,14 +428,7 @@ func NewWorkflowResponseBody(res *collectionviews.EnduroCollectionWorkflowStatus
 		Status: res.Status,
 	}
 	if res.History != nil {
-		body.History = make([]*EnduroCollectionWorkflowHistoryResponseBody, len(res.History))
-		for i, val := range res.History {
-			if val == nil {
-				body.History[i] = nil
-				continue
-			}
-			body.History[i] = marshalCollectionviewsEnduroCollectionWorkflowHistoryViewToEnduroCollectionWorkflowHistoryResponseBody(val)
-		}
+		body.History = marshalCollectionviewsEnduroCollectionWorkflowHistoryCollectionViewToEnduroCollectionWorkflowHistoryResponseBodyCollection(res.History)
 	}
 	return body
 }
@@ -447,16 +440,9 @@ func NewStatusHistoryResponseBody(res *collectionviews.EnduroCollectionStatusHis
 		Availability: *res.Availability,
 	}
 	if res.Transitions != nil {
-		body.Transitions = make([]*EnduroCollectionStatusTransitionResponseBody, len(res.Transitions))
-		for i, val := range res.Transitions {
-			if val == nil {
-				body.Transitions[i] = nil
-				continue
-			}
-			body.Transitions[i] = marshalCollectionviewsEnduroCollectionStatusTransitionViewToEnduroCollectionStatusTransitionResponseBody(val)
-		}
+		body.Transitions = marshalCollectionviewsEnduroCollectionStatusTransitionCollectionViewToEnduroCollectionStatusTransitionResponseBodyCollection(res.Transitions)
 	} else {
-		body.Transitions = []*EnduroCollectionStatusTransitionResponseBody{}
+		body.Transitions = EnduroCollectionStatusTransitionResponseBodyCollection{}
 	}
 	return body
 }
@@ -709,10 +695,7 @@ func NewDownloadPayload(id uint) *collection.DownloadPayload {
 }
 
 // NewDecidePayload builds a collection service decide endpoint payload.
-func NewDecidePayload(body struct {
-	// Decision option to proceed with
-	Option *string `form:"option" json:"option" xml:"option"`
-}, id uint) *collection.DecidePayload {
+func NewDecidePayload(body *DecideRequestBody, id uint) *collection.DecidePayload {
 	v := &collection.DecidePayload{}
 	if body.Option != nil {
 		v.Option = *body.Option

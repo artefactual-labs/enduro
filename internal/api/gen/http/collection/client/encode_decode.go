@@ -11,6 +11,8 @@ package client
 import (
 	"bytes"
 	"context"
+	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -41,18 +43,24 @@ func (c *Client) BuildMonitorRequest(ctx context.Context, v any) (*http.Request,
 // collection monitor endpoint. restoreBody controls whether the response body
 // should be restored after having been read.
 func DecodeMonitorResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
-	return func(resp *http.Response) (any, error) {
+	return func(resp *http.Response) (result any, decodeErr error) {
+		responseBody := resp.Body
 		if restoreBody {
-			b, err := io.ReadAll(resp.Body)
-			if err != nil {
-				return nil, err
+			b, readErr := io.ReadAll(responseBody)
+			closeErr := responseBody.Close()
+			if err := errors.Join(readErr, closeErr); err != nil {
+				return nil, goahttp.ErrDecodingError("collection", "monitor", err)
 			}
 			resp.Body = io.NopCloser(bytes.NewBuffer(b))
 			defer func() {
 				resp.Body = io.NopCloser(bytes.NewBuffer(b))
 			}()
 		} else {
-			defer resp.Body.Close()
+			defer func() {
+				if err := responseBody.Close(); err != nil {
+					decodeErr = errors.Join(decodeErr, goahttp.ErrDecodingError("collection", "monitor", err))
+				}
+			}()
 		}
 		switch resp.StatusCode {
 		case http.StatusOK:
@@ -71,7 +79,10 @@ func DecodeMonitorResponse(decoder func(*http.Response) goahttp.Decoder, restore
 			res := NewMonitorEnduroMonitorUpdateOK(&body)
 			return res, nil
 		default:
-			body, _ := io.ReadAll(resp.Body)
+			body, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("collection", "monitor", err)
+			}
 			return nil, goahttp.ErrInvalidResponse("collection", "monitor", resp.StatusCode, string(body))
 		}
 	}
@@ -137,18 +148,24 @@ func EncodeListRequest(encoder func(*http.Request) goahttp.Encoder) func(*http.R
 // collection list endpoint. restoreBody controls whether the response body
 // should be restored after having been read.
 func DecodeListResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
-	return func(resp *http.Response) (any, error) {
+	return func(resp *http.Response) (result any, decodeErr error) {
+		responseBody := resp.Body
 		if restoreBody {
-			b, err := io.ReadAll(resp.Body)
-			if err != nil {
-				return nil, err
+			b, readErr := io.ReadAll(responseBody)
+			closeErr := responseBody.Close()
+			if err := errors.Join(readErr, closeErr); err != nil {
+				return nil, goahttp.ErrDecodingError("collection", "list", err)
 			}
 			resp.Body = io.NopCloser(bytes.NewBuffer(b))
 			defer func() {
 				resp.Body = io.NopCloser(bytes.NewBuffer(b))
 			}()
 		} else {
-			defer resp.Body.Close()
+			defer func() {
+				if err := responseBody.Close(); err != nil {
+					decodeErr = errors.Join(decodeErr, goahttp.ErrDecodingError("collection", "list", err))
+				}
+			}()
 		}
 		switch resp.StatusCode {
 		case http.StatusOK:
@@ -167,7 +184,10 @@ func DecodeListResponse(decoder func(*http.Response) goahttp.Decoder, restoreBod
 			res := NewListResultOK(&body)
 			return res, nil
 		default:
-			body, _ := io.ReadAll(resp.Body)
+			body, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("collection", "list", err)
+			}
 			return nil, goahttp.ErrInvalidResponse("collection", "list", resp.StatusCode, string(body))
 		}
 	}
@@ -186,7 +206,9 @@ func (c *Client) BuildShowRequest(ctx context.Context, v any) (*http.Request, er
 		}
 		id = p.ID
 	}
-	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: ShowCollectionPath(id)}
+
+	rawPath := fmt.Sprintf("/collection/%v", url.PathEscape(fmt.Sprint(id)))
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: ShowCollectionPath(id), RawPath: rawPath}
 	req, err := http.NewRequest("GET", u.String(), nil)
 	if err != nil {
 		return nil, goahttp.ErrInvalidURL("collection", "show", u.String(), err)
@@ -205,18 +227,24 @@ func (c *Client) BuildShowRequest(ctx context.Context, v any) (*http.Request, er
 //   - "not_found" (type *collection.CollectionNotfound): http.StatusNotFound
 //   - error: internal error
 func DecodeShowResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
-	return func(resp *http.Response) (any, error) {
+	return func(resp *http.Response) (result any, decodeErr error) {
+		responseBody := resp.Body
 		if restoreBody {
-			b, err := io.ReadAll(resp.Body)
-			if err != nil {
-				return nil, err
+			b, readErr := io.ReadAll(responseBody)
+			closeErr := responseBody.Close()
+			if err := errors.Join(readErr, closeErr); err != nil {
+				return nil, goahttp.ErrDecodingError("collection", "show", err)
 			}
 			resp.Body = io.NopCloser(bytes.NewBuffer(b))
 			defer func() {
 				resp.Body = io.NopCloser(bytes.NewBuffer(b))
 			}()
 		} else {
-			defer resp.Body.Close()
+			defer func() {
+				if err := responseBody.Close(); err != nil {
+					decodeErr = errors.Join(decodeErr, goahttp.ErrDecodingError("collection", "show", err))
+				}
+			}()
 		}
 		switch resp.StatusCode {
 		case http.StatusOK:
@@ -227,6 +255,10 @@ func DecodeShowResponse(decoder func(*http.Response) goahttp.Decoder, restoreBod
 			err = decoder(resp).Decode(&body)
 			if err != nil {
 				return nil, goahttp.ErrDecodingError("collection", "show", err)
+			}
+			err = ValidateShowResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("collection", "show", err)
 			}
 			p := NewShowEnduroDetailedStoredCollectionOK(&body)
 			view := "default"
@@ -251,7 +283,10 @@ func DecodeShowResponse(decoder func(*http.Response) goahttp.Decoder, restoreBod
 			}
 			return nil, NewShowNotFound(&body)
 		default:
-			body, _ := io.ReadAll(resp.Body)
+			body, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("collection", "show", err)
+			}
 			return nil, goahttp.ErrInvalidResponse("collection", "show", resp.StatusCode, string(body))
 		}
 	}
@@ -270,7 +305,9 @@ func (c *Client) BuildDeleteRequest(ctx context.Context, v any) (*http.Request, 
 		}
 		id = p.ID
 	}
-	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: DeleteCollectionPath(id)}
+
+	rawPath := fmt.Sprintf("/collection/%v", url.PathEscape(fmt.Sprint(id)))
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: DeleteCollectionPath(id), RawPath: rawPath}
 	req, err := http.NewRequest("DELETE", u.String(), nil)
 	if err != nil {
 		return nil, goahttp.ErrInvalidURL("collection", "delete", u.String(), err)
@@ -289,18 +326,24 @@ func (c *Client) BuildDeleteRequest(ctx context.Context, v any) (*http.Request, 
 //   - "not_found" (type *collection.CollectionNotfound): http.StatusNotFound
 //   - error: internal error
 func DecodeDeleteResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
-	return func(resp *http.Response) (any, error) {
+	return func(resp *http.Response) (result any, decodeErr error) {
+		responseBody := resp.Body
 		if restoreBody {
-			b, err := io.ReadAll(resp.Body)
-			if err != nil {
-				return nil, err
+			b, readErr := io.ReadAll(responseBody)
+			closeErr := responseBody.Close()
+			if err := errors.Join(readErr, closeErr); err != nil {
+				return nil, goahttp.ErrDecodingError("collection", "delete", err)
 			}
 			resp.Body = io.NopCloser(bytes.NewBuffer(b))
 			defer func() {
 				resp.Body = io.NopCloser(bytes.NewBuffer(b))
 			}()
 		} else {
-			defer resp.Body.Close()
+			defer func() {
+				if err := responseBody.Close(); err != nil {
+					decodeErr = errors.Join(decodeErr, goahttp.ErrDecodingError("collection", "delete", err))
+				}
+			}()
 		}
 		switch resp.StatusCode {
 		case http.StatusNoContent:
@@ -320,7 +363,10 @@ func DecodeDeleteResponse(decoder func(*http.Response) goahttp.Decoder, restoreB
 			}
 			return nil, NewDeleteNotFound(&body)
 		default:
-			body, _ := io.ReadAll(resp.Body)
+			body, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("collection", "delete", err)
+			}
 			return nil, goahttp.ErrInvalidResponse("collection", "delete", resp.StatusCode, string(body))
 		}
 	}
@@ -339,7 +385,9 @@ func (c *Client) BuildCancelRequest(ctx context.Context, v any) (*http.Request, 
 		}
 		id = p.ID
 	}
-	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: CancelCollectionPath(id)}
+
+	rawPath := fmt.Sprintf("/collection/%v/cancel", url.PathEscape(fmt.Sprint(id)))
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: CancelCollectionPath(id), RawPath: rawPath}
 	req, err := http.NewRequest("POST", u.String(), nil)
 	if err != nil {
 		return nil, goahttp.ErrInvalidURL("collection", "cancel", u.String(), err)
@@ -359,18 +407,24 @@ func (c *Client) BuildCancelRequest(ctx context.Context, v any) (*http.Request, 
 //   - "not_running" (type *goa.ServiceError): http.StatusBadRequest
 //   - error: internal error
 func DecodeCancelResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
-	return func(resp *http.Response) (any, error) {
+	return func(resp *http.Response) (result any, decodeErr error) {
+		responseBody := resp.Body
 		if restoreBody {
-			b, err := io.ReadAll(resp.Body)
-			if err != nil {
-				return nil, err
+			b, readErr := io.ReadAll(responseBody)
+			closeErr := responseBody.Close()
+			if err := errors.Join(readErr, closeErr); err != nil {
+				return nil, goahttp.ErrDecodingError("collection", "cancel", err)
 			}
 			resp.Body = io.NopCloser(bytes.NewBuffer(b))
 			defer func() {
 				resp.Body = io.NopCloser(bytes.NewBuffer(b))
 			}()
 		} else {
-			defer resp.Body.Close()
+			defer func() {
+				if err := responseBody.Close(); err != nil {
+					decodeErr = errors.Join(decodeErr, goahttp.ErrDecodingError("collection", "cancel", err))
+				}
+			}()
 		}
 		switch resp.StatusCode {
 		case http.StatusOK:
@@ -404,7 +458,10 @@ func DecodeCancelResponse(decoder func(*http.Response) goahttp.Decoder, restoreB
 			}
 			return nil, NewCancelNotRunning(&body)
 		default:
-			body, _ := io.ReadAll(resp.Body)
+			body, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("collection", "cancel", err)
+			}
 			return nil, goahttp.ErrInvalidResponse("collection", "cancel", resp.StatusCode, string(body))
 		}
 	}
@@ -423,7 +480,9 @@ func (c *Client) BuildRetryRequest(ctx context.Context, v any) (*http.Request, e
 		}
 		id = p.ID
 	}
-	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: RetryCollectionPath(id)}
+
+	rawPath := fmt.Sprintf("/collection/%v/retry", url.PathEscape(fmt.Sprint(id)))
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: RetryCollectionPath(id), RawPath: rawPath}
 	req, err := http.NewRequest("POST", u.String(), nil)
 	if err != nil {
 		return nil, goahttp.ErrInvalidURL("collection", "retry", u.String(), err)
@@ -443,18 +502,24 @@ func (c *Client) BuildRetryRequest(ctx context.Context, v any) (*http.Request, e
 //   - "not_running" (type *goa.ServiceError): http.StatusBadRequest
 //   - error: internal error
 func DecodeRetryResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
-	return func(resp *http.Response) (any, error) {
+	return func(resp *http.Response) (result any, decodeErr error) {
+		responseBody := resp.Body
 		if restoreBody {
-			b, err := io.ReadAll(resp.Body)
-			if err != nil {
-				return nil, err
+			b, readErr := io.ReadAll(responseBody)
+			closeErr := responseBody.Close()
+			if err := errors.Join(readErr, closeErr); err != nil {
+				return nil, goahttp.ErrDecodingError("collection", "retry", err)
 			}
 			resp.Body = io.NopCloser(bytes.NewBuffer(b))
 			defer func() {
 				resp.Body = io.NopCloser(bytes.NewBuffer(b))
 			}()
 		} else {
-			defer resp.Body.Close()
+			defer func() {
+				if err := responseBody.Close(); err != nil {
+					decodeErr = errors.Join(decodeErr, goahttp.ErrDecodingError("collection", "retry", err))
+				}
+			}()
 		}
 		switch resp.StatusCode {
 		case http.StatusOK:
@@ -501,7 +566,10 @@ func DecodeRetryResponse(decoder func(*http.Response) goahttp.Decoder, restoreBo
 			}
 			return nil, NewRetryNotRunning(&body)
 		default:
-			body, _ := io.ReadAll(resp.Body)
+			body, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("collection", "retry", err)
+			}
 			return nil, goahttp.ErrInvalidResponse("collection", "retry", resp.StatusCode, string(body))
 		}
 	}
@@ -520,7 +588,9 @@ func (c *Client) BuildWorkflowRequest(ctx context.Context, v any) (*http.Request
 		}
 		id = p.ID
 	}
-	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: WorkflowCollectionPath(id)}
+
+	rawPath := fmt.Sprintf("/collection/%v/workflow", url.PathEscape(fmt.Sprint(id)))
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: WorkflowCollectionPath(id), RawPath: rawPath}
 	req, err := http.NewRequest("GET", u.String(), nil)
 	if err != nil {
 		return nil, goahttp.ErrInvalidURL("collection", "workflow", u.String(), err)
@@ -539,18 +609,24 @@ func (c *Client) BuildWorkflowRequest(ctx context.Context, v any) (*http.Request
 //   - "not_found" (type *collection.CollectionNotfound): http.StatusNotFound
 //   - error: internal error
 func DecodeWorkflowResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
-	return func(resp *http.Response) (any, error) {
+	return func(resp *http.Response) (result any, decodeErr error) {
+		responseBody := resp.Body
 		if restoreBody {
-			b, err := io.ReadAll(resp.Body)
-			if err != nil {
-				return nil, err
+			b, readErr := io.ReadAll(responseBody)
+			closeErr := responseBody.Close()
+			if err := errors.Join(readErr, closeErr); err != nil {
+				return nil, goahttp.ErrDecodingError("collection", "workflow", err)
 			}
 			resp.Body = io.NopCloser(bytes.NewBuffer(b))
 			defer func() {
 				resp.Body = io.NopCloser(bytes.NewBuffer(b))
 			}()
 		} else {
-			defer resp.Body.Close()
+			defer func() {
+				if err := responseBody.Close(); err != nil {
+					decodeErr = errors.Join(decodeErr, goahttp.ErrDecodingError("collection", "workflow", err))
+				}
+			}()
 		}
 		switch resp.StatusCode {
 		case http.StatusOK:
@@ -585,7 +661,10 @@ func DecodeWorkflowResponse(decoder func(*http.Response) goahttp.Decoder, restor
 			}
 			return nil, NewWorkflowNotFound(&body)
 		default:
-			body, _ := io.ReadAll(resp.Body)
+			body, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("collection", "workflow", err)
+			}
 			return nil, goahttp.ErrInvalidResponse("collection", "workflow", resp.StatusCode, string(body))
 		}
 	}
@@ -604,7 +683,9 @@ func (c *Client) BuildStatusHistoryRequest(ctx context.Context, v any) (*http.Re
 		}
 		id = p.ID
 	}
-	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: StatusHistoryCollectionPath(id)}
+
+	rawPath := fmt.Sprintf("/collection/%v/status-history", url.PathEscape(fmt.Sprint(id)))
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: StatusHistoryCollectionPath(id), RawPath: rawPath}
 	req, err := http.NewRequest("GET", u.String(), nil)
 	if err != nil {
 		return nil, goahttp.ErrInvalidURL("collection", "status_history", u.String(), err)
@@ -623,18 +704,24 @@ func (c *Client) BuildStatusHistoryRequest(ctx context.Context, v any) (*http.Re
 //   - "not_found" (type *collection.CollectionNotfound): http.StatusNotFound
 //   - error: internal error
 func DecodeStatusHistoryResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
-	return func(resp *http.Response) (any, error) {
+	return func(resp *http.Response) (result any, decodeErr error) {
+		responseBody := resp.Body
 		if restoreBody {
-			b, err := io.ReadAll(resp.Body)
-			if err != nil {
-				return nil, err
+			b, readErr := io.ReadAll(responseBody)
+			closeErr := responseBody.Close()
+			if err := errors.Join(readErr, closeErr); err != nil {
+				return nil, goahttp.ErrDecodingError("collection", "status_history", err)
 			}
 			resp.Body = io.NopCloser(bytes.NewBuffer(b))
 			defer func() {
 				resp.Body = io.NopCloser(bytes.NewBuffer(b))
 			}()
 		} else {
-			defer resp.Body.Close()
+			defer func() {
+				if err := responseBody.Close(); err != nil {
+					decodeErr = errors.Join(decodeErr, goahttp.ErrDecodingError("collection", "status_history", err))
+				}
+			}()
 		}
 		switch resp.StatusCode {
 		case http.StatusOK:
@@ -645,6 +732,10 @@ func DecodeStatusHistoryResponse(decoder func(*http.Response) goahttp.Decoder, r
 			err = decoder(resp).Decode(&body)
 			if err != nil {
 				return nil, goahttp.ErrDecodingError("collection", "status_history", err)
+			}
+			err = ValidateStatusHistoryResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("collection", "status_history", err)
 			}
 			p := NewStatusHistoryEnduroCollectionStatusHistoryOK(&body)
 			view := "default"
@@ -669,7 +760,10 @@ func DecodeStatusHistoryResponse(decoder func(*http.Response) goahttp.Decoder, r
 			}
 			return nil, NewStatusHistoryNotFound(&body)
 		default:
-			body, _ := io.ReadAll(resp.Body)
+			body, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("collection", "status_history", err)
+			}
 			return nil, goahttp.ErrInvalidResponse("collection", "status_history", resp.StatusCode, string(body))
 		}
 	}
@@ -688,7 +782,9 @@ func (c *Client) BuildDownloadRequest(ctx context.Context, v any) (*http.Request
 		}
 		id = p.ID
 	}
-	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: DownloadCollectionPath(id)}
+
+	rawPath := fmt.Sprintf("/collection/%v/download", url.PathEscape(fmt.Sprint(id)))
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: DownloadCollectionPath(id), RawPath: rawPath}
 	req, err := http.NewRequest("GET", u.String(), nil)
 	if err != nil {
 		return nil, goahttp.ErrInvalidURL("collection", "download", u.String(), err)
@@ -708,16 +804,6 @@ func (c *Client) BuildDownloadRequest(ctx context.Context, v any) (*http.Request
 //   - error: internal error
 func DecodeDownloadResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
 	return func(resp *http.Response) (any, error) {
-		if restoreBody {
-			b, err := io.ReadAll(resp.Body)
-			if err != nil {
-				return nil, err
-			}
-			resp.Body = io.NopCloser(bytes.NewBuffer(b))
-			defer func() {
-				resp.Body = io.NopCloser(bytes.NewBuffer(b))
-			}()
-		}
 		switch resp.StatusCode {
 		case http.StatusOK:
 			var (
@@ -767,7 +853,10 @@ func DecodeDownloadResponse(decoder func(*http.Response) goahttp.Decoder, restor
 			}
 			return nil, NewDownloadNotFound(&body)
 		default:
-			body, _ := io.ReadAll(resp.Body)
+			body, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("collection", "download", err)
+			}
 			return nil, goahttp.ErrInvalidResponse("collection", "download", resp.StatusCode, string(body))
 		}
 	}
@@ -786,7 +875,9 @@ func (c *Client) BuildDecideRequest(ctx context.Context, v any) (*http.Request, 
 		}
 		id = p.ID
 	}
-	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: DecideCollectionPath(id)}
+
+	rawPath := fmt.Sprintf("/collection/%v/decision", url.PathEscape(fmt.Sprint(id)))
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: DecideCollectionPath(id), RawPath: rawPath}
 	req, err := http.NewRequest("POST", u.String(), nil)
 	if err != nil {
 		return nil, goahttp.ErrInvalidURL("collection", "decide", u.String(), err)
@@ -806,7 +897,7 @@ func EncodeDecideRequest(encoder func(*http.Request) goahttp.Encoder) func(*http
 		if !ok {
 			return goahttp.ErrInvalidType("collection", "decide", "*collection.DecidePayload", v)
 		}
-		body := p
+		body := NewDecideRequestBody(p)
 		if err := encoder(req).Encode(&body); err != nil {
 			return goahttp.ErrEncodingError("collection", "decide", err)
 		}
@@ -822,18 +913,24 @@ func EncodeDecideRequest(encoder func(*http.Request) goahttp.Encoder) func(*http
 //   - "not_valid" (type *goa.ServiceError): http.StatusBadRequest
 //   - error: internal error
 func DecodeDecideResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
-	return func(resp *http.Response) (any, error) {
+	return func(resp *http.Response) (result any, decodeErr error) {
+		responseBody := resp.Body
 		if restoreBody {
-			b, err := io.ReadAll(resp.Body)
-			if err != nil {
-				return nil, err
+			b, readErr := io.ReadAll(responseBody)
+			closeErr := responseBody.Close()
+			if err := errors.Join(readErr, closeErr); err != nil {
+				return nil, goahttp.ErrDecodingError("collection", "decide", err)
 			}
 			resp.Body = io.NopCloser(bytes.NewBuffer(b))
 			defer func() {
 				resp.Body = io.NopCloser(bytes.NewBuffer(b))
 			}()
 		} else {
-			defer resp.Body.Close()
+			defer func() {
+				if err := responseBody.Close(); err != nil {
+					decodeErr = errors.Join(decodeErr, goahttp.ErrDecodingError("collection", "decide", err))
+				}
+			}()
 		}
 		switch resp.StatusCode {
 		case http.StatusOK:
@@ -867,7 +964,10 @@ func DecodeDecideResponse(decoder func(*http.Response) goahttp.Decoder, restoreB
 			}
 			return nil, NewDecideNotValid(&body)
 		default:
-			body, _ := io.ReadAll(resp.Body)
+			body, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("collection", "decide", err)
+			}
 			return nil, goahttp.ErrInvalidResponse("collection", "decide", resp.StatusCode, string(body))
 		}
 	}
@@ -912,18 +1012,24 @@ func EncodeBulkRequest(encoder func(*http.Request) goahttp.Encoder) func(*http.R
 //   - "not_valid" (type *goa.ServiceError): http.StatusBadRequest
 //   - error: internal error
 func DecodeBulkResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
-	return func(resp *http.Response) (any, error) {
+	return func(resp *http.Response) (result any, decodeErr error) {
+		responseBody := resp.Body
 		if restoreBody {
-			b, err := io.ReadAll(resp.Body)
-			if err != nil {
-				return nil, err
+			b, readErr := io.ReadAll(responseBody)
+			closeErr := responseBody.Close()
+			if err := errors.Join(readErr, closeErr); err != nil {
+				return nil, goahttp.ErrDecodingError("collection", "bulk", err)
 			}
 			resp.Body = io.NopCloser(bytes.NewBuffer(b))
 			defer func() {
 				resp.Body = io.NopCloser(bytes.NewBuffer(b))
 			}()
 		} else {
-			defer resp.Body.Close()
+			defer func() {
+				if err := responseBody.Close(); err != nil {
+					decodeErr = errors.Join(decodeErr, goahttp.ErrDecodingError("collection", "bulk", err))
+				}
+			}()
 		}
 		switch resp.StatusCode {
 		case http.StatusAccepted:
@@ -970,7 +1076,10 @@ func DecodeBulkResponse(decoder func(*http.Response) goahttp.Decoder, restoreBod
 			}
 			return nil, NewBulkNotValid(&body)
 		default:
-			body, _ := io.ReadAll(resp.Body)
+			body, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("collection", "bulk", err)
+			}
 			return nil, goahttp.ErrInvalidResponse("collection", "bulk", resp.StatusCode, string(body))
 		}
 	}
@@ -995,18 +1104,24 @@ func (c *Client) BuildBulkStatusRequest(ctx context.Context, v any) (*http.Reque
 // collection bulk_status endpoint. restoreBody controls whether the response
 // body should be restored after having been read.
 func DecodeBulkStatusResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
-	return func(resp *http.Response) (any, error) {
+	return func(resp *http.Response) (result any, decodeErr error) {
+		responseBody := resp.Body
 		if restoreBody {
-			b, err := io.ReadAll(resp.Body)
-			if err != nil {
-				return nil, err
+			b, readErr := io.ReadAll(responseBody)
+			closeErr := responseBody.Close()
+			if err := errors.Join(readErr, closeErr); err != nil {
+				return nil, goahttp.ErrDecodingError("collection", "bulk_status", err)
 			}
 			resp.Body = io.NopCloser(bytes.NewBuffer(b))
 			defer func() {
 				resp.Body = io.NopCloser(bytes.NewBuffer(b))
 			}()
 		} else {
-			defer resp.Body.Close()
+			defer func() {
+				if err := responseBody.Close(); err != nil {
+					decodeErr = errors.Join(decodeErr, goahttp.ErrDecodingError("collection", "bulk_status", err))
+				}
+			}()
 		}
 		switch resp.StatusCode {
 		case http.StatusOK:
@@ -1025,7 +1140,10 @@ func DecodeBulkStatusResponse(decoder func(*http.Response) goahttp.Decoder, rest
 			res := NewBulkStatusResultOK(&body)
 			return res, nil
 		default:
-			body, _ := io.ReadAll(resp.Body)
+			body, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("collection", "bulk_status", err)
+			}
 			return nil, goahttp.ErrInvalidResponse("collection", "bulk_status", resp.StatusCode, string(body))
 		}
 	}
@@ -1035,9 +1153,6 @@ func DecodeBulkStatusResponse(decoder func(*http.Response) goahttp.Decoder, rest
 // builds a value of type *collection.EnduroStoredCollection from a value of
 // type *EnduroStoredCollectionResponseBody.
 func unmarshalEnduroStoredCollectionResponseBodyToCollectionEnduroStoredCollection(v *EnduroStoredCollectionResponseBody) *collection.EnduroStoredCollection {
-	if v == nil {
-		return nil
-	}
 	res := &collection.EnduroStoredCollection{
 		ID:          *v.ID,
 		Name:        v.Name,
@@ -1056,17 +1171,64 @@ func unmarshalEnduroStoredCollectionResponseBodyToCollectionEnduroStoredCollecti
 	return res
 }
 
+// unmarshalEnduroStoredCollectionCollectionResponseBodyToCollectionEnduroStoredCollectionCollection
+// builds a value of type collection.EnduroStoredCollectionCollection from a
+// value of type EnduroStoredCollectionCollectionResponseBody.
+func unmarshalEnduroStoredCollectionCollectionResponseBodyToCollectionEnduroStoredCollectionCollection(v EnduroStoredCollectionCollectionResponseBody) collection.EnduroStoredCollectionCollection {
+	res := make([]*collection.EnduroStoredCollection, len(v))
+	for i, val := range v {
+		if val == nil {
+			res[i] = nil
+			continue
+		}
+		res[i] = unmarshalEnduroStoredCollectionResponseBodyToCollectionEnduroStoredCollection(val)
+	}
+
+	return res
+}
+
+// unmarshalEnduroCollectionWorkflowHistoryResponseBodyCollectionToCollectionviewsEnduroCollectionWorkflowHistoryCollectionView
+// builds a value of type
+// collectionviews.EnduroCollectionWorkflowHistoryCollectionView from a value
+// of type EnduroCollectionWorkflowHistoryResponseBodyCollection.
+func unmarshalEnduroCollectionWorkflowHistoryResponseBodyCollectionToCollectionviewsEnduroCollectionWorkflowHistoryCollectionView(v EnduroCollectionWorkflowHistoryResponseBodyCollection) collectionviews.EnduroCollectionWorkflowHistoryCollectionView {
+	res := make([]*collectionviews.EnduroCollectionWorkflowHistoryView, len(v))
+	for i, val := range v {
+		if val == nil {
+			res[i] = nil
+			continue
+		}
+		res[i] = unmarshalEnduroCollectionWorkflowHistoryResponseBodyToCollectionviewsEnduroCollectionWorkflowHistoryView(val)
+	}
+
+	return res
+}
+
 // unmarshalEnduroCollectionWorkflowHistoryResponseBodyToCollectionviewsEnduroCollectionWorkflowHistoryView
 // builds a value of type *collectionviews.EnduroCollectionWorkflowHistoryView
 // from a value of type *EnduroCollectionWorkflowHistoryResponseBody.
 func unmarshalEnduroCollectionWorkflowHistoryResponseBodyToCollectionviewsEnduroCollectionWorkflowHistoryView(v *EnduroCollectionWorkflowHistoryResponseBody) *collectionviews.EnduroCollectionWorkflowHistoryView {
-	if v == nil {
-		return nil
-	}
 	res := &collectionviews.EnduroCollectionWorkflowHistoryView{
 		ID:      v.ID,
 		Type:    v.Type,
 		Details: v.Details,
+	}
+
+	return res
+}
+
+// unmarshalEnduroCollectionStatusTransitionResponseBodyCollectionToCollectionviewsEnduroCollectionStatusTransitionCollectionView
+// builds a value of type
+// collectionviews.EnduroCollectionStatusTransitionCollectionView from a value
+// of type EnduroCollectionStatusTransitionResponseBodyCollection.
+func unmarshalEnduroCollectionStatusTransitionResponseBodyCollectionToCollectionviewsEnduroCollectionStatusTransitionCollectionView(v EnduroCollectionStatusTransitionResponseBodyCollection) collectionviews.EnduroCollectionStatusTransitionCollectionView {
+	res := make([]*collectionviews.EnduroCollectionStatusTransitionView, len(v))
+	for i, val := range v {
+		if val == nil {
+			res[i] = nil
+			continue
+		}
+		res[i] = unmarshalEnduroCollectionStatusTransitionResponseBodyToCollectionviewsEnduroCollectionStatusTransitionView(val)
 	}
 
 	return res

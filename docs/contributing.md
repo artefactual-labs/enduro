@@ -14,7 +14,7 @@ makes thing much simpler during development.
 
 There are some dependencies that need to be installed:
 
-- [Go][go],
+- [Go],
 - [Docker Engine][docker-engine] (includes Docker Compose),
 - [Node.js][nodejs], and
 - [GNU Make][make]
@@ -27,20 +27,28 @@ user with some [extra configuration steps][docker-non-root].
 
 Spin up the environment with the following command:
 
-    docker compose up --detach
+```
+docker compose up --detach
+```
 
 Build the web-based user interface:
 
-    make frontend
+```
+make frontend
+```
 
 Finall, build and run Enduro with:
 
-    make run
+```
+make run
+```
 
 With Enduro running in the background, you should be able to access the web
 interface via <http://127.0.0.1:9000/> or connect to the API, e.g.:
 
-    curl -v 127.0.0.1:9000/collection
+```
+curl -v 127.0.0.1:9000/collection
+```
 
 ### Set up SeaweedFS for object storage
 
@@ -56,60 +64,72 @@ The SeaweedFS filer UI is available at <http://127.0.0.1:7461>.
 You can [install][mc] the MinIO command-line client (mc) and register the local
 S3 endpoint with:
 
-    $ mc alias set enduro http://127.0.0.1:7460 minio minio123
-    Added `enduro` successfully.
+```
+$ mc alias set enduro http://127.0.0.1:7460 minio minio123
+Added `enduro` successfully.
+```
 
 We provide default configuration so SeaweedFS publishes filer create events to
 Enduro's object event webhook. Enduro normalizes those events and publishes them
 to our local Redis instance. The `[[watcher.s3]]` entry in `enduro.toml`
-consumes those events with `eventSource = "redis"` and
-`eventFormat = "enduro"`.
+consumes those events with `eventSource = "redis"` and `eventFormat = "enduro"`.
 
 The webhook server is configured in `enduro.toml`:
 
-    [objectEventWebhook]
-    enabled = true
-    listen = "0.0.0.0:7480"
-    redisAddress = "redis://127.0.0.1:7470"
-    redisList = "object-events"
-    bucketsPath = "/buckets"
+```
+[objectEventWebhook]
+enabled = true
+listen = "0.0.0.0:7480"
+redisAddress = "redis://127.0.0.1:7470"
+redisList = "object-events"
+bucketsPath = "/buckets"
+```
 
 SeaweedFS loads its webhook notification configuration from
 `hack/seaweedfs/notification.toml`.
 
 List the bucket with:
 
-    $ mc ls enduro/sips
+```
+$ mc ls enduro/sips
+```
 
 ### Start a transfer
 
-Uploading a zipped transfer into the `sips` bucket should trigger the
-workflow. From the command-line interface, you can run the following:
+Uploading a zipped transfer into the `sips` bucket should trigger the workflow.
+From the command-line interface, you can run the following:
 
-    mc cp ~/Documents/transfer.zip enduro/sips
+```
+mc cp ~/Documents/transfer.zip enduro/sips
+```
 
 The workflow should be triggered automatically. It is okay to start Enduro later
 since the event is buffered by Redis.
 
-    make run
+```
+make run
+```
 
 Additionally, you can visualize workflows and activities from Temporal UI. Try
-opening the following link: <http://127.0.0.1:7440/namespaces/default/workflows>.
+opening the following link:
+<http://127.0.0.1:7440/namespaces/default/workflows>.
 
 ### Development workflow
 
 You can use the standard Go build workflows such `go build` or `go install` but
 we provide a couple of shortcuts that use our custom build directory and flags:
 
-    # Build the binary in ./build/enduro
-    make enduro-dev
+```
+# Build the binary in ./build/enduro
+make enduro-dev
 
-    # Build and run
-    make run
+# Build and run
+make run
+```
 
 If you are looking for a source-code editor, Visual Studio Code has great Go
-support. It uses the official language server, [gopls][gopls], which is it not
-stable yet - it is recommendable to read their docs and keep it up to date.
+support. It uses the official language server, [gopls], which is it not stable
+yet - it is recommendable to read their docs and keep it up to date.
 
 Other useful commands are `make lint` and `make test`. This project uses
 GolangCI-Lint, an aggregator of many linters. It is installed with `make tools`.
@@ -124,31 +144,37 @@ You can enable it in Visual Studio Code as follows:
 
 ### Dagger smoke harness
 
-Enduro also has an experimental Dagger-based smoke harness under
-`hack/dagger`. The same harness runs in the dedicated `smoke-tests` job in the
-`Test` GitHub Actions workflow. It can also be run manually before pushing
-changes that affect transfer publishing or Archivematica integration.
+Enduro also has an experimental Dagger-based smoke harness under `hack/dagger`.
+The same harness runs in the dedicated `smoke-tests` job in the `Test` GitHub
+Actions workflow. It can also be run manually before pushing changes that affect
+transfer publishing or Archivematica integration.
 
 Install a recent version of Dagger and make sure Docker is available. From the
 repository root, run:
 
-    make test-smoke
+```
+make test-smoke
+```
 
 Because this harness starts real services and Archivematica workers, it is
 slower and heavier than `make test`. Treat it as an end-to-end smoke check for
 the transfer publishing workaround rather than a replacement for unit or
-workflow tests. The harness also exports Go coverage from the Enduro process;
-CI uploads that profile to Codecov under the `go-smoke` flag.
+workflow tests. The harness also exports Go coverage from the Enduro process; CI
+uploads that profile to Codecov under the `go-smoke` flag.
 
 ### Enable tracing
 
 Enable the observability services by editing the root `.env` file as follows:
 
-    COMPOSE_FILE=docker-compose.yml:docker-compose.observability.yml
+```
+COMPOSE_FILE=docker-compose.yml:docker-compose.observability.yml
+```
 
 Start all services again:
 
-    docker compose up -d
+```
+docker compose up -d
+```
 
 Three new services should be ready:
 
@@ -167,17 +193,23 @@ ratio = 1.0
 
 Run enduro:
 
-    make run
+```
+make run
+```
 
 Things that you can do:
 
 - Observe that `grafana-agent` logs received traces:
 
-      docker compose logs -f grafana-agent
+  ```
+  docker compose logs -f grafana-agent
+  ```
 
 - Observe that `grafana-tempo` logs stored traces:
 
-      docker compose logs -f grafana-tempo
+  ```
+  docker compose logs -f grafana-tempo
+  ```
 
 - Use the [Grafana explorer](http://127.0.0.1:3000/explore) to search and
   visualize traces.
@@ -185,8 +217,8 @@ Things that you can do:
 ## API changes
 
 Enduro uses the [Goa framework][goa] to build the API. Goa provides a
-[design language][goa-dsl] which is our source of truth from which both
-behavior and docs are derived.
+[design language][goa-dsl] which is our source of truth from which both behavior
+and docs are derived.
 
 Goa generates all the code that relates to the communication transport as well
 as the API specification using OpenAPI. Enduro provides the implementation of
@@ -219,17 +251,17 @@ Method("delete", func() {
 })
 ```
 
-With this design language we describe our API services, methods and types. It
-is also possible to implement some advanced features such different
-authentication methods or streaming of contents.
+With this design language we describe our API services, methods and types. It is
+also possible to implement some advanced features such different authentication
+methods or streaming of contents.
 
 ### Backend development
 
 After making new changes to the API design, the developer should run:
 `make gen-goa` which generates all the code under `internal/api/gen`, including
 the OpenAPI description of the API for the HTTP transport:
-[`openapi3.2.json`][openapi3-2-json] and [`openapi3.json`][openapi3-json].
-The 3.0 document remains the input for the generated UI clients because it is
+[`openapi3.2.json`][openapi3-2-json] and [`openapi3.json`][openapi3-json]. The
+3.0 document remains the input for the generated UI clients because it is
 supported by more client-generation tools.
 
 In the example above, we added a `Delete` method to the `Collection` service.
@@ -267,7 +299,8 @@ The version of Go used by this project is specified in the `go.mod` file.
 
 Use `make deps` to list available updates.
 
-When updating Goa, make sure `hack/make/dep_goa.mk` is using the same version.
+When updating Goa, keep its version in `.bine.toml` aligned with `go.mod`, then
+run `make gen-goa` and `make frontend-client` to regenerate the API and client.
 
 ### OpenAPI Generator
 
@@ -291,8 +324,10 @@ The release process is automated via GitHub Actions. See
 The artifacts associated with a release are automatically published after the
 git tag is submitted to the repository. We use annotated tags. For example:
 
-    git tag -a "v0.20.0" -m "Enduro v0.20.0"
-    git push --follow-tags
+```
+git tag -a "v0.20.0" -m "Enduro v0.20.0"
+git push --follow-tags
+```
 
 The `release` workflow is started as soon as the tag makes it to GitHub. The
 artifacts will start building right away and they will appear in the
@@ -301,20 +336,20 @@ artifacts will start building right away and they will appear in the
 The workflow runs are recorded by GitHub for auditing purposes, e.g. check out
 the [workflow run][first-release-run] that made our very first release.
 
+[clean-arch]: https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html
+[design-pkg]: https://github.com/artefactual-labs/enduro/tree/main/internal/api/design
 [docker-engine]: https://docs.docker.com/engine/install/
-[mc]: https://docs.min.io/docs/minio-client-quickstart-guide.html
-[go]: https://golang.org/doc/install
-[gopls]: https://github.com/golang/tools/blob/master/gopls/README.md
-[nodejs]: https://nodejs.org
-[make]: https://www.gnu.org/software/make/
-[issue-118]: https://github.com/artefactual-labs/enduro/issues/118
 [docker-non-root]: https://docs.docker.com/engine/install/linux-postinstall/#manage-docker-as-a-non-root-user
+[first-release-run]: https://github.com/artefactual-labs/enduro/commit/0f17f7fa3beb88f7039cf9b6e1dc1a6f4af66f51/checks
+[go]: https://golang.org/doc/install
 [goa]: https://goa.design/
 [goa-dsl]: https://godoc.org/goa.design/goa/dsl
-[design-pkg]: https://github.com/artefactual-labs/enduro/tree/main/internal/api/design
-[clean-arch]: https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html
+[gopls]: https://github.com/golang/tools/blob/master/gopls/README.md
+[issue-118]: https://github.com/artefactual-labs/enduro/issues/118
+[make]: https://www.gnu.org/software/make/
+[mc]: https://docs.min.io/docs/minio-client-quickstart-guide.html
+[nodejs]: https://nodejs.org
 [openapi3-2-json]: https://github.com/artefactual-labs/enduro/blob/main/internal/api/gen/http/openapi3.2.json
 [openapi3-json]: https://github.com/artefactual-labs/enduro/blob/main/internal/api/gen/http/openapi3.json
-[release-workflow]: https://github.com/artefactual-labs/enduro/blob/main/.github/workflows/release.yml
 [release-github-page]: https://github.com/artefactual-labs/enduro/releases
-[first-release-run]: https://github.com/artefactual-labs/enduro/commit/0f17f7fa3beb88f7039cf9b6e1dc1a6f4af66f51/checks
+[release-workflow]: https://github.com/artefactual-labs/enduro/blob/main/.github/workflows/release.yml

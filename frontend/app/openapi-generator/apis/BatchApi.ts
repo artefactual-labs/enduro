@@ -40,10 +40,16 @@ import {
 } from '../models/SubmitRequestBody';
 
 export interface BatchApiBatchBrowseRequest {
+    /**
+     * Root-relative directory path to list
+     */
     path?: string;
 }
 
 export interface BatchApiBatchSubmitRequest {
+    /**
+     * 
+     */
     submitRequestBody: SubmitRequestBody;
 }
 

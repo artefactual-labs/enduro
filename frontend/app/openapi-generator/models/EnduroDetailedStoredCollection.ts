@@ -12,7 +12,7 @@
  * Do not edit the class manually.
  */
 
-import { mapValues } from '../runtime';
+import { mapValues, parseDate, parseDateTime, serializeDate, serializeDateTime } from '../runtime';
 /**
  * DetailedStoredCollection describes a collection retrieved by the service detail view.
  * @export
@@ -21,98 +21,66 @@ import { mapValues } from '../runtime';
 export interface EnduroDetailedStoredCollection {
     /**
      * Identifier of Archivematica AIP
-     * @type {string}
-     * @memberof EnduroDetailedStoredCollection
      */
     aipId?: string;
     /**
      * Datetime when the primary AIP was confirmed in storage
-     * @type {Date}
-     * @memberof EnduroDetailedStoredCollection
      */
     aipStoredAt?: Date;
     /**
      * Completion datetime
-     * @type {Date}
-     * @memberof EnduroDetailedStoredCollection
      */
     completedAt?: Date;
     /**
      * Creation datetime
-     * @type {Date}
-     * @memberof EnduroDetailedStoredCollection
      */
     createdAt: Date;
     /**
      * Identifier of collection
-     * @type {number}
-     * @memberof EnduroDetailedStoredCollection
      */
     id: number;
     /**
      * Name of the collection
-     * @type {string}
-     * @memberof EnduroDetailedStoredCollection
      */
     name?: string;
     /**
      * Identifier provided by the client
-     * @type {string}
-     * @memberof EnduroDetailedStoredCollection
      */
     originalId?: string;
     /**
      * Identifier of Archivematica pipeline
-     * @type {string}
-     * @memberof EnduroDetailedStoredCollection
      */
     pipelineId?: string;
     /**
      * Datetime when storage was last reconciled
-     * @type {Date}
-     * @memberof EnduroDetailedStoredCollection
      */
     reconciliationCheckedAt?: Date;
     /**
      * Last storage reconciliation error
-     * @type {string}
-     * @memberof EnduroDetailedStoredCollection
      */
     reconciliationError?: string;
     /**
      * Latest storage reconciliation status
-     * @type {EnduroDetailedStoredCollectionReconciliationStatusEnum}
-     * @memberof EnduroDetailedStoredCollection
      */
     reconciliationStatus?: EnduroDetailedStoredCollectionReconciliationStatusEnum;
     /**
      * Identifier of latest processing workflow run
-     * @type {string}
-     * @memberof EnduroDetailedStoredCollection
      */
     runId?: string;
     /**
      * Start datetime
-     * @type {Date}
-     * @memberof EnduroDetailedStoredCollection
      */
     startedAt?: Date;
     /**
      * Status of the collection
-     * @type {EnduroDetailedStoredCollectionStatusEnum}
-     * @memberof EnduroDetailedStoredCollection
      */
     status: EnduroDetailedStoredCollectionStatusEnum;
     /**
      * Identifier of Archivematica tranfser
-     * @type {string}
-     * @memberof EnduroDetailedStoredCollection
      */
     transferId?: string;
     /**
      * Identifier of processing workflow
-     * @type {string}
-     * @memberof EnduroDetailedStoredCollection
      */
     workflowId?: string;
 }
@@ -166,18 +134,18 @@ export function EnduroDetailedStoredCollectionFromJSONTyped(json: any, ignoreDis
     return {
         
         'aipId': json['aip_id'] == null ? undefined : json['aip_id'],
-        'aipStoredAt': json['aip_stored_at'] == null ? undefined : (new Date(json['aip_stored_at'])),
-        'completedAt': json['completed_at'] == null ? undefined : (new Date(json['completed_at'])),
-        'createdAt': (new Date(json['created_at'])),
+        'aipStoredAt': json['aip_stored_at'] == null ? undefined : (parseDateTime(json['aip_stored_at'])),
+        'completedAt': json['completed_at'] == null ? undefined : (parseDateTime(json['completed_at'])),
+        'createdAt': (json['created_at'] == null ? json['created_at'] : parseDateTime(json['created_at'])),
         'id': json['id'],
         'name': json['name'] == null ? undefined : json['name'],
         'originalId': json['original_id'] == null ? undefined : json['original_id'],
         'pipelineId': json['pipeline_id'] == null ? undefined : json['pipeline_id'],
-        'reconciliationCheckedAt': json['reconciliation_checked_at'] == null ? undefined : (new Date(json['reconciliation_checked_at'])),
+        'reconciliationCheckedAt': json['reconciliation_checked_at'] == null ? undefined : (parseDateTime(json['reconciliation_checked_at'])),
         'reconciliationError': json['reconciliation_error'] == null ? undefined : json['reconciliation_error'],
         'reconciliationStatus': json['reconciliation_status'] == null ? undefined : json['reconciliation_status'],
         'runId': json['run_id'] == null ? undefined : json['run_id'],
-        'startedAt': json['started_at'] == null ? undefined : (new Date(json['started_at'])),
+        'startedAt': json['started_at'] == null ? undefined : (parseDateTime(json['started_at'])),
         'status': json['status'],
         'transferId': json['transfer_id'] == null ? undefined : json['transfer_id'],
         'workflowId': json['workflow_id'] == null ? undefined : json['workflow_id'],
@@ -196,18 +164,18 @@ export function EnduroDetailedStoredCollectionToJSONTyped(value?: EnduroDetailed
     return {
         
         'aip_id': value['aipId'],
-        'aip_stored_at': value['aipStoredAt'] == null ? value['aipStoredAt'] : value['aipStoredAt'].toISOString(),
-        'completed_at': value['completedAt'] == null ? value['completedAt'] : value['completedAt'].toISOString(),
-        'created_at': value['createdAt'].toISOString(),
+        'aip_stored_at': value['aipStoredAt'] == null ? value['aipStoredAt'] : serializeDateTime(value['aipStoredAt']),
+        'completed_at': value['completedAt'] == null ? value['completedAt'] : serializeDateTime(value['completedAt']),
+        'created_at': value['createdAt'] == null ? value['createdAt'] : serializeDateTime(value['createdAt']),
         'id': value['id'],
         'name': value['name'],
         'original_id': value['originalId'],
         'pipeline_id': value['pipelineId'],
-        'reconciliation_checked_at': value['reconciliationCheckedAt'] == null ? value['reconciliationCheckedAt'] : value['reconciliationCheckedAt'].toISOString(),
+        'reconciliation_checked_at': value['reconciliationCheckedAt'] == null ? value['reconciliationCheckedAt'] : serializeDateTime(value['reconciliationCheckedAt']),
         'reconciliation_error': value['reconciliationError'],
         'reconciliation_status': value['reconciliationStatus'],
         'run_id': value['runId'],
-        'started_at': value['startedAt'] == null ? value['startedAt'] : value['startedAt'].toISOString(),
+        'started_at': value['startedAt'] == null ? value['startedAt'] : serializeDateTime(value['startedAt']),
         'status': value['status'],
         'transfer_id': value['transferId'],
         'workflow_id': value['workflowId'],

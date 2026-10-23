@@ -145,7 +145,7 @@ export function createEnduroApiClient(basePath: string): EnduroApiClient {
       remove: (id, requestOptions) => collection.collectionDelete({ id }, requestOptions),
       decide: (id, option, requestOptions) => collection.collectionDecide({
         id,
-        collectionDecideRequest: { option }
+        decideRequestBody: { option }
       }, requestOptions),
       bulk: (request, requestOptions) => collection.collectionBulk({ bulkRequestBody: request }, requestOptions),
       bulkStatus: requestOptions => collection.collectionBulkStatus(requestOptions)

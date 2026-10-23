@@ -21,14 +21,10 @@ import { mapValues } from '../runtime';
 export interface BatchResult {
     /**
      * 
-     * @type {string}
-     * @memberof BatchResult
      */
     runId: string;
     /**
      * 
-     * @type {string}
-     * @memberof BatchResult
      */
     workflowId: string;
 }

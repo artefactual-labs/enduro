@@ -21,32 +21,22 @@ import { mapValues } from '../runtime';
 export interface EnduroStoredPipeline {
     /**
      * Maximum concurrent transfers
-     * @type {number}
-     * @memberof EnduroStoredPipeline
      */
     capacity?: number;
     /**
      * Current transfers
-     * @type {number}
-     * @memberof EnduroStoredPipeline
      */
     current?: number;
     /**
      * Identifier of pipeline
-     * @type {string}
-     * @memberof EnduroStoredPipeline
      */
     id?: string;
     /**
      * Name of the pipeline
-     * @type {string}
-     * @memberof EnduroStoredPipeline
      */
     name: string;
     /**
      * 
-     * @type {string}
-     * @memberof EnduroStoredPipeline
      */
     status?: string;
 }

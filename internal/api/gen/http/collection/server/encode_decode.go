@@ -651,11 +651,8 @@ func DecodeDecideRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.
 	return func(r *http.Request) (*collection.DecidePayload, error) {
 		var payload *collection.DecidePayload
 		var (
-			body struct {
-				// Decision option to proceed with
-				Option *string `form:"option" json:"option" xml:"option"`
-			}
-			err error
+			body DecideRequestBody
+			err  error
 		)
 		err = decoder(r).Decode(&body)
 		if err != nil {
@@ -685,7 +682,7 @@ func DecodeDecideRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.
 		if err != nil {
 			return payload, err
 		}
-		payload = NewDecidePayload(body, id)
+		payload = NewDecidePayload(&body, id)
 
 		return payload, nil
 	}
@@ -833,9 +830,6 @@ func EncodeBulkStatusResponse(encoder func(context.Context, http.ResponseWriter)
 // builds a value of type *EnduroStoredCollectionResponseBody from a value of
 // type *collection.EnduroStoredCollection.
 func marshalCollectionEnduroStoredCollectionToEnduroStoredCollectionResponseBody(v *collection.EnduroStoredCollection) *EnduroStoredCollectionResponseBody {
-	if v == nil {
-		return nil
-	}
 	res := &EnduroStoredCollectionResponseBody{
 		ID:          v.ID,
 		Name:        v.Name,
@@ -854,17 +848,64 @@ func marshalCollectionEnduroStoredCollectionToEnduroStoredCollectionResponseBody
 	return res
 }
 
+// marshalCollectionEnduroStoredCollectionCollectionToEnduroStoredCollectionCollectionResponseBody
+// builds a value of type EnduroStoredCollectionCollectionResponseBody from a
+// value of type collection.EnduroStoredCollectionCollection.
+func marshalCollectionEnduroStoredCollectionCollectionToEnduroStoredCollectionCollectionResponseBody(v collection.EnduroStoredCollectionCollection) EnduroStoredCollectionCollectionResponseBody {
+	res := make([]*EnduroStoredCollectionResponseBody, len(v))
+	for i, val := range v {
+		if val == nil {
+			res[i] = nil
+			continue
+		}
+		res[i] = marshalCollectionEnduroStoredCollectionToEnduroStoredCollectionResponseBody(val)
+	}
+
+	return res
+}
+
+// marshalCollectionviewsEnduroCollectionWorkflowHistoryCollectionViewToEnduroCollectionWorkflowHistoryResponseBodyCollection
+// builds a value of type EnduroCollectionWorkflowHistoryResponseBodyCollection
+// from a value of type
+// collectionviews.EnduroCollectionWorkflowHistoryCollectionView.
+func marshalCollectionviewsEnduroCollectionWorkflowHistoryCollectionViewToEnduroCollectionWorkflowHistoryResponseBodyCollection(v collectionviews.EnduroCollectionWorkflowHistoryCollectionView) EnduroCollectionWorkflowHistoryResponseBodyCollection {
+	res := make([]*EnduroCollectionWorkflowHistoryResponseBody, len(v))
+	for i, val := range v {
+		if val == nil {
+			res[i] = nil
+			continue
+		}
+		res[i] = marshalCollectionviewsEnduroCollectionWorkflowHistoryViewToEnduroCollectionWorkflowHistoryResponseBody(val)
+	}
+
+	return res
+}
+
 // marshalCollectionviewsEnduroCollectionWorkflowHistoryViewToEnduroCollectionWorkflowHistoryResponseBody
 // builds a value of type *EnduroCollectionWorkflowHistoryResponseBody from a
 // value of type *collectionviews.EnduroCollectionWorkflowHistoryView.
 func marshalCollectionviewsEnduroCollectionWorkflowHistoryViewToEnduroCollectionWorkflowHistoryResponseBody(v *collectionviews.EnduroCollectionWorkflowHistoryView) *EnduroCollectionWorkflowHistoryResponseBody {
-	if v == nil {
-		return nil
-	}
 	res := &EnduroCollectionWorkflowHistoryResponseBody{
 		ID:      v.ID,
 		Type:    v.Type,
 		Details: v.Details,
+	}
+
+	return res
+}
+
+// marshalCollectionviewsEnduroCollectionStatusTransitionCollectionViewToEnduroCollectionStatusTransitionResponseBodyCollection
+// builds a value of type
+// EnduroCollectionStatusTransitionResponseBodyCollection from a value of type
+// collectionviews.EnduroCollectionStatusTransitionCollectionView.
+func marshalCollectionviewsEnduroCollectionStatusTransitionCollectionViewToEnduroCollectionStatusTransitionResponseBodyCollection(v collectionviews.EnduroCollectionStatusTransitionCollectionView) EnduroCollectionStatusTransitionResponseBodyCollection {
+	res := make([]*EnduroCollectionStatusTransitionResponseBody, len(v))
+	for i, val := range v {
+		if val == nil {
+			res[i] = nil
+			continue
+		}
+		res[i] = marshalCollectionviewsEnduroCollectionStatusTransitionViewToEnduroCollectionStatusTransitionResponseBody(val)
 	}
 
 	return res

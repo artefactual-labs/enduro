@@ -280,7 +280,7 @@
         "type": "object"
       },
       "CollectionNotfound": {
-        "description": "Collection not found",
+        "description": "Collection not found.",
         "example": {
           "id": 1,
           "message": "abc123"
@@ -302,6 +302,20 @@
           "message",
           "id"
         ],
+        "type": "object"
+      },
+      "DecideRequestBody": {
+        "description": "Request body for decide.",
+        "example": {
+          "option": "abc123"
+        },
+        "properties": {
+          "option": {
+            "description": "Decision option to proceed with",
+            "example": "abc123",
+            "type": "string"
+          }
+        },
         "type": "object"
       },
       "EnduroCollectionStatusHistory": {
@@ -526,7 +540,7 @@
           "started_at": "1970-01-01T00:00:01Z",
           "status": "in progress",
           "transfer_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
-          "workflow_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5"
+          "workflow_id": "processing-workflow-d1845cb6-a5ea-474a-9ab8-26f9bcd919f5"
         },
         "properties": {
           "aip_id": {
@@ -633,8 +647,7 @@
           },
           "workflow_id": {
             "description": "Identifier of processing workflow",
-            "example": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
-            "format": "uuid",
+            "example": "processing-workflow-d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
             "type": "string"
           }
         },
@@ -660,7 +673,7 @@
             "started_at": "1970-01-01T00:00:01Z",
             "status": "in progress",
             "transfer_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
-            "workflow_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5"
+            "workflow_id": "processing-workflow-d1845cb6-a5ea-474a-9ab8-26f9bcd919f5"
           },
           "timestamp": "1970-01-01T00:00:01Z",
           "type": "abc123"
@@ -707,7 +720,7 @@
           "started_at": "1970-01-01T00:00:01Z",
           "status": "in progress",
           "transfer_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
-          "workflow_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5"
+          "workflow_id": "processing-workflow-d1845cb6-a5ea-474a-9ab8-26f9bcd919f5"
         },
         "properties": {
           "aip_id": {
@@ -786,8 +799,7 @@
           },
           "workflow_id": {
             "description": "Identifier of processing workflow",
-            "example": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
-            "format": "uuid",
+            "example": "processing-workflow-d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
             "type": "string"
           }
         },
@@ -812,7 +824,7 @@
             "started_at": "1970-01-01T00:00:01Z",
             "status": "in progress",
             "transfer_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
-            "workflow_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5"
+            "workflow_id": "processing-workflow-d1845cb6-a5ea-474a-9ab8-26f9bcd919f5"
           }
         ],
         "items": {
@@ -930,7 +942,7 @@
               "started_at": "1970-01-01T00:00:01Z",
               "status": "in progress",
               "transfer_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
-              "workflow_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5"
+              "workflow_id": "processing-workflow-d1845cb6-a5ea-474a-9ab8-26f9bcd919f5"
             }
           ],
           "next_cursor": "abc123"
@@ -950,7 +962,7 @@
         "type": "object"
       },
       "PipelineNotFound": {
-        "description": "Pipeline not found",
+        "description": "Pipeline not found.",
         "example": {
           "id": "abc123",
           "message": "abc123"
@@ -1140,6 +1152,14 @@
           "400": {
             "content": {
               "application/vnd.goa.error": {
+                "example": {
+                  "fault": false,
+                  "id": "123abc",
+                  "message": "parameter 'p' must be an integer",
+                  "name": "not_valid",
+                  "temporary": false,
+                  "timeout": false
+                },
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
@@ -1150,6 +1170,14 @@
           "409": {
             "content": {
               "application/vnd.goa.error": {
+                "example": {
+                  "fault": false,
+                  "id": "123abc",
+                  "message": "parameter 'p' must be an integer",
+                  "name": "not_available",
+                  "temporary": false,
+                  "timeout": false
+                },
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
@@ -1209,6 +1237,14 @@
           "400": {
             "content": {
               "application/vnd.goa.error": {
+                "example": {
+                  "fault": false,
+                  "id": "123abc",
+                  "message": "parameter 'p' must be an integer",
+                  "name": "not_valid",
+                  "temporary": false,
+                  "timeout": false
+                },
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
@@ -1219,6 +1255,14 @@
           "404": {
             "content": {
               "application/vnd.goa.error": {
+                "example": {
+                  "fault": false,
+                  "id": "123abc",
+                  "message": "parameter 'p' must be an integer",
+                  "name": "not_available",
+                  "temporary": false,
+                  "timeout": false
+                },
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
@@ -1398,7 +1442,7 @@
                       "started_at": "1970-01-01T00:00:01Z",
                       "status": "in progress",
                       "transfer_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
-                      "workflow_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5"
+                      "workflow_id": "processing-workflow-d1845cb6-a5ea-474a-9ab8-26f9bcd919f5"
                     }
                   ],
                   "next_cursor": "abc123"
@@ -1483,6 +1527,14 @@
           "400": {
             "content": {
               "application/vnd.goa.error": {
+                "example": {
+                  "fault": false,
+                  "id": "123abc",
+                  "message": "parameter 'p' must be an integer",
+                  "name": "not_valid",
+                  "temporary": false,
+                  "timeout": false
+                },
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
@@ -1493,6 +1545,14 @@
           "409": {
             "content": {
               "application/vnd.goa.error": {
+                "example": {
+                  "fault": false,
+                  "id": "123abc",
+                  "message": "parameter 'p' must be an integer",
+                  "name": "not_available",
+                  "temporary": false,
+                  "timeout": false
+                },
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
@@ -1621,7 +1681,7 @@
                   "started_at": "1970-01-01T00:00:01Z",
                   "status": "in progress",
                   "transfer_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5",
-                  "workflow_id": "d1845cb6-a5ea-474a-9ab8-26f9bcd919f5"
+                  "workflow_id": "processing-workflow-d1845cb6-a5ea-474a-9ab8-26f9bcd919f5"
                 },
                 "schema": {
                   "$ref": "#/components/schemas/EnduroDetailedStoredCollection"
@@ -1677,6 +1737,14 @@
           "400": {
             "content": {
               "application/vnd.goa.error": {
+                "example": {
+                  "fault": false,
+                  "id": "123abc",
+                  "message": "parameter 'p' must be an integer",
+                  "name": "not_running",
+                  "temporary": false,
+                  "timeout": false
+                },
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
@@ -1731,17 +1799,7 @@
                 "option": "abc123"
               },
               "schema": {
-                "example": {
-                  "option": "abc123"
-                },
-                "properties": {
-                  "option": {
-                    "description": "Decision option to proceed with",
-                    "example": "abc123",
-                    "type": "string"
-                  }
-                },
-                "type": "object"
+                "$ref": "#/components/schemas/DecideRequestBody"
               }
             }
           },
@@ -1755,6 +1813,14 @@
           "400": {
             "content": {
               "application/vnd.goa.error": {
+                "example": {
+                  "fault": false,
+                  "id": "123abc",
+                  "message": "parameter 'p' must be an integer",
+                  "name": "not_valid",
+                  "temporary": false,
+                  "timeout": false
+                },
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
@@ -1895,6 +1961,14 @@
           "400": {
             "content": {
               "application/vnd.goa.error": {
+                "example": {
+                  "fault": false,
+                  "id": "123abc",
+                  "message": "parameter 'p' must be an integer",
+                  "name": "not_running",
+                  "temporary": false,
+                  "timeout": false
+                },
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }

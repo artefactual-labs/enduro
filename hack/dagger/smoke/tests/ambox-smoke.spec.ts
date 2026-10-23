@@ -526,7 +526,17 @@ async function downloadAndInspectAIP(
     ].join("\n") + "\n",
   );
 
-  await saveCollection(request, opts.collection.id, collectionName);
+  const detailResponse = await request.get(
+    `${enduroURL}/collection/${opts.collection.id}`,
+  );
+  expect(detailResponse.ok(), await detailResponse.text()).toBeTruthy();
+  const detail = await detailResponse.json();
+  expect(detail).toMatchObject({
+    id: opts.collection.id,
+    status: "done",
+    workflow_id: expect.stringMatching(/^processing-workflow-/),
+  });
+  await writeJSONArtifact(collectionName, detail);
 }
 
 async function saveCollection(

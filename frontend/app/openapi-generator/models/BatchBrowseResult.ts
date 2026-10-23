@@ -29,26 +29,18 @@ import {
 export interface BatchBrowseResult {
     /**
      * Absolute path of the listed directory.
-     * @type {string}
-     * @memberof BatchBrowseResult
      */
     absolutePath: string;
     /**
      * Immediate child directories.
-     * @type {Array<BatchBrowseEntry>}
-     * @memberof BatchBrowseResult
      */
     entries: Array<BatchBrowseEntry>;
     /**
      * Root-relative path of the listed directory.
-     * @type {string}
-     * @memberof BatchBrowseResult
      */
     path: string;
     /**
      * Whether the result was truncated because it exceeded the entry limit.
-     * @type {boolean}
-     * @memberof BatchBrowseResult
      */
     truncated: boolean;
 }

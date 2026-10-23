@@ -13,8 +13,8 @@ models/BatchStatusResult.ts
 models/BulkRequestBody.ts
 models/BulkResult.ts
 models/BulkStatusResult.ts
-models/CollectionDecideRequest.ts
 models/CollectionNotfound.ts
+models/DecideRequestBody.ts
 models/EnduroCollectionStatusHistory.ts
 models/EnduroCollectionStatusTransition.ts
 models/EnduroCollectionWorkflowHistory.ts

@@ -12,7 +12,7 @@
  * Do not edit the class manually.
  */
 
-import { mapValues } from '../runtime';
+import { mapValues, parseDate, parseDateTime, serializeDate, serializeDateTime } from '../runtime';
 /**
  * 
  * @export
@@ -21,38 +21,26 @@ import { mapValues } from '../runtime';
 export interface BulkStatusResult {
     /**
      * 
-     * @type {Date}
-     * @memberof BulkStatusResult
      */
     closedAt?: Date;
     /**
      * 
-     * @type {string}
-     * @memberof BulkStatusResult
      */
     runId?: string;
     /**
      * 
-     * @type {boolean}
-     * @memberof BulkStatusResult
      */
     running: boolean;
     /**
      * 
-     * @type {Date}
-     * @memberof BulkStatusResult
      */
     startedAt?: Date;
     /**
      * 
-     * @type {string}
-     * @memberof BulkStatusResult
      */
     status?: string;
     /**
      * 
-     * @type {string}
-     * @memberof BulkStatusResult
      */
     workflowId?: string;
 }
@@ -75,10 +63,10 @@ export function BulkStatusResultFromJSONTyped(json: any, ignoreDiscriminator: bo
     }
     return {
         
-        'closedAt': json['closed_at'] == null ? undefined : (new Date(json['closed_at'])),
+        'closedAt': json['closed_at'] == null ? undefined : (parseDateTime(json['closed_at'])),
         'runId': json['run_id'] == null ? undefined : json['run_id'],
         'running': json['running'],
-        'startedAt': json['started_at'] == null ? undefined : (new Date(json['started_at'])),
+        'startedAt': json['started_at'] == null ? undefined : (parseDateTime(json['started_at'])),
         'status': json['status'] == null ? undefined : json['status'],
         'workflowId': json['workflow_id'] == null ? undefined : json['workflow_id'],
     };
@@ -95,10 +83,10 @@ export function BulkStatusResultToJSONTyped(value?: BulkStatusResult | null, ign
 
     return {
         
-        'closed_at': value['closedAt'] == null ? value['closedAt'] : value['closedAt'].toISOString(),
+        'closed_at': value['closedAt'] == null ? value['closedAt'] : serializeDateTime(value['closedAt']),
         'run_id': value['runId'],
         'running': value['running'],
-        'started_at': value['startedAt'] == null ? value['startedAt'] : value['startedAt'].toISOString(),
+        'started_at': value['startedAt'] == null ? value['startedAt'] : serializeDateTime(value['startedAt']),
         'status': value['status'],
         'workflow_id': value['workflowId'],
     };

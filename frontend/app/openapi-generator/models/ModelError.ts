@@ -21,38 +21,26 @@ import { mapValues } from '../runtime';
 export interface ModelError {
     /**
      * Is the error a server-side fault?
-     * @type {boolean}
-     * @memberof ModelError
      */
     fault: boolean;
     /**
      * ID is a unique identifier for this particular occurrence of the problem.
-     * @type {string}
-     * @memberof ModelError
      */
     id: string;
     /**
      * Message is a human-readable explanation specific to this occurrence of the problem.
-     * @type {string}
-     * @memberof ModelError
      */
     message: string;
     /**
      * Name is the name of this class of errors.
-     * @type {string}
-     * @memberof ModelError
      */
     name: string;
     /**
      * Is the error temporary?
-     * @type {boolean}
-     * @memberof ModelError
      */
     temporary: boolean;
     /**
      * Is the error a timeout?
-     * @type {boolean}
-     * @memberof ModelError
      */
     timeout: boolean;
 }
