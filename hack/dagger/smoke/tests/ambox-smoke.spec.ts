@@ -7,6 +7,8 @@ import { promisify } from "node:util";
 const execFile = promisify(execFileCallback);
 
 const enduroURL = process.env.ENDURO_URL ?? "http://enduro:9000";
+const lgtmURL = process.env.LGTM_URL ?? "http://lgtm:3000";
+const tempoURL = `${lgtmURL}/api/datasources/proxy/uid/tempo`;
 const temporalAddress = process.env.TEMPORAL_ADDRESS ?? "temporal:7233";
 const watchedDir = process.env.WATCHED_DIR ?? "/runtime/watched";
 const batchDir = process.env.BATCH_DIR ?? "/runtime/batch";
@@ -26,6 +28,20 @@ type Collection = {
   status: string;
 };
 
+type TraceAttribute = {
+  key: string;
+  value: { stringValue?: string };
+};
+
+type TempoTrace = {
+  batches?: {
+    resource?: { attributes?: TraceAttribute[] };
+    scopeSpans?: {
+      spans?: { name: string; attributes?: TraceAttribute[] }[];
+    }[];
+  }[];
+};
+
 test.describe.configure({ mode: "serial" });
 
 test.beforeAll(async () => {
@@ -35,6 +51,13 @@ test.beforeAll(async () => {
 test("filesystem transfer resumes after a prod receipt decision", async ({
   request,
 }) => {
+  await test.step("wait for LGTM's Tempo datasource", async () => {
+    await expect(async () => {
+      const response = await request.get(`${tempoURL}/ready`, { timeout: 5_000 });
+      expect(response.ok(), await response.text()).toBeTruthy();
+    }).toPass({ timeout: 120_000, intervals: [1_000, 2_000, 5_000] });
+  });
+
   const runID = `e2e-${Math.floor(Date.now() / 1000)}`;
   const receiptIdentifier = `2.16.578.1.39.100.11.${Date.now()}`;
   const transferName = `avl-other-sip-${receiptIdentifier}-20260721.xml.zip`;
@@ -137,6 +160,68 @@ test("filesystem transfer resumes after a prod receipt decision", async ({
       `receipt=${receiptName}`,
     ].join("\n") + "\n",
   );
+});
+
+test("LGTM captures the completed transfer's workflow trace", async ({ request }) => {
+  test.setTimeout(90_000);
+  const collection = JSON.parse(
+    await fs.readFile(path.join(artifactsDir, "collection.json"), "utf8"),
+  );
+  const workflowID: string = collection.workflow_id;
+  expect(workflowID).toMatch(/^processing-workflow-/);
+
+  // Both Enduro and the collector batch exports. Wait for this transfer's
+  // completed workflow and activity spans, not unrelated health-check traffic.
+  await expect(async () => {
+    const searchResponse = await request.get(`${tempoURL}/api/search`, {
+      params: {
+        q: `{ resource.service.name = "enduro" && span.temporalWorkflowID = ${JSON.stringify(workflowID)} && name = "RunWorkflow:processing-workflow" }`,
+        limit: 1,
+      },
+      timeout: 10_000,
+    });
+    expect(searchResponse.ok(), await searchResponse.text()).toBeTruthy();
+    const search = await searchResponse.json();
+    await writeJSONArtifact("tempo-search.json", search);
+    const traceID: string = search.traces?.[0]?.traceID;
+    expect(traceID, `No processing trace found for ${workflowID}`).toBeTruthy();
+
+    const traceResponse = await request.get(`${tempoURL}/api/traces/${traceID}`, {
+      timeout: 10_000,
+    });
+    expect(traceResponse.ok(), await traceResponse.text()).toBeTruthy();
+    const trace: TempoTrace = await traceResponse.json();
+    await writeJSONArtifact("tempo-trace.json", trace);
+    const spans = (trace.batches ?? [])
+      .filter((batch) =>
+        batch.resource?.attributes?.some(
+          (attribute) =>
+            attribute.key === "service.name" &&
+            attribute.value.stringValue === "enduro",
+        ),
+      )
+      .flatMap((batch) => batch.scopeSpans ?? [])
+      .flatMap((scope) => scope.spans ?? [])
+      .filter((span) =>
+        span.attributes?.some(
+          (attribute) =>
+            attribute.key === "temporalWorkflowID" &&
+            attribute.value.stringValue === workflowID,
+        ),
+      );
+    const spanNames = spans.map((span) => span.name);
+    expect(spanNames).toEqual(
+      expect.arrayContaining([
+        "RunWorkflow:processing-workflow",
+        "RunActivity:publish-transfer-activity",
+        "RunActivity:transfer-activity",
+      ]),
+    );
+    await writeTextArtifact(
+      "telemetry-report.txt",
+      `workflow_id=${workflowID}\ntrace_id=${traceID}\nspans=${spanNames.join(",")}\n`,
+    );
+  }).toPass({ timeout: 60_000, intervals: [1_000, 2_000, 5_000] });
 });
 
 test("Nuxt batch import form submits a directory transfer", async ({ page }) => {
