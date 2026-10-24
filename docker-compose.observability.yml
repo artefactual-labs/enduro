@@ -1,38 +1,15 @@
 services:
 
-  grafana:
-    image: grafana/grafana:13.2.4
-    volumes:
-      - ./hack/etc/grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
+  grafana-lgtm:
+    image: grafana/otel-lgtm:0.38.0
+    init: true
     environment:
       - GF_AUTH_ANONYMOUS_ENABLED=true
       - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
       - GF_AUTH_DISABLE_LOGIN_FORM=true
+      - ENABLE_LOGS_OTELCOL=true
+      - ENABLE_LOGS_TEMPO=true
     ports:
       - "127.0.0.1:3000:3000"
-
-  grafana-tempo:
-    image: "grafana/tempo:3.1.1"
-    entrypoint:
-      - "/tempo"
-    command:
-      - "-config.file=/etc/grafana-tempo.yaml"
-    volumes:
-      - "./hack/etc/grafana-tempo.yaml:/etc/grafana-tempo.yaml"
-      - "tempo-data:/var/tempo"
-    ports:
       - "127.0.0.1:4317:4317"
-
-  grafana-alloy:
-    image: "grafana/alloy:v1.21.2"
-    command:
-      - "run"
-      - "--stability.level=experimental"
-      - "/etc/alloy/config.alloy"
-    volumes:
-      - "./hack/etc/grafana-alloy.alloy:/etc/alloy/config.alloy:ro"
-    ports:
       - "127.0.0.1:12345:4317"
-
-volumes:
-  tempo-data:
