@@ -370,6 +370,10 @@ dependencies are configured in `hack/dagger/dagger.json` and
 `hack/dagger/smoke/package.json` aligned with its container image in
 `hack/dagger/main.go`.
 
+Keep the LGTM image in `docker-compose.observability.yml` aligned with
+`lgtmImage` in `hack/dagger/main.go`. The main Dagger smoke suite checks trace
+capture through the same LGTM release used for local development.
+
 The MinIO smoke-test server uses the published Quay image pinned in
 `hack/dagger/main.go`. The `minio-latest` provider name is a legacy label; it
 does not track a moving `latest` tag. This image predates the October 2025

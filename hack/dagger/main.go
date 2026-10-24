@@ -23,6 +23,7 @@ const (
 	seaweedFSImage    = "chrislusf/seaweedfs:4.48"
 	amboxImage        = "ghcr.io/sevein/ambox:latest"
 	playwrightImage   = "mcr.microsoft.com/playwright:v1.64.1-noble"
+	lgtmImage         = "grafana/otel-lgtm:0.38.0"
 )
 
 type EnduroE2E struct{}
@@ -56,6 +57,7 @@ type smokeEnvironment struct {
 	enduro      *dagger.Service
 	redis       *dagger.Service
 	storage     *dagger.Service
+	lgtm        *dagger.Service
 }
 
 // Run the smoke test suite against ambox.
@@ -183,7 +185,8 @@ func (m *EnduroE2E) smokeEnvironment(ctx context.Context, source *dagger.Directo
 		return nil, err
 	}
 
-	enduro := m.enduroService(source, volumes, mysql, temporal, ambox)
+	lgtm := m.lgtmService(cacheBuster)
+	enduro := m.enduroService(source, volumes, mysql, temporal, ambox, lgtm)
 
 	return &smokeEnvironment{
 		cacheBuster: cacheBuster,
@@ -193,6 +196,7 @@ func (m *EnduroE2E) smokeEnvironment(ctx context.Context, source *dagger.Directo
 		temporal:    temporal,
 		ambox:       ambox,
 		enduro:      enduro,
+		lgtm:        lgtm,
 	}, nil
 }
 
@@ -304,6 +308,7 @@ func (m *EnduroE2E) runSmokeSuite(ctx context.Context, env *smokeEnvironment) (*
 		WithServiceBinding("enduro", env.enduro).
 		WithServiceBinding("ambox", env.ambox).
 		WithServiceBinding("temporal", env.temporal).
+		WithServiceBinding("lgtm", env.lgtm).
 		WithMountedCache("/runtime/batch", env.volumes.batch).
 		WithMountedCache("/runtime/watched", env.volumes.watched).
 		WithMountedCache("/runtime/completed", env.volumes.completed).
@@ -311,6 +316,7 @@ func (m *EnduroE2E) runSmokeSuite(ctx context.Context, env *smokeEnvironment) (*
 		WithDirectory("/e2e", env.source.Directory("hack/dagger/smoke")).
 		WithEnvVariable("E2E_CACHE_BUSTER", env.cacheBuster).
 		WithEnvVariable("ENDURO_URL", "http://enduro:9000").
+		WithEnvVariable("LGTM_URL", "http://lgtm:3000").
 		WithEnvVariable("TEMPORAL_ADDRESS", "temporal:7233").
 		WithEnvVariable("WATCHED_DIR", "/runtime/watched").
 		WithEnvVariable("BATCH_DIR", "/runtime/batch").
@@ -560,6 +566,17 @@ func (m *EnduroE2E) redisService() *dagger.Service {
 		AsService(dagger.ContainerAsServiceOpts{UseEntrypoint: true})
 }
 
+func (m *EnduroE2E) lgtmService(cacheBuster string) *dagger.Service {
+	return dag.Container().
+		From(lgtmImage).
+		WithEnvVariable("E2E_CACHE_BUSTER", cacheBuster).
+		WithEnvVariable("ENABLE_LOGS_OTELCOL", "true").
+		WithEnvVariable("ENABLE_LOGS_TEMPO", "true").
+		WithExposedPort(3000).
+		WithExposedPort(4317).
+		AsService(dagger.ContainerAsServiceOpts{UseEntrypoint: true})
+}
+
 // Build independently of Enduro's source and per-run cache buster. Copy the
 // executable out of the target cache so it is part of Dagger's immutable output.
 func (m *EnduroE2E) argminBinary() *dagger.File {
@@ -656,6 +673,7 @@ func (m *EnduroE2E) enduroService(
 	mysql *dagger.Service,
 	temporal *dagger.Service,
 	ambox *dagger.Service,
+	lgtm *dagger.Service,
 ) *dagger.Service {
 	enduroBin := m.enduroBase(source, volumes).File("/src/build/enduro")
 
@@ -665,6 +683,7 @@ func (m *EnduroE2E) enduroService(
 		WithServiceBinding("mysql", mysql).
 		WithServiceBinding("temporal", temporal).
 		WithServiceBinding("ambox", ambox).
+		WithServiceBinding("lgtm", lgtm).
 		WithMountedCache("/runtime/batch", volumes.batch).
 		WithMountedCache("/runtime/watched", volumes.watched).
 		WithMountedCache("/runtime/completed", volumes.completed).
@@ -920,8 +939,8 @@ debug = true
 debugListen = "0.0.0.0:9001"
 
 [telemetry.traces]
-enabled = false
-address = ""
+enabled = true
+address = "lgtm:4317"
 ratio = 1.0
 
 [temporal]
