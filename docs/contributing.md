@@ -205,7 +205,12 @@ compatibility failure.
 
 ### Enable tracing
 
-Enable the observability services by editing the root `.env` file as follows:
+The optional [Grafana LGTM] container provides a local OpenTelemetry collector
+and preconfigured Grafana, Tempo, Loki, Prometheus, and Pyroscope backends. It
+is intended for development and testing. Enduro sends traces to it; collecting
+Enduro's metrics and logs requires additional configuration.
+
+Enable it by editing the root `.env` file as follows:
 
 ```
 COMPOSE_FILE=docker-compose.yml:docker-compose.observability.yml
@@ -218,21 +223,19 @@ defined in this Compose project:
 docker compose up -d --remove-orphans
 ```
 
-Three new services should be ready:
+The `grafana-lgtm` service provides:
 
 - Grafana (listens on `127.0.0.1:3000`),
-- Grafana Alloy (accepts OTLP/gRPC on `127.0.0.1:12345`), and
-- Grafana Tempo (listens on `127.0.0.1:4317`).
+- an OTLP/gRPC collector at `127.0.0.1:12345`, also available at
+  `127.0.0.1:4317` for clients using the standard port.
 
-Alloy replaces the retired Grafana Agent and keeps the same OTLP/gRPC endpoint.
-The `--remove-orphans` flag removes the old `grafana-agent` container, if
-present, so that it releases port `12345` before Alloy starts.
+The `--remove-orphans` flag removes the previous `grafana`, `grafana-tempo`,
+`grafana-alloy`, or `grafana-agent` containers, if present, so that they release
+the shared ports before LGTM starts. Existing Enduro tracing settings continue
+to use the same endpoint.
 
-Tempo runs in monolithic mode and stores traces in the `tempo-data` named
-volume. Docker initializes this volume with the ownership required by Tempo's
-container user. Existing traces in `hack/stuff/tempo-data` are left untouched
-and are not imported into the new volume. The Alloy debug exporter logs received
-spans and requires the experimental stability flag set in Compose.
+LGTM data is disposable: traces and Grafana changes are lost when the container
+is removed or recreated.
 
 Enable tracing in `enduro.toml`:
 
@@ -251,19 +254,15 @@ make run
 
 Things that you can do:
 
-- Observe that `grafana-alloy` logs received traces:
+- Check startup and collector/Tempo diagnostic logs:
 
   ```
-  docker compose logs -f grafana-alloy
+  docker compose logs -f grafana-lgtm
   ```
 
-- Observe that `grafana-tempo` logs stored traces:
-
-  ```
-  docker compose logs -f grafana-tempo
-  ```
-
-- Use the [Grafana explorer] to search and visualize traces.
+- Once `docker compose ps grafana-lgtm` reports the container as healthy, use
+  the [Grafana explorer] with the Tempo datasource to search and visualize
+  traces.
 
 ## API changes
 
@@ -406,6 +405,7 @@ the [workflow run][first-release-run] that made our very first release.
 [goa-dsl]: https://godoc.org/goa.design/goa/dsl
 [gopls]: https://github.com/golang/tools/blob/master/gopls/README.md
 [grafana explorer]: http://127.0.0.1:3000/explore
+[grafana lgtm]: https://github.com/grafana/docker-otel-lgtm
 [issue-118]: https://github.com/artefactual-labs/enduro/issues/118
 [make]: https://www.gnu.org/software/make/
 [mc]: https://docs.min.io/docs/minio-client-quickstart-guide.html
