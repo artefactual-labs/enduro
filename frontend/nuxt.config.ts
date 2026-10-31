@@ -1,3 +1,10 @@
+import { pathToFileURL } from 'node:url'
+
+const sbomPlugin = process.env.SBOM_FRONTEND_PLUGIN
+const sbomPlugins = sbomPlugin
+  ? [(await import(pathToFileURL(sbomPlugin).href)).sbomEvidence({ nuxtIcons: true })]
+  : []
+
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   modules: [
@@ -56,6 +63,7 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-01-15',
 
   vite: {
+    plugins: sbomPlugins,
     resolve: {
       dedupe: ['vue', '@vue/runtime-core', '@vue/runtime-dom']
     }

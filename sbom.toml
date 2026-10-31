@@ -1,0 +1,10 @@
+# Release expectations for the shared GoReleaser + embedded Vite collector.
+product = "Legacy Enduro"
+repository = "artefactual-labs/enduro"
+property_namespace = "enduro-legacy"
+binary = "enduro"
+platform = "linux/amd64"
+dist = "dist"
+frontend = "frontend/.output/public"
+evidence = "sbom-evidence"
+rolling_versions = ["main"]

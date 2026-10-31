@@ -1,0 +1,199 @@
+name: Upload retained SBOM
+
+on:
+  workflow_call:
+    inputs:
+      run-id:
+        type: string
+        required: true
+      run-attempt:
+        type: string
+        required: true
+  workflow_dispatch:
+    inputs:
+      run-id:
+        description: Build run ID (leave empty when using a retained release asset)
+        type: string
+        required: false
+      run-attempt:
+        description: Build run attempt containing the evidence
+        type: string
+        required: true
+        default: '1'
+      release-tag:
+        description: Exact release tag to retry from its sbom-evidence.tar.gz asset
+        type: string
+        required: false
+
+permissions:
+  contents: read
+  actions: read
+
+# Every writer, including retries, shares one lock. Never cancel an active import.
+concurrency:
+  group: enduro-legacy-dependency-track-upload
+  cancel-in-progress: false
+  queue: max
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Require trusted main for manual retries
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          RETRY_REF: ${{ github.ref }}
+        run: test "$RETRY_REF" = refs/heads/main
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Verify evidence came from a trusted build
+        if: inputs.release-tag == ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUILD_RUN: ${{ inputs.run-id }}
+          BUILD_ATTEMPT: ${{ inputs.run-attempt }}
+        run: |
+          [[ "$BUILD_RUN" =~ ^[0-9]+$ && "$BUILD_ATTEMPT" =~ ^[0-9]+$ ]]
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$BUILD_RUN/attempts/$BUILD_ATTEMPT" > build-run.json
+          jq -e '.event == "push" and .path == ".github/workflows/release.yml"' build-run.json
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        if: inputs.release-tag == ''
+        with:
+          name: sbom-evidence-${{ inputs.run-attempt }}
+          path: sbom-evidence
+          run-id: ${{ inputs.run-id }}
+          github-token: ${{ github.token }}
+      - name: Recover retained release evidence without rebuilding
+        if: inputs.release-tag != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release-tag }}
+          BUILD_RUN: ${{ inputs.run-id }}
+        run: |
+          [[ -z "$BUILD_RUN" && "$RELEASE_TAG" == v* && "$RELEASE_TAG" != *'/'* ]]
+          gh release download "$RELEASE_TAG" --pattern sbom-evidence.tar.gz --dir downloaded
+          python3 -c 'import tarfile; tarfile.open("downloaded/sbom-evidence.tar.gz").extractall("release-evidence", filter="data")'
+          mv release-evidence/sbom-evidence sbom-evidence
+          git fetch origin "refs/tags/$RELEASE_TAG:refs/tags/$RELEASE_TAG"
+          commit=$(git rev-parse "$RELEASE_TAG^{commit}")
+          jq -e --arg commit "$commit" --arg version "$RELEASE_TAG" \
+            '.version == $version and .source_commit == $commit' \
+            sbom-evidence/snapshot/manifest.json
+      - name: Bind evidence to the original trusted run attempt
+        id: retained
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUILD_RUN: ${{ inputs.run-id }}
+          BUILD_ATTEMPT: ${{ inputs.run-attempt }}
+          RELEASE_TAG: ${{ inputs.release-tag }}
+        run: |
+          recorded_run=$(jq -er '.ci_run' sbom-evidence/snapshot/manifest.json)
+          suffix=${recorded_run#"$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/"}
+          [[ "$suffix" != "$recorded_run" && "$suffix" =~ ^([0-9]+)/attempts/([0-9]+)$ ]]
+          recorded_id=${BASH_REMATCH[1]}
+          recorded_attempt=${BASH_REMATCH[2]}
+          if [[ -n "$RELEASE_TAG" ]]; then
+            gh api "repos/$GITHUB_REPOSITORY/actions/runs/$recorded_id/attempts/$recorded_attempt" > build-run.json
+          else
+            if [[ "$BUILD_RUN" != "$recorded_id" || "$BUILD_ATTEMPT" != "$recorded_attempt" ]]; then
+              echo "Evidence identifies a different build run attempt."
+              exit 1
+            fi
+          fi
+          jq -e --arg repository "$GITHUB_REPOSITORY" \
+            '.event == "push" and .path == ".github/workflows/release.yml" and .head_repository.full_name == $repository' build-run.json
+          version=$(jq -er '.head_branch' build-run.json)
+          commit=$(jq -er '.head_sha' build-run.json)
+          [[ -z "$RELEASE_TAG" || "$version" == "$RELEASE_TAG" ]]
+          jq -e --arg commit "$commit" --arg version "$version" --arg run "$recorded_run" \
+            '.version == $version and .source_commit == $commit and .ci_run == $run' \
+            sbom-evidence/snapshot/manifest.json
+          revision=$(cat sbom-evidence/reporting-tool-revision.txt)
+          [[ "$revision" =~ ^[0-9a-f]{40}$ ]]
+          echo "revision=$revision" >> "$GITHUB_OUTPUT"
+      - name: Install the original reporting tool
+        id: reporting
+        uses: artefactual-labs/sbom-reporting@a75f1a5d5c80646eef8e6bcee56cebd1cf972e6d # v0.2.0
+        with:
+          revision: ${{ steps.retained.outputs.revision }}
+      - name: Record and check the installed reporting revision
+        env:
+          BOOTSTRAP_REVISION: a75f1a5d5c80646eef8e6bcee56cebd1cf972e6d
+          EXPECTED_REVISION: ${{ steps.retained.outputs.revision }}
+          INSTALLED_REVISION: ${{ steps.reporting.outputs.revision }}
+        run: |
+          printf '%s\n' "$BOOTSTRAP_REVISION" > sbom-evidence/upload-bootstrap-revision.txt
+          test "$INSTALLED_REVISION" = "$EXPECTED_REVISION"
+          printf '%s\n' "$INSTALLED_REVISION" > sbom-evidence/upload-tool-revision.txt
+      - name: Upload and verify imported inventory
+        env:
+          DEPENDENCY_TRACK_URL: ${{ secrets.DEPENDENCY_TRACK_URL }}
+          DEPENDENCY_TRACK_API_KEY: ${{ secrets.DEPENDENCY_TRACK_API_KEY }}
+          DEPENDENCY_TRACK_PARENT_UUID: ${{ vars.DEPENDENCY_TRACK_PARENT_UUID }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          manifest=sbom-evidence/snapshot/manifest.json
+          jq -e --arg parent "$DEPENDENCY_TRACK_PARENT_UUID" '.parent_uuid == $parent' "$manifest"
+          kind=$(jq -er '.kind' "$manifest")
+          version=$(jq -er '.version' "$manifest")
+          commit=$(jq -er '.source_commit' "$manifest")
+          # A processed import can lose properties on this server. Retry the same
+          # snapshot once, retaining both exports and checking freshness each time.
+          for attempt in 1 2; do
+            args=()
+            if [[ "$kind" == rolling ]]; then
+              head=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/$version" --jq '.object.sha')
+              args+=(--expected-head "$head")
+            fi
+            status=0
+            sbom-reporting upload \
+              sbom-evidence/snapshot --allow-create "${args[@]}" || status=$?
+            mkdir -p "sbom-evidence/upload-attempt-$attempt"
+            for evidence in upload-result.json imported.cdx.json; do
+              if [[ -f "sbom-evidence/snapshot/$evidence" ]]; then
+                cp "sbom-evidence/snapshot/$evidence" "sbom-evidence/upload-attempt-$attempt/"
+              fi
+            done
+            if [[ "$status" == 0 ]]; then
+              break
+            fi
+            if [[ "$attempt" == 2 ]] || ! jq -e \
+              '.state == "failed" and .last_state == "processed-unverified"' \
+              sbom-evidence/snapshot/upload-result.json; then
+              exit "$status"
+            fi
+            echo "::warning::Processed import did not verify; retrying the identical retained snapshot once."
+          done
+          if [[ "$kind" == rolling ]]; then
+            head=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/$version" --jq '.object.sha')
+            jq -n --arg commit "$commit" --arg head "$head" \
+              '{source_commit: $commit, current_head: $head, fresh: ($commit == $head)}' \
+              > sbom-evidence/freshness.json
+            if [[ "$head" != "$commit" ]]; then
+              echo "Branch advanced during import; the verified inventory is now stale."
+              exit 1
+            fi
+          fi
+      - name: Retain upload receipt
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: sbom-upload-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            sbom-evidence/
+            build-run.json
+          retention-days: 90
+      - name: Report upload status
+        if: always()
+        env:
+          REPORT_STATUS: ${{ job.status }}
+        run: |
+          echo "Dependency-Track reporting: $REPORT_STATUS" >> "$GITHUB_STEP_SUMMARY"
+          if test -f sbom-evidence/snapshot/upload-result.json; then
+            cat sbom-evidence/snapshot/upload-result.json >> "$GITHUB_STEP_SUMMARY"
+          fi
+          if test -f sbom-evidence/freshness.json; then
+            cat sbom-evidence/freshness.json >> "$GITHUB_STEP_SUMMARY"
+          fi

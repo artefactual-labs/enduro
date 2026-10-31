@@ -22,3 +22,5 @@ node_modules
 /hack/production-system-interface/*
 
 /hack/stuff
+
+/sbom-evidence/

@@ -1,14 +1,20 @@
-name: GoReleaser
+name: Build and report SBOM
 on:
   push:
+    branches: [main]
     tags:
       - "v*"
 permissions:
-  contents: write
+  contents: read
 jobs:
   release:
-    name: Release
+    name: Build release artifact
+    permissions:
+      contents: write
+    timeout-minutes: 40
     runs-on: ubuntu-latest
+    outputs:
+      evidence-attempt: ${{ steps.evidence.outputs.attempt }}
     steps:
       - name: Check out code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -24,11 +30,83 @@ jobs:
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24
+      - name: Capture source inputs
+        run: |
+          mkdir -p sbom-evidence
+          go list -m -json all > sbom-evidence/go-modules.json
+          cp go.mod go.sum frontend/package.json frontend/package-lock.json sbom-evidence/
+      - name: Install shared reporting tool
+        id: reporting
+        uses: artefactual-labs/sbom-reporting@a75f1a5d5c80646eef8e6bcee56cebd1cf972e6d # v0.2.0
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@a4f02ab5355a589de60d917a659ce617ed19b3de # v7.3.0
         with:
-          version: "~> v2"
-          args: release --clean
+          version: v2.19.0
+          args: release --clean ${{ github.ref_type == 'branch' && '--snapshot' || '' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SBOM_FRONTEND_PLUGIN: ${{ steps.reporting.outputs.frontend-plugin }}
+          SBOM_FRONTEND_EVIDENCE: ${{ github.workspace }}/sbom-evidence/frontend-build.json
         if: success()
+      - name: Generate and validate the complete inventory
+        env:
+          DEPENDENCY_TRACK_PARENT_UUID: ${{ vars.DEPENDENCY_TRACK_PARENT_UUID }}
+          REPORT_TOOL_REVISION: ${{ steps.reporting.outputs.revision }}
+          REPORT_VERSION: ${{ github.ref_name }}
+          REPORT_COMMIT: ${{ github.sha }}
+          REPORT_RUN: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/attempts/${{ github.run_attempt }}
+        run: |
+          printf '%s\n' "$REPORT_TOOL_REVISION" > sbom-evidence/reporting-tool-revision.txt
+          sbom-reporting collect-goreleaser sbom.toml \
+            --version "$REPORT_VERSION" --commit "$REPORT_COMMIT" --run "$REPORT_RUN"
+          sbom-reporting merge \
+            sbom-evidence/manifest.json --output sbom-evidence/snapshot
+      - name: Retain release evidence for the release lifetime
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          tar -czf sbom-evidence.tar.gz sbom-evidence
+          gh release upload "$RELEASE_TAG" sbom-evidence.tar.gz
+      - name: Retain the original build outputs
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: sbom-build-outputs-${{ github.run_attempt }}
+          include-hidden-files: true
+          path: |
+            dist/*.tar.gz
+            dist/checksums.txt
+            dist/artifacts.json
+            frontend/.output/public/
+          if-no-files-found: error
+          retention-days: 90
+      - name: Record the evidence build attempt
+        id: evidence
+        run: echo "attempt=$GITHUB_RUN_ATTEMPT" >> "$GITHUB_OUTPUT"
+      - name: Retain evidence even when reporting fails
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: sbom-evidence-${{ github.run_attempt }}
+          path: sbom-evidence/
+          if-no-files-found: error
+          retention-days: 90
+      - name: Report build identity and status
+        if: always()
+        env:
+          REPORT_COMMIT: ${{ github.sha }}
+          REPORT_STATUS: ${{ job.status }}
+        run: |
+          echo "SBOM build: $REPORT_COMMIT; status: $REPORT_STATUS. See retained evidence and upload job." >> "$GITHUB_STEP_SUMMARY"
+  upload:
+    permissions:
+      contents: read
+      actions: read
+    needs: release
+    uses: ./.github/workflows/sbom-upload.yml
+    with:
+      run-id: ${{ github.run_id }}
+      run-attempt: ${{ needs.release.outputs.evidence-attempt }}
+    secrets: inherit
