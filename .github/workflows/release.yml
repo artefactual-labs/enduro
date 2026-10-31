@@ -37,7 +37,7 @@ jobs:
           cp go.mod go.sum frontend/package.json frontend/package-lock.json sbom-evidence/
       - name: Install shared reporting tool
         id: reporting
-        uses: artefactual-labs/sbom-reporting@a75f1a5d5c80646eef8e6bcee56cebd1cf972e6d # v0.2.0
+        uses: artefactual-labs/sbom-reporting@7bedac9ed66d6ec7c03e48faf1796c472f1d984f # v0.2.1
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@a4f02ab5355a589de60d917a659ce617ed19b3de # v7.3.0
         with:

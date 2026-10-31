@@ -95,7 +95,10 @@ jobs:
           recorded_id=${BASH_REMATCH[1]}
           recorded_attempt=${BASH_REMATCH[2]}
           if [[ -n "$RELEASE_TAG" ]]; then
-            gh api "repos/$GITHUB_REPOSITORY/actions/runs/$recorded_id/attempts/$recorded_attempt" > build-run.json
+            if ! gh api "repos/$GITHUB_REPOSITORY/actions/runs/$recorded_id/attempts/$recorded_attempt" > build-run.json; then
+              echo "::error::Cannot authenticate the original build run $recorded_id attempt $recorded_attempt. Check Actions access and preserve the original run for the supported release lifetime. The release asset alone is not trusted provenance."
+              exit 1
+            fi
           else
             if [[ "$BUILD_RUN" != "$recorded_id" || "$BUILD_ATTEMPT" != "$recorded_attempt" ]]; then
               echo "Evidence identifies a different build run attempt."
@@ -115,12 +118,12 @@ jobs:
           echo "revision=$revision" >> "$GITHUB_OUTPUT"
       - name: Install the original reporting tool
         id: reporting
-        uses: artefactual-labs/sbom-reporting@a75f1a5d5c80646eef8e6bcee56cebd1cf972e6d # v0.2.0
+        uses: artefactual-labs/sbom-reporting@7bedac9ed66d6ec7c03e48faf1796c472f1d984f # v0.2.1
         with:
           revision: ${{ steps.retained.outputs.revision }}
       - name: Record and check the installed reporting revision
         env:
-          BOOTSTRAP_REVISION: a75f1a5d5c80646eef8e6bcee56cebd1cf972e6d
+          BOOTSTRAP_REVISION: 7bedac9ed66d6ec7c03e48faf1796c472f1d984f
           EXPECTED_REVISION: ${{ steps.retained.outputs.revision }}
           INSTALLED_REVISION: ${{ steps.reporting.outputs.revision }}
         run: |
