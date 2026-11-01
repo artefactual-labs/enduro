@@ -19,7 +19,7 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
-      enduroApiBase: import.meta.env.NUXT_PUBLIC_ENDURO_API_BASE || ''
+      enduroApiBase: process.env.NUXT_PUBLIC_ENDURO_API_BASE || ''
     }
   },
 
