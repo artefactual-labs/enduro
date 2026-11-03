@@ -6,13 +6,27 @@ on:
     # Daily, at 1pm UTC / 6am PST.
     - cron: "0 13 * * *"
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
 jobs:
   govulncheck:
+    timeout-minutes: 15
     name: Go vulnerability check
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Check out code
         uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
       - name: Run govulncheck
         uses: golang/govulncheck-action@v1.1.0
         with:

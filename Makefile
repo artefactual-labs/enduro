@@ -99,6 +99,10 @@ lint: LINT_FLAGS ?= --fix=1
 lint: tool-golangci-lint
 	golangci-lint run -v $(LINT_FLAGS)
 
+lint-actions: # @HELP Lints workflows and Dependabot configuration.
+lint-actions: tool-jactionlint
+	jactionlint --strict-exit
+
 check-actions: # @HELP Verifies action pins against GitHub without changing files.
 check-actions: tool-gh-actions-lock
 	gh-actions-lock --verify

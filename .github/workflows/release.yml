@@ -8,21 +8,26 @@ permissions:
 concurrency:
   group: release-${{ github.ref }}
   cancel-in-progress: false
+defaults:
+  run:
+    shell: bash
+
 jobs:
   candidate:
     name: Build candidate
     permissions:
-      contents: write
-      packages: write
+      contents: write # Create the release draft and upload its assets.
+      packages: write # Push candidate container images.
     outputs:
       image-ref: ${{ steps.candidate.outputs.image-ref }}
       image-version: ${{ steps.candidate.outputs.image-version }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 40
     steps:
       - name: Check out code
         uses: actions/checkout@v7.0.1
         with:
+          persist-credentials: false
           fetch-depth: 0
       - name: Fetch all tags
         run: git fetch origin +refs/tags/*:refs/tags/*
@@ -30,12 +35,15 @@ jobs:
         uses: actions/setup-go@v7.0.0
         with:
           go-version-file: go.mod
+          cache: false
       - name: Install Node
         uses: actions/setup-node@v7.1.0
         with:
           node-version: 24.22.1
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4.4.1
+        with:
+          cache-binary: false
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v4.7.0
         with:
@@ -71,7 +79,7 @@ jobs:
           printf '%s\n' "$image_ref" > dist/candidate-image-ref.txt
           docker buildx imagetools inspect --raw "$image_ref" > dist/candidate-index.json
       - name: Retain candidate identities
-        if: always()
+        if: ${{ always() }}
         uses: actions/upload-artifact@v7.0.2
         with:
           name: release-candidate-${{ github.run_id }}-${{ github.run_attempt }}
@@ -88,25 +96,29 @@ jobs:
     needs: candidate
     permissions:
       contents: read
-      packages: read
-    uses: ./.github/workflows/container-tests.yml
+      packages: read # Pull release candidates from GitHub Container Registry.
+    uses: $/.github/workflows/container-tests.yml
     with:
       image-ref: ${{ needs.candidate.outputs.image-ref }}
       image-version: ${{ needs.candidate.outputs.image-version }}
   promote:
     name: Promote tested candidate
     needs: [candidate, test]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
-      contents: write
-      packages: write
-      issues: write
+      contents: write # Publish the existing release draft.
+      packages: write # Tag the tested container index for release.
+      issues: write # Close the released milestone.
     steps:
       - name: Check out code
         uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4.4.1
+        with:
+          cache-binary: false
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v4.7.0
         with:

@@ -4,11 +4,15 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    cooldown:
+      default-days: 7
     open-pull-requests-limit: 1
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
+    cooldown:
+      default-days: 7
     open-pull-requests-limit: 1
     groups:
       github-actions:
@@ -18,6 +22,8 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    cooldown:
+      default-days: 7
     open-pull-requests-limit: 1
     groups:
       go-dependencies:
@@ -27,6 +33,8 @@ updates:
     directory: "/hack/dagger"
     schedule:
       interval: "weekly"
+    cooldown:
+      default-days: 7
     open-pull-requests-limit: 1
     groups:
       dagger-go-dependencies:
@@ -36,6 +44,8 @@ updates:
     directory: "/frontend"
     schedule:
       interval: "weekly"
+    cooldown:
+      default-days: 7
     open-pull-requests-limit: 1
     groups:
       frontend-dependencies:
@@ -45,6 +55,8 @@ updates:
     directory: "/hack/dagger/smoke"
     schedule:
       interval: "weekly"
+    cooldown:
+      default-days: 7
     open-pull-requests-limit: 1
     groups:
       smoke-test-dependencies:

@@ -44,3 +44,8 @@ version = "1.8.2"
 name = "gh-actions-lock"
 version = "0.2.0"
 go_package = "github.com/github/gh-actions-lock/cmd/gh-actions-lock"
+
+[[bins]]
+name = "jactionlint"
+version = "2.2.0"
+packslip = { project = "github.com/jdx/jactionlint" }

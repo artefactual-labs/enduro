@@ -142,6 +142,29 @@ You can enable it in Visual Studio Code as follows:
 }
 ```
 
+### GitHub Actions
+
+Run `make lint-actions` to check workflows and Dependabot configuration with
+[jactionlint]. The pedantic profile is configured in `.github/jactionlint.yaml`.
+Action pins are checked separately by [gh-actions-lock]. Both tools are pinned
+in `.bine.toml` and installed automatically by their Make targets.
+
+After adding, removing, or updating a workflow dependency, run:
+
+```sh
+make lock-actions
+make check-actions
+make lint-actions
+```
+
+Review and commit the workflow changes together with the generated
+`.github/workflows/actions.lock`. Check changes to locked commits and repository
+identities, including transitive action dependencies. Keep full version tags in
+workflow references. `make check-actions` verifies the lockfile against GitHub
+without changing files and needs GitHub CLI authentication. Dependabot updates
+the matching lockfile entries alongside action version updates for workflows
+already covered by the lockfile.
+
 ### Dagger smoke harness
 
 The Dagger harness under `hack/dagger` can test production image archives or
@@ -446,6 +469,7 @@ the [workflow run][first-release-run] that made our very first release.
 [docker-engine]: https://docs.docker.com/engine/install/
 [docker-non-root]: https://docs.docker.com/engine/install/linux-postinstall/#manage-docker-as-a-non-root-user
 [first-release-run]: https://github.com/artefactual-labs/enduro/commit/0f17f7fa3beb88f7039cf9b6e1dc1a6f4af66f51/checks
+[gh-actions-lock]: https://github.com/github/gh-actions-lock
 [go]: https://golang.org/doc/install
 [goa]: https://goa.design/
 [goa-dsl]: https://godoc.org/goa.design/goa/dsl
@@ -453,6 +477,7 @@ the [workflow run][first-release-run] that made our very first release.
 [grafana explorer]: http://127.0.0.1:3000/explore
 [grafana lgtm]: https://github.com/grafana/docker-otel-lgtm
 [issue-118]: https://github.com/artefactual-labs/enduro/issues/118
+[jactionlint]: https://github.com/jdx/jactionlint
 [make]: https://www.gnu.org/software/make/
 [mc]: https://docs.min.io/docs/minio-client-quickstart-guide.html
 [minio-status]: https://github.com/minio/minio
