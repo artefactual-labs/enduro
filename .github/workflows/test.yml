@@ -1,9 +1,21 @@
 on:
   pull_request:
+  workflow_dispatch:
+    inputs:
+      full-tests:
+        description: Run the complete container and integration coverage suites
+        type: boolean
+        default: true
   push:
     branches:
       - main
+      - dev/containers
 name: Test
+permissions:
+  contents: read
+concurrency:
+  group: test-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 jobs:
   mod:
     runs-on: ubuntu-latest
@@ -30,7 +42,7 @@ jobs:
       - name: Get date
         shell: bash
         run: |
-          echo "DATE=$(date -u '+%Y-%m')" >> $GITHUB_ENV
+          echo "DATE=$(date -u '+%Y-%m')" >> "$GITHUB_ENV"
       - name: Restore golangci-lint cache
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         timeout-minutes: 10
@@ -74,7 +86,9 @@ jobs:
           files: junit.xml
           report_type: test_results
           token: ${{ secrets.CODECOV_TOKEN }}
-  smoke-tests:
+  smoke-coverage:
+    name: Smoke coverage
+    needs: frontend
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:
@@ -82,6 +96,15 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Download frontend assets
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: frontend-assets
+          path: ${{ runner.temp }}/frontend-assets
+      - name: Extract frontend assets
+        run: |
+          mkdir -p frontend/.output/public
+          tar -xf "$RUNNER_TEMP/frontend-assets/frontend.tar" -C frontend/.output/public
       - name: Report initial disk usage
         run: df -h /
       - name: Configure Dagger engine cache
@@ -102,14 +125,18 @@ jobs:
         env:
           DAGGER_NO_NAG: "1"
         with:
+          version: "0.21.11"
           verb: call
           module: hack/dagger
-          args: smoke-tests --source . export --path hack/dagger/runtime/artifacts
+          args: >-
+            ${{ (github.ref != 'refs/heads/dev/containers' || (github.event_name == 'workflow_dispatch' && inputs.full-tests)) && 'smoke-tests' || 'coverage-check' }}
+            --source . --frontend-assets frontend/.output/public
+            export --path hack/dagger/runtime/artifacts
       - name: Report final disk usage
         if: always()
         run: df -h /
       - name: Upload smoke coverage to Codecov
-        if: github.actor != 'dependabot[bot]'
+        if: github.actor != 'dependabot[bot]' && (github.ref != 'refs/heads/dev/containers' || (github.event_name == 'workflow_dispatch' && inputs.full-tests))
         uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
@@ -122,66 +149,8 @@ jobs:
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: smoke-test-artifacts
+          name: smoke-coverage-artifacts
           path: hack/dagger/runtime/artifacts
-          if-no-files-found: ignore
-  object-storage-smoke-tests:
-    runs-on: ubuntu-latest
-    timeout-minutes: 60
-    permissions:
-      contents: read
-    strategy:
-      fail-fast: false
-      matrix:
-        provider:
-          # MinIO is tested locally only; see docs/contributing.md.
-          - seaweedfs
-          - argmin
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Report initial disk usage
-        run: df -h /
-      - name: Configure Dagger engine cache
-        run: |
-          mkdir -p "$HOME/.config/dagger"
-          cat > "$HOME/.config/dagger/engine.json" <<'JSON'
-          {
-            "gc": {
-              "maxUsedSpace": "30%",
-              "reservedSpace": "5%",
-              "minFreeSpace": "30%",
-              "sweepSize": "50%"
-            }
-          }
-          JSON
-      - name: Run object storage smoke tests
-        uses: dagger/dagger-for-github@27b130bf0f79a7f6fbbbe0fbca6760dc9bb40a77 # v8.4.1
-        env:
-          DAGGER_NO_NAG: "1"
-        with:
-          verb: call
-          module: hack/dagger
-          args: object-storage-smoke-test --source . --provider ${{ matrix.provider }} export --path hack/dagger/runtime/object-storage-artifacts-${{ matrix.provider }}
-      - name: Report final disk usage
-        if: always()
-        run: df -h /
-      - name: Upload object storage smoke coverage to Codecov
-        if: github.actor != 'dependabot[bot]'
-        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-        with:
-          disable_search: true
-          fail_ci_if_error: true
-          files: hack/dagger/runtime/object-storage-artifacts-${{ matrix.provider }}/enduro-smoke.coverprofile
-          flags: go-smoke-object-storage-${{ matrix.provider }}
-      - name: Upload object storage smoke test artifacts
-        if: always()
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: object-storage-smoke-test-artifacts-${{ matrix.provider }}
-          path: hack/dagger/runtime/object-storage-artifacts-${{ matrix.provider }}
           if-no-files-found: ignore
   frontend:
     runs-on: ubuntu-latest
@@ -193,7 +162,9 @@ jobs:
       - name: Install Node
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 24
+          node-version: 24.22.1
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
       - name: Install frontend dependencies
         run: npm ci --prefix frontend
       - name: Lint frontend
@@ -204,6 +175,15 @@ jobs:
         run: npm run test:coverage --prefix frontend
       - name: Build frontend
         run: npm run build --prefix frontend
+      - name: Archive frontend assets
+        run: tar -cf "$RUNNER_TEMP/frontend.tar" -C frontend/.output/public .
+      - name: Retain frontend assets for binary builds
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: frontend-assets
+          path: ${{ runner.temp }}/frontend.tar
+          if-no-files-found: error
+          retention-days: 7
       - name: Upload frontend coverage to Codecov
         if: github.actor != 'dependabot[bot]'
         uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
@@ -214,3 +194,72 @@ jobs:
           fail_ci_if_error: true
           files: frontend/coverage/lcov.info
           flags: frontend
+  containers:
+    name: Build containers
+    needs: frontend
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Check out code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Install Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+      - name: Download frontend assets
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: frontend-assets
+          path: ${{ runner.temp }}/frontend-assets
+      - name: Extract frontend assets
+        run: |
+          mkdir -p frontend/.output/public
+          tar -xf "$RUNNER_TEMP/frontend-assets/frontend.tar" -C frontend/.output/public
+          test -s frontend/.output/public/index.html
+      - name: Set up Docker with the containerd image store
+        uses: docker/setup-docker-action@7ec28a010822b4626af4874f9448a4b05ac6f3e5 # v5.6.0
+        with:
+          version: v29.5.2
+          daemon-config: '{"features":{"containerd-snapshotter":true}}'
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - name: Build the archive and both container images without publishing
+        uses: goreleaser/goreleaser-action@a4f02ab5355a589de60d917a659ce617ed19b3de # v7.3.0
+        with:
+          version: "2.19.0"
+          args: release --clean --snapshot --skip=before
+      - name: Export the built images
+        run: ./hack/containers/export.sh
+      - name: Retain images for native container tests
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: enduro-containers
+          path: dist/containers/
+          if-no-files-found: error
+          retention-days: 7
+      - name: Retain build identities
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: container-build-identities
+          path: |
+            dist/artifacts.json
+            dist/metadata.json
+            dist/checksums.txt
+          if-no-files-found: warn
+          retention-days: 7
+  container-tests:
+    name: Test containers
+    needs: containers
+    permissions:
+      contents: read
+      packages: read
+    uses: ./.github/workflows/container-tests.yml
+    with:
+      image-artifact: enduro-containers
+      full-tests: ${{ github.ref != 'refs/heads/dev/containers' || (github.event_name == 'workflow_dispatch' && inputs.full-tests) }}

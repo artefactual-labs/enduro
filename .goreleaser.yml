@@ -5,6 +5,8 @@ before:
   hooks:
     - make frontend
 release:
+  draft: true
+  prerelease: auto
   github:
     owner: artefactual-labs
     name: enduro
@@ -17,7 +19,10 @@ changelog:
       - "^docs:"
       - "^website:"
 builds:
-  - goos: [linux]
+  - &linux-build
+    id: enduro-linux-amd64
+    binary: enduro
+    goos: [linux]
     goarch: [amd64]
     flags:
       - -trimpath
@@ -31,8 +36,13 @@ builds:
     mod_timestamp: "{{ .CommitTimestamp }}"
     env:
       - CGO_ENABLED=0
+  # Build ARM64 for the container without adding a new release archive.
+  - <<: *linux-build
+    id: enduro-linux-arm64
+    goarch: [arm64]
 archives:
-  - wrap_in_directory: true
+  - ids: [enduro-linux-amd64]
+    wrap_in_directory: true
     formats: [tar.gz]
     name_template: >-
       {{ .ProjectName }}_
@@ -46,13 +56,29 @@ archives:
       - README.md
       - enduro.toml
       - internal/db/migrations/*.sql
+dockers_v2:
+  - ids: [enduro-linux-amd64, enduro-linux-arm64]
+    extra_files:
+      - LICENSE
+    images:
+      - ghcr.io/artefactual-labs/enduro
+    tags:
+      - "{{ if .IsSnapshot }}{{ .Version }}{{ else }}{{ .Env.CANDIDATE_TAG }}{{ end }}"
+    platforms:
+      - linux/amd64
+      - linux/arm64
+    labels:
+      org.opencontainers.image.title: Legacy Enduro
+      org.opencontainers.image.source: https://github.com/artefactual-labs/enduro
+      org.opencontainers.image.licenses: Apache-2.0
+      org.opencontainers.image.version: "{{ .Version }}"
+      org.opencontainers.image.revision: "{{ .FullCommit }}"
+      org.opencontainers.image.created: "{{ .Date }}"
+    annotations:
+      # Snapshots are single-platform exports and have no index to annotate.
+      "{{ if not .IsSnapshot }}index,{{ end }}manifest:org.opencontainers.image.source": https://github.com/artefactual-labs/enduro
+      "{{ if not .IsSnapshot }}index,{{ end }}manifest:org.opencontainers.image.revision": "{{ .FullCommit }}"
+      "{{ if not .IsSnapshot }}index,{{ end }}manifest:org.opencontainers.image.version": "{{ .Version }}"
 checksum:
   name_template: checksums.txt
   algorithm: sha256
-milestones:
-  - repo:
-      owner: artefactual-labs
-      name: enduro
-    close: true
-    fail_on_error: false
-    name_template: "{{ .Tag }}"
