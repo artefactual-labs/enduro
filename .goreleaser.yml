@@ -44,12 +44,11 @@ builds:
     mod_timestamp: "{{ .CommitTimestamp }}"
     env:
       - CGO_ENABLED=0
-  # Build ARM64 for the container without adding a new release archive.
   - <<: *linux-build
     id: enduro-linux-arm64
     goarch: [arm64]
 archives:
-  - ids: [enduro-linux-amd64]
+  - ids: [enduro-linux-amd64, enduro-linux-arm64]
     wrap_in_directory: true
     formats: [tar.gz]
     name_template: >-
