@@ -10,6 +10,14 @@ release:
   github:
     owner: artefactual-labs
     name: enduro
+  footer: |
+    ## Docker image
+
+    The image supports Linux AMD64 and ARM64:
+
+    ```sh
+    docker pull ghcr.io/artefactual-labs/enduro:{{ .Tag }}
+    ```
 changelog:
   use: github
   abbrev: 8
