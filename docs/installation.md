@@ -23,16 +23,16 @@ Temporal is the orchestration engine. There are
 [multiple ways to run a Temporal Cluster]. Our standard configuration uses an
 [Ansible role] to deploy both Enduro and Temporal on a remote server.
 
-More on this topic can be found at the official [Temporal Cluster deployment
-guide][temporal-deployment].
+More on this topic can be found at the official
+[Temporal Cluster deployment guide][temporal-deployment].
 
 ### Other dependencies
 
 #### S3-compatible storage + Redis
 
 Enduro can consume objects uploaded to S3-compatible object storage. Object
-storage and Redis can be considered dependencies only when Enduro is set up
-with at least one S3 watcher entry.
+storage and Redis can be considered dependencies only when Enduro is set up with
+at least one S3 watcher entry.
 
 Enduro does not poll buckets directly. Instead, `[[watcher.s3]]` consumes
 object-created events from Redis, downloads the referenced object from the
@@ -47,9 +47,8 @@ There are two supported Redis event formats:
   keeps the legacy MinIO + Redis notification path supported.
 
 The bundled development environment uses SeaweedFS as the S3-compatible storage
-service. SeaweedFS sends filer webhook events to Enduro's
-`[objectEventWebhook]` adapter, which normalizes object-created file events and
-writes them to Redis:
+service. SeaweedFS sends filer webhook events to Enduro's `[objectEventWebhook]`
+adapter, which normalizes object-created file events and writes them to Redis:
 
 ```text
 SeaweedFS filer webhook
@@ -61,8 +60,8 @@ SeaweedFS filer webhook
 ```
 
 In this setup, `[[watcher.s3]]` uses `eventSource = "redis"` and
-`eventFormat = "enduro"`. The detailed configuration attributes are described
-in the [configuration reference](./configuration-reference.md).
+`eventFormat = "enduro"`. The detailed configuration attributes are described in
+the [configuration reference](./configuration-reference.md).
 
 #### Temporal Web UI
 
@@ -74,8 +73,8 @@ Visit [Temporal Web UI][temporal-web-ui] to know more.
 
 #### Prometheus
 
-Though not a dependency per se, Prometheus can be used to pull metrics from
-both Temporal (be prepared for an extensive set of metrics here) and Enduro.
+Though not a dependency per se, Prometheus can be used to pull metrics from both
+Temporal (be prepared for an extensive set of metrics here) and Enduro.
 
 In Enduro, the `debugListen` configuration parameter determines the address of
 the HTTP server from which the metrics are served. E.g. use
@@ -84,11 +83,12 @@ the HTTP server from which the metrics are served. E.g. use
 
 ## Enduro
 
+For container deployments, see the [container guide].
+
 Enduro binaries can be found at the [release page][enduro-release-page]. Learn
-more about the configuration details
-[here](./configuration-reference.md). Review the
-[Security Configuration](./security-configuration.md) guide before exposing
-Enduro to operators.
+more about the configuration details [here](./configuration-reference.md).
+Review the [Security Configuration](./security-configuration.md) guide before
+exposing Enduro to operators.
 
 Before upgrading, follow the [Enduro upgrade procedure] to ensure that all
 Enduro Workflow Executions are closed. By default, Enduro applies pending
@@ -140,12 +140,12 @@ the API via cURL is `curl -Ls 127.0.0.1:9000/collection | jq`:
 `/collection/monitor` uses Server-Sent Events (SSE), a long-lived HTTP response
 that delivers collection updates. Proxies and security appliances must forward
 messages promptly; buffering or inspection that waits for a complete response
-can stall delivery. A proxy that supported Enduro's previous WebSocket connection
-may still buffer SSE responses. The [Connection monitor] shows whether the
-browser is connected and receiving events.
+can stall delivery. A proxy that supported Enduro's previous WebSocket
+connection may still buffer SSE responses. The [Connection monitor] shows
+whether the browser is connected and receiving events.
 
-For Nginx, apply these directives in the existing location serving this endpoint,
-preserving its upstream, authentication, and forwarding settings:
+For Nginx, apply these directives in the existing location serving this
+endpoint, preserving its upstream, authentication, and forwarding settings:
 
 ```nginx
 proxy_buffering off;
@@ -153,16 +153,15 @@ proxy_cache off;
 proxy_read_timeout 60s;  # Already the Nginx default.
 ```
 
-[`proxy_buffering off`] forwards data as it arrives.
-[`proxy_read_timeout`] measures inactivity between upstream
-reads, not total connection duration. Enduro's ten-second heartbeats should
-keep it open; increasing the timeout does not fix buffering. If creating a
-separate location, retain the existing access controls: sibling locations do
-not inherit each other's settings.
+[`proxy_buffering off`] forwards data as it arrives. [`proxy_read_timeout`]
+measures inactivity between upstream reads, not total connection duration.
+Enduro's ten-second heartbeats should keep it open; increasing the timeout does
+not fix buffering. If creating a separate location, retain the existing access
+controls: sibling locations do not inherit each other's settings.
 
-If compression is enabled for event streams, try [`gzip off;`] to
-rule out Nginx's own compression. Other appliances may need separate changes.
-Validate with `nginx -t` before reloading.
+If compression is enabled for event streams, try [`gzip off;`] to rule out
+Nginx's own compression. Other appliances may need separate changes. Validate
+with `nginx -t` before reloading.
 
 To check delivery, replace the hostname below and authenticate if required:
 
@@ -172,22 +171,22 @@ curl --no-buffer --include --max-time 35 --header 'Accept: text/event-stream' ht
 
 Expect HTTP 200, `Content-Type: text/event-stream`, an immediate `data:` message
 containing `"type":"hello"`, then `"type":"ping"` about every ten seconds.
-`--no-buffer` disables cURL's output buffering. The command deliberately times out after
-35 seconds because the stream stays open.
+`--no-buffer` disables cURL's output buffering. The command deliberately times
+out after 35 seconds because the stream stays open.
 
 Where access permits, compare direct backend access with the public address.
 Events delayed, batched, or absent only through the proxy suggest a problem in
-that access path. In browser network tools, an open request is normal; check
-for arriving messages. Buffering can stall delivery without a browser error.
+that access path. In browser network tools, an open request is normal; check for
+arriving messages. Buffering can stall delivery without a browser error.
 
-[Connection monitor]: ./user-manual.md#connection-monitor
-[`proxy_buffering off`]: https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_buffering
-[`proxy_read_timeout`]: https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_read_timeout
-[`gzip off;`]: https://nginx.org/en/docs/http/ngx_http_gzip_module.html#gzip
-[multiple ways to run a Temporal Cluster]: https://docs.temporal.io/kb/all-the-ways-to-run-a-cluster
-[Ansible role]: https://github.com/artefactual-labs/ansible-enduro-temporal
+[ansible role]: https://github.com/artefactual-labs/ansible-enduro-temporal
+[connection monitor]: ./user-manual.md#connection-monitor
+[container guide]: ./containers.md
+[enduro upgrade procedure]: ./upgrades.md#upgrade-enduro
+[enduro-release-page]: https://github.com/artefactual-labs/enduro/releases
+[multiple ways to run a temporal cluster]: https://docs.temporal.io/kb/all-the-ways-to-run-a-cluster
 [temporal-deployment]: https://docs.temporal.io/cluster-deployment-guide
 [temporal-web-ui]: https://docs.temporal.io/web-ui
-[docker-restart-policy]: https://docs.docker.com/config/containers/start-containers-automatically/#use-a-restart-policy
-[enduro-release-page]: https://github.com/artefactual-labs/enduro/releases
-[Enduro upgrade procedure]: ./upgrades.md#upgrade-enduro
+[`gzip off;`]: https://nginx.org/en/docs/http/ngx_http_gzip_module.html#gzip
+[`proxy_buffering off`]: https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_buffering
+[`proxy_read_timeout`]: https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_read_timeout

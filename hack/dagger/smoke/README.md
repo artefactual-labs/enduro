@@ -1,12 +1,13 @@
 # Enduro Smoke Tests
 
 These Playwright tests exercise Enduro against an ambox Archivematica
-environment started by Dagger.
+environment started by Dagger. Use Dagger 0.21.11 to match the module
+configuration in `hack/dagger/dagger.json`.
 
 Dagger owns service orchestration, shared runtime directories, and artifact
-export. It also builds Enduro with Go binary coverage instrumentation, stops the
-service after the scenarios complete, and exports a coverage profile with the
-rest of the artifacts. The tests own the user-visible scenarios:
+export. It can import a production image archive, pull an immutable registry
+reference, or build Enduro from source with Go binary coverage instrumentation.
+The tests own the user-visible scenarios:
 
 - submit a zip through the filesystem watcher,
 - recover a failed production-system receipt with an operator decision,
@@ -36,6 +37,78 @@ The Make target runs:
 ```sh
 dagger -m hack/dagger call smoke-tests --source . export --path hack/dagger/runtime/artifacts
 ```
+
+## Runtime image modes
+
+Without an image argument, the harness builds an instrumented Enduro binary from
+source and packages it with the production `Dockerfile`, static base, nonroot
+user, entrypoint, and default `/etc/enduro/enduro.toml` configuration path. It
+stops Enduro after the scenarios and exports a coverage profile alongside the
+other artifacts. `--frontend-assets frontend/.output/public` can supply
+previously built public assets to this source coverage mode; otherwise Dagger
+builds the frontend.
+
+To test production images, follow the [container guide] to build and export the
+snapshot once, then select the archive for the native platform:
+
+```sh
+dagger -m hack/dagger call smoke-tests --source . \
+  --image-archive dist/containers/enduro-amd64.tar \
+  export --path hack/dagger/runtime/artifacts
+```
+
+Alternatively, pass an immutable registry digest:
+
+```sh
+dagger -m hack/dagger call smoke-tests --source . \
+  --image-ref ghcr.io/artefactual-labs/enduro@sha256:REPLACE_WITH_INDEX_DIGEST \
+  export --path hack/dagger/runtime/artifacts
+```
+
+The same `--image-archive` and `--image-ref` options apply to `startup-test`,
+`object-storage-smoke-test`, and `object-storage-smoke-tests`. The two image
+options are mutually exclusive. They use the existing production binary without
+rebuilding or collecting coverage, and cannot be combined with
+`--frontend-assets`. Dagger mounts the scenario configuration at the image's
+default configuration path and runs its normal entrypoint.
+
+For a shorter native startup check without Archivematica:
+
+```sh
+make container-startup
+```
+
+This imports the native archive from `dist/containers` and checks database
+migrations, the API, embedded dashboard assets, and shutdown with MySQL and
+Temporal. CI runs startup acceptance on native AMD64 and ARM64. Full acceptance
+also runs the main Archivematica, SeaweedFS, and argmin image suites on AMD64.
+Snapshot jobs receive archives without registry credentials; release jobs test
+the candidate by immutable digest. A separate source-built smoke suite collects
+coverage. CI reuses one frontend build for the snapshot images and the coverage
+build.
+
+### Branch iteration
+
+Pushes to `dev/containers` run both native startup checks and a smaller source
+coverage check without the full service suites. Run the coverage check locally
+with:
+
+```sh
+dagger -m hack/dagger call coverage-check --source . \
+  export --path hack/dagger/runtime/coverage-check-artifacts
+```
+
+Add `--frontend-assets frontend/.output/public` to reuse existing public assets;
+omit it to let Dagger build them. The check builds and runs the real
+instrumented Enduro binary with `--version`, then exports Go coverage data. It
+starts no services and verifies the coverage build and export path, not workflow
+behavior. A cold compile can still take several minutes.
+
+Pull requests and `main` run the full image suites and source smoke coverage;
+releases run full image acceptance. For a final full run on `dev/containers`,
+manually dispatch the Test workflow with `full-tests` enabled (the default).
+
+## Object storage
 
 The object-storage smoke suite exercises S3 watcher ingestion through the
 supported local object storage paths:
@@ -86,4 +159,5 @@ plan for duplicate handling. The Redis watcher removes events before processing;
 neither this delivery path nor the smoke test guarantees exactly-once processing
 or crash recovery.
 
+[container guide]: ../../../docs/containers.md
 [upstream]: https://github.com/justincormack/argmin

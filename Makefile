@@ -121,6 +121,25 @@ release-build: # @HELP Generate the release build with GoReleaser.
 release-build: tool-goreleaser
 	goreleaser build --clean --auto-snapshot
 
+container-build: # @HELP Builds and loads both production snapshot images once.
+container-build: tool-goreleaser
+	goreleaser release --clean --snapshot
+
+container-check: # @HELP Checks loaded snapshot images, or CONTAINER_ARTIFACTS, for CONTAINER_ARCH (default all).
+container-check: CONTAINER_ARCH ?= all
+container-check: tool-jq
+	bash hack/containers/smoke.sh "$(CONTAINER_ARCH)" "$(CONTAINER_ARTIFACTS)"
+
+container-export: # @HELP Exports previously built snapshot images to dist/containers.
+container-export: tool-jq
+	bash hack/containers/export.sh
+
+container-startup: # @HELP Tests a production image archive with Dagger (set CONTAINER_ARCH for the native platform).
+container-startup: CONTAINER_ARCH ?= $(shell go env GOARCH)
+container-startup: CONTAINER_ARTIFACTS ?= dist/containers
+container-startup:
+	dagger -m hack/dagger call startup-test --source . --image-archive "$(CONTAINER_ARTIFACTS)/enduro-$(CONTAINER_ARCH).tar" export --path hack/dagger/runtime/startup-artifacts
+
 frontend: # @HELP Builds the frontend app.
 frontend:
 	npm ci --prefix frontend

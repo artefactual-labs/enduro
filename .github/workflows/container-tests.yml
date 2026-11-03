@@ -1,0 +1,142 @@
+name: Container acceptance
+
+on:
+  workflow_call:
+    inputs:
+      image-artifact:
+        description: Workflow artifact containing exported snapshot images
+        type: string
+        default: ""
+      image-ref:
+        description: Immutable registry reference for a release candidate
+        type: string
+        default: ""
+      image-version:
+        description: Expected binary version when testing a registry image
+        type: string
+        default: ""
+      full-tests:
+        description: Include the Archivematica and storage integration suites
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  acceptance:
+    name: ${{ matrix.arch }} ${{ matrix.suite }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [amd64, arm64]
+        suite: ${{ fromJSON(inputs.full-tests && '["startup-test", "smoke-tests", "seaweedfs", "argmin"]' || '["startup-test"]') }}
+        exclude:
+          - arch: arm64
+            suite: smoke-tests
+          - arch: arm64
+            suite: seaweedfs
+          - arch: arm64
+            suite: argmin
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    env:
+      IMAGE_REF: ${{ inputs.image-ref }}
+      IMAGE_VERSION: ${{ inputs.image-version }}
+      IMAGE_ARTIFACT: ${{ inputs.image-artifact }}
+      ARCH: ${{ matrix.arch }}
+      SUITE: ${{ (matrix.suite == 'seaweedfs' || matrix.suite == 'argmin') && 'object-storage-smoke-test' || matrix.suite }}
+      PROVIDER: ${{ (matrix.suite == 'seaweedfs' || matrix.suite == 'argmin') && matrix.suite || '' }}
+      DAGGER_NO_NAG: "1"
+    steps:
+      - name: Check out code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Validate image input
+        shell: bash
+        run: |
+          if [[ -n $IMAGE_REF && -z $IMAGE_ARTIFACT && -n $IMAGE_VERSION ]]; then
+            [[ $IMAGE_REF =~ ^ghcr.io/artefactual-labs/enduro@sha256:[a-f0-9]{64}$ ]]
+          elif [[ -n $IMAGE_ARTIFACT && -z $IMAGE_REF ]]; then
+            :
+          else
+            echo "Provide either an image artifact or an immutable image reference and version" >&2
+            exit 1
+          fi
+      - name: Download container images
+        if: inputs.image-artifact != ''
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: ${{ inputs.image-artifact }}
+          path: dist/containers
+      - name: Set up Docker with the containerd image store
+        uses: docker/setup-docker-action@7ec28a010822b4626af4874f9448a4b05ac6f3e5 # v5.6.0
+        with:
+          version: v29.5.2
+          set-host: true
+          daemon-config: '{"features":{"containerd-snapshotter":true}}'
+      - name: Log in to GitHub Container Registry
+        if: inputs.image-ref != ''
+        uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4.7.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Check native image configuration and entrypoint
+        shell: bash
+        run: |
+          if [[ -n $IMAGE_REF ]]; then
+            ./hack/containers/smoke.sh --image-ref "$IMAGE_REF" --arch "$ARCH" \
+              --commit "$(git rev-parse HEAD)" --version "$IMAGE_VERSION"
+          else
+            ./hack/containers/smoke.sh "$ARCH" dist/containers
+          fi
+      - name: Configure Dagger engine cache
+        run: |
+          mkdir -p "$HOME/.config/dagger"
+          cat > "$HOME/.config/dagger/engine.json" <<'JSON'
+          {
+            "gc": {
+              "maxUsedSpace": "30%",
+              "reservedSpace": "5%",
+              "minFreeSpace": "30%",
+              "sweepSize": "50%"
+            }
+          }
+          JSON
+      - name: Install Dagger
+        uses: dagger/dagger-for-github@27b130bf0f79a7f6fbbbe0fbca6760dc9bb40a77 # v8.4.1
+        with:
+          version: "0.21.11"
+          verb: version
+      - name: Test the built image
+        shell: bash
+        run: |
+          image_args=(--image-archive "dist/containers/enduro-$ARCH.tar")
+          if [[ -n $IMAGE_REF ]]; then
+            image_args=(--image-ref "$IMAGE_REF")
+          fi
+          provider_args=()
+          if [[ -n $PROVIDER ]]; then
+            provider_args=(--provider "$PROVIDER")
+          fi
+          mkdir -p hack/dagger/runtime/acceptance
+          dagger --progress=plain -m hack/dagger call "$SUITE" --source . \
+            "${image_args[@]}" "${provider_args[@]}" \
+            export --path hack/dagger/runtime/acceptance/results \
+            2>&1 | tee hack/dagger/runtime/acceptance/dagger.log
+      - name: Retain acceptance results
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: container-${{ matrix.arch }}-${{ matrix.suite }}
+          path: hack/dagger/runtime/acceptance/
+          if-no-files-found: warn
+          retention-days: 7

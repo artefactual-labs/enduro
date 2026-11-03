@@ -144,28 +144,65 @@ You can enable it in Visual Studio Code as follows:
 
 ### Dagger smoke harness
 
-Enduro also has an experimental Dagger-based smoke harness under `hack/dagger`.
-The same harness runs in the dedicated `smoke-tests` job in the `Test` GitHub
-Actions workflow. It can also be run manually before pushing changes that affect
-transfer publishing or Archivematica integration.
+The Dagger harness under `hack/dagger` can test production image archives or
+registry digests, or build an instrumented binary from source for coverage.
+Install Dagger 0.21.11 and make sure Docker is available. The [container guide]
+covers the pinned build tools and Docker containerd image store prerequisite.
 
-Install a recent version of Dagger and make sure Docker is available. From the
-repository root, run:
+To build production snapshots once and test the native image locally:
 
+```sh
+make container-build
+make container-export
+make container-check CONTAINER_ARCH=arm64 CONTAINER_ARTIFACTS=dist/containers
+make container-startup
 ```
+
+Use `amd64` instead of `arm64` for the check on an AMD64 host. The startup
+target automatically selects the host Go architecture and checks MySQL
+migrations, Temporal connectivity, the API, embedded dashboard assets, and
+service shutdown. See the [smoke harness] for testing the same archive through
+the full Archivematica and object-storage scenarios.
+
+For the full source-built smoke suite with Go coverage, run:
+
+```sh
 make test-smoke
 ```
 
-Because this harness starts real services and Archivematica workers, it is
-slower and heavier than `make test`. Treat it as an end-to-end smoke check for
-the transfer publishing workaround rather than a replacement for unit or
-workflow tests. The harness also exports Go coverage from the Enduro process; CI
-uploads that profile to Codecov under the `go-smoke` flag.
+This mode builds an instrumented Enduro binary into the same production
+Dockerfile, runs the scenarios, stops Enduro, and exports its coverage profile.
+It is slower and heavier than `make test` because it starts real services and
+Archivematica workers. Full CI runs the production image suites separately from
+one source coverage suite, whose profile is uploaded to Codecov under
+`go-smoke`. The frontend is built once in CI and its public assets are reused by
+both builds. Image archive and registry digest modes use the existing binary and
+do not collect coverage.
+
+For a smaller check of the coverage build and export path without starting
+services:
+
+```sh
+dagger -m hack/dagger call coverage-check --source . \
+  export --path hack/dagger/runtime/coverage-check-artifacts
+```
+
+Optionally pass `--frontend-assets frontend/.output/public` to reuse an existing
+frontend build. This runs the real instrumented Enduro binary with `--version`
+and exports coverage data; it does not exercise workflows or service
+integration. A cold compile can still take several minutes.
+
+Pushes to `dev/containers` run this coverage check and native production startup
+acceptance on both AMD64 and ARM64 for quicker iteration. Pull requests and
+`main` run full source smoke coverage and the full AMD64 production image suites
+in addition to both startup checks; releases use full image acceptance. To
+request full tests on the development branch, manually dispatch the Test
+workflow with `full-tests` enabled (the default).
 
 #### MinIO compatibility tests (local only)
 
-CI runs the object storage smoke tests against SeaweedFS and argmin. MinIO is
-excluded because its [community server is no longer maintained][minio-status]
+Full CI runs the object storage smoke tests against SeaweedFS and argmin. MinIO
+is excluded because its [community server is no longer maintained][minio-status]
 and the legacy releases have known security vulnerabilities. Compatibility with
 MinIO is checked manually when investigating reports or changing its
 integration; a passing CI run does not verify MinIO compatibility.
@@ -381,11 +418,11 @@ security fix and is retained only for legacy compatibility testing.
 
 ## Releases
 
-The release process is automated via GitHub Actions. See
-[`release.yml`][release-workflow] for more - we plan to develop it further.
+The release process is automated via GitHub Actions in
+[`release.yml`][release-workflow].
 
-The artifacts associated with a release are automatically published after the
-git tag is submitted to the repository. We use annotated tags. For example:
+Pushing a Git tag starts the automated build, test, and publication process. We
+use annotated tags. For example:
 
 ```
 git tag -a "v0.20.0" -m "Enduro v0.20.0"
@@ -393,13 +430,18 @@ git push --follow-tags
 ```
 
 The `release` workflow is started as soon as the tag makes it to GitHub. The
-artifacts will start building right away and they will appear in the
-[Releases page][release-github-page] as soon as they're ready.
+workflow builds a candidate container image and a draft release, then tests the
+candidate by immutable digest. Passing native AMD64 and ARM64 startup checks and
+the full AMD64 integration suites allow promotion of the whole tested image
+index to the release tag. The workflow then publishes the draft on the
+[Releases page][release-github-page] and closes the matching milestone. A failed
+test leaves the candidate available for inspection and the release in draft.
 
 The workflow runs are recorded by GitHub for auditing purposes, e.g. check out
 the [workflow run][first-release-run] that made our very first release.
 
 [clean-arch]: https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html
+[container guide]: ./containers.md
 [design-pkg]: https://github.com/artefactual-labs/enduro/tree/main/internal/api/design
 [docker-engine]: https://docs.docker.com/engine/install/
 [docker-non-root]: https://docs.docker.com/engine/install/linux-postinstall/#manage-docker-as-a-non-root-user
@@ -419,3 +461,4 @@ the [workflow run][first-release-run] that made our very first release.
 [openapi3-json]: https://github.com/artefactual-labs/enduro/blob/main/internal/api/gen/http/openapi3.json
 [release-github-page]: https://github.com/artefactual-labs/enduro/releases
 [release-workflow]: https://github.com/artefactual-labs/enduro/blob/main/.github/workflows/release.yml
+[smoke harness]: ../hack/dagger/smoke/README.md

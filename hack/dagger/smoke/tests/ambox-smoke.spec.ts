@@ -96,6 +96,7 @@ test("filesystem transfer resumes after a prod receipt decision", async ({
 
   await test.step("repair prod delivery and submit a retry decision", async () => {
     await fs.mkdir(receiptsDir, { recursive: true });
+    await fs.chown(receiptsDir, 65532, 65532);
 
     const response = await request.post(
       `${enduroURL}/collection/${pendingCollection.id}/decision`,
@@ -233,6 +234,7 @@ test("Nuxt batch import form submits a directory transfer", async ({ page }) => 
       path.join(transferDir, "objects", "hello.txt"),
       `hello from ${batchTransferName}\n`,
     );
+    await execFile("chown", ["-R", "65532:65532", transferDir]);
   });
 
   await test.step("submit the batch import form in the dashboard", async () => {

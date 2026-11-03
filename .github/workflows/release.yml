@@ -1,14 +1,24 @@
-name: GoReleaser
+name: Release
 on:
   push:
     tags:
       - "v*"
 permissions:
-  contents: write
+  contents: read
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
 jobs:
-  release:
-    name: Release
+  candidate:
+    name: Build candidate
+    permissions:
+      contents: write
+      packages: write
+    outputs:
+      image-ref: ${{ steps.candidate.outputs.image-ref }}
+      image-version: ${{ steps.candidate.outputs.image-version }}
     runs-on: ubuntu-latest
+    timeout-minutes: 40
     steps:
       - name: Check out code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -23,12 +33,105 @@ jobs:
       - name: Install Node
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 24
+          node-version: 24.22.1
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4.7.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Prepare candidate
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          releases=$(gh api --paginate "repos/$GITHUB_REPOSITORY/releases" \
+            --jq '.[].tag_name')
+          if grep -Fxq "$GITHUB_REF_NAME" <<< "$releases"; then
+            echo "A draft or published release already exists for $GITHUB_REF_NAME" >&2
+            echo "Rerun failed downstream jobs to reuse the existing candidate." >&2
+            echo "If the candidate job failed, inspect the incomplete draft before removing it for a rebuild." >&2
+            exit 1
+          fi
+          echo "CANDIDATE_TAG=candidate-${GITHUB_SHA}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" >> "$GITHUB_ENV"
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@a4f02ab5355a589de60d917a659ce617ed19b3de # v7.3.0
         with:
-          version: "~> v2"
+          version: "2.19.0"
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        if: success()
+      - name: Resolve candidate index
+        id: candidate
+        run: |
+          image_ref=$(hack/containers/promote.sh --resolve "ghcr.io/artefactual-labs/enduro:$CANDIDATE_TAG")
+          echo "image-ref=$image_ref" >> "$GITHUB_OUTPUT"
+          echo "image-version=$(jq -er .version dist/metadata.json)" >> "$GITHUB_OUTPUT"
+          printf '%s\n' "$image_ref" > dist/candidate-image-ref.txt
+          docker buildx imagetools inspect --raw "$image_ref" > dist/candidate-index.json
+      - name: Retain candidate identities
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-candidate-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            dist/artifacts.json
+            dist/metadata.json
+            dist/checksums.txt
+            dist/candidate-image-ref.txt
+            dist/candidate-index.json
+          if-no-files-found: warn
+          retention-days: 30
+  test:
+    name: Test candidate
+    needs: candidate
+    permissions:
+      contents: read
+      packages: read
+    uses: ./.github/workflows/container-tests.yml
+    with:
+      image-ref: ${{ needs.candidate.outputs.image-ref }}
+      image-version: ${{ needs.candidate.outputs.image-version }}
+  promote:
+    name: Promote tested candidate
+    needs: [candidate, test]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      packages: write
+      issues: write
+    steps:
+      - name: Check out code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4.7.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Promote the tested index
+        env:
+          IMAGE_REF: ${{ needs.candidate.outputs.image-ref }}
+        run: hack/containers/promote.sh "$IMAGE_REF" "ghcr.io/artefactual-labs/enduro:$GITHUB_REF_NAME"
+      - name: Publish draft release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          draft=$(gh release view "$GITHUB_REF_NAME" --json isDraft --jq .isDraft)
+          [[ $draft == true || $draft == false ]]
+          if [[ $draft == true ]]; then
+            gh release edit "$GITHUB_REF_NAME" --draft=false
+          fi
+      - name: Close release milestone
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          milestones=$(gh api --paginate "repos/$GITHUB_REPOSITORY/milestones?state=open" |
+            jq -r --arg tag "$GITHUB_REF_NAME" '.[] | select(.title == $tag) | .number')
+          for milestone in $milestones; do
+            gh api --method PATCH "repos/$GITHUB_REPOSITORY/milestones/$milestone" -f state=closed
+          done
