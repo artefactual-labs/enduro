@@ -99,6 +99,14 @@ lint: LINT_FLAGS ?= --fix=1
 lint: tool-golangci-lint
 	golangci-lint run -v $(LINT_FLAGS)
 
+check-actions: # @HELP Verifies action pins against GitHub without changing files.
+check-actions: tool-gh-actions-lock
+	gh-actions-lock --verify
+
+lock-actions: # @HELP Updates the lockfile after changing workflow dependencies.
+lock-actions: tool-gh-actions-lock
+	gh-actions-lock
+
 gen-goa: # @HELP Generates Goa assets.
 gen-goa: GOA = $(shell go tool bine get goa)
 gen-goa: tool-goa

@@ -1,0 +1,45 @@
+name: GitHub Actions
+
+on:
+  pull_request:
+    paths:
+      - ".github/**"
+  push:
+    branches:
+      - main
+      - dev/containers
+      - "qa/**"
+      - "stable/**"
+    paths:
+      - ".github/**"
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  verify-actions-lock:
+    timeout-minutes: 10
+    name: Verify action lockfile
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install actions-lock
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh extension install github/gh-actions-lock --pin v0.2.0
+      - name: Verify locked dependencies
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh actions-lock --verify

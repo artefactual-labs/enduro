@@ -39,3 +39,8 @@ version = "1.9.1"
 name = "jq"
 url = "https://github.com/jqlang/jq"
 version = "1.8.2"
+
+[[bins]]
+name = "gh-actions-lock"
+version = "0.2.0"
+go_package = "github.com/github/gh-actions-lock/cmd/gh-actions-lock"
