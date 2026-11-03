@@ -1,0 +1,4 @@
+profile: pedantic
+rules:
+  # gh actions-lock --verify enforces the pins in actions.lock.
+  unpinned-uses: off

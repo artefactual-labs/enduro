@@ -16,12 +16,20 @@ permissions:
 concurrency:
   group: test-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
+defaults:
+  run:
+    shell: bash
+
 jobs:
   mod:
-    runs-on: ubuntu-latest
+    name: Check Go modules
+    timeout-minutes: 10
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout code
         uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
       - name: Install Go
         uses: actions/setup-go@v7.0.0
         with:
@@ -29,12 +37,16 @@ jobs:
       - name: Check go.mod
         run: go mod tidy -diff
   lint:
-    runs-on: ubuntu-latest
+    name: Lint Go
+    timeout-minutes: 15
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     steps:
       - name: Checkout code
         uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
       - name: Install Go
         uses: actions/setup-go@v7.0.0
         with:
@@ -57,10 +69,14 @@ jobs:
         env:
           GOLANGCI_LINT_CACHE: ${{ runner.temp }}/golangci-lint-cache
   test:
-    runs-on: ubuntu-latest
+    name: Test Go
+    timeout-minutes: 30
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout code
         uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
       - name: Install Go
         uses: actions/setup-go@v7.0.0
         with:
@@ -68,9 +84,11 @@ jobs:
       - name: Test
         run: make test-ci
       - name: Upload coverage to Codecov
-        if: github.actor != 'dependabot[bot]'
+        if: ${{ github.actor != 'dependabot[bot]' }}
         uses: codecov/codecov-action@v7.1.1
         env:
+          # Codecov uploads use the existing repository token.
+          # jactionlint ignore=secrets-outside-env
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
           disable_search: true
@@ -78,24 +96,28 @@ jobs:
           files: covreport
           flags: go
       - name: Upload test results to Codecov
-        if: github.actor != 'dependabot[bot]'
+        if: ${{ github.actor != 'dependabot[bot]' }}
         uses: codecov/codecov-action@v7.1.1
         with:
           disable_search: true
           fail_ci_if_error: true
           files: junit.xml
           report_type: test_results
+          # Codecov uploads use the existing repository token.
+          # jactionlint ignore=secrets-outside-env
           token: ${{ secrets.CODECOV_TOKEN }}
   smoke-coverage:
     name: Smoke coverage
     needs: frontend
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 45
     permissions:
       contents: read
     steps:
       - name: Checkout code
         uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
       - name: Download frontend assets
         uses: actions/download-artifact@v8.0.2
         with:
@@ -133,12 +155,14 @@ jobs:
             --source . --frontend-assets frontend/.output/public
             export --path hack/dagger/runtime/artifacts
       - name: Report final disk usage
-        if: always()
+        if: ${{ always() }}
         run: df -h /
       - name: Upload smoke coverage to Codecov
-        if: github.actor != 'dependabot[bot]' && (github.ref != 'refs/heads/dev/containers' || (github.event_name == 'workflow_dispatch' && inputs.full-tests))
+        if: ${{ github.actor != 'dependabot[bot]' && (github.ref != 'refs/heads/dev/containers' || (github.event_name == 'workflow_dispatch' && inputs.full-tests)) }}
         uses: codecov/codecov-action@v7.1.1
         env:
+          # Codecov uploads use the existing repository token.
+          # jactionlint ignore=secrets-outside-env
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
           disable_search: true
@@ -146,18 +170,21 @@ jobs:
           files: hack/dagger/runtime/artifacts/enduro-smoke.coverprofile
           flags: go-smoke
       - name: Upload smoke test artifacts
-        if: always()
+        if: ${{ always() }}
         uses: actions/upload-artifact@v7.0.2
         with:
           name: smoke-coverage-artifacts
           path: hack/dagger/runtime/artifacts
           if-no-files-found: ignore
   frontend:
-    runs-on: ubuntu-latest
+    name: Test and build frontend
+    timeout-minutes: 20
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout code
         uses: actions/checkout@v7.0.1
         with:
+          persist-credentials: false
           fetch-depth: 2
       - name: Install Node
         uses: actions/setup-node@v7.1.0
@@ -166,6 +193,8 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
       - name: Install frontend dependencies
+        # Nuxt prepares generated types in the frontend postinstall script.
+        # jactionlint ignore=unlocked-install
         run: npm ci --prefix frontend
       - name: Lint frontend
         run: npm run lint --prefix frontend
@@ -185,9 +214,11 @@ jobs:
           if-no-files-found: error
           retention-days: 7
       - name: Upload frontend coverage to Codecov
-        if: github.actor != 'dependabot[bot]'
+        if: ${{ github.actor != 'dependabot[bot]' }}
         uses: codecov/codecov-action@v7.1.1
         env:
+          # Codecov uploads use the existing repository token.
+          # jactionlint ignore=secrets-outside-env
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
           disable_search: true
@@ -199,7 +230,7 @@ jobs:
     needs: frontend
     permissions:
       contents: read
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 40
     steps:
       - name: Check out code
@@ -208,6 +239,8 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
       - name: Install Go
+        # Snapshot builds do not publish release artifacts.
+        # jactionlint ignore=cache-poisoning
         uses: actions/setup-go@v7.0.0
         with:
           go-version-file: go.mod
@@ -227,6 +260,8 @@ jobs:
           version: v29.5.2
           daemon-config: '{"features":{"containerd-snapshotter":true}}'
       - name: Set up Docker Buildx
+        # Snapshot builds do not publish release artifacts.
+        # jactionlint ignore=cache-poisoning
         uses: docker/setup-buildx-action@v4.4.1
       - name: Build the archive and both container images without publishing
         uses: goreleaser/goreleaser-action@v7.3.0
@@ -243,7 +278,7 @@ jobs:
           if-no-files-found: error
           retention-days: 7
       - name: Retain build identities
-        if: always()
+        if: ${{ always() }}
         uses: actions/upload-artifact@v7.0.2
         with:
           name: container-build-identities
@@ -258,8 +293,8 @@ jobs:
     needs: containers
     permissions:
       contents: read
-      packages: read
-    uses: ./.github/workflows/container-tests.yml
+      packages: read # Pull release candidates from GitHub Container Registry.
+    uses: $/.github/workflows/container-tests.yml
     with:
       image-artifact: enduro-containers
       full-tests: ${{ github.ref != 'refs/heads/dev/containers' || (github.event_name == 'workflow_dispatch' && inputs.full-tests) }}
