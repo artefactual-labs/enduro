@@ -223,10 +223,10 @@ in addition to both startup checks; releases use full image acceptance. To
 request full tests on the development branch, manually dispatch the Test
 workflow with `full-tests` enabled (the default).
 
-#### MinIO compatibility tests
+#### MinIO and Silo compatibility tests
 
-Full CI runs the object storage smoke tests against MinIO, SeaweedFS, and argmin
-on AMD64. Although the
+Full CI runs the object storage smoke tests against MinIO, Silo, SeaweedFS, and
+argmin on AMD64. Although the
 [MinIO community server is no longer maintained][minio-status], the pinned
 [Coollabs build] remains available for compatibility testing.
 
@@ -247,8 +247,16 @@ dagger -m hack/dagger api call object-storage-smoke-test \
 
 On success, the output directory contains the downloaded AIP, Temporal workflow
 history, and coverage artifacts. The test starts Archivematica and can take
-several minutes. `make test-smoke-object-storage` runs all three providers
+several minutes. `make test-smoke-object-storage` runs all four providers
 locally using the same scenarios as the full CI storage matrix.
+
+Silo is tested independently with its own digest-pinned image and CI artifacts.
+To run its native Redis notification and ingestion scenario locally:
+
+```sh
+hack/dagger/run.sh object-storage-smoke-test \
+  hack/dagger/runtime/object-storage-artifacts-silo --provider silo
+```
 
 The image is selected by `minioLatestImage` in `hack/dagger/main.go`. To
 investigate a compatibility report, set that constant locally to the reported

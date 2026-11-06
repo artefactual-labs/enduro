@@ -144,6 +144,8 @@ supported local object storage paths:
 
 - `minio-latest`: env-configured MinIO native Redis notifications
   (`eventFormat = "minio"`),
+- `silo`: the PGSTY MinIO fork, using native Redis notifications
+  (`eventFormat = "minio"`),
 - `seaweedfs`: SeaweedFS filer webhooks through Enduro's object event webhook
   (`eventFormat = "enduro"`),
 - `argmin`: argmin S3 storage with a test-injected normalized Redis event
@@ -156,6 +158,18 @@ The `minio-latest` provider uses the [Coollabs build] of upstream MinIO
 third-party image replaces the unavailable official image for local and CI
 compatibility tests. GitHub Actions runs the MinIO scenario on AMD64 alongside
 the other storage scenarios when full container acceptance tests are enabled.
+
+The `silo` provider independently exercises the [Silo fork] at
+`RELEASE.2026-10-26T00-00-00Z`, also pinned to its multi-platform image digest.
+It has its own AMD64 CI matrix job and artifacts. Both scenarios verify S3
+upload, native Redis notification delivery, ingestion, the resulting AIP, and
+Temporal history; they do not establish compatibility with every storage API.
+
+Run just the Silo scenario locally:
+
+```sh
+hack/dagger/run.sh object-storage-smoke-test hack/dagger/runtime/object-storage-artifacts-silo --provider silo
+```
 
 Run the object-storage suite from the repository root:
 
@@ -196,4 +210,5 @@ or crash recovery.
 
 [container guide]: ../../../docs/containers.md
 [coollabs build]: https://github.com/coollabsio/minio
+[silo fork]: https://github.com/pgsty/silo
 [upstream]: https://github.com/justincormack/argmin

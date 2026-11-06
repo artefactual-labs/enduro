@@ -121,7 +121,7 @@ type EnduroE2EObjectStorageSmokeTestOpts struct {
 
 // Run one S3 watcher smoke test provider.
 //
-// Provider must be "minio-latest", "seaweedfs", or "argmin".
+// Provider must be "minio-latest", "silo", "seaweedfs", or "argmin".
 func (r *EnduroE2E) ObjectStorageSmokeTest(source *Directory, provider string, opts ...EnduroE2EObjectStorageSmokeTestOpts) *Directory {
 	assertNotNil("source", source)
 	q := r.query.Select("objectStorageSmokeTest")
@@ -158,9 +158,9 @@ type EnduroE2EObjectStorageSmokeTestsOpts struct {
 	FrontendAssets *Directory
 }
 
-// Run S3 watcher smoke tests against MinIO, SeaweedFS, and argmin.
+// Run S3 watcher smoke tests against MinIO, Silo, SeaweedFS, and argmin.
 //
-// The MinIO scenario exercises native Redis notifications configured through
+// The MinIO and Silo scenarios exercise native Redis notifications configured through
 // environment variables and the S3 API. The SeaweedFS scenario exercises
 // SeaweedFS filer webhooks, Enduro's object event webhook,
 // normalized Redis events, and the S3 watcher path. All scenarios publish the

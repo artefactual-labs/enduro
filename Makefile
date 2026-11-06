@@ -78,7 +78,7 @@ test-smoke: # @HELP Run the Dagger smoke tests against ambox.
 test-smoke:
 	hack/dagger/run.sh smoke-tests hack/dagger/runtime/artifacts
 
-test-smoke-object-storage: # @HELP Run the Dagger S3 watcher smoke tests against MinIO, SeaweedFS, and argmin.
+test-smoke-object-storage: # @HELP Run the Dagger S3 watcher smoke tests against MinIO, Silo, SeaweedFS, and argmin.
 test-smoke-object-storage:
 	hack/dagger/run.sh object-storage-smoke-tests hack/dagger/runtime/object-storage-artifacts
 
