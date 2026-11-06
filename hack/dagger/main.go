@@ -80,8 +80,10 @@ type smokeEnvironment struct {
 // Call from the repository root with:
 //
 //	dagger -m hack/dagger api call smoke-tests --source . export --path hack/dagger/runtime/artifacts
+//
+// +cache="session"
 func (m *EnduroE2E) SmokeTests(ctx context.Context,
-	// +ignore=[".git", "build", "dist", "frontend/node_modules", "frontend/.nuxt", "frontend/.output", "frontend/coverage", "frontend/.cache", ".ruff_cache", ".playwright-cli", "covreport", "enduro", "hack/dagger/runtime", "hack/minio-data", "hack/seaweedfs-data"]
+	// +ignore=[".git", "build", "dist", "**/node_modules", "frontend/.nuxt", "frontend/.output", "frontend/coverage", "frontend/.cache", ".ruff_cache", ".playwright-cli", "covreport", "enduro", "hack/dagger/runtime", "hack/dagger/internal", "hack/dagger/dagger.gen.go", "dagger.lock", "hack/minio-data", "hack/seaweedfs-data"]
 	source *dagger.Directory,
 	// Production image in an OCI-compatible archive; mutually exclusive with imageRef.
 	// +optional
@@ -117,8 +119,10 @@ func (m *EnduroE2E) SmokeTests(ctx context.Context,
 // Call from the repository root with:
 //
 //	dagger -m hack/dagger api call object-storage-smoke-tests --source . export --path hack/dagger/runtime/object-storage-artifacts
+//
+// +cache="session"
 func (m *EnduroE2E) ObjectStorageSmokeTests(ctx context.Context,
-	// +ignore=[".git", "build", "dist", "frontend/node_modules", "frontend/.nuxt", "frontend/.output", "frontend/coverage", "frontend/.cache", ".ruff_cache", ".playwright-cli", "covreport", "enduro", "hack/dagger/runtime", "hack/minio-data", "hack/seaweedfs-data"]
+	// +ignore=[".git", "build", "dist", "**/node_modules", "frontend/.nuxt", "frontend/.output", "frontend/coverage", "frontend/.cache", ".ruff_cache", ".playwright-cli", "covreport", "enduro", "hack/dagger/runtime", "hack/dagger/internal", "hack/dagger/dagger.gen.go", "dagger.lock", "hack/minio-data", "hack/seaweedfs-data"]
 	source *dagger.Directory,
 	// Production image in an OCI-compatible archive; mutually exclusive with imageRef.
 	// +optional
@@ -159,7 +163,7 @@ func (m *EnduroE2E) ObjectStorageSmokeTests(ctx context.Context,
 // This checks that Enduro starts as nonroot, prints its version, and writes Go
 // coverage data. It does not exercise ingestion or replace the full smoke suite.
 func (m *EnduroE2E) CoverageCheck(ctx context.Context,
-	// +ignore=[".git", "build", "dist", "frontend/node_modules", "frontend/.nuxt", "frontend/.output", "frontend/coverage", "frontend/.cache", ".ruff_cache", ".playwright-cli", "covreport", "enduro", "hack/dagger/runtime", "hack/minio-data", "hack/seaweedfs-data"]
+	// +ignore=[".git", "build", "dist", "**/node_modules", "frontend/.nuxt", "frontend/.output", "frontend/coverage", "frontend/.cache", ".ruff_cache", ".playwright-cli", "covreport", "enduro", "hack/dagger/runtime", "hack/dagger/internal", "hack/dagger/dagger.gen.go", "dagger.lock", "hack/minio-data", "hack/seaweedfs-data"]
 	source *dagger.Directory,
 	// Reuse built frontend assets for the source coverage build.
 	// +optional
@@ -204,8 +208,10 @@ func (m *EnduroE2E) CoverageCheck(ctx context.Context,
 
 // Check a native-platform image's configuration, database migrations, API,
 // embedded dashboard assets, and service shutdown without Archivematica.
+//
+// +cache="session"
 func (m *EnduroE2E) StartupTest(ctx context.Context,
-	// +ignore=[".git", "build", "dist", "frontend/node_modules", "frontend/.nuxt", "frontend/.output", "frontend/coverage", "frontend/.cache", ".ruff_cache", ".playwright-cli", "covreport", "enduro", "hack/dagger/runtime", "hack/minio-data", "hack/seaweedfs-data"]
+	// +ignore=[".git", "build", "dist", "**/node_modules", "frontend/.nuxt", "frontend/.output", "frontend/coverage", "frontend/.cache", ".ruff_cache", ".playwright-cli", "covreport", "enduro", "hack/dagger/runtime", "hack/dagger/internal", "hack/dagger/dagger.gen.go", "dagger.lock", "hack/minio-data", "hack/seaweedfs-data"]
 	source *dagger.Directory,
 	// Production image in an OCI-compatible archive; mutually exclusive with imageRef.
 	// +optional
@@ -285,8 +291,10 @@ inotify = true
 // Run one S3 watcher smoke test provider.
 //
 // Provider must be "minio-latest", "seaweedfs", or "argmin".
+//
+// +cache="session"
 func (m *EnduroE2E) ObjectStorageSmokeTest(ctx context.Context,
-	// +ignore=[".git", "build", "dist", "frontend/node_modules", "frontend/.nuxt", "frontend/.output", "frontend/coverage", "frontend/.cache", ".ruff_cache", ".playwright-cli", "covreport", "enduro", "hack/dagger/runtime", "hack/minio-data", "hack/seaweedfs-data"]
+	// +ignore=[".git", "build", "dist", "**/node_modules", "frontend/.nuxt", "frontend/.output", "frontend/coverage", "frontend/.cache", ".ruff_cache", ".playwright-cli", "covreport", "enduro", "hack/dagger/runtime", "hack/dagger/internal", "hack/dagger/dagger.gen.go", "dagger.lock", "hack/minio-data", "hack/seaweedfs-data"]
 	source *dagger.Directory, provider string,
 	// Production image in an OCI-compatible archive; mutually exclusive with imageRef.
 	// +optional
@@ -508,7 +516,22 @@ func (m *EnduroE2E) objectStorageEnvironment(ctx context.Context, source *dagger
 	default:
 		return nil, fmt.Errorf("unknown object storage provider %q", provider)
 	}
+}
 
+// Install tools and dependencies before adding test sources or live services.
+// Per-run state must not invalidate these expensive, reusable layers.
+func (m *EnduroE2E) smokeTester(source *dagger.Directory) *dagger.Container {
+	return dag.Container().
+		From(playwrightImage).
+		WithWorkdir("/e2e").
+		WithEnvVariable("PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD", "1").
+		WithExec([]string{"sh", "-ceu", "apt-get update && apt-get install -y --no-install-recommends curl jq zip p7zip-full ca-certificates redis-tools && rm -rf /var/lib/apt/lists/*"}).
+		WithDirectory("/e2e", source.Directory("hack/dagger/smoke"), dagger.ContainerWithDirectoryOpts{
+			Include: []string{"package.json", "package-lock.json"},
+		}).
+		WithMountedCache("/root/.npm", dag.CacheVolume("enduro-e2e-smoke-npm-cache")).
+		WithExec([]string{"npm", "ci"}).
+		WithDirectory("/e2e", source.Directory("hack/dagger/smoke"))
 }
 
 func (m *EnduroE2E) runSmokeSuite(ctx context.Context, env *smokeEnvironment) (*dagger.Directory, error) {
@@ -517,9 +540,7 @@ func (m *EnduroE2E) runSmokeSuite(ctx context.Context, env *smokeEnvironment) (*
 		WithoutEntrypoint().
 		File("/usr/local/bin/temporal")
 
-	tester := dag.Container().
-		From(playwrightImage).
-		WithWorkdir("/e2e").
+	tester := m.smokeTester(env.source).
 		WithServiceBinding("enduro", env.enduro).
 		WithServiceBinding("ambox", env.ambox).
 		WithServiceBinding("temporal", env.temporal).
@@ -528,7 +549,6 @@ func (m *EnduroE2E) runSmokeSuite(ctx context.Context, env *smokeEnvironment) (*
 		WithMountedCache("/runtime/watched", env.volumes.watched).
 		WithMountedCache("/runtime/completed", env.volumes.completed).
 		WithMountedCache("/runtime/receipts", env.volumes.receipts).
-		WithDirectory("/e2e", env.source.Directory("hack/dagger/smoke")).
 		WithEnvVariable("E2E_CACHE_BUSTER", env.cacheBuster).
 		WithEnvVariable("ENDURO_URL", "http://enduro:9000").
 		WithEnvVariable("LGTM_URL", "http://lgtm:3000").
@@ -540,12 +560,9 @@ func (m *EnduroE2E) runSmokeSuite(ctx context.Context, env *smokeEnvironment) (*
 		WithEnvVariable("BATCH_TRANSFER_NAME", fmt.Sprintf("avl-other-sip-2.16.578.1.39.100.11.%s-20260721", env.cacheBuster)).
 		WithEnvVariable("EXPECTED_PROCESSING_WORKFLOWS", "2").
 		WithEnvVariable("VERIFY_BATCH_WORKFLOW", "true").
-		WithEnvVariable("PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD", "1").
 		WithFile("/usr/local/bin/temporal", temporalCLI, dagger.ContainerWithFileOpts{
 			Permissions: 0o755,
-		}).
-		WithExec([]string{"sh", "-ceu", "apt-get update && apt-get install -y --no-install-recommends curl jq zip p7zip-full ca-certificates && rm -rf /var/lib/apt/lists/*"}).
-		WithExec([]string{"npm", "ci"})
+		})
 
 	tester = tester.WithExec([]string{"npx", "playwright", "test", "tests/ambox-smoke.spec.ts", "--reporter=line"})
 
@@ -582,13 +599,10 @@ func (m *EnduroE2E) runObjectStorageSmokeSuite(ctx context.Context, env *smokeEn
 		redisList = "object-events"
 	}
 
-	tester := dag.Container().
-		From(playwrightImage).
-		WithWorkdir("/e2e").
+	tester := m.smokeTester(env.source).
 		WithServiceBinding("enduro", env.enduro).
 		WithServiceBinding("temporal", env.temporal).
 		WithServiceBinding("redis", env.redis).
-		WithDirectory("/e2e", env.source.Directory("hack/dagger/smoke")).
 		WithEnvVariable("E2E_CACHE_BUSTER", env.cacheBuster).
 		WithEnvVariable("ENDURO_URL", "http://enduro:9000").
 		WithEnvVariable("TEMPORAL_ADDRESS", "temporal:7233").
@@ -602,15 +616,12 @@ func (m *EnduroE2E) runObjectStorageSmokeSuite(ctx context.Context, env *smokeEn
 		WithEnvVariable("S3_REGION", "us-west-1").
 		WithEnvVariable("REDIS_LIST", redisList).
 		WithEnvVariable("OBJECT_STORAGE_UPLOAD_DELAY_MS", "45000").
-		WithEnvVariable("PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD", "1").
 		WithFile("/usr/local/bin/temporal", temporalCLI, dagger.ContainerWithFileOpts{
 			Permissions: 0o755,
 		}).
 		WithFile("/usr/local/bin/s3put", s3put, dagger.ContainerWithFileOpts{
 			Permissions: 0o755,
-		}).
-		WithExec([]string{"sh", "-ceu", "apt-get update && apt-get install -y --no-install-recommends curl jq zip p7zip-full ca-certificates redis-tools && rm -rf /var/lib/apt/lists/*"}).
-		WithExec([]string{"npm", "ci"})
+		})
 
 	if env.storage != nil {
 		tester = tester.WithServiceBinding(string(provider), env.storage)
@@ -955,7 +966,7 @@ func (m *EnduroE2E) enduroRuntime(image *dagger.Container, volumes runtimeVolume
 	return runtime
 }
 
-func (m *EnduroE2E) enduroBase(source *dagger.Directory, frontendAssets *dagger.Directory) *dagger.Container {
+func (m *EnduroE2E) enduroBase(source, frontendAssets *dagger.Directory) *dagger.Container {
 	if frontendAssets == nil {
 		frontendAssets = m.frontendAssets(source)
 	}
@@ -969,7 +980,7 @@ func (m *EnduroE2E) enduroBase(source *dagger.Directory, frontendAssets *dagger.
 				"dist",
 				"frontend/.nuxt",
 				"frontend/.output",
-				"frontend/node_modules",
+				"**/node_modules",
 				"frontend/coverage",
 				"hack/dagger/runtime",
 				"hack/minio-data",
@@ -987,6 +998,12 @@ func (m *EnduroE2E) enduroBase(source *dagger.Directory, frontendAssets *dagger.
 func (m *EnduroE2E) frontendAssets(source *dagger.Directory) *dagger.Directory {
 	return dag.Container().
 		From(nodeImage).
+		WithWorkdir("/src/frontend").
+		WithDirectory("/src/frontend", source.Directory("frontend"), dagger.ContainerWithDirectoryOpts{
+			Include: []string{"package.json", "package-lock.json"},
+		}).
+		WithMountedCache("/root/.npm", dag.CacheVolume("enduro-e2e-npm-cache")).
+		WithExec([]string{"npm", "ci", "--ignore-scripts"}).
 		WithDirectory("/src/frontend", source.Directory("frontend"), dagger.ContainerWithDirectoryOpts{
 			Exclude: []string{
 				".nuxt",
@@ -995,9 +1012,8 @@ func (m *EnduroE2E) frontendAssets(source *dagger.Directory) *dagger.Directory {
 				"node_modules",
 			},
 		}).
-		WithWorkdir("/src/frontend").
-		WithMountedCache("/root/.npm", dag.CacheVolume("enduro-e2e-npm-cache")).
-		WithExec([]string{"npm", "ci"}).
+		// Replay install hooks, including nuxt prepare, once sources are present.
+		WithExec([]string{"npm", "rebuild"}).
 		WithExec([]string{"npm", "run", "build"}).
 		Directory("/src/frontend/.output/public")
 }
@@ -1012,7 +1028,7 @@ func (m *EnduroE2E) s3PutBinary(source *dagger.Directory) *dagger.File {
 				"dist",
 				"frontend/.nuxt",
 				"frontend/.output",
-				"frontend/node_modules",
+				"**/node_modules",
 				"frontend/coverage",
 				"hack/dagger/runtime",
 				"hack/minio-data",
@@ -1036,7 +1052,7 @@ func (m *EnduroE2E) s3SetupBinary(source *dagger.Directory) *dagger.File {
 				"dist",
 				"frontend/.nuxt",
 				"frontend/.output",
-				"frontend/node_modules",
+				"**/node_modules",
 				"frontend/coverage",
 				"hack/dagger/runtime",
 				"hack/minio-data",
@@ -1076,7 +1092,7 @@ func (m *EnduroE2E) convertEnduroCoverage(
 }
 
 func enduroConfig() string {
-	return fmt.Sprintf(`
+	return `
 verbosity = 2
 debug = true
 debugListen = "0.0.0.0:9001"
@@ -1167,7 +1183,7 @@ maxConcurrentSessionExecutionSize = 4
 
 [workflow]
 activityHeartbeatTimeout = "30s"
-`)
+`
 }
 
 func enduroObjectStorageConfig(provider objectStorageProvider, endpoint string) string {
