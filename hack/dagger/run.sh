@@ -15,7 +15,7 @@ case "$suite" in
     results=(smoke-exit-code)
     ;;
   object-storage-smoke-tests)
-    results=(minio-latest/smoke-exit-code seaweedfs/smoke-exit-code argmin/smoke-exit-code)
+    results=(minio-latest/smoke-exit-code silo/smoke-exit-code seaweedfs/smoke-exit-code argmin/smoke-exit-code)
     ;;
   coverage-check|startup-test)
     results=()

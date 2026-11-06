@@ -37,8 +37,10 @@ jobs:
       fail-fast: false
       matrix:
         arch: [amd64, arm64]
-        suite: ${{ fromJSON(inputs.full-tests && '["startup-test", "smoke-tests", "minio-latest", "seaweedfs", "argmin"]' || '["startup-test"]') }}
+        suite: ${{ fromJSON(inputs.full-tests && '["startup-test", "smoke-tests", "minio-latest", "silo", "seaweedfs", "argmin"]' || '["startup-test"]') }}
         exclude:
+          - arch: arm64
+            suite: silo
           - arch: arm64
             suite: minio-latest
           - arch: arm64
@@ -57,8 +59,8 @@ jobs:
       IMAGE_VERSION: ${{ inputs.image-version }}
       IMAGE_ARTIFACT: ${{ inputs.image-artifact }}
       ARCH: ${{ matrix.arch }}
-      SUITE: ${{ contains(fromJSON('["minio-latest", "seaweedfs", "argmin"]'), matrix.suite) && 'object-storage-smoke-test' || matrix.suite }}
-      PROVIDER: ${{ contains(fromJSON('["minio-latest", "seaweedfs", "argmin"]'), matrix.suite) && matrix.suite || '' }}
+      SUITE: ${{ contains(fromJSON('["minio-latest", "silo", "seaweedfs", "argmin"]'), matrix.suite) && 'object-storage-smoke-test' || matrix.suite }}
+      PROVIDER: ${{ contains(fromJSON('["minio-latest", "silo", "seaweedfs", "argmin"]'), matrix.suite) && matrix.suite || '' }}
       DAGGER_NO_NAG: "1"
     steps:
       - name: Check out code
