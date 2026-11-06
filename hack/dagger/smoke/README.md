@@ -151,6 +151,12 @@ supported local object storage paths:
 
 These object-storage scenarios do not start LGTM and keep tracing disabled.
 
+The `minio-latest` provider uses the [Coollabs build] of upstream MinIO
+`RELEASE.2025-10-15T17-29-55Z`, pinned to its multi-platform image digest. This
+third-party image replaces the unavailable official image for local and CI
+compatibility tests. GitHub Actions runs the MinIO scenario on AMD64 alongside
+the other storage scenarios when full container acceptance tests are enabled.
+
 Run the object-storage suite from the repository root:
 
 ```sh
@@ -189,4 +195,5 @@ neither this delivery path nor the smoke test guarantees exactly-once processing
 or crash recovery.
 
 [container guide]: ../../../docs/containers.md
+[coollabs build]: https://github.com/coollabsio/minio
 [upstream]: https://github.com/justincormack/argmin
