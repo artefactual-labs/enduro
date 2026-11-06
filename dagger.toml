@@ -1,4 +1,4 @@
-[modules.enduro-e2e]
+[modules.enduro]
 source = "hack/dagger"
 main = true
 

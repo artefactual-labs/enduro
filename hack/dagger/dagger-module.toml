@@ -1,4 +1,4 @@
-name = "enduro-e2e"
+name = "enduro"
 engineVersion = "v1.0.0-beta.24"
 
 [runtime]

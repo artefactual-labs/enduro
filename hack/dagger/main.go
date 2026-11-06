@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"dagger/enduro-e-2-e/internal/dagger"
+	"dagger/enduro/internal/dagger"
 )
 
 const (
@@ -29,7 +29,7 @@ const (
 	lgtmImage         = "grafana/otel-lgtm:0.38.0"
 )
 
-type EnduroE2E struct {
+type Enduro struct {
 	// +private
 	ReportOnly bool
 }
@@ -39,8 +39,8 @@ type EnduroE2E struct {
 func New(
 	// +optional
 	reportOnly bool,
-) *EnduroE2E {
-	return &EnduroE2E{ReportOnly: reportOnly}
+) *Enduro {
+	return &Enduro{ReportOnly: reportOnly}
 }
 
 type objectStorageProvider string
@@ -96,7 +96,7 @@ type smokeEnvironment struct {
 //	dagger -m hack/dagger api call smoke-tests --source . export --path hack/dagger/runtime/artifacts
 //
 // +cache="session"
-func (m *EnduroE2E) SmokeTests(ctx context.Context,
+func (m *Enduro) SmokeTests(ctx context.Context,
 	// +ignore=[".git", "build", "dist", "**/node_modules", "frontend/.nuxt", "frontend/.output", "frontend/coverage", "frontend/.cache", ".ruff_cache", ".playwright-cli", "covreport", "enduro", "hack/dagger/runtime", "hack/dagger/internal", "hack/dagger/dagger.gen.go", "dagger.lock", "hack/minio-data", "hack/seaweedfs-data"]
 	source *dagger.Directory,
 	// Production image in an OCI-compatible archive; mutually exclusive with imageRef.
@@ -135,7 +135,7 @@ func (m *EnduroE2E) SmokeTests(ctx context.Context,
 //	dagger -m hack/dagger api call object-storage-smoke-tests --source . export --path hack/dagger/runtime/object-storage-artifacts
 //
 // +cache="session"
-func (m *EnduroE2E) ObjectStorageSmokeTests(ctx context.Context,
+func (m *Enduro) ObjectStorageSmokeTests(ctx context.Context,
 	// +ignore=[".git", "build", "dist", "**/node_modules", "frontend/.nuxt", "frontend/.output", "frontend/coverage", "frontend/.cache", ".ruff_cache", ".playwright-cli", "covreport", "enduro", "hack/dagger/runtime", "hack/dagger/internal", "hack/dagger/dagger.gen.go", "dagger.lock", "hack/minio-data", "hack/seaweedfs-data"]
 	source *dagger.Directory,
 	// Production image in an OCI-compatible archive; mutually exclusive with imageRef.
@@ -181,7 +181,7 @@ func (m *EnduroE2E) ObjectStorageSmokeTests(ctx context.Context,
 // Exercise the coverage build and production runtime without external services.
 // This checks that Enduro starts as nonroot, prints its version, and writes Go
 // coverage data. It does not exercise ingestion or replace the full smoke suite.
-func (m *EnduroE2E) CoverageCheck(ctx context.Context,
+func (m *Enduro) CoverageCheck(ctx context.Context,
 	// +ignore=[".git", "build", "dist", "**/node_modules", "frontend/.nuxt", "frontend/.output", "frontend/coverage", "frontend/.cache", ".ruff_cache", ".playwright-cli", "covreport", "enduro", "hack/dagger/runtime", "hack/dagger/internal", "hack/dagger/dagger.gen.go", "dagger.lock", "hack/minio-data", "hack/seaweedfs-data"]
 	source *dagger.Directory,
 	// Reuse built frontend assets for the source coverage build.
@@ -229,7 +229,7 @@ func (m *EnduroE2E) CoverageCheck(ctx context.Context,
 // embedded dashboard assets, and service shutdown without Archivematica.
 //
 // +cache="session"
-func (m *EnduroE2E) StartupTest(ctx context.Context,
+func (m *Enduro) StartupTest(ctx context.Context,
 	// +ignore=[".git", "build", "dist", "**/node_modules", "frontend/.nuxt", "frontend/.output", "frontend/coverage", "frontend/.cache", ".ruff_cache", ".playwright-cli", "covreport", "enduro", "hack/dagger/runtime", "hack/dagger/internal", "hack/dagger/dagger.gen.go", "dagger.lock", "hack/minio-data", "hack/seaweedfs-data"]
 	source *dagger.Directory,
 	// Production image in an OCI-compatible archive; mutually exclusive with imageRef.
@@ -312,7 +312,7 @@ inotify = true
 // Provider must be "minio-latest", "silo", "seaweedfs", or "argmin".
 //
 // +cache="session"
-func (m *EnduroE2E) ObjectStorageSmokeTest(ctx context.Context,
+func (m *Enduro) ObjectStorageSmokeTest(ctx context.Context,
 	// +ignore=[".git", "build", "dist", "**/node_modules", "frontend/.nuxt", "frontend/.output", "frontend/coverage", "frontend/.cache", ".ruff_cache", ".playwright-cli", "covreport", "enduro", "hack/dagger/runtime", "hack/dagger/internal", "hack/dagger/dagger.gen.go", "dagger.lock", "hack/minio-data", "hack/seaweedfs-data"]
 	source *dagger.Directory, provider string,
 	// Production image in an OCI-compatible archive; mutually exclusive with imageRef.
@@ -343,7 +343,7 @@ func (m *EnduroE2E) ObjectStorageSmokeTest(ctx context.Context,
 	}
 }
 
-func (m *EnduroE2E) objectStorageSmokeTest(ctx context.Context, source *dagger.Directory, image *dagger.Container, coverage bool, provider objectStorageProvider) (*dagger.Directory, error) {
+func (m *Enduro) objectStorageSmokeTest(ctx context.Context, source *dagger.Directory, image *dagger.Container, coverage bool, provider objectStorageProvider) (*dagger.Directory, error) {
 	env, err := m.objectStorageEnvironment(ctx, source, image, coverage, provider)
 	if err != nil {
 		return nil, err
@@ -352,7 +352,7 @@ func (m *EnduroE2E) objectStorageSmokeTest(ctx context.Context, source *dagger.D
 	return m.runObjectStorageSmokeSuite(ctx, env, provider)
 }
 
-func (m *EnduroE2E) smokeEnvironment(ctx context.Context, source *dagger.Directory, image *dagger.Container, coverage bool) (*smokeEnvironment, error) {
+func (m *Enduro) smokeEnvironment(ctx context.Context, source *dagger.Directory, image *dagger.Container, coverage bool) (*smokeEnvironment, error) {
 	cacheBuster := fmt.Sprintf("%d", time.Now().UnixNano())
 	volumes := runtimeVolumes{
 		batch:      dag.CacheVolume("enduro-e2e-ambox-batch"),
@@ -412,7 +412,7 @@ func (m *EnduroE2E) smokeEnvironment(ctx context.Context, source *dagger.Directo
 	}, nil
 }
 
-func (m *EnduroE2E) objectStorageEnvironment(ctx context.Context, source *dagger.Directory, image *dagger.Container, coverage bool, provider objectStorageProvider) (*smokeEnvironment, error) {
+func (m *Enduro) objectStorageEnvironment(ctx context.Context, source *dagger.Directory, image *dagger.Container, coverage bool, provider objectStorageProvider) (*smokeEnvironment, error) {
 	cacheBuster := fmt.Sprintf("%s-%d", provider, time.Now().UnixNano())
 	volumes := runtimeVolumes{
 		batch:      dag.CacheVolume(fmt.Sprintf("enduro-e2e-%s-batch", provider)),
@@ -545,7 +545,7 @@ func (m *EnduroE2E) objectStorageEnvironment(ctx context.Context, source *dagger
 
 // Install tools and dependencies before adding test sources or live services.
 // Per-run state must not invalidate these expensive, reusable layers.
-func (m *EnduroE2E) smokeTester(source *dagger.Directory) *dagger.Container {
+func (m *Enduro) smokeTester(source *dagger.Directory) *dagger.Container {
 	return dag.Container().
 		From(playwrightImage).
 		WithWorkdir("/e2e").
@@ -561,7 +561,7 @@ func (m *EnduroE2E) smokeTester(source *dagger.Directory) *dagger.Container {
 		WithDirectory("/tmp/temporal-artifacts", dag.Directory())
 }
 
-func (m *EnduroE2E) runSmokeSuite(ctx context.Context, env *smokeEnvironment) (*dagger.Directory, error) {
+func (m *Enduro) runSmokeSuite(ctx context.Context, env *smokeEnvironment) (*dagger.Directory, error) {
 	temporalCLI := dag.Container().
 		From(temporalToolImage).
 		WithoutEntrypoint().
@@ -594,7 +594,7 @@ func (m *EnduroE2E) runSmokeSuite(ctx context.Context, env *smokeEnvironment) (*
 	return m.finishSmokeSuite(ctx, env, tester, "tests/ambox-smoke.spec.ts")
 }
 
-func (m *EnduroE2E) runObjectStorageSmokeSuite(ctx context.Context, env *smokeEnvironment, provider objectStorageProvider) (*dagger.Directory, error) {
+func (m *Enduro) runObjectStorageSmokeSuite(ctx context.Context, env *smokeEnvironment, provider objectStorageProvider) (*dagger.Directory, error) {
 	temporalCLI := dag.Container().
 		From(temporalToolImage).
 		WithoutEntrypoint().
@@ -642,7 +642,7 @@ func (m *EnduroE2E) runObjectStorageSmokeSuite(ctx context.Context, env *smokeEn
 	return m.finishSmokeSuite(ctx, env, tester, "tests/object-storage-smoke.spec.ts")
 }
 
-func (m *EnduroE2E) finishSmokeSuite(ctx context.Context, env *smokeEnvironment, tester *dagger.Container, suite string) (*dagger.Directory, error) {
+func (m *Enduro) finishSmokeSuite(ctx context.Context, env *smokeEnvironment, tester *dagger.Container, suite string) (*dagger.Directory, error) {
 	tester = tester.WithExec([]string{"npx", "playwright", "test", suite, "--reporter=line"}, dagger.ContainerWithExecOpts{
 		Expect: dagger.ReturnTypeAny,
 	})
@@ -679,7 +679,7 @@ func (m *EnduroE2E) finishSmokeSuite(ctx context.Context, env *smokeEnvironment,
 	return artifacts.WithNewFile("smoke-exit-code", strconv.Itoa(code)+"\n"), nil
 }
 
-func (m *EnduroE2E) resetRuntime(ctx context.Context, volumes runtimeVolumes, cacheBuster string) error {
+func (m *Enduro) resetRuntime(ctx context.Context, volumes runtimeVolumes, cacheBuster string) error {
 	reset := dag.Container().
 		From("alpine:3.24.1").
 		WithEnvVariable("E2E_CACHE_BUSTER", cacheBuster).
@@ -701,7 +701,7 @@ func (m *EnduroE2E) resetRuntime(ctx context.Context, volumes runtimeVolumes, ca
 	return err
 }
 
-func (m *EnduroE2E) mysqlService(source *dagger.Directory) *dagger.Service {
+func (m *Enduro) mysqlService(source *dagger.Directory) *dagger.Service {
 	return dag.Container().
 		From(mysqlImage).
 		WithEnvVariable("MYSQL_ROOT_PASSWORD", "root123").
@@ -712,7 +712,7 @@ func (m *EnduroE2E) mysqlService(source *dagger.Directory) *dagger.Service {
 		AsService(dagger.ContainerAsServiceOpts{UseEntrypoint: true})
 }
 
-func (m *EnduroE2E) setupTemporalSchema(ctx context.Context, mysql *dagger.Service, cacheBuster string) error {
+func (m *Enduro) setupTemporalSchema(ctx context.Context, mysql *dagger.Service, cacheBuster string) error {
 	setup := dag.Container().
 		From(temporalToolImage).
 		WithoutEntrypoint().
@@ -724,7 +724,7 @@ func (m *EnduroE2E) setupTemporalSchema(ctx context.Context, mysql *dagger.Servi
 	return err
 }
 
-func (m *EnduroE2E) temporalService(source *dagger.Directory, mysql *dagger.Service) *dagger.Service {
+func (m *Enduro) temporalService(source *dagger.Directory, mysql *dagger.Service) *dagger.Service {
 	return withoutOTelEnv(dag.Container().
 		From(temporalImage).
 		WithServiceBinding("mysql", mysql).
@@ -740,7 +740,7 @@ func (m *EnduroE2E) temporalService(source *dagger.Directory, mysql *dagger.Serv
 		AsService(dagger.ContainerAsServiceOpts{UseEntrypoint: true})
 }
 
-func (m *EnduroE2E) temporalDevService() *dagger.Service {
+func (m *Enduro) temporalDevService() *dagger.Service {
 	return withoutOTelEnv(dag.Container().
 		From(temporalToolImage).
 		WithoutEntrypoint().
@@ -758,7 +758,7 @@ func (m *EnduroE2E) temporalDevService() *dagger.Service {
 		AsService(dagger.ContainerAsServiceOpts{UseEntrypoint: true})
 }
 
-func (m *EnduroE2E) createTemporalNamespace(ctx context.Context, temporal *dagger.Service, cacheBuster string) error {
+func (m *Enduro) createTemporalNamespace(ctx context.Context, temporal *dagger.Service, cacheBuster string) error {
 	setup := dag.Container().
 		From(temporalToolImage).
 		WithoutEntrypoint().
@@ -771,7 +771,7 @@ func (m *EnduroE2E) createTemporalNamespace(ctx context.Context, temporal *dagge
 	return err
 }
 
-func (m *EnduroE2E) waitTemporalNamespace(ctx context.Context, temporal *dagger.Service, cacheBuster string) error {
+func (m *Enduro) waitTemporalNamespace(ctx context.Context, temporal *dagger.Service, cacheBuster string) error {
 	waiter := dag.Container().
 		From(temporalToolImage).
 		WithoutEntrypoint().
@@ -796,7 +796,7 @@ func withoutOTelEnv(container *dagger.Container) *dagger.Container {
 	return container.WithEnvVariable("OTEL_TRACES_EXPORTER", "none")
 }
 
-func (m *EnduroE2E) amboxService() *dagger.Service {
+func (m *Enduro) amboxService() *dagger.Service {
 	return dag.Container().
 		From(amboxImage).
 		WithNewFile("/etc/sftpgo/initial-data.json", sftpgoInitialData(), dagger.ContainerWithNewFileOpts{
@@ -811,7 +811,7 @@ func (m *EnduroE2E) amboxService() *dagger.Service {
 		})
 }
 
-func (m *EnduroE2E) settleAmbox(ctx context.Context, ambox *dagger.Service, cacheBuster string) error {
+func (m *Enduro) settleAmbox(ctx context.Context, ambox *dagger.Service, cacheBuster string) error {
 	waiter := dag.Container().
 		From("alpine:3.24.1").
 		WithServiceBinding("ambox", ambox).
@@ -822,14 +822,14 @@ func (m *EnduroE2E) settleAmbox(ctx context.Context, ambox *dagger.Service, cach
 	return err
 }
 
-func (m *EnduroE2E) redisService() *dagger.Service {
+func (m *Enduro) redisService() *dagger.Service {
 	return dag.Container().
 		From(redisImage).
 		WithExposedPort(6379).
 		AsService(dagger.ContainerAsServiceOpts{UseEntrypoint: true})
 }
 
-func (m *EnduroE2E) lgtmService(cacheBuster string) *dagger.Service {
+func (m *Enduro) lgtmService(cacheBuster string) *dagger.Service {
 	return dag.Container().
 		From(lgtmImage).
 		WithEnvVariable("E2E_CACHE_BUSTER", cacheBuster).
@@ -842,7 +842,7 @@ func (m *EnduroE2E) lgtmService(cacheBuster string) *dagger.Service {
 
 // Build independently of Enduro's source and per-run cache buster. Copy the
 // executable out of the target cache so it is part of Dagger's immutable output.
-func (m *EnduroE2E) argminBinary() *dagger.File {
+func (m *Enduro) argminBinary() *dagger.File {
 	source := dag.Git("https://github.com/justincormack/argmin.git").Commit(argminRevision).Tree()
 	return dag.Container().
 		From(argminBuildImage).
@@ -858,7 +858,7 @@ func (m *EnduroE2E) argminBinary() *dagger.File {
 		File("/out/argmin-s3")
 }
 
-func (m *EnduroE2E) argminService(cacheBuster string) *dagger.Service {
+func (m *Enduro) argminService(cacheBuster string) *dagger.Service {
 	return dag.Container().
 		From("debian:bookworm-slim").
 		WithFile("/usr/local/bin/argmin-s3", m.argminBinary()).
@@ -878,7 +878,7 @@ func (m *EnduroE2E) argminService(cacheBuster string) *dagger.Service {
 		AsService()
 }
 
-func (m *EnduroE2E) minioService(volumes runtimeVolumes, redis *dagger.Service, image string) *dagger.Service {
+func (m *Enduro) minioService(volumes runtimeVolumes, redis *dagger.Service, image string) *dagger.Service {
 	return dag.Container().
 		From(image).
 		WithServiceBinding("redis", redis).
@@ -898,7 +898,7 @@ func (m *EnduroE2E) minioService(volumes runtimeVolumes, redis *dagger.Service, 
 		AsService(dagger.ContainerAsServiceOpts{UseEntrypoint: true})
 }
 
-func (m *EnduroE2E) setupObjectStorageBucket(
+func (m *Enduro) setupObjectStorageBucket(
 	ctx context.Context,
 	source *dagger.Directory,
 	storage *dagger.Service,
@@ -932,7 +932,7 @@ func (m *EnduroE2E) setupObjectStorageBucket(
 
 // runtimeImage selects a release artifact or builds the coverage binary into
 // the same Dockerfile used by GoReleaser. Runtime data never enters the build.
-func (m *EnduroE2E) runtimeImage(ctx context.Context, source *dagger.Directory, archive *dagger.File, ref string, assets *dagger.Directory) (*dagger.Container, bool, error) {
+func (m *Enduro) runtimeImage(ctx context.Context, source *dagger.Directory, archive *dagger.File, ref string, assets *dagger.Directory) (*dagger.Container, bool, error) {
 	if archive != nil && ref != "" {
 		return nil, false, fmt.Errorf("image-archive and image-ref are mutually exclusive")
 	}
@@ -963,7 +963,7 @@ func (m *EnduroE2E) runtimeImage(ctx context.Context, source *dagger.Directory, 
 	}), true, nil
 }
 
-func (m *EnduroE2E) enduroRuntime(image *dagger.Container, volumes runtimeVolumes, ambox *dagger.Service, config string, coverage bool, cacheBuster string) *dagger.Container {
+func (m *Enduro) enduroRuntime(image *dagger.Container, volumes runtimeVolumes, ambox *dagger.Service, config string, coverage bool, cacheBuster string) *dagger.Container {
 	knownHosts := dag.Container().
 		From("alpine:3.24.1").
 		WithExec([]string{"apk", "add", "--no-cache", "openssh-client"}).
@@ -1002,7 +1002,7 @@ func (m *EnduroE2E) enduroRuntime(image *dagger.Container, volumes runtimeVolume
 	return runtime
 }
 
-func (m *EnduroE2E) enduroBase(source, frontendAssets *dagger.Directory) *dagger.Container {
+func (m *Enduro) enduroBase(source, frontendAssets *dagger.Directory) *dagger.Container {
 	if frontendAssets == nil {
 		frontendAssets = m.frontendAssets(source)
 	}
@@ -1031,7 +1031,7 @@ func (m *EnduroE2E) enduroBase(source, frontendAssets *dagger.Directory) *dagger
 		WithExec([]string{"go", "build", "-cover", "-covermode=atomic", "-coverpkg=./...", "-trimpath", "-o", "build/enduro", "."})
 }
 
-func (m *EnduroE2E) frontendAssets(source *dagger.Directory) *dagger.Directory {
+func (m *Enduro) frontendAssets(source *dagger.Directory) *dagger.Directory {
 	return dag.Container().
 		From(nodeImage).
 		WithWorkdir("/src/frontend").
@@ -1054,7 +1054,7 @@ func (m *EnduroE2E) frontendAssets(source *dagger.Directory) *dagger.Directory {
 		Directory("/src/frontend/.output/public")
 }
 
-func (m *EnduroE2E) s3PutBinary(source *dagger.Directory) *dagger.File {
+func (m *Enduro) s3PutBinary(source *dagger.Directory) *dagger.File {
 	return dag.Container().
 		From(goImage).
 		WithDirectory("/src", source, dagger.ContainerWithDirectoryOpts{
@@ -1078,7 +1078,7 @@ func (m *EnduroE2E) s3PutBinary(source *dagger.Directory) *dagger.File {
 		File("/usr/local/bin/s3put")
 }
 
-func (m *EnduroE2E) s3SetupBinary(source *dagger.Directory) *dagger.File {
+func (m *Enduro) s3SetupBinary(source *dagger.Directory) *dagger.File {
 	return dag.Container().
 		From(goImage).
 		WithDirectory("/src", source, dagger.ContainerWithDirectoryOpts{
@@ -1102,7 +1102,7 @@ func (m *EnduroE2E) s3SetupBinary(source *dagger.Directory) *dagger.File {
 		File("/usr/local/bin/s3setup")
 }
 
-func (m *EnduroE2E) convertEnduroCoverage(
+func (m *Enduro) convertEnduroCoverage(
 	ctx context.Context,
 	env *smokeEnvironment,
 	artifacts *dagger.Directory,

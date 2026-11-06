@@ -17,7 +17,7 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.40.0"
 	"go.opentelemetry.io/otel/trace"
 
-	"dagger/enduro-e-2-e/internal/dagger"
+	"dagger/enduro/internal/dagger"
 
 	"github.com/dagger/querybuilder"
 )
@@ -59,7 +59,7 @@ func convertSlice[I any, O any](in []I, f func(I) O) []O {
 	return out
 }
 
-func (r EnduroE2E) MarshalJSON() ([]byte, error) {
+func (r Enduro) MarshalJSON() ([]byte, error) {
 	var concrete struct {
 		ReportOnly bool
 	}
@@ -67,7 +67,7 @@ func (r EnduroE2E) MarshalJSON() ([]byte, error) {
 	return json.Marshal(&concrete)
 }
 
-func (r *EnduroE2E) UnmarshalJSON(bs []byte) error {
+func (r *Enduro) UnmarshalJSON(bs []byte) error {
 	var concrete struct {
 		ReportOnly bool
 	}
@@ -171,10 +171,10 @@ func dispatch(ctx context.Context) (rerr error) {
 func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName string, inputArgs map[string][]byte) (_ any, err error) {
 	_ = inputArgs
 	switch parentName {
-	case "EnduroE2E":
+	case "Enduro":
 		switch fnName {
 		case "CoverageCheck":
-			var parent EnduroE2E
+			var parent Enduro
 			err = json.Unmarshal(parentJSON, &parent)
 			if err != nil {
 				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
@@ -193,9 +193,9 @@ func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName st
 					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg frontendAssets", err))
 				}
 			}
-			return (*EnduroE2E).CoverageCheck(&parent, ctx, source, frontendAssets)
+			return (*Enduro).CoverageCheck(&parent, ctx, source, frontendAssets)
 		case "ObjectStorageSmokeTest":
-			var parent EnduroE2E
+			var parent Enduro
 			err = json.Unmarshal(parentJSON, &parent)
 			if err != nil {
 				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
@@ -235,9 +235,9 @@ func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName st
 					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg frontendAssets", err))
 				}
 			}
-			return (*EnduroE2E).ObjectStorageSmokeTest(&parent, ctx, source, provider, imageArchive, imageRef, frontendAssets)
+			return (*Enduro).ObjectStorageSmokeTest(&parent, ctx, source, provider, imageArchive, imageRef, frontendAssets)
 		case "ObjectStorageSmokeTests":
-			var parent EnduroE2E
+			var parent Enduro
 			err = json.Unmarshal(parentJSON, &parent)
 			if err != nil {
 				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
@@ -270,9 +270,9 @@ func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName st
 					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg frontendAssets", err))
 				}
 			}
-			return (*EnduroE2E).ObjectStorageSmokeTests(&parent, ctx, source, imageArchive, imageRef, frontendAssets)
+			return (*Enduro).ObjectStorageSmokeTests(&parent, ctx, source, imageArchive, imageRef, frontendAssets)
 		case "SmokeTests":
-			var parent EnduroE2E
+			var parent Enduro
 			err = json.Unmarshal(parentJSON, &parent)
 			if err != nil {
 				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
@@ -305,9 +305,9 @@ func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName st
 					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg frontendAssets", err))
 				}
 			}
-			return (*EnduroE2E).SmokeTests(&parent, ctx, source, imageArchive, imageRef, frontendAssets)
+			return (*Enduro).SmokeTests(&parent, ctx, source, imageArchive, imageRef, frontendAssets)
 		case "StartupTest":
-			var parent EnduroE2E
+			var parent Enduro
 			err = json.Unmarshal(parentJSON, &parent)
 			if err != nil {
 				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
@@ -340,9 +340,9 @@ func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName st
 					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg frontendAssets", err))
 				}
 			}
-			return (*EnduroE2E).StartupTest(&parent, ctx, source, imageArchive, imageRef, frontendAssets)
+			return (*Enduro).StartupTest(&parent, ctx, source, imageArchive, imageRef, frontendAssets)
 		case "":
-			var parent EnduroE2E
+			var parent Enduro
 			err = json.Unmarshal(parentJSON, &parent)
 			if err != nil {
 				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
@@ -362,7 +362,7 @@ func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName st
 		return dag.Module().
 			WithDescription("Enduro integration-test harnesses.\n").
 			WithObject(
-				dag.TypeDef().WithObject("EnduroE2E", dagger.TypeDefWithObjectOpts{SourceMap: dag.SourceMap("main.go", 32, 6)}).
+				dag.TypeDef().WithObject("Enduro", dagger.TypeDefWithObjectOpts{SourceMap: dag.SourceMap("main.go", 32, 6)}).
 					WithFunction(
 						dag.Function("CoverageCheck",
 							dag.TypeDef().WithObject("Directory")).
@@ -413,7 +413,7 @@ func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName st
 							WithArg("frontendAssets", dag.TypeDef().WithObject("Directory").WithOptional(true), dagger.FunctionWithArgOpts{Description: "Reuse built frontend assets for the default source coverage build.", SourceMap: dag.SourceMap("main.go", 243, 2)})).
 					WithConstructor(
 						dag.Function("New",
-							dag.TypeDef().WithObject("EnduroE2E")).
+							dag.TypeDef().WithObject("Enduro")).
 							WithDescription("Export smoke diagnostics even when Playwright fails. Callers using reportOnly\nmust check the exported smoke-exit-code files, as hack/dagger/run.sh does.").
 							WithSourceMap(dag.SourceMap("main.go", 39, 1)).
 							WithArg("reportOnly", dag.TypeDef().WithKind(dagger.TypeDefKindBooleanKind).WithOptional(true), dagger.FunctionWithArgOpts{SourceMap: dag.SourceMap("main.go", 41, 2)}))), nil

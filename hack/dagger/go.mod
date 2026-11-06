@@ -1,4 +1,4 @@
-module dagger/enduro-e-2-e
+module dagger/enduro
 
 // Keep the go directive compatible with Dagger's bundled Go toolchain.
 go 1.26.5
