@@ -142,18 +142,19 @@ jobs:
             }
           }
           JSON
-      - name: Run smoke tests
+      - name: Install Dagger
         uses: dagger/dagger-for-github@v8.4.1
         env:
           DAGGER_NO_NAG: "1"
         with:
           version: "1.0.0-beta.24"
-          verb: call
-          module: hack/dagger
-          args: >-
-            ${{ (github.ref != 'refs/heads/dev/containers' || (github.event_name == 'workflow_dispatch' && inputs.full-tests)) && 'smoke-tests' || 'coverage-check' }}
-            --source . --frontend-assets frontend/.output/public
-            export --path hack/dagger/runtime/artifacts
+      - name: Run smoke tests
+        env:
+          SUITE: ${{ (github.ref != 'refs/heads/dev/containers' || (github.event_name == 'workflow_dispatch' && inputs.full-tests)) && 'smoke-tests' || 'coverage-check' }}
+          DAGGER_NO_NAG: "1"
+        run: |
+          hack/dagger/run.sh "$SUITE" hack/dagger/runtime/artifacts \
+            --frontend-assets frontend/.output/public
       - name: Report final disk usage
         if: ${{ always() }}
         run: df -h /

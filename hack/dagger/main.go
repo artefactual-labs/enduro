@@ -28,7 +28,19 @@ const (
 	lgtmImage         = "grafana/otel-lgtm:0.38.0"
 )
 
-type EnduroE2E struct{}
+type EnduroE2E struct {
+	// +private
+	ReportOnly bool
+}
+
+// Export smoke diagnostics even when Playwright fails. Callers using reportOnly
+// must check the exported smoke-exit-code files, as hack/dagger/run.sh does.
+func New(
+	// +optional
+	reportOnly bool,
+) *EnduroE2E {
+	return &EnduroE2E{ReportOnly: reportOnly}
+}
 
 type objectStorageProvider string
 
@@ -531,7 +543,9 @@ func (m *EnduroE2E) smokeTester(source *dagger.Directory) *dagger.Container {
 		}).
 		WithMountedCache("/root/.npm", dag.CacheVolume("enduro-e2e-smoke-npm-cache")).
 		WithExec([]string{"npm", "ci"}).
-		WithDirectory("/e2e", source.Directory("hack/dagger/smoke"))
+		WithDirectory("/e2e", source.Directory("hack/dagger/smoke")).
+		WithDirectory("/artifacts", dag.Directory()).
+		WithDirectory("/tmp/temporal-artifacts", dag.Directory())
 }
 
 func (m *EnduroE2E) runSmokeSuite(ctx context.Context, env *smokeEnvironment) (*dagger.Directory, error) {
@@ -564,22 +578,7 @@ func (m *EnduroE2E) runSmokeSuite(ctx context.Context, env *smokeEnvironment) (*
 			Permissions: 0o755,
 		})
 
-	tester = tester.WithExec([]string{"npx", "playwright", "test", "tests/ambox-smoke.spec.ts", "--reporter=line"})
-
-	if _, err := tester.Stdout(ctx); err != nil {
-		return nil, err
-	}
-
-	// Go writes binary coverage data when the process exits, so stop Enduro
-	// gracefully before converting the raw GOCOVERDIR files.
-	if _, err := env.enduro.Stop(ctx); err != nil {
-		return nil, err
-	}
-
-	artifacts := tester.Directory("/artifacts").
-		WithDirectory(".", tester.Directory("/tmp/temporal-artifacts"))
-
-	return m.convertEnduroCoverage(ctx, env, artifacts)
+	return m.finishSmokeSuite(ctx, env, tester, "tests/ambox-smoke.spec.ts")
 }
 
 func (m *EnduroE2E) runObjectStorageSmokeSuite(ctx context.Context, env *smokeEnvironment, provider objectStorageProvider) (*dagger.Directory, error) {
@@ -627,20 +626,44 @@ func (m *EnduroE2E) runObjectStorageSmokeSuite(ctx context.Context, env *smokeEn
 		tester = tester.WithServiceBinding(string(provider), env.storage)
 	}
 
-	tester = tester.WithExec([]string{"npx", "playwright", "test", "tests/object-storage-smoke.spec.ts", "--reporter=line"})
+	return m.finishSmokeSuite(ctx, env, tester, "tests/object-storage-smoke.spec.ts")
+}
 
-	if _, err := tester.Stdout(ctx); err != nil {
+func (m *EnduroE2E) finishSmokeSuite(ctx context.Context, env *smokeEnvironment, tester *dagger.Container, suite string) (*dagger.Directory, error) {
+	tester = tester.WithExec([]string{"npx", "playwright", "test", suite, "--reporter=line"}, dagger.ContainerWithExecOpts{
+		Expect: dagger.ReturnTypeAny,
+	})
+	code, err := tester.ExitCode(ctx)
+	if err != nil {
 		return nil, err
 	}
-
-	if _, err := env.enduro.Stop(ctx); err != nil {
-		return nil, err
-	}
-
 	artifacts := tester.Directory("/artifacts").
 		WithDirectory(".", tester.Directory("/tmp/temporal-artifacts"))
+	output, err := tester.CombinedOutput(ctx)
+	if err != nil {
+		return nil, err
+	}
+	artifacts = artifacts.WithNewFile("playwright.log", output)
 
-	return m.convertEnduroCoverage(ctx, env, artifacts)
+	// Go flushes coverage at shutdown. Retain test artifacts if shutdown or
+	// coverage conversion fails, and report that failure to the caller too.
+	if _, err = env.enduro.Stop(ctx); err == nil {
+		var coverageArtifacts *dagger.Directory
+		coverageArtifacts, err = m.convertEnduroCoverage(ctx, env, artifacts)
+		if err == nil {
+			artifacts = coverageArtifacts
+		}
+	}
+	if err != nil {
+		artifacts = artifacts.WithNewFile("cleanup-error.txt", err.Error()+"\n")
+		if code == 0 {
+			code = 1
+		}
+	}
+	if code != 0 && !m.ReportOnly {
+		return nil, fmt.Errorf("smoke suite %s failed (exit %d): %s; cleanup: %v", suite, code, output, err)
+	}
+	return artifacts.WithNewFile("smoke-exit-code", strconv.Itoa(code)+"\n"), nil
 }
 
 func (m *EnduroE2E) resetRuntime(ctx context.Context, volumes runtimeVolumes, cacheBuster string) error {

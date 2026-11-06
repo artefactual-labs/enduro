@@ -60,16 +60,22 @@ func convertSlice[I any, O any](in []I, f func(I) O) []O {
 }
 
 func (r EnduroE2E) MarshalJSON() ([]byte, error) {
-	var concrete struct{}
+	var concrete struct {
+		ReportOnly bool
+	}
+	concrete.ReportOnly = r.ReportOnly
 	return json.Marshal(&concrete)
 }
 
 func (r *EnduroE2E) UnmarshalJSON(bs []byte) error {
-	var concrete struct{}
+	var concrete struct {
+		ReportOnly bool
+	}
 	err := json.Unmarshal(bs, &concrete)
 	if err != nil {
 		return err
 	}
+	r.ReportOnly = concrete.ReportOnly
 	return nil
 }
 
@@ -335,6 +341,20 @@ func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName st
 				}
 			}
 			return (*EnduroE2E).StartupTest(&parent, ctx, source, imageArchive, imageRef, frontendAssets)
+		case "":
+			var parent EnduroE2E
+			err = json.Unmarshal(parentJSON, &parent)
+			if err != nil {
+				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
+			}
+			var reportOnly bool
+			if inputArgs["reportOnly"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["reportOnly"]), &reportOnly)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg reportOnly", err))
+				}
+			}
+			return New(reportOnly), nil
 		default:
 			return nil, fmt.Errorf("unknown function %s", fnName)
 		}
@@ -347,50 +367,56 @@ func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName st
 						dag.Function("CoverageCheck",
 							dag.TypeDef().WithObject("Directory")).
 							WithDescription("Exercise the coverage build and production runtime without external services.\nThis checks that Enduro starts as nonroot, prints its version, and writes Go\ncoverage data. It does not exercise ingestion or replace the full smoke suite.").
-							WithSourceMap(dag.SourceMap("main.go", 165, 1)).
-							WithArg("source", dag.TypeDef().WithObject("Directory"), dagger.FunctionWithArgOpts{SourceMap: dag.SourceMap("main.go", 167, 2), Ignore: []string{".git", "build", "dist", "**/node_modules", "frontend/.nuxt", "frontend/.output", "frontend/coverage", "frontend/.cache", ".ruff_cache", ".playwright-cli", "covreport", "enduro", "hack/dagger/runtime", "hack/dagger/internal", "hack/dagger/dagger.gen.go", "dagger.lock", "hack/minio-data", "hack/seaweedfs-data"}}).
-							WithArg("frontendAssets", dag.TypeDef().WithObject("Directory").WithOptional(true), dagger.FunctionWithArgOpts{Description: "Reuse built frontend assets for the source coverage build.", SourceMap: dag.SourceMap("main.go", 170, 2)})).
+							WithSourceMap(dag.SourceMap("main.go", 177, 1)).
+							WithArg("source", dag.TypeDef().WithObject("Directory"), dagger.FunctionWithArgOpts{SourceMap: dag.SourceMap("main.go", 179, 2), Ignore: []string{".git", "build", "dist", "**/node_modules", "frontend/.nuxt", "frontend/.output", "frontend/coverage", "frontend/.cache", ".ruff_cache", ".playwright-cli", "covreport", "enduro", "hack/dagger/runtime", "hack/dagger/internal", "hack/dagger/dagger.gen.go", "dagger.lock", "hack/minio-data", "hack/seaweedfs-data"}}).
+							WithArg("frontendAssets", dag.TypeDef().WithObject("Directory").WithOptional(true), dagger.FunctionWithArgOpts{Description: "Reuse built frontend assets for the source coverage build.", SourceMap: dag.SourceMap("main.go", 182, 2)})).
 					WithFunction(
 						dag.Function("ObjectStorageSmokeTest",
 							dag.TypeDef().WithObject("Directory")).
 							WithDescription("Run one S3 watcher smoke test provider.\n\nProvider must be \"minio-latest\", \"seaweedfs\", or \"argmin\".").
 							WithCachePolicy(dagger.FunctionCachePolicyPerSession).
-							WithSourceMap(dag.SourceMap("main.go", 296, 1)).
-							WithArg("source", dag.TypeDef().WithObject("Directory"), dagger.FunctionWithArgOpts{SourceMap: dag.SourceMap("main.go", 298, 2), Ignore: []string{".git", "build", "dist", "**/node_modules", "frontend/.nuxt", "frontend/.output", "frontend/coverage", "frontend/.cache", ".ruff_cache", ".playwright-cli", "covreport", "enduro", "hack/dagger/runtime", "hack/dagger/internal", "hack/dagger/dagger.gen.go", "dagger.lock", "hack/minio-data", "hack/seaweedfs-data"}}).
-							WithArg("provider", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind), dagger.FunctionWithArgOpts{SourceMap: dag.SourceMap("main.go", 298, 28)}).
-							WithArg("imageArchive", dag.TypeDef().WithObject("File").WithOptional(true), dagger.FunctionWithArgOpts{Description: "Production image in an OCI-compatible archive; mutually exclusive with imageRef.", SourceMap: dag.SourceMap("main.go", 301, 2)}).
-							WithArg("imageRef", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "Production registry image pinned by sha256 digest.", SourceMap: dag.SourceMap("main.go", 304, 2)}).
-							WithArg("frontendAssets", dag.TypeDef().WithObject("Directory").WithOptional(true), dagger.FunctionWithArgOpts{Description: "Reuse built frontend assets for the default source coverage build.", SourceMap: dag.SourceMap("main.go", 307, 2)})).
+							WithSourceMap(dag.SourceMap("main.go", 308, 1)).
+							WithArg("source", dag.TypeDef().WithObject("Directory"), dagger.FunctionWithArgOpts{SourceMap: dag.SourceMap("main.go", 310, 2), Ignore: []string{".git", "build", "dist", "**/node_modules", "frontend/.nuxt", "frontend/.output", "frontend/coverage", "frontend/.cache", ".ruff_cache", ".playwright-cli", "covreport", "enduro", "hack/dagger/runtime", "hack/dagger/internal", "hack/dagger/dagger.gen.go", "dagger.lock", "hack/minio-data", "hack/seaweedfs-data"}}).
+							WithArg("provider", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind), dagger.FunctionWithArgOpts{SourceMap: dag.SourceMap("main.go", 310, 28)}).
+							WithArg("imageArchive", dag.TypeDef().WithObject("File").WithOptional(true), dagger.FunctionWithArgOpts{Description: "Production image in an OCI-compatible archive; mutually exclusive with imageRef.", SourceMap: dag.SourceMap("main.go", 313, 2)}).
+							WithArg("imageRef", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "Production registry image pinned by sha256 digest.", SourceMap: dag.SourceMap("main.go", 316, 2)}).
+							WithArg("frontendAssets", dag.TypeDef().WithObject("Directory").WithOptional(true), dagger.FunctionWithArgOpts{Description: "Reuse built frontend assets for the default source coverage build.", SourceMap: dag.SourceMap("main.go", 319, 2)})).
 					WithFunction(
 						dag.Function("ObjectStorageSmokeTests",
 							dag.TypeDef().WithObject("Directory")).
 							WithDescription("Run S3 watcher smoke tests against MinIO, SeaweedFS, and argmin.\n\nThe MinIO scenario exercises native Redis notifications configured through\nenvironment variables and the S3 API. The SeaweedFS scenario exercises\nSeaweedFS filer webhooks, Enduro's object event webhook,\nnormalized Redis events, and the S3 watcher path. All scenarios publish the\ntransfer to ambox and verify the resulting AIP. Argmin uses a synthetic\nnormalized Redis event after upload because it has no native notifications.\n\nCall from the repository root with:\n\n\tdagger -m hack/dagger api call object-storage-smoke-tests --source . export --path hack/dagger/runtime/object-storage-artifacts").
 							WithCachePolicy(dagger.FunctionCachePolicyPerSession).
-							WithSourceMap(dag.SourceMap("main.go", 124, 1)).
-							WithArg("source", dag.TypeDef().WithObject("Directory"), dagger.FunctionWithArgOpts{SourceMap: dag.SourceMap("main.go", 126, 2), Ignore: []string{".git", "build", "dist", "**/node_modules", "frontend/.nuxt", "frontend/.output", "frontend/coverage", "frontend/.cache", ".ruff_cache", ".playwright-cli", "covreport", "enduro", "hack/dagger/runtime", "hack/dagger/internal", "hack/dagger/dagger.gen.go", "dagger.lock", "hack/minio-data", "hack/seaweedfs-data"}}).
-							WithArg("imageArchive", dag.TypeDef().WithObject("File").WithOptional(true), dagger.FunctionWithArgOpts{Description: "Production image in an OCI-compatible archive; mutually exclusive with imageRef.", SourceMap: dag.SourceMap("main.go", 129, 2)}).
-							WithArg("imageRef", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "Production registry image pinned by sha256 digest.", SourceMap: dag.SourceMap("main.go", 132, 2)}).
-							WithArg("frontendAssets", dag.TypeDef().WithObject("Directory").WithOptional(true), dagger.FunctionWithArgOpts{Description: "Reuse built frontend assets for the default source coverage build.", SourceMap: dag.SourceMap("main.go", 135, 2)})).
+							WithSourceMap(dag.SourceMap("main.go", 136, 1)).
+							WithArg("source", dag.TypeDef().WithObject("Directory"), dagger.FunctionWithArgOpts{SourceMap: dag.SourceMap("main.go", 138, 2), Ignore: []string{".git", "build", "dist", "**/node_modules", "frontend/.nuxt", "frontend/.output", "frontend/coverage", "frontend/.cache", ".ruff_cache", ".playwright-cli", "covreport", "enduro", "hack/dagger/runtime", "hack/dagger/internal", "hack/dagger/dagger.gen.go", "dagger.lock", "hack/minio-data", "hack/seaweedfs-data"}}).
+							WithArg("imageArchive", dag.TypeDef().WithObject("File").WithOptional(true), dagger.FunctionWithArgOpts{Description: "Production image in an OCI-compatible archive; mutually exclusive with imageRef.", SourceMap: dag.SourceMap("main.go", 141, 2)}).
+							WithArg("imageRef", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "Production registry image pinned by sha256 digest.", SourceMap: dag.SourceMap("main.go", 144, 2)}).
+							WithArg("frontendAssets", dag.TypeDef().WithObject("Directory").WithOptional(true), dagger.FunctionWithArgOpts{Description: "Reuse built frontend assets for the default source coverage build.", SourceMap: dag.SourceMap("main.go", 147, 2)})).
 					WithFunction(
 						dag.Function("SmokeTests",
 							dag.TypeDef().WithObject("Directory")).
 							WithDescription("Run the smoke test suite against ambox.\n\nThis starts Enduro, Temporal, MySQL, and an ambox Archivematica environment,\nthen submits a zipped transfer through Enduro's filesystem watcher. Enduro\nprepares the transfer locally and publishes it to ambox over SFTP, which\nexercises the publish, transfer, cleanup, and completion workflow path.\n\nIt also drives the Nuxt batch-import form with Playwright, submitting a\nsimple directory transfer from a filesystem path visible to Enduro. The suite\nwaits for processing to finish, downloads the generated AIPs through Enduro,\nand performs basic checks on the AIPs and Temporal history. It returns a\nDagger directory with downloaded AIPs and diagnostic reports for local\ninspection or CI artifact upload.\n\nCall from the repository root with:\n\n\tdagger -m hack/dagger api call smoke-tests --source . export --path hack/dagger/runtime/artifacts").
 							WithCachePolicy(dagger.FunctionCachePolicyPerSession).
-							WithSourceMap(dag.SourceMap("main.go", 85, 1)).
-							WithArg("source", dag.TypeDef().WithObject("Directory"), dagger.FunctionWithArgOpts{SourceMap: dag.SourceMap("main.go", 87, 2), Ignore: []string{".git", "build", "dist", "**/node_modules", "frontend/.nuxt", "frontend/.output", "frontend/coverage", "frontend/.cache", ".ruff_cache", ".playwright-cli", "covreport", "enduro", "hack/dagger/runtime", "hack/dagger/internal", "hack/dagger/dagger.gen.go", "dagger.lock", "hack/minio-data", "hack/seaweedfs-data"}}).
-							WithArg("imageArchive", dag.TypeDef().WithObject("File").WithOptional(true), dagger.FunctionWithArgOpts{Description: "Production image in an OCI-compatible archive; mutually exclusive with imageRef.", SourceMap: dag.SourceMap("main.go", 90, 2)}).
-							WithArg("imageRef", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "Production registry image pinned by sha256 digest.", SourceMap: dag.SourceMap("main.go", 93, 2)}).
-							WithArg("frontendAssets", dag.TypeDef().WithObject("Directory").WithOptional(true), dagger.FunctionWithArgOpts{Description: "Reuse built frontend assets for the default source coverage build.", SourceMap: dag.SourceMap("main.go", 96, 2)})).
+							WithSourceMap(dag.SourceMap("main.go", 97, 1)).
+							WithArg("source", dag.TypeDef().WithObject("Directory"), dagger.FunctionWithArgOpts{SourceMap: dag.SourceMap("main.go", 99, 2), Ignore: []string{".git", "build", "dist", "**/node_modules", "frontend/.nuxt", "frontend/.output", "frontend/coverage", "frontend/.cache", ".ruff_cache", ".playwright-cli", "covreport", "enduro", "hack/dagger/runtime", "hack/dagger/internal", "hack/dagger/dagger.gen.go", "dagger.lock", "hack/minio-data", "hack/seaweedfs-data"}}).
+							WithArg("imageArchive", dag.TypeDef().WithObject("File").WithOptional(true), dagger.FunctionWithArgOpts{Description: "Production image in an OCI-compatible archive; mutually exclusive with imageRef.", SourceMap: dag.SourceMap("main.go", 102, 2)}).
+							WithArg("imageRef", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "Production registry image pinned by sha256 digest.", SourceMap: dag.SourceMap("main.go", 105, 2)}).
+							WithArg("frontendAssets", dag.TypeDef().WithObject("Directory").WithOptional(true), dagger.FunctionWithArgOpts{Description: "Reuse built frontend assets for the default source coverage build.", SourceMap: dag.SourceMap("main.go", 108, 2)})).
 					WithFunction(
 						dag.Function("StartupTest",
 							dag.TypeDef().WithObject("Directory")).
 							WithDescription("Check a native-platform image's configuration, database migrations, API,\nembedded dashboard assets, and service shutdown without Archivematica.").
 							WithCachePolicy(dagger.FunctionCachePolicyPerSession).
-							WithSourceMap(dag.SourceMap("main.go", 213, 1)).
-							WithArg("source", dag.TypeDef().WithObject("Directory"), dagger.FunctionWithArgOpts{SourceMap: dag.SourceMap("main.go", 215, 2), Ignore: []string{".git", "build", "dist", "**/node_modules", "frontend/.nuxt", "frontend/.output", "frontend/coverage", "frontend/.cache", ".ruff_cache", ".playwright-cli", "covreport", "enduro", "hack/dagger/runtime", "hack/dagger/internal", "hack/dagger/dagger.gen.go", "dagger.lock", "hack/minio-data", "hack/seaweedfs-data"}}).
-							WithArg("imageArchive", dag.TypeDef().WithObject("File").WithOptional(true), dagger.FunctionWithArgOpts{Description: "Production image in an OCI-compatible archive; mutually exclusive with imageRef.", SourceMap: dag.SourceMap("main.go", 218, 2)}).
-							WithArg("imageRef", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "Production registry image pinned by sha256 digest.", SourceMap: dag.SourceMap("main.go", 221, 2)}).
-							WithArg("frontendAssets", dag.TypeDef().WithObject("Directory").WithOptional(true), dagger.FunctionWithArgOpts{Description: "Reuse built frontend assets for the default source coverage build.", SourceMap: dag.SourceMap("main.go", 224, 2)}))), nil
+							WithSourceMap(dag.SourceMap("main.go", 225, 1)).
+							WithArg("source", dag.TypeDef().WithObject("Directory"), dagger.FunctionWithArgOpts{SourceMap: dag.SourceMap("main.go", 227, 2), Ignore: []string{".git", "build", "dist", "**/node_modules", "frontend/.nuxt", "frontend/.output", "frontend/coverage", "frontend/.cache", ".ruff_cache", ".playwright-cli", "covreport", "enduro", "hack/dagger/runtime", "hack/dagger/internal", "hack/dagger/dagger.gen.go", "dagger.lock", "hack/minio-data", "hack/seaweedfs-data"}}).
+							WithArg("imageArchive", dag.TypeDef().WithObject("File").WithOptional(true), dagger.FunctionWithArgOpts{Description: "Production image in an OCI-compatible archive; mutually exclusive with imageRef.", SourceMap: dag.SourceMap("main.go", 230, 2)}).
+							WithArg("imageRef", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "Production registry image pinned by sha256 digest.", SourceMap: dag.SourceMap("main.go", 233, 2)}).
+							WithArg("frontendAssets", dag.TypeDef().WithObject("Directory").WithOptional(true), dagger.FunctionWithArgOpts{Description: "Reuse built frontend assets for the default source coverage build.", SourceMap: dag.SourceMap("main.go", 236, 2)})).
+					WithConstructor(
+						dag.Function("New",
+							dag.TypeDef().WithObject("EnduroE2E")).
+							WithDescription("Export smoke diagnostics even when Playwright fails. Callers using reportOnly\nmust check the exported smoke-exit-code files, as hack/dagger/run.sh does.").
+							WithSourceMap(dag.SourceMap("main.go", 38, 1)).
+							WithArg("reportOnly", dag.TypeDef().WithKind(dagger.TypeDefKindBooleanKind).WithOptional(true), dagger.FunctionWithArgOpts{SourceMap: dag.SourceMap("main.go", 40, 2)}))), nil
 	default:
 		return nil, fmt.Errorf("unknown object %s", parentName)
 	}

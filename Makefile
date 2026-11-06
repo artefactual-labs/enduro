@@ -76,11 +76,11 @@ test-ci:
 
 test-smoke: # @HELP Run the Dagger smoke tests against ambox.
 test-smoke:
-	dagger -m hack/dagger api call smoke-tests --source . export --path hack/dagger/runtime/artifacts
+	hack/dagger/run.sh smoke-tests hack/dagger/runtime/artifacts
 
 test-smoke-object-storage: # @HELP Run the Dagger S3 watcher smoke tests against MinIO, SeaweedFS, and argmin.
 test-smoke-object-storage:
-	dagger -m hack/dagger api call object-storage-smoke-tests --source . export --path hack/dagger/runtime/object-storage-artifacts
+	hack/dagger/run.sh object-storage-smoke-tests hack/dagger/runtime/object-storage-artifacts
 
 list-tested-packages: # @HELP Print a list of packages being tested.
 list-tested-packages:

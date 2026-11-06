@@ -22,3 +22,6 @@ type EnduroE2ESmokeTestsOpts = core.EnduroE2ESmokeTestsOpts
 
 // EnduroE2EStartupTestOpts contains options for EnduroE2E.StartupTest
 type EnduroE2EStartupTestOpts = core.EnduroE2EStartupTestOpts
+
+// EnduroE2EOpts contains options for Query.EnduroE2E
+type EnduroE2EOpts = core.EnduroE2EOpts

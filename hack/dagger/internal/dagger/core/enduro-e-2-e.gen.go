@@ -284,8 +284,19 @@ func (r *EnduroE2E) StartupTest(source *Directory, opts ...EnduroE2EStartupTestO
 	}
 }
 
-func (r *Query) EnduroE2E() *EnduroE2E { // enduro-e2e (../../../../../:0:0)
+// EnduroE2EOpts contains options for Query.EnduroE2E
+type EnduroE2EOpts struct {
+	ReportOnly bool
+}
+
+func (r *Query) EnduroE2E(opts ...EnduroE2EOpts) *EnduroE2E { // enduro-e2e (../../../../../:0:0)
 	q := r.query.Select("enduroE2E")
+	for i := len(opts) - 1; i >= 0; i-- {
+		// `reportOnly` optional argument
+		if !querybuilder.IsZeroValue(opts[i].ReportOnly) {
+			q = q.Arg("reportOnly", opts[i].ReportOnly)
+		}
+	}
 
 	return &EnduroE2E{
 		query:     q,
