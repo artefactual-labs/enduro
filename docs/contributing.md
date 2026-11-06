@@ -169,8 +169,9 @@ already covered by the lockfile.
 
 The Dagger harness under `hack/dagger` can test production image archives or
 registry digests, or build an instrumented binary from source for coverage.
-Install Dagger 0.21.11 and make sure Docker is available. The [container guide]
-covers the pinned build tools and Docker containerd image store prerequisite.
+Install Dagger 1.0.0-beta.24 and make sure Docker is available. The
+[container guide] covers the pinned build tools and Docker containerd image
+store prerequisite.
 
 To build production snapshots once and test the native image locally:
 
@@ -206,7 +207,7 @@ For a smaller check of the coverage build and export path without starting
 services:
 
 ```sh
-dagger -m hack/dagger call coverage-check --source . \
+dagger -m hack/dagger api call coverage-check --source . \
   export --path hack/dagger/runtime/coverage-check-artifacts
 ```
 
@@ -239,7 +240,7 @@ With Docker running and Dagger installed, run this command from the repository
 root:
 
 ```sh
-dagger -m hack/dagger call object-storage-smoke-test \
+dagger -m hack/dagger api call object-storage-smoke-test \
   --source . \
   --provider minio-latest \
   export --path hack/dagger/runtime/object-storage-artifacts-minio-latest
@@ -424,11 +425,12 @@ lockfile.
 
 ### Other tools
 
-See `.bine.toml` for pinned build and development tools. Dagger's engine and Go
-dependencies are configured in `hack/dagger/dagger.json` and
-`hack/dagger/go.mod`. Keep the Playwright version in
-`hack/dagger/smoke/package.json` aligned with its container image in
-`hack/dagger/main.go`.
+See `.bine.toml` for pinned build and development tools. Dagger's workspace is
+configured in `dagger.toml`, its engine version in
+`hack/dagger/dagger-module.toml`, and its Go dependencies in
+`hack/dagger/go.mod`. Commit `dagger.lock` with dependency changes. Keep the
+Playwright version in `hack/dagger/smoke/package.json` aligned with its
+container image in `hack/dagger/main.go`.
 
 Keep the LGTM image in `docker-compose.observability.yml` aligned with
 `lgtmImage` in `hack/dagger/main.go`. The main Dagger smoke suite checks trace

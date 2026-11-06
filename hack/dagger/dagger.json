@@ -1,7 +1,0 @@
-{
-  "name": "enduro-e2e",
-  "engineVersion": "v0.21.11",
-  "sdk": {
-    "source": "go"
-  }
-}

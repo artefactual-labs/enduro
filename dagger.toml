@@ -1,0 +1,12 @@
+[modules.enduro-e2e]
+source = "hack/dagger"
+main = true
+
+[modules.dagger-go-sdk]
+source = "github.com/dagger/go-sdk"
+
+[sdks.go]
+module = "dagger-go-sdk"
+
+[sdks.go.scopes."hack/dagger"]
+is-module = true

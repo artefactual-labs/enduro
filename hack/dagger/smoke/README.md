@@ -1,8 +1,15 @@
 # Enduro Smoke Tests
 
 These Playwright tests exercise Enduro against an ambox Archivematica
-environment started by Dagger. Use Dagger 0.21.11 to match the module
-configuration in `hack/dagger/dagger.json`.
+environment started by Dagger. Use Dagger 1.0.0-beta.24 to match the module
+configuration in `hack/dagger/dagger-module.toml`.
+
+The repository workspace is configured in `dagger.toml`. After changing the
+module API, run `dagger generate -y` and commit the generated bindings and
+`dagger.lock`. The Go SDK currently resets the OpenTelemetry logging
+replacements to v0.16.0 during generation; retain the v0.19.0 replacements
+documented in `hack/dagger/go.mod` before committing. Refresh locked
+dependencies deliberately with `dagger lock update`.
 
 Dagger owns service orchestration, shared runtime directories, and artifact
 export. It can import a production image archive, pull an immutable registry
@@ -35,7 +42,7 @@ make test-smoke
 The Make target runs:
 
 ```sh
-dagger -m hack/dagger call smoke-tests --source . export --path hack/dagger/runtime/artifacts
+dagger -m hack/dagger api call smoke-tests --source . export --path hack/dagger/runtime/artifacts
 ```
 
 ## Runtime image modes
@@ -52,7 +59,7 @@ To test production images, follow the [container guide] to build and export the
 snapshot once, then select the archive for the native platform:
 
 ```sh
-dagger -m hack/dagger call smoke-tests --source . \
+dagger -m hack/dagger api call smoke-tests --source . \
   --image-archive dist/containers/enduro-amd64.tar \
   export --path hack/dagger/runtime/artifacts
 ```
@@ -60,7 +67,7 @@ dagger -m hack/dagger call smoke-tests --source . \
 Alternatively, pass an immutable registry digest:
 
 ```sh
-dagger -m hack/dagger call smoke-tests --source . \
+dagger -m hack/dagger api call smoke-tests --source . \
   --image-ref ghcr.io/artefactual-labs/enduro@sha256:REPLACE_WITH_INDEX_DIGEST \
   export --path hack/dagger/runtime/artifacts
 ```
@@ -94,7 +101,7 @@ coverage check without the full service suites. Run the coverage check locally
 with:
 
 ```sh
-dagger -m hack/dagger call coverage-check --source . \
+dagger -m hack/dagger api call coverage-check --source . \
   export --path hack/dagger/runtime/coverage-check-artifacts
 ```
 
@@ -131,7 +138,7 @@ make test-smoke-object-storage
 The Make target runs:
 
 ```sh
-dagger -m hack/dagger call object-storage-smoke-tests --source . export --path hack/dagger/runtime/object-storage-artifacts
+dagger -m hack/dagger api call object-storage-smoke-tests --source . export --path hack/dagger/runtime/object-storage-artifacts
 ```
 
 The object-storage tests build and use `hack/s3put`, a small S3-compatible
@@ -141,7 +148,7 @@ without depending on a provider-specific CLI.
 Run only argmin with:
 
 ```sh
-dagger -m hack/dagger call object-storage-smoke-test --source . --provider argmin export --path hack/dagger/runtime/object-storage-artifacts-argmin
+dagger -m hack/dagger api call object-storage-smoke-test --source . --provider argmin export --path hack/dagger/runtime/object-storage-artifacts-argmin
 ```
 
 GitHub Actions includes argmin in the storage matrix. Dagger builds a pinned
