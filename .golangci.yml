@@ -61,6 +61,8 @@ formatters:
       no-inline-comments: true
       no-prefix-comments: false
     gofumpt:
+      # Dagger's module has no domain; keep its imports out of the stdlib group.
+      module-path: dagger/enduro-e-2-e
       extra-rules: true
   exclusions:
     warn-unused: true
