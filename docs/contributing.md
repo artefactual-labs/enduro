@@ -223,15 +223,14 @@ in addition to both startup checks; releases use full image acceptance. To
 request full tests on the development branch, manually dispatch the Test
 workflow with `full-tests` enabled (the default).
 
-#### MinIO compatibility tests (local only)
+#### MinIO compatibility tests
 
-Full CI runs the object storage smoke tests against SeaweedFS and argmin. MinIO
-is excluded because its [community server is no longer maintained][minio-status]
-and the legacy releases have known security vulnerabilities. Compatibility with
-MinIO is checked manually when investigating reports or changing its
-integration; a passing CI run does not verify MinIO compatibility.
+Full CI runs the object storage smoke tests against MinIO, SeaweedFS, and argmin
+on AMD64. Although the
+[MinIO community server is no longer maintained][minio-status], the pinned
+[Coollabs build] remains available for compatibility testing.
 
-The local scenario uploads a transfer through S3, exercises MinIO's native Redis
+The scenario uploads a transfer through S3, exercises MinIO's native Redis
 notifications and Enduro's S3 watcher, and verifies the resulting Archivematica
 AIP. It starts its own services with dummy credentials. Use disposable test data
 and keep these services separate from production systems.
@@ -249,7 +248,7 @@ dagger -m hack/dagger api call object-storage-smoke-test \
 On success, the output directory contains the downloaded AIP, Temporal workflow
 history, and coverage artifacts. The test starts Archivematica and can take
 several minutes. `make test-smoke-object-storage` runs all three providers
-locally, including MinIO; it is broader than the CI matrix.
+locally using the same scenarios as the full CI storage matrix.
 
 The image is selected by `minioLatestImage` in `hack/dagger/main.go`. To
 investigate a compatibility report, set that constant locally to the reported
@@ -257,12 +256,9 @@ image tag or digest and rerun the command. Record the image reference, Enduro
 revision, and test output with the report. A result applies to the tested
 version and scenario, not every MinIO deployment.
 
-Legacy image availability is a separate limitation: on October 23, 2026, the
-pinned Quay image and the Quay and Docker Hub `latest` tags returned
-authorization errors. If image resolution fails, obtain an accessible image from
-your existing deployment or a trusted registry and update `minioLatestImage`
-before retrying. An image-pull failure does not establish an Enduro
-compatibility failure.
+The official Quay image is no longer publicly available. The harness uses the
+Coollabs build of upstream `RELEASE.2025-10-15T17-29-55Z`, pinned by digest. An
+image-pull failure does not establish an Enduro compatibility failure.
 
 ### Enable tracing
 
@@ -436,10 +432,10 @@ Keep the LGTM image in `docker-compose.observability.yml` aligned with
 `lgtmImage` in `hack/dagger/main.go`. The main Dagger smoke suite checks trace
 capture through the same LGTM release used for local development.
 
-The MinIO smoke-test server uses the published Quay image pinned in
+The MinIO smoke-test server uses the third-party Coollabs image pinned in
 `hack/dagger/main.go`. The `minio-latest` provider name is a legacy label; it
-does not track a moving `latest` tag. This image predates the October 2025
-security fix and is retained only for legacy compatibility testing.
+does not track a moving `latest` tag. Its release tag and multi-platform digest
+identify the upstream version and the exact image used for compatibility tests.
 
 ## Releases
 
@@ -467,6 +463,7 @@ the [workflow run][first-release-run] that made our very first release.
 
 [clean-arch]: https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html
 [container guide]: ./containers.md
+[coollabs build]: https://github.com/coollabsio/minio
 [design-pkg]: https://github.com/artefactual-labs/enduro/tree/main/internal/api/design
 [docker-engine]: https://docs.docker.com/engine/install/
 [docker-non-root]: https://docs.docker.com/engine/install/linux-postinstall/#manage-docker-as-a-non-root-user
