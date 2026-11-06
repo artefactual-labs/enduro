@@ -9,7 +9,7 @@ import (
 	"github.com/dagger/querybuilder"
 )
 
-type EnduroE2E struct { // enduro-e2e (../../../../../:0:0)
+type Enduro struct { // enduro (../../../../../:0:0)
 	query *querybuilder.Selection
 	// refetchID is set when this object is built through a field marked
 	// @reevaluate: it fetches its ID on every use, so each use evaluates that
@@ -19,8 +19,8 @@ type EnduroE2E struct { // enduro-e2e (../../../../../:0:0)
 	id *ID
 }
 
-func (r *EnduroE2E) WithGraphQLQuery(q *querybuilder.Selection) *EnduroE2E {
-	return &EnduroE2E{
+func (r *Enduro) WithGraphQLQuery(q *querybuilder.Selection) *Enduro {
+	return &Enduro{
 		query: q,
 		// The query's origin is unknown: it may go through a field that
 		// must be reevaluated.
@@ -28,8 +28,8 @@ func (r *EnduroE2E) WithGraphQLQuery(q *querybuilder.Selection) *EnduroE2E {
 	}
 }
 
-// EnduroE2ECoverageCheckOpts contains options for EnduroE2E.CoverageCheck
-type EnduroE2ECoverageCheckOpts struct {
+// EnduroCoverageCheckOpts contains options for Enduro.CoverageCheck
+type EnduroCoverageCheckOpts struct {
 	// Reuse built frontend assets for the source coverage build.
 	FrontendAssets *Directory
 }
@@ -37,7 +37,7 @@ type EnduroE2ECoverageCheckOpts struct {
 // Exercise the coverage build and production runtime without external services.
 // This checks that Enduro starts as nonroot, prints its version, and writes Go
 // coverage data. It does not exercise ingestion or replace the full smoke suite.
-func (r *EnduroE2E) CoverageCheck(source *Directory, opts ...EnduroE2ECoverageCheckOpts) *Directory {
+func (r *Enduro) CoverageCheck(source *Directory, opts ...EnduroCoverageCheckOpts) *Directory {
 	assertNotNil("source", source)
 	q := r.query.Select("coverageCheck")
 	for i := len(opts) - 1; i >= 0; i-- {
@@ -54,8 +54,8 @@ func (r *EnduroE2E) CoverageCheck(source *Directory, opts ...EnduroE2ECoverageCh
 	}
 }
 
-// A unique identifier for this EnduroE2E.
-func (r *EnduroE2E) ID(ctx context.Context) (ID, error) {
+// A unique identifier for this Enduro.
+func (r *Enduro) ID(ctx context.Context) (ID, error) {
 	if r.id != nil {
 		return *r.id, nil
 	}
@@ -74,17 +74,17 @@ func (r *EnduroE2E) ID(ctx context.Context) (ID, error) {
 }
 
 // XXX_GraphQLType is an internal function. It returns the native GraphQL type name
-func (r *EnduroE2E) XXX_GraphQLType() string {
-	return "EnduroE2E"
+func (r *Enduro) XXX_GraphQLType() string {
+	return "Enduro"
 }
 
 // XXX_GraphQLIDType is an internal function. It returns the native GraphQL type name for the ID of this object
-func (r *EnduroE2E) XXX_GraphQLIDType() string {
+func (r *Enduro) XXX_GraphQLIDType() string {
 	return "ID"
 }
 
 // XXX_GraphQLID is an internal function. It returns the underlying type ID
-func (r *EnduroE2E) XXX_GraphQLID(ctx context.Context) (string, error) {
+func (r *Enduro) XXX_GraphQLID(ctx context.Context) (string, error) {
 	id, err := r.ID(ctx)
 	if err != nil {
 		return "", err
@@ -92,25 +92,25 @@ func (r *EnduroE2E) XXX_GraphQLID(ctx context.Context) (string, error) {
 	return string(id), nil
 }
 
-func (r *EnduroE2E) MarshalJSON() ([]byte, error) {
+func (r *Enduro) MarshalJSON() ([]byte, error) {
 	id, err := r.ID(marshalCtx)
 	if err != nil {
 		return nil, err
 	}
 	return json.Marshal(id)
 }
-func (r *EnduroE2E) UnmarshalJSON(bs []byte) error {
+func (r *Enduro) UnmarshalJSON(bs []byte) error {
 	var id string
 	err := json.Unmarshal(bs, &id)
 	if err != nil {
 		return err
 	}
-	*r = EnduroE2E{query: selectNode(dag.QueryBuilder(), id, "EnduroE2E")}
+	*r = Enduro{query: selectNode(dag.QueryBuilder(), id, "Enduro")}
 	return nil
 }
 
-// EnduroE2EObjectStorageSmokeTestOpts contains options for EnduroE2E.ObjectStorageSmokeTest
-type EnduroE2EObjectStorageSmokeTestOpts struct {
+// EnduroObjectStorageSmokeTestOpts contains options for Enduro.ObjectStorageSmokeTest
+type EnduroObjectStorageSmokeTestOpts struct {
 	// Production image in an OCI-compatible archive; mutually exclusive with imageRef.
 	ImageArchive *File
 	// Production registry image pinned by sha256 digest.
@@ -122,7 +122,7 @@ type EnduroE2EObjectStorageSmokeTestOpts struct {
 // Run one S3 watcher smoke test provider.
 //
 // Provider must be "minio-latest", "silo", "seaweedfs", or "argmin".
-func (r *EnduroE2E) ObjectStorageSmokeTest(source *Directory, provider string, opts ...EnduroE2EObjectStorageSmokeTestOpts) *Directory {
+func (r *Enduro) ObjectStorageSmokeTest(source *Directory, provider string, opts ...EnduroObjectStorageSmokeTestOpts) *Directory {
 	assertNotNil("source", source)
 	q := r.query.Select("objectStorageSmokeTest")
 	for i := len(opts) - 1; i >= 0; i-- {
@@ -148,8 +148,8 @@ func (r *EnduroE2E) ObjectStorageSmokeTest(source *Directory, provider string, o
 	}
 }
 
-// EnduroE2EObjectStorageSmokeTestsOpts contains options for EnduroE2E.ObjectStorageSmokeTests
-type EnduroE2EObjectStorageSmokeTestsOpts struct {
+// EnduroObjectStorageSmokeTestsOpts contains options for Enduro.ObjectStorageSmokeTests
+type EnduroObjectStorageSmokeTestsOpts struct {
 	// Production image in an OCI-compatible archive; mutually exclusive with imageRef.
 	ImageArchive *File
 	// Production registry image pinned by sha256 digest.
@@ -170,7 +170,7 @@ type EnduroE2EObjectStorageSmokeTestsOpts struct {
 // Call from the repository root with:
 //
 //	dagger -m hack/dagger api call object-storage-smoke-tests --source . export --path hack/dagger/runtime/object-storage-artifacts
-func (r *EnduroE2E) ObjectStorageSmokeTests(source *Directory, opts ...EnduroE2EObjectStorageSmokeTestsOpts) *Directory {
+func (r *Enduro) ObjectStorageSmokeTests(source *Directory, opts ...EnduroObjectStorageSmokeTestsOpts) *Directory {
 	assertNotNil("source", source)
 	q := r.query.Select("objectStorageSmokeTests")
 	for i := len(opts) - 1; i >= 0; i-- {
@@ -195,8 +195,8 @@ func (r *EnduroE2E) ObjectStorageSmokeTests(source *Directory, opts ...EnduroE2E
 	}
 }
 
-// EnduroE2ESmokeTestsOpts contains options for EnduroE2E.SmokeTests
-type EnduroE2ESmokeTestsOpts struct {
+// EnduroSmokeTestsOpts contains options for Enduro.SmokeTests
+type EnduroSmokeTestsOpts struct {
 	// Production image in an OCI-compatible archive; mutually exclusive with imageRef.
 	ImageArchive *File
 	// Production registry image pinned by sha256 digest.
@@ -222,7 +222,7 @@ type EnduroE2ESmokeTestsOpts struct {
 // Call from the repository root with:
 //
 //	dagger -m hack/dagger api call smoke-tests --source . export --path hack/dagger/runtime/artifacts
-func (r *EnduroE2E) SmokeTests(source *Directory, opts ...EnduroE2ESmokeTestsOpts) *Directory {
+func (r *Enduro) SmokeTests(source *Directory, opts ...EnduroSmokeTestsOpts) *Directory {
 	assertNotNil("source", source)
 	q := r.query.Select("smokeTests")
 	for i := len(opts) - 1; i >= 0; i-- {
@@ -247,8 +247,8 @@ func (r *EnduroE2E) SmokeTests(source *Directory, opts ...EnduroE2ESmokeTestsOpt
 	}
 }
 
-// EnduroE2EStartupTestOpts contains options for EnduroE2E.StartupTest
-type EnduroE2EStartupTestOpts struct {
+// EnduroStartupTestOpts contains options for Enduro.StartupTest
+type EnduroStartupTestOpts struct {
 	// Production image in an OCI-compatible archive; mutually exclusive with imageRef.
 	ImageArchive *File
 	// Production registry image pinned by sha256 digest.
@@ -259,7 +259,7 @@ type EnduroE2EStartupTestOpts struct {
 
 // Check a native-platform image's configuration, database migrations, API,
 // embedded dashboard assets, and service shutdown without Archivematica.
-func (r *EnduroE2E) StartupTest(source *Directory, opts ...EnduroE2EStartupTestOpts) *Directory {
+func (r *Enduro) StartupTest(source *Directory, opts ...EnduroStartupTestOpts) *Directory {
 	assertNotNil("source", source)
 	q := r.query.Select("startupTest")
 	for i := len(opts) - 1; i >= 0; i-- {
@@ -284,13 +284,13 @@ func (r *EnduroE2E) StartupTest(source *Directory, opts ...EnduroE2EStartupTestO
 	}
 }
 
-// EnduroE2EOpts contains options for Query.EnduroE2E
-type EnduroE2EOpts struct {
+// EnduroOpts contains options for Query.Enduro
+type EnduroOpts struct {
 	ReportOnly bool
 }
 
-func (r *Query) EnduroE2E(opts ...EnduroE2EOpts) *EnduroE2E { // enduro-e2e (../../../../../:0:0)
-	q := r.query.Select("enduroE2E")
+func (r *Query) Enduro(opts ...EnduroOpts) *Enduro { // enduro (../../../../../:0:0)
+	q := r.query.Select("enduro")
 	for i := len(opts) - 1; i >= 0; i-- {
 		// `reportOnly` optional argument
 		if !querybuilder.IsZeroValue(opts[i].ReportOnly) {
@@ -298,7 +298,7 @@ func (r *Query) EnduroE2E(opts ...EnduroE2EOpts) *EnduroE2E { // enduro-e2e (../
 		}
 	}
 
-	return &EnduroE2E{
+	return &Enduro{
 		query:     q,
 		refetchID: r.refetchID,
 	}

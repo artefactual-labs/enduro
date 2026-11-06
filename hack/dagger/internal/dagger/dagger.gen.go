@@ -10,7 +10,7 @@ import (
 
 	"github.com/dagger/querybuilder"
 
-	"dagger/enduro-e-2-e/internal/dagger/core"
+	"dagger/enduro/internal/dagger/core"
 )
 
 // The generated API bindings (types, DaggerObject, ExecError, Ref/Load, and
