@@ -76,11 +76,11 @@ test-ci:
 
 test-smoke: # @HELP Run the Dagger smoke tests against ambox.
 test-smoke:
-	dagger -m hack/dagger call smoke-tests --source . export --path hack/dagger/runtime/artifacts
+	dagger -m hack/dagger api call smoke-tests --source . export --path hack/dagger/runtime/artifacts
 
 test-smoke-object-storage: # @HELP Run the Dagger S3 watcher smoke tests against MinIO, SeaweedFS, and argmin.
 test-smoke-object-storage:
-	dagger -m hack/dagger call object-storage-smoke-tests --source . export --path hack/dagger/runtime/object-storage-artifacts
+	dagger -m hack/dagger api call object-storage-smoke-tests --source . export --path hack/dagger/runtime/object-storage-artifacts
 
 list-tested-packages: # @HELP Print a list of packages being tested.
 list-tested-packages:
@@ -150,7 +150,7 @@ container-startup: # @HELP Tests a production image archive with Dagger (set CON
 container-startup: CONTAINER_ARCH ?= $(shell go env GOARCH)
 container-startup: CONTAINER_ARTIFACTS ?= dist/containers
 container-startup:
-	dagger -m hack/dagger call startup-test --source . --image-archive "$(CONTAINER_ARTIFACTS)/enduro-$(CONTAINER_ARCH).tar" export --path hack/dagger/runtime/startup-artifacts
+	dagger -m hack/dagger api call startup-test --source . --image-archive "$(CONTAINER_ARTIFACTS)/enduro-$(CONTAINER_ARCH).tar" export --path hack/dagger/runtime/startup-artifacts
 
 frontend: # @HELP Builds the frontend app.
 frontend:

@@ -118,7 +118,7 @@ jobs:
       - name: Install Dagger
         uses: dagger/dagger-for-github@v8.4.1
         with:
-          version: "0.21.11"
+          version: "1.0.0-beta.24"
           verb: version
       - name: Test the built image
         shell: bash
@@ -132,7 +132,7 @@ jobs:
             provider_args=(--provider "$PROVIDER")
           fi
           mkdir -p hack/dagger/runtime/acceptance
-          dagger --progress=plain -m hack/dagger call "$SUITE" --source . \
+          dagger --progress=plain -m hack/dagger api call "$SUITE" --source . \
             "${image_args[@]}" "${provider_args[@]}" \
             export --path hack/dagger/runtime/acceptance/results \
             2>&1 | tee hack/dagger/runtime/acceptance/dagger.log

@@ -1,0 +1,5 @@
+name = "enduro-e2e"
+engineVersion = "v1.0.0-beta.24"
+
+[runtime]
+  source = "go"

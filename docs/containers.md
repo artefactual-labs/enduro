@@ -109,8 +109,8 @@ Use GoReleaser 2.19.0 (pinned in `.bine.toml`), the Go version in `go.mod`,
 Node.js 24.22.1, and Docker with Buildx and the containerd image store enabled.
 CI uses Docker 29.5.2. The containerd image store makes `docker image save`
 include the OCI layout that Dagger imports; the export helper rejects archives
-without it. Install Dagger 0.21.11, matching `hack/dagger/dagger.json`, to run
-the service tests.
+without it. Install Dagger 1.0.0-beta.24, matching
+`hack/dagger/dagger-module.toml`, to run the service tests.
 
 Run from the repository root:
 

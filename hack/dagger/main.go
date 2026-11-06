@@ -79,7 +79,7 @@ type smokeEnvironment struct {
 //
 // Call from the repository root with:
 //
-//	dagger -m hack/dagger call smoke-tests --source . export --path hack/dagger/runtime/artifacts
+//	dagger -m hack/dagger api call smoke-tests --source . export --path hack/dagger/runtime/artifacts
 func (m *EnduroE2E) SmokeTests(ctx context.Context,
 	// +ignore=[".git", "build", "dist", "frontend/node_modules", "frontend/.nuxt", "frontend/.output", "frontend/coverage", "frontend/.cache", ".ruff_cache", ".playwright-cli", "covreport", "enduro", "hack/dagger/runtime", "hack/minio-data", "hack/seaweedfs-data"]
 	source *dagger.Directory,
@@ -116,7 +116,7 @@ func (m *EnduroE2E) SmokeTests(ctx context.Context,
 //
 // Call from the repository root with:
 //
-//	dagger -m hack/dagger call object-storage-smoke-tests --source . export --path hack/dagger/runtime/object-storage-artifacts
+//	dagger -m hack/dagger api call object-storage-smoke-tests --source . export --path hack/dagger/runtime/object-storage-artifacts
 func (m *EnduroE2E) ObjectStorageSmokeTests(ctx context.Context,
 	// +ignore=[".git", "build", "dist", "frontend/node_modules", "frontend/.nuxt", "frontend/.output", "frontend/coverage", "frontend/.cache", ".ruff_cache", ".playwright-cli", "covreport", "enduro", "hack/dagger/runtime", "hack/minio-data", "hack/seaweedfs-data"]
 	source *dagger.Directory,
