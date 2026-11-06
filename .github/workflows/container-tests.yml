@@ -119,7 +119,6 @@ jobs:
         uses: dagger/dagger-for-github@v8.4.1
         with:
           version: "1.0.0-beta.24"
-          verb: version
       - name: Test the built image
         shell: bash
         run: |
@@ -132,9 +131,8 @@ jobs:
             provider_args=(--provider "$PROVIDER")
           fi
           mkdir -p hack/dagger/runtime/acceptance
-          dagger --progress=plain -m hack/dagger api call "$SUITE" --source . \
+          hack/dagger/run.sh "$SUITE" hack/dagger/runtime/acceptance/results \
             "${image_args[@]}" "${provider_args[@]}" \
-            export --path hack/dagger/runtime/acceptance/results \
             2>&1 | tee hack/dagger/runtime/acceptance/dagger.log
       - name: Retain acceptance results
         if: ${{ always() }}

@@ -42,8 +42,30 @@ make test-smoke
 The Make target runs:
 
 ```sh
-dagger -m hack/dagger api call smoke-tests --source . export --path hack/dagger/runtime/artifacts
+hack/dagger/run.sh smoke-tests hack/dagger/runtime/artifacts
 ```
+
+The wrapper exports reports before checking `smoke-exit-code`, and returns a
+nonzero status for failed tests or missing results. Failed runs retain
+`playwright.log`, Playwright traces, and any diagnostics already collected by
+the tests. Shutdown or coverage-conversion errors are retained in
+`cleanup-error.txt` and also fail the run. Setup errors still fail immediately.
+
+Use a dedicated artifact directory: each completed export replaces its contents
+so reports from earlier runs cannot be mistaken for current results. If setup
+fails before export, the previous directory remains unchanged.
+
+Direct `dagger api call` commands below keep their normal fail-fast behavior.
+For failure artifacts, use `hack/dagger/run.sh SUITE ARTIFACT_DIRECTORY`
+followed by the same image, provider, or frontend arguments. The wrapper opts
+into `--report-only`; do not use that mode without checking the exported status.
+
+Run `hack/dagger/test-failure-artifacts.sh` to exercise the real export and exit
+status behavior with an intentionally failing test in a temporary source copy.
+Run harness invocations sequentially on a shared engine: they reset the same
+runtime cache volumes. Tooling and dependency layers remain cached between runs,
+while integration entry points use session-scoped caching to rerun the
+scenarios.
 
 ## Runtime image modes
 
@@ -138,7 +160,7 @@ make test-smoke-object-storage
 The Make target runs:
 
 ```sh
-dagger -m hack/dagger api call object-storage-smoke-tests --source . export --path hack/dagger/runtime/object-storage-artifacts
+hack/dagger/run.sh object-storage-smoke-tests hack/dagger/runtime/object-storage-artifacts
 ```
 
 The object-storage tests build and use `hack/s3put`, a small S3-compatible
