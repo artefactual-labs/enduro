@@ -169,7 +169,7 @@ type EnduroE2EObjectStorageSmokeTestsOpts struct {
 //
 // Call from the repository root with:
 //
-//	dagger -m hack/dagger call object-storage-smoke-tests --source . export --path hack/dagger/runtime/object-storage-artifacts
+//	dagger -m hack/dagger api call object-storage-smoke-tests --source . export --path hack/dagger/runtime/object-storage-artifacts
 func (r *EnduroE2E) ObjectStorageSmokeTests(source *Directory, opts ...EnduroE2EObjectStorageSmokeTestsOpts) *Directory {
 	assertNotNil("source", source)
 	q := r.query.Select("objectStorageSmokeTests")
@@ -221,7 +221,7 @@ type EnduroE2ESmokeTestsOpts struct {
 //
 // Call from the repository root with:
 //
-//	dagger -m hack/dagger call smoke-tests --source . export --path hack/dagger/runtime/artifacts
+//	dagger -m hack/dagger api call smoke-tests --source . export --path hack/dagger/runtime/artifacts
 func (r *EnduroE2E) SmokeTests(source *Directory, opts ...EnduroE2ESmokeTestsOpts) *Directory {
 	assertNotNil("source", source)
 	q := r.query.Select("smokeTests")
