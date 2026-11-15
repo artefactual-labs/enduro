@@ -331,6 +331,9 @@ type DirectoryAsModuleSourceOpts = core.DirectoryAsModuleSourceOpts
 // DirectoryAsWorkspaceOpts contains options for Directory.AsWorkspace
 type DirectoryAsWorkspaceOpts = core.DirectoryAsWorkspaceOpts
 
+// DirectoryDirectoryOpts contains options for Directory.Directory
+type DirectoryDirectoryOpts = core.DirectoryDirectoryOpts
+
 // DirectoryDockerBuildOpts contains options for Directory.DockerBuild
 type DirectoryDockerBuildOpts = core.DirectoryDockerBuildOpts
 
@@ -432,6 +435,9 @@ type FileExtractOpts = core.FileExtractOpts
 
 // FileSearchOpts contains options for File.Search
 type FileSearchOpts = core.FileSearchOpts
+
+// FileSyncOpts contains options for File.Sync
+type FileSyncOpts = core.FileSyncOpts
 
 // FileWithReplacedOpts contains options for File.WithReplaced
 type FileWithReplacedOpts = core.FileWithReplacedOpts
@@ -671,10 +677,27 @@ type ModuleServeOpts = core.ModuleServeOpts
 // The client generated for the module.
 type ModuleConfigClient = core.ModuleConfigClient
 
+// The names the engine gives a module's own declarations, by the naming rules of the version the module is named by.
+//
+// Every list-taking field answers in input order.
+type ModuleNaming = core.ModuleNaming
+
 // The source needed to load and run a module, along with any metadata about the source such as versions/urls/etc.
 type ModuleSource = core.ModuleSource
 
 type WithModuleSourceFunc = core.WithModuleSourceFunc
+
+// ModuleSourceClientSchemaIntrospectionJSONOpts contains options for ModuleSource.ClientSchemaIntrospectionJSON
+type ModuleSourceClientSchemaIntrospectionJSONOpts = core.ModuleSourceClientSchemaIntrospectionJSONOpts
+
+// The engine's identifier naming rules at an engine version.
+type Naming = core.Naming
+
+// NamingFormatIdentifiersOpts contains options for Naming.FormatIdentifiers
+type NamingFormatIdentifiersOpts = core.NamingFormatIdentifiersOpts
+
+// NamingModuleOpts contains options for Naming.Module
+type NamingModuleOpts = core.NamingModuleOpts
 
 // An entry in the naming dictionary.
 type NamingTerm = core.NamingTerm
@@ -706,9 +729,6 @@ type EnvFileOpts = core.EnvFileOpts
 // FileOpts contains options for Query.File
 type FileOpts = core.FileOpts
 
-// FormatIdentifiersOpts contains options for Query.FormatIdentifiers
-type FormatIdentifiersOpts = core.FormatIdentifiersOpts
-
 // GitOpts contains options for Query.Git
 type GitOpts = core.GitOpts
 
@@ -720,6 +740,9 @@ type LLMOpts = core.LLMOpts
 
 // ModuleSourceOpts contains options for Query.ModuleSource
 type ModuleSourceOpts = core.ModuleSourceOpts
+
+// NamingOpts contains options for Query.Naming
+type NamingOpts = core.NamingOpts
 
 // SecretOpts contains options for Query.Secret
 type SecretOpts = core.SecretOpts
@@ -1180,8 +1203,6 @@ const (
 type ImageLayerCompression = core.ImageLayerCompression
 
 const (
-	ImageLayerCompressionEstarGz ImageLayerCompression = core.ImageLayerCompressionEstarGz
-
 	ImageLayerCompressionEstargz ImageLayerCompression = core.ImageLayerCompressionEstargz
 
 	ImageLayerCompressionGzip ImageLayerCompression = core.ImageLayerCompressionGzip
@@ -1197,11 +1218,7 @@ type ImageMediaTypes = core.ImageMediaTypes
 const (
 	ImageMediaTypesDocker ImageMediaTypes = core.ImageMediaTypesDocker
 
-	ImageMediaTypesDockerMediaTypes ImageMediaTypes = core.ImageMediaTypesDockerMediaTypes
-
 	ImageMediaTypesOci ImageMediaTypes = core.ImageMediaTypesOci
-
-	ImageMediaTypesOcimediaTypes ImageMediaTypes = core.ImageMediaTypesOcimediaTypes
 )
 
 // The kind of content in a message block.

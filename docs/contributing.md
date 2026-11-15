@@ -165,13 +165,33 @@ without changing files and needs GitHub CLI authentication. Dependabot updates
 the matching lockfile entries alongside action version updates for workflows
 already covered by the lockfile.
 
+### Tool lookup and authentication
+
+If bine's saved GitHub authentication has expired while `gh` still works, reuse
+the existing GitHub CLI token for the command without printing or saving it:
+
+```sh
+BINE_GITHUB_API_TOKEN="$(gh auth token)" make check-actions
+```
+
+On older macOS Make, exporting the bine directory before starting Make can
+resolve tool lookup failures:
+
+```sh
+export PATH="$(go tool bine path):$PATH"
+make check-actions
+```
+
+Diagnose these environment failures separately from dependency compatibility
+problems. Changing account settings is a separate operation.
+
 ### Dagger smoke harness
 
 The Dagger harness under `hack/dagger` can test production image archives or
 registry digests, or build an instrumented binary from source for coverage.
-Install Dagger 1.0.0-beta.24 and make sure Docker is available. The
-[container guide] covers the pinned build tools and Docker containerd image
-store prerequisite.
+Install the Dagger version declared in `hack/dagger/dagger-module.toml` and make
+sure Docker is available. The [container guide] covers the pinned build tools
+and Docker containerd image store prerequisite.
 
 To build production snapshots once and test the native image locally:
 
@@ -406,6 +426,10 @@ async collectionDelete(requestParameters: CollectionDeleteRequest): Promise<void
 
 ## Software dependencies
 
+For a complete maintenance pass, follow the [dependency refresh guide]. It
+covers version discovery, related pins, generation, validation, and known
+compatibility constraints across all layers.
+
 ### Go
 
 The version of Go used by this project is specified in the `go.mod` file.
@@ -416,10 +440,24 @@ Use `make deps` to list available updates.
 
 When updating Goa, keep its version in `.bine.toml` aligned with `go.mod`, then
 run `make gen-goa` and `make frontend-client` to regenerate the API and client.
+Review plugin compatibility and release notes as described in the
+[dependency refresh guide].
+
+### Temporal
+
+Review the Temporal API, SDK, and telemetry contribution in `go.mod` together
+with the CLI in `.bine.toml` and the server/admin-tools images in Compose and
+Dagger. Their version numbers are independent; choose a compatible set and check
+both CLI sources. The [dependency refresh guide] describes the release notes,
+configuration, workflow behavior, and integration checks to review.
 
 ### OpenAPI Generator
 
-In Makefile (target `frontend-client`), as a Docker container.
+The Docker image is pinned in the `frontend-client` target in `Makefile`.
+Whenever that pin changes, run `make frontend-client`, review the generated diff
+and warnings, and validate the frontend, even if the API specification has not
+changed. Include the regenerated client with the generator upgrade; see the
+[dependency refresh guide] for the full procedure.
 
 ### UI
 
@@ -472,6 +510,7 @@ the [workflow run][first-release-run] that made our very first release.
 [clean-arch]: https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html
 [container guide]: ./containers.md
 [coollabs build]: https://github.com/coollabsio/minio
+[dependency refresh guide]: ./dependency-updates.md
 [design-pkg]: https://github.com/artefactual-labs/enduro/tree/main/internal/api/design
 [docker-engine]: https://docs.docker.com/engine/install/
 [docker-non-root]: https://docs.docker.com/engine/install/linux-postinstall/#manage-docker-as-a-non-root-user

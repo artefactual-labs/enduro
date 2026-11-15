@@ -116,7 +116,7 @@ func (s *batchImpl) Submit(ctx context.Context, payload *goabatch.SubmitPayload)
 
 func (s *batchImpl) Status(ctx context.Context) (*goabatch.BatchStatusResult, error) {
 	result := &goabatch.BatchStatusResult{}
-	resp, err := s.cc.DescribeWorkflowExecution(ctx, BatchWorkflowID, "")
+	description, err := s.cc.DescribeWorkflow(ctx, BatchWorkflowID, "")
 	if err != nil {
 		switch err := err.(type) {
 		case *temporalapi_serviceerror.NotFound:
@@ -126,6 +126,7 @@ func (s *batchImpl) Status(ctx context.Context) (*goabatch.BatchStatusResult, er
 			return nil, ErrBatchStatusUnavailable
 		}
 	}
+	resp := description.RawResponse
 	if resp.WorkflowExecutionInfo == nil {
 		s.logger.Info("error retrieving workflow execution details")
 		return nil, ErrBatchStatusUnavailable

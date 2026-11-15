@@ -14,19 +14,19 @@ import (
 
 const (
 	mysqlImage        = "mysql:8.4.13-oraclelinux9"
-	temporalImage     = "temporalio/server:1.32.1"
-	temporalToolImage = "temporalio/admin-tools:1.32.1"
-	goImage           = "golang:1.27.3-bookworm"
-	nodeImage         = "node:24.22.1-bookworm"
-	redisImage        = "redis:8.2.10-alpine3.22"
+	temporalImage     = "temporalio/server:1.32.2"
+	temporalToolImage = "temporalio/admin-tools:1.32.2"
+	goImage           = "golang:1.27.4-bookworm"
+	nodeImage         = "node:24.22.3-bookworm"
+	redisImage        = "redis:8.2.11-alpine3.22"
 	minioLatestImage  = "ghcr.io/coollabsio/minio:RELEASE.2025-10-15T17-29-55Z@sha256:69b55a1c1c5dc285ce04db96689f5b2102317fc77a50680a1874ca6efd1c87f9"
-	siloImage         = "docker.io/pgsty/silo:RELEASE.2026-10-26T00-00-00Z@sha256:7bb2aff6b89efe1cb1303c10fc21d579447434ed06649ac9ec05a5e2dbf30ad7"
-	argminBuildImage  = "rust:1.99.1-bookworm"
-	argminRevision    = "8ebbf735460e1e6e38333571853b460c40d09879"
-	seaweedFSImage    = "chrislusf/seaweedfs:4.48"
+	siloImage         = "docker.io/pgsty/silo:RELEASE.2026-11-12T00-00-00Z@sha256:c20d112390b9a9ce8c11b8af95ad35bcaa62f4759663c09c936cd8d2b511f329"
+	argminBuildImage  = "rust:1.100.0-bookworm"
+	argminRevision    = "78234dc37a026f890c61182c9f7837b33fab3e78"
+	seaweedFSImage    = "chrislusf/seaweedfs:4.53"
 	amboxImage        = "ghcr.io/sevein/ambox:latest"
-	playwrightImage   = "mcr.microsoft.com/playwright:v1.64.1-noble"
-	lgtmImage         = "grafana/otel-lgtm:0.38.0"
+	playwrightImage   = "mcr.microsoft.com/playwright:v1.65.1-noble"
+	lgtmImage         = "grafana/otel-lgtm:0.41.0"
 )
 
 type Enduro struct {
@@ -681,7 +681,7 @@ func (m *Enduro) finishSmokeSuite(ctx context.Context, env *smokeEnvironment, te
 
 func (m *Enduro) resetRuntime(ctx context.Context, volumes runtimeVolumes, cacheBuster string) error {
 	reset := dag.Container().
-		From("alpine:3.24.1").
+		From("alpine:3.24.4").
 		WithEnvVariable("E2E_CACHE_BUSTER", cacheBuster).
 		WithMountedCache("/runtime/batch", volumes.batch).
 		WithMountedCache("/runtime/watched", volumes.watched).
@@ -813,7 +813,7 @@ func (m *Enduro) amboxService() *dagger.Service {
 
 func (m *Enduro) settleAmbox(ctx context.Context, ambox *dagger.Service, cacheBuster string) error {
 	waiter := dag.Container().
-		From("alpine:3.24.1").
+		From("alpine:3.24.4").
 		WithServiceBinding("ambox", ambox).
 		WithEnvVariable("E2E_CACHE_BUSTER", cacheBuster).
 		WithExec([]string{"sh", "-ceu", "sleep 45"})
@@ -965,7 +965,7 @@ func (m *Enduro) runtimeImage(ctx context.Context, source *dagger.Directory, arc
 
 func (m *Enduro) enduroRuntime(image *dagger.Container, volumes runtimeVolumes, ambox *dagger.Service, config string, coverage bool, cacheBuster string) *dagger.Container {
 	knownHosts := dag.Container().
-		From("alpine:3.24.1").
+		From("alpine:3.24.4").
 		WithExec([]string{"apk", "add", "--no-cache", "openssh-client"}).
 		WithEnvVariable("E2E_CACHE_BUSTER", cacheBuster).
 		WithServiceBinding("ambox", ambox).
