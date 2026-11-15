@@ -71,7 +71,7 @@ import {
 
 export interface CollectionApiCollectionBulkRequest {
     /**
-     * 
+     * Request body for bulk.
      */
     bulkRequestBody: BulkRequestBody;
 }
@@ -89,7 +89,7 @@ export interface CollectionApiCollectionDecideRequest {
      */
     id: number;
     /**
-     * 
+     * Request body for decide.
      */
     decideRequestBody: DecideRequestBody;
 }

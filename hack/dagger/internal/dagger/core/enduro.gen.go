@@ -28,6 +28,12 @@ func (r *Enduro) WithGraphQLQuery(q *querybuilder.Selection) *Enduro {
 	}
 }
 
+// withLoadedID is the Enduro that q, a query of the node whose
+// ID is id, selects, knowing that ID (Loaded).
+func (r *Enduro) withLoadedID(q *querybuilder.Selection, id ID) *Enduro {
+	return &Enduro{query: q, id: &id}
+}
+
 // EnduroCoverageCheckOpts contains options for Enduro.CoverageCheck
 type EnduroCoverageCheckOpts struct {
 	// Reuse built frontend assets for the source coverage build.

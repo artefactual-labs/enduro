@@ -1,15 +1,15 @@
 # Enduro Smoke Tests
 
 These Playwright tests exercise Enduro against an ambox Archivematica
-environment started by Dagger. Use Dagger 1.0.0-beta.24 to match the module
-configuration in `hack/dagger/dagger-module.toml`.
+environment started by Dagger. Use the Dagger version declared in
+`hack/dagger/dagger-module.toml`, matching the CI workflows.
 
 The repository workspace is configured in `dagger.toml`. After changing the
 module API, run `dagger generate -y` and commit the generated bindings and
 `dagger.lock`. The Go SDK currently resets the OpenTelemetry logging
-replacements to v0.16.0 during generation; retain the v0.19.0 replacements
-documented in `hack/dagger/go.mod` before committing. Refresh locked
-dependencies deliberately with `dagger lock update`.
+replacements to older defaults during generation; retain the compatible
+replacements documented in `hack/dagger/go.mod` before committing. Refresh
+locked dependencies deliberately with `dagger lock update`.
 
 Dagger owns service orchestration, shared runtime directories, and artifact
 export. It can import a production image archive, pull an immutable registry
@@ -153,17 +153,17 @@ supported local object storage paths:
 
 These object-storage scenarios do not start LGTM and keep tracing disabled.
 
-The `minio-latest` provider uses the [Coollabs build] of upstream MinIO
-`RELEASE.2025-10-15T17-29-55Z`, pinned to its multi-platform image digest. This
-third-party image replaces the unavailable official image for local and CI
+The `minio-latest` provider uses the [Coollabs build] of upstream MinIO, with
+its release and multi-platform image digest pinned in `hack/dagger/main.go`.
+This third-party image replaces the unavailable official image for local and CI
 compatibility tests. GitHub Actions runs the MinIO scenario on AMD64 alongside
 the other storage scenarios when full container acceptance tests are enabled.
 
-The `silo` provider independently exercises the [Silo fork] at
-`RELEASE.2026-10-26T00-00-00Z`, also pinned to its multi-platform image digest.
-It has its own AMD64 CI matrix job and artifacts. Both scenarios verify S3
-upload, native Redis notification delivery, ingestion, the resulting AIP, and
-Temporal history; they do not establish compatibility with every storage API.
+The `silo` provider independently exercises the [Silo fork], with its release
+and multi-platform image digest also pinned in `hack/dagger/main.go`. It has its
+own AMD64 CI matrix job and artifacts. Both scenarios verify S3 upload, native
+Redis notification delivery, ingestion, the resulting AIP, and Temporal history;
+they do not establish compatibility with every storage API.
 
 Run just the Silo scenario locally:
 
@@ -207,6 +207,31 @@ ingestion. Retries can duplicate events, so use stable, unique object keys and
 plan for duplicate handling. The Redis watcher removes events before processing;
 neither this delivery path nor the smoke test guarantees exactly-once processing
 or crash recovery.
+
+## Refresh image pins
+
+Run image maintenance from the repository root. `dagger lock update` refreshes
+recorded entries; new image references enter the lockfile when Dagger resolves
+them. After changing an image reference, running its suite records the new pin
+and tests compatibility.
+
+To resolve a digest without starting services, set `IMAGE` to the reviewed
+reference and run:
+
+```sh
+dagger api query --var image="$IMAGE" <<'GRAPHQL'
+query ($image: String!) {
+  container {
+    from(address: $image) {
+      imageRef
+    }
+  }
+}
+GRAPHQL
+```
+
+Review and commit `dagger.lock` with the image change. Resolving an image proves
+availability, not compatibility; run the affected scenarios separately.
 
 [container guide]: ../../../docs/containers.md
 [coollabs build]: https://github.com/coollabsio/minio

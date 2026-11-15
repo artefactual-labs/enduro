@@ -8,7 +8,7 @@ version = "2.15.0"
 [[bins]]
 name = "goreleaser"
 url = "https://github.com/goreleaser/goreleaser"
-version = "2.19.0"
+version = "2.20.2"
 
 [[bins]]
 name = "go-mod-outdated"
@@ -33,7 +33,7 @@ version = "0.6.0"
 [[bins]]
 name = "temporal-cli"
 url = "https://github.com/temporalio/cli"
-version = "1.9.1"
+version = "1.10.1"
 
 [[bins]]
 name = "jq"
@@ -42,10 +42,10 @@ version = "1.8.2"
 
 [[bins]]
 name = "gh-actions-lock"
-version = "0.2.0"
+version = "0.4.1"
 go_package = "github.com/github/gh-actions-lock/cmd/gh-actions-lock"
 
 [[bins]]
 name = "jactionlint"
-version = "2.2.0"
+version = "2.6.0"
 packslip = { project = "github.com/jdx/jactionlint" }

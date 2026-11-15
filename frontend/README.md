@@ -27,23 +27,31 @@ npm run build
 
 ## Package management
 
-This project uses npm and commits `package-lock.json`.
-
-Useful upgrade commands:
-
-```bash
-npm run upgrade:nuxt
-npm run upgrade:deps
-npm run upgrade:deps:latest
-```
+This project uses npm and commits `package-lock.json`. Run the commands in this
+section from `frontend/`.
 
 Use `npm run upgrade:deps` for routine dependency updates within the current
 semver ranges. Use `npm run upgrade:deps:latest` when intentionally reviewing
-new major versions interactively.
+new major versions interactively. These selection scripts edit `package.json`;
+run `npm install` afterward to synchronize `package-lock.json` before
+validation. Commit both files together. Use `npm update` when intentionally
+refreshing installed versions within the existing ranges.
 
-When updating Nuxt-related packages, start with `npm run upgrade:nuxt` so Nuxt
-can apply its own coordinated upgrade and deduplication logic before reviewing
-the remaining dependencies with npm-check-updates.
+For Nuxt updates, review release notes and choose the intended version/channel
+before invoking `upgrade:nuxt`. The script runs `nuxt upgrade --dedupe`, which
+installs directly from the stable channel by default; it does not ask you to
+approve the target and can cross a major-version boundary. Check the installed
+CLI's `upgrade --help` for supported channels. To select one explicitly, set
+`NUXT_CHANNEL` to the reviewed channel and run:
+
+```bash
+npm run upgrade:nuxt -- --channel="$NUXT_CHANNEL"
+```
+
+Alternatively, install a reviewed Nuxt version directly with npm. Review the
+resulting manifest and lockfile before continuing with the remaining
+dependencies. The repository's [dependency refresh guide] covers coordinated
+updates and validation.
 
 ## Application structure
 
@@ -67,38 +75,52 @@ API calls so navigation changes can cancel stale requests.
 
 ## Theming
 
-The frontend uses Nuxt UI v4 and Tailwind CSS. Treat theme colors as semantic roles, not as fixed brand names.
+The frontend uses Nuxt UI v4 and Tailwind CSS. Treat theme colors as semantic
+roles, not as fixed brand names.
 
-- Use Nuxt UI semantic colors in components: `primary`, `neutral`, `success`, `warning`, `error`, `info`.
-- Do not introduce new component styles tied directly to `purple` or another temporary brand hue.
-- The current branded palette lives in [`app/assets/css/main.css`](./app/assets/css/main.css) as `--color-brand-*`.
-- Nuxt UI `primary` is mapped to `brand` in [`app/app.config.ts`](./app/app.config.ts).
+- Use Nuxt UI semantic colors in components: `primary`, `neutral`, `success`,
+  `warning`, `error`, `info`.
+- Do not introduce new component styles tied directly to `purple` or another
+  temporary brand hue.
+- The current branded palette lives in
+  [`app/assets/css/main.css`](./app/assets/css/main.css) as `--color-brand-*`.
+- Nuxt UI `primary` is mapped to `brand` in
+  [`app/app.config.ts`](./app/app.config.ts).
 
 ### Preferred pattern
 
 1. Use Nuxt UI props and semantic utilities first.
 2. Derive any custom app tokens from Nuxt UI tokens.
-3. Add one-off CSS only when the component cannot be expressed cleanly through Nuxt UI.
+3. Add one-off CSS only when the component cannot be expressed cleanly through
+   Nuxt UI.
 
 Examples:
 
 - Prefer `color="primary"` over custom button colors.
 - Prefer `text-primary` or `border-default` over raw hex values.
-- For branded custom surfaces, derive from app tokens such as `--app-brand-strong` and `--app-on-brand`.
+- For branded custom surfaces, derive from app tokens such as
+  `--app-brand-strong` and `--app-on-brand`.
 
 ### Dark mode
 
 Dark mode should be token-driven, not component-by-component.
 
-- Use Nuxt UI tokens such as `--ui-primary`, `--ui-bg`, and `--ui-text-inverted` as the mode-aware seam.
-- Keep app-specific tokens in `main.css` as a thin wrapper around Nuxt UI tokens.
-- Avoid separate ad hoc dark-mode color choices in components unless the component has a strong visual reason.
+- Use Nuxt UI tokens such as `--ui-primary`, `--ui-bg`, and `--ui-text-inverted`
+  as the mode-aware seam.
+- Keep app-specific tokens in `main.css` as a thin wrapper around Nuxt UI
+  tokens.
+- Avoid separate ad hoc dark-mode color choices in components unless the
+  component has a strong visual reason.
 
-This keeps future brand changes localized to the theme layer instead of requiring broad component rewrites.
+This keeps future brand changes localized to the theme layer instead of
+requiring broad component rewrites.
 
 ### Rules of thumb
 
 - In Vue templates, prefer semantic props and classes.
 - In CSS, prefer `brand` or app-level semantic tokens, never `purple`.
 - Avoid hardcoded hex values for branded UI.
-- If a future rebrand happens, the goal should be to change tokens, not component code.
+- If a future rebrand happens, the goal should be to change tokens, not
+  component code.
+
+[dependency refresh guide]: ../docs/dependency-updates.md

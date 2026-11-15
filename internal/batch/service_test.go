@@ -13,6 +13,7 @@ import (
 	temporalapi_serviceerror "go.temporal.io/api/serviceerror"
 	temporalapi_workflow "go.temporal.io/api/workflow/v1"
 	temporalapi_workflowservice "go.temporal.io/api/workflowservice/v1"
+	temporalsdk_client "go.temporal.io/sdk/client"
 	temporalsdk_mocks "go.temporal.io/sdk/mocks"
 	"gotest.tools/v3/assert"
 
@@ -113,7 +114,7 @@ func TestBatchServiceStatus(t *testing.T) {
 
 	t.Run("Fails if the workflow information is unavailable", func(t *testing.T) {
 		client := &temporalsdk_mocks.Client{}
-		client.On("DescribeWorkflowExecution", mock.AnythingOfType("context.backgroundCtx"), "batch-workflow", "").Return(nil, &temporalapi_serviceerror.Unavailable{})
+		client.On("DescribeWorkflow", mock.AnythingOfType("context.backgroundCtx"), "batch-workflow", "").Return(nil, &temporalapi_serviceerror.Unavailable{})
 
 		batchsvc := NewService(logger, client, taskQueue, completedDirs)
 		_, err := batchsvc.Status(ctx)
@@ -123,7 +124,9 @@ func TestBatchServiceStatus(t *testing.T) {
 
 	t.Run("Fails if the workflow information is incomplete", func(t *testing.T) {
 		client := &temporalsdk_mocks.Client{}
-		client.On("DescribeWorkflowExecution", mock.AnythingOfType("context.backgroundCtx"), "batch-workflow", "").Return(&temporalapi_workflowservice.DescribeWorkflowExecutionResponse{}, nil)
+		client.On("DescribeWorkflow", mock.AnythingOfType("context.backgroundCtx"), "batch-workflow", "").Return(&temporalsdk_client.WorkflowExecutionDescription{
+			RawResponse: &temporalapi_workflowservice.DescribeWorkflowExecutionResponse{},
+		}, nil)
 
 		batchsvc := NewService(logger, client, taskQueue, completedDirs)
 		_, err := batchsvc.Status(ctx)
@@ -133,7 +136,7 @@ func TestBatchServiceStatus(t *testing.T) {
 
 	t.Run("Identifies a non-running batch", func(t *testing.T) {
 		client := &temporalsdk_mocks.Client{}
-		client.On("DescribeWorkflowExecution", mock.AnythingOfType("context.backgroundCtx"), "batch-workflow", "").Return(nil, &temporalapi_serviceerror.NotFound{})
+		client.On("DescribeWorkflow", mock.AnythingOfType("context.backgroundCtx"), "batch-workflow", "").Return(nil, &temporalapi_serviceerror.NotFound{})
 
 		batchsvc := NewService(logger, client, taskQueue, completedDirs)
 		result, err := batchsvc.Status(ctx)
@@ -146,13 +149,15 @@ func TestBatchServiceStatus(t *testing.T) {
 
 	t.Run("Identifies a running batch", func(t *testing.T) {
 		client := &temporalsdk_mocks.Client{}
-		client.On("DescribeWorkflowExecution", mock.AnythingOfType("context.backgroundCtx"), "batch-workflow", "").Return(&temporalapi_workflowservice.DescribeWorkflowExecutionResponse{
-			WorkflowExecutionInfo: &temporalapi_workflow.WorkflowExecutionInfo{
-				Execution: &temporalapi_common.WorkflowExecution{
-					WorkflowId: wid,
-					RunId:      rid,
+		client.On("DescribeWorkflow", mock.AnythingOfType("context.backgroundCtx"), "batch-workflow", "").Return(&temporalsdk_client.WorkflowExecutionDescription{
+			RawResponse: &temporalapi_workflowservice.DescribeWorkflowExecutionResponse{
+				WorkflowExecutionInfo: &temporalapi_workflow.WorkflowExecutionInfo{
+					Execution: &temporalapi_common.WorkflowExecution{
+						WorkflowId: wid,
+						RunId:      rid,
+					},
+					Status: temporalapi_enums.WORKFLOW_EXECUTION_STATUS_RUNNING,
 				},
-				Status: temporalapi_enums.WORKFLOW_EXECUTION_STATUS_RUNNING,
 			},
 		}, nil)
 
@@ -169,13 +174,15 @@ func TestBatchServiceStatus(t *testing.T) {
 
 	t.Run("Identifies a closed batch", func(t *testing.T) {
 		client := &temporalsdk_mocks.Client{}
-		client.On("DescribeWorkflowExecution", mock.AnythingOfType("context.backgroundCtx"), "batch-workflow", "").Return(&temporalapi_workflowservice.DescribeWorkflowExecutionResponse{
-			WorkflowExecutionInfo: &temporalapi_workflow.WorkflowExecutionInfo{
-				Execution: &temporalapi_common.WorkflowExecution{
-					WorkflowId: wid,
-					RunId:      rid,
+		client.On("DescribeWorkflow", mock.AnythingOfType("context.backgroundCtx"), "batch-workflow", "").Return(&temporalsdk_client.WorkflowExecutionDescription{
+			RawResponse: &temporalapi_workflowservice.DescribeWorkflowExecutionResponse{
+				WorkflowExecutionInfo: &temporalapi_workflow.WorkflowExecutionInfo{
+					Execution: &temporalapi_common.WorkflowExecution{
+						WorkflowId: wid,
+						RunId:      rid,
+					},
+					Status: temporalapi_enums.WORKFLOW_EXECUTION_STATUS_COMPLETED,
 				},
-				Status: temporalapi_enums.WORKFLOW_EXECUTION_STATUS_COMPLETED,
 			},
 		}, nil)
 

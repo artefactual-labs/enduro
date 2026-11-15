@@ -48,7 +48,7 @@ export interface BatchApiBatchBrowseRequest {
 
 export interface BatchApiBatchSubmitRequest {
     /**
-     * 
+     * Request body for submit.
      */
     submitRequestBody: SubmitRequestBody;
 }

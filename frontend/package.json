@@ -20,13 +20,13 @@
   },
   "dependencies": {
     "@iconify-json/entypo": "^1.2.1",
-    "@iconify-json/lucide": "^1.2.150",
-    "@iconify-json/simple-icons": "^1.2.101",
+    "@iconify-json/lucide": "^1.2.154",
+    "@iconify-json/simple-icons": "^1.2.102",
     "@nuxt/ui": "^4.12.0",
     "@vueuse/core": "^15.0.0",
     "nuxt": "^4.6.4",
-    "tailwindcss": "^4.3.4",
-    "vue-router": "^5.4.0"
+    "tailwindcss": "^4.3.5",
+    "vue-router": "^5.5.1"
   },
   "overrides": {
     "fontless": {
@@ -35,10 +35,10 @@
   },
   "devDependencies": {
     "@nuxt/eslint": "^1.17.0",
-    "@nuxt/test-utils": "^4.3.4",
+    "@nuxt/test-utils": "^4.4.0",
     "@vitest/coverage-v8": "^5.1.0",
     "@vue/test-utils": "^2.5.1",
-    "eslint": "^10.14.0",
+    "eslint": "^10.15.0",
     "happy-dom": "^21.0.4",
     "typescript": "^6.0.3",
     "vitest": "^5.1.0",

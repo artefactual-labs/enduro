@@ -364,7 +364,7 @@ func (w *goaWrapper) Workflow(ctx context.Context, payload *goacollection.Workfl
 		History: []*goacollection.EnduroCollectionWorkflowHistory{},
 	}
 
-	we, err := w.cc.DescribeWorkflowExecution(ctx, *goacol.WorkflowID, *goacol.RunID)
+	description, err := w.cc.DescribeWorkflow(ctx, *goacol.WorkflowID, *goacol.RunID)
 	if err != nil {
 		switch err.(type) {
 		case *temporalapi_serviceerror.NotFound:
@@ -374,6 +374,7 @@ func (w *goaWrapper) Workflow(ctx context.Context, payload *goacollection.Workfl
 		}
 	}
 
+	we := description.RawResponse
 	status := "ACTIVE"
 	if we.WorkflowExecutionInfo.Status != temporalapi_enums.WORKFLOW_EXECUTION_STATUS_RUNNING {
 		status = we.WorkflowExecutionInfo.Status.String()
@@ -518,7 +519,7 @@ func (w *goaWrapper) Bulk(ctx context.Context, payload *goacollection.BulkPayloa
 func (w *goaWrapper) BulkStatus(ctx context.Context) (*goacollection.BulkStatusResult, error) {
 	result := &goacollection.BulkStatusResult{}
 
-	resp, err := w.cc.DescribeWorkflowExecution(ctx, BulkWorkflowID, "")
+	description, err := w.cc.DescribeWorkflow(ctx, BulkWorkflowID, "")
 	if err != nil {
 		switch err := err.(type) {
 		case *temporalapi_serviceerror.NotFound:
@@ -530,6 +531,7 @@ func (w *goaWrapper) BulkStatus(ctx context.Context) (*goacollection.BulkStatusR
 		}
 	}
 
+	resp := description.RawResponse
 	if resp.WorkflowExecutionInfo == nil {
 		w.logger.Info("error retrieving workflow execution details")
 		return nil, ErrBulkStatusUnavailable
