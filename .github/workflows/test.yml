@@ -256,7 +256,7 @@ jobs:
           tar -xf "$RUNNER_TEMP/frontend-assets/frontend.tar" -C frontend/.output/public
           test -s frontend/.output/public/index.html
       - name: Set up Docker with the containerd image store
-        uses: docker/setup-docker-action@v5.6.0
+        uses: docker/setup-docker-action@v5.7.0
         with:
           version: v29.5.2
           daemon-config: '{"features":{"containerd-snapshotter":true}}'

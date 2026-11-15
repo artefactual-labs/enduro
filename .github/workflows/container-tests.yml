@@ -85,14 +85,14 @@ jobs:
           name: ${{ inputs.image-artifact }}
           path: dist/containers
       - name: Set up Docker with the containerd image store
-        uses: docker/setup-docker-action@v5.6.0
+        uses: docker/setup-docker-action@v5.7.0
         with:
           version: v29.5.2
           set-host: true
           daemon-config: '{"features":{"containerd-snapshotter":true}}'
       - name: Log in to GitHub Container Registry
         if: ${{ inputs.image-ref != '' }}
-        uses: docker/login-action@v4.7.0
+        uses: docker/login-action@v4.8.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
