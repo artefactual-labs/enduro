@@ -94,7 +94,7 @@ services:
       - "127.0.0.1:7440:8080"
 
   seaweedfs:
-    image: "chrislusf/seaweedfs:4.53"
+    image: "chrislusf/seaweedfs:4.54"
     command: "mini -dir=/data -ip.bind=0.0.0.0 -bucket=sips -master.volumeSizeLimitMB=64 -webdav=false -admin.ui=false -s3.port.iceberg=0"
     extra_hosts:
       - "host.docker.internal:host-gateway"

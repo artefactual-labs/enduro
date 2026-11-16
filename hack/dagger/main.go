@@ -23,8 +23,8 @@ const (
 	siloImage         = "docker.io/pgsty/silo:RELEASE.2026-11-12T00-00-00Z@sha256:c20d112390b9a9ce8c11b8af95ad35bcaa62f4759663c09c936cd8d2b511f329"
 	argminBuildImage  = "rust:1.100.0-bookworm"
 	argminRevision    = "78234dc37a026f890c61182c9f7837b33fab3e78"
-	seaweedFSImage    = "chrislusf/seaweedfs:4.53"
-	amboxImage        = "ghcr.io/sevein/ambox:latest"
+	seaweedFSImage    = "chrislusf/seaweedfs:4.54"
+	amboxImage        = "ghcr.io/sevein/ambox:1.2.2"
 	playwrightImage   = "mcr.microsoft.com/playwright:v1.65.1-noble"
 	lgtmImage         = "grafana/otel-lgtm:0.41.0"
 )
