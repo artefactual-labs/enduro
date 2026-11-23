@@ -18,7 +18,9 @@ The tests own the user-visible scenarios:
 
 - submit a zip through the filesystem watcher,
 - recover a failed production-system receipt with an operator decision,
-- submit a directory through the Nuxt batch-import form,
+- submit a directory through the Nuxt batch-import form with an explicit
+  processing configuration distinct from the pipeline default and verify that
+  the collection API and dashboard show the selected name,
 - wait for Enduro collections to complete,
 - download each generated AIP and inspect its METS file,
 - retrieve the completed filesystem transfer's trace from LGTM and check its

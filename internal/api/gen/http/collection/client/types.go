@@ -69,6 +69,9 @@ type ShowResponseBody struct {
 	OriginalID *string `form:"original_id,omitempty" json:"original_id,omitempty" xml:"original_id,omitempty"`
 	// Identifier of Archivematica pipeline
 	PipelineID *string `form:"pipeline_id,omitempty" json:"pipeline_id,omitempty" xml:"pipeline_id,omitempty"`
+	// Processing configuration name submitted to Archivematica. Empty when
+	// Archivematica was left to choose its default.
+	ProcessingConfig *string `form:"processing_config,omitempty" json:"processing_config,omitempty" xml:"processing_config,omitempty"`
 	// Creation datetime
 	CreatedAt *string `form:"created_at,omitempty" json:"created_at,omitempty" xml:"created_at,omitempty"`
 	// Start datetime
@@ -425,6 +428,7 @@ func NewShowEnduroDetailedStoredCollectionOK(body *ShowResponseBody) *collection
 		AipID:                   body.AipID,
 		OriginalID:              body.OriginalID,
 		PipelineID:              body.PipelineID,
+		ProcessingConfig:        body.ProcessingConfig,
 		CreatedAt:               body.CreatedAt,
 		StartedAt:               body.StartedAt,
 		CompletedAt:             body.CompletedAt,

@@ -1,6 +1,7 @@
 import { ref } from 'vue'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mountSuspended, mockComponent, mockNuxtImport } from '@nuxt/test-utils/runtime'
+import type { EnduroDetailedStoredCollection } from '~/openapi-generator'
 
 import CollectionOverviewPage from './index.vue'
 
@@ -28,7 +29,7 @@ mockComponent('AppUuid', async () => {
   })
 })
 
-function createCollectionDetailsState(collectionOverrides: { startedAt?: Date } = {}) {
+function createCollectionDetailsState(collectionOverrides: Partial<EnduroDetailedStoredCollection> = {}) {
   return {
     activeAction: ref(null),
     actionErrorMessage: ref(''),
@@ -88,5 +89,24 @@ describe('collection overview page', () => {
     const labels = wrapper.findAll('dt').map(label => label.text())
     expect(labels).toContain('Processing started')
     expect(wrapper.text()).toContain('Processing has not started yet.')
+  })
+
+  it.each([
+    { processingConfig: 'local-storage', expected: 'local-storage' },
+    { processingConfig: '', expected: 'Archivematica default' },
+    { processingConfig: undefined, expected: 'Not recorded' }
+  ])('shows $expected for the transfer processing configuration', async ({ processingConfig, expected }) => {
+    useCollectionDetailsMock.mockReturnValue(createCollectionDetailsState({
+      pipelineId: 'pipeline-1',
+      transferId: 'transfer-1',
+      processingConfig
+    }))
+
+    const wrapper = await mountSuspended(CollectionOverviewPage, {
+      route: '/collections/77'
+    })
+
+    const label = wrapper.findAll('dt').find(label => label.text() === 'Processing configuration')
+    expect(label?.element.nextElementSibling?.textContent?.trim()).toBe(expected)
   })
 })

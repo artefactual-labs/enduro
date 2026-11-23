@@ -70,6 +70,9 @@ type ProcessingWorkflowRequest struct {
 	ExistingAIPID      string
 	ExistingPipelineID string
 
+	// Configuration recorded for the existing transfer, if available.
+	ExistingProcessingConfig *string `json:",omitempty"`
+
 	// Name of the watcher that received this blob.
 	WatcherName string
 

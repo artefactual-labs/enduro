@@ -85,6 +85,13 @@ func TestPipelineConfigValidate(t *testing.T) {
 		"Defaults are safe": {
 			cfg: Config{},
 		},
+		"Processing configuration accepts 255 Unicode characters": {
+			cfg: Config{ProcessingConfig: strings.Repeat("é", 255)},
+		},
+		"Processing configuration rejects 256 characters": {
+			cfg:         Config{ProcessingConfig: strings.Repeat("é", 256)},
+			errContains: "processing configuration name must be at most 255 characters",
+		},
 		"Storage Service URL alone does not enable recovery": {
 			cfg: Config{StorageServiceURL: "http://user:key@example.com"},
 		},

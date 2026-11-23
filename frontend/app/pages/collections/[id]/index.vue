@@ -70,11 +70,22 @@ const workflowItems = computed(() => [
 ])
 
 const pipelineItems = computed(() => {
-  if (!collection.value?.pipelineId) return []
+  if (!collection.value) return []
 
-  const items: Array<{ key: string, label: string, slot?: string, value?: string }> = [
-    { key: 'pipelineId', label: 'ID', slot: 'pipelineId' }
-  ]
+  const items: Array<{ key: string, label: string, slot?: string, value?: string }> = []
+
+  if (collection.value.pipelineId) {
+    items.push({ key: 'pipelineId', label: 'ID', slot: 'pipelineId' })
+  }
+
+  if (collection.value.transferId) {
+    const config = collection.value.processingConfig
+    items.push({
+      key: 'processingConfig',
+      label: 'Processing configuration',
+      value: config === '' ? 'Archivematica default' : config ?? 'Not recorded'
+    })
+  }
 
   if (pipeline.value) {
     items.unshift({ key: 'name', label: 'Name', value: pipeline.value.name })
@@ -290,7 +301,7 @@ async function confirmDelete() {
             </h3>
           </template>
 
-          <template v-if="collection.pipelineId">
+          <template v-if="pipelineItems.length">
             <AppMetadataList
               :items="pipelineItems"
               layout="stacked"
@@ -319,7 +330,7 @@ async function confirmDelete() {
               </div>
             </template>
             <div
-              v-else
+              v-else-if="collection.pipelineId"
               class="border-t border-default px-4 py-4 text-sm text-muted sm:px-5"
             >
               Pipeline details are not available.

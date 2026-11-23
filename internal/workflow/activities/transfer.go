@@ -10,6 +10,7 @@ import (
 
 	"github.com/artefactual-labs/enduro/internal/pipeline"
 	"github.com/artefactual-labs/enduro/internal/temporal"
+	"github.com/artefactual-labs/enduro/internal/validation"
 )
 
 // TransferActivity submits the transfer to Archivematica and returns its ID.
@@ -41,6 +42,11 @@ type TransferActivityResponse struct {
 }
 
 func (a *TransferActivity) Execute(ctx context.Context, params *TransferActivityParams) (*TransferActivityResponse, error) {
+	// Queued transfers and retries can carry names accepted by older workers.
+	if err := validation.ValidateProcessingConfigName(params.ProcessingConfig); err != nil {
+		return nil, temporal.NewNonRetryableError(err)
+	}
+
 	p, err := a.pipelineRegistry.ByName(params.PipelineName)
 	if err != nil {
 		return nil, temporal.NewNonRetryableError(err)

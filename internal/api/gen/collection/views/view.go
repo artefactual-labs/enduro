@@ -102,6 +102,9 @@ type EnduroDetailedStoredCollectionView struct {
 	OriginalID *string
 	// Identifier of Archivematica pipeline
 	PipelineID *string
+	// Processing configuration name submitted to Archivematica. Empty when
+	// Archivematica was left to choose its default.
+	ProcessingConfig *string
 	// Creation datetime
 	CreatedAt *string
 	// Start datetime
@@ -187,6 +190,7 @@ var (
 			"aip_id",
 			"original_id",
 			"pipeline_id",
+			"processing_config",
 			"created_at",
 			"started_at",
 			"completed_at",

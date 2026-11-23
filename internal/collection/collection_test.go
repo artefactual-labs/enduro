@@ -193,6 +193,39 @@ func TestStatusTransitionFailureRollsBack(t *testing.T) {
 	assert.Assert(t, !recorder.committed)
 }
 
+func TestUpdateWorkflowStatusPersistsSubmittedTransfer(t *testing.T) {
+	t.Parallel()
+
+	for _, tt := range []struct {
+		name   string
+		config string
+		want   any
+	}{
+		{"Archivematica default", "", ""},
+		{"longest storable name", strings.Repeat("é", 255), strings.Repeat("é", 255)},
+		{"oversized name from an older worker", strings.Repeat("é", 256), nil},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			recorder := newExecRecorderDB(t)
+			recorder.row = &Collection{WorkflowID: "workflow", RunID: "run", Status: StatusInProgress}
+			svc := NewService(testLogger(), recorder.db, nil, "", nil)
+			storedAt := time.Date(2026, time.March, 18, 8, 0, 0, 0, time.UTC)
+
+			err := svc.UpdateWorkflowStatus(t.Context(), 42, "collection", "workflow", "run",
+				"transfer-id", "aip-id", "pipeline-id", &tt.config, StatusDone, storedAt)
+
+			assert.NilError(t, err)
+			assert.DeepEqual(t, recorder.execArgsList[0], []any{
+				"collection", "workflow", "run", "transfer-id", "aip-id", "pipeline-id",
+				tt.want, int64(StatusDone), storedAt, int64(42),
+			})
+			assert.Assert(t, recorder.committed)
+		})
+	}
+}
+
 func TestUpdateWorkflowStatusRecordsRetryRunStart(t *testing.T) {
 	t.Parallel()
 
@@ -209,6 +242,7 @@ func TestUpdateWorkflowStatusRecordsRetryRunStart(t *testing.T) {
 		"",
 		"",
 		"",
+		nil,
 		StatusQueued,
 		time.Time{},
 	)
@@ -514,6 +548,7 @@ func (r *collectionRows) Columns() []string {
 		"aip_id",
 		"original_id",
 		"pipeline_id",
+		"processing_config",
 		"status",
 		"created_at",
 		"started_at",
@@ -544,6 +579,7 @@ func (r *collectionRows) Next(dest []driver.Value) error {
 		r.row.AIPID,
 		r.row.OriginalID,
 		r.row.PipelineID,
+		nullStringValue(r.row.ProcessingConfig),
 		int64(r.row.Status),
 		r.row.CreatedAt,
 		nullTimeValue(r.row.StartedAt),

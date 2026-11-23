@@ -19,6 +19,7 @@ const expectedProcessingWorkflows = Number(
   process.env.EXPECTED_PROCESSING_WORKFLOWS ?? "1",
 );
 const verifyBatchWorkflow = process.env.VERIFY_BATCH_WORKFLOW === "true";
+const batchProcessingConfig = "enduro-batch";
 const batchTransferName =
   process.env.BATCH_TRANSFER_NAME ??
   `avl-other-sip-2.16.578.1.39.100.11.${cacheBuster}-20260721`;
@@ -144,12 +145,13 @@ test("filesystem transfer resumes after a prod receipt decision", async ({
   );
   await writeJSONArtifact("production-receipt.json", receipt);
 
-  await downloadAndInspectAIP(request, {
+  const detail = await downloadAndInspectAIP(request, {
     collection,
     transferName,
     artifactPrefix: "",
     extractDir: "/tmp/aip-extract",
   });
+  expect(detail.processing_config).toBe("automated");
 
   await writeTextArtifact(
     "report.txt",
@@ -226,6 +228,8 @@ test("LGTM captures the completed transfer's workflow trace", async ({ request }
 });
 
 test("Nuxt batch import form submits a directory transfer", async ({ page }) => {
+  test.setTimeout(120_000);
+
   await test.step("prepare a batch transfer visible to Enduro", async () => {
     const transferDir = path.join(batchDir, batchTransferName);
     await fs.rm(transferDir, { recursive: true, force: true });
@@ -259,13 +263,32 @@ test("Nuxt batch import form submits a directory transfer", async ({ page }) => 
     );
     await page.getByText("Start a new batch").waitFor({ timeout: 60_000 });
     await page.locator('input[placeholder="/path/to/transfers"]').fill(batchDir);
+    await page
+      .getByRole("combobox", { name: "Processing configuration" })
+      .click();
+    await page
+      .getByRole("option", { name: batchProcessingConfig, exact: true })
+      .click();
 
     await page.getByRole("button", { name: "Submit" }).click();
     const confirmation = page
       .getByRole("dialog")
       .filter({ hasText: "Submit batch import?" });
     await expect(confirmation).toBeVisible();
-    await confirmation.getByRole("button", { name: "Submit" }).click();
+    await expect(
+      confirmation.getByText(batchProcessingConfig, { exact: true }),
+    ).toBeVisible();
+    const [submission] = await Promise.all([
+      page.waitForRequest(
+        (request) =>
+          request.method() === "POST" &&
+          /^\/batch\/?$/.test(new URL(request.url()).pathname),
+      ),
+      confirmation.getByRole("button", { name: "Submit" }).click(),
+    ]);
+    expect(submission.postDataJSON()).toMatchObject({
+      processing_config: batchProcessingConfig,
+    });
 
     await Promise.race([
       page.getByText("Batch submitted", { exact: true }).waitFor(),
@@ -289,18 +312,33 @@ test("Nuxt batch import form submits a directory transfer", async ({ page }) => 
   });
 });
 
-test("batch transfer completes and produces an AIP", async ({ request }) => {
+test("batch transfer records the processing configuration and produces an AIP", async ({
+  page,
+}) => {
+  const request = page.request;
   const collection = await waitForCollectionDone(request, batchTransferName, {
     artifactPrefix: "batch-",
     logPrefix: "batch collection",
   });
 
-  await downloadAndInspectAIP(request, {
+  const detail = await downloadAndInspectAIP(request, {
     collection,
     transferName: batchTransferName,
     artifactPrefix: "batch-",
     extractDir: "/tmp/batch-aip-extract",
   });
+  expect(detail.processing_config).toBe(batchProcessingConfig);
+
+  await page.goto(`${enduroURL}/collections/${collection.id}`, {
+    waitUntil: "domcontentloaded",
+  });
+  const processingConfig = page
+    .locator("dl > div")
+    .filter({
+      has: page.getByText("Processing configuration", { exact: true }),
+    })
+    .locator("dd");
+  await expect(processingConfig).toHaveText(batchProcessingConfig);
 
   await writeTextArtifact(
     "batch-report.txt",
@@ -624,6 +662,7 @@ async function downloadAndInspectAIP(
     workflow_id: expect.stringMatching(/^processing-workflow-/),
   });
   await writeJSONArtifact(collectionName, detail);
+  return detail;
 }
 
 async function saveCollection(

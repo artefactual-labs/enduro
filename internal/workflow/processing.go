@@ -143,6 +143,10 @@ type TransferInfo struct {
 	// It is populated via the workflow request.
 	ProcessingConfig string
 
+	// The configuration sent with TransferID. An empty string means Enduro
+	// deferred to Archivematica's default.
+	SubmittedProcessingConfig *string `json:",omitempty"`
+
 	// PipelineID is the UUID of the Archivematica pipeline. Extracted from
 	// the API response header when the transfer is submitted.
 	//
@@ -243,6 +247,8 @@ func (w *ProcessingWorkflow) Execute(ctx temporalsdk_workflow.Context, req *coll
 				params.PipelineID = req.ExistingPipelineID
 				params.TransferID = req.ExistingTransferID
 				params.SIPID = req.ExistingAIPID
+				params.ProcessingConfig = req.ExistingProcessingConfig
+				tinfo.SubmittedProcessingConfig = req.ExistingProcessingConfig
 			} else {
 				params.PipelineID = ""
 				params.TransferID = ""
@@ -280,6 +286,8 @@ func (w *ProcessingWorkflow) Execute(ctx temporalsdk_workflow.Context, req *coll
 			SIPID:        tinfo.SIPID,
 			StoredAt:     tinfo.StoredAt,
 			Status:       status,
+
+			ProcessingConfig: tinfo.SubmittedProcessingConfig,
 		}).Get(activityOpts, nil)
 		if err != nil {
 			logger.Error("Failed to persist final workflow status",
@@ -820,13 +828,14 @@ func (w *ProcessingWorkflow) transfer(sessCtx temporalsdk_workflow.Context, tinf
 	{
 		if tinfo.TransferID == "" {
 			transferResponse := activities.TransferActivityResponse{}
+			processingConfig := tinfo.ProcessingConfiguration()
 			activityOpts := withActivityOptsForRequest(sessCtx)
 			err := temporalsdk_workflow.ExecuteActivity(activityOpts, activities.TransferActivityName, &activities.TransferActivityParams{
 				PipelineName:       tinfo.PipelineName,
 				TransferLocationID: tinfo.PipelineConfig.TransferLocationID,
 				RelPath:            tinfo.Bundle.RelPath,
 				Name:               tinfo.Key,
-				ProcessingConfig:   tinfo.ProcessingConfiguration(),
+				ProcessingConfig:   processingConfig,
 				TransferType:       tinfo.TransferType,
 				Accession:          nameMetadata.Accession,
 			}).Get(activityOpts, &transferResponse)
@@ -836,10 +845,11 @@ func (w *ProcessingWorkflow) transfer(sessCtx temporalsdk_workflow.Context, tinf
 
 			tinfo.TransferID = transferResponse.TransferID
 			tinfo.PipelineID = transferResponse.PipelineID
+			tinfo.SubmittedProcessingConfig = &processingConfig
 		}
 	}
 
-	// Persist TransferID + PipelineID.
+	// Persist the transfer ID, pipeline ID and submitted configuration together.
 	{
 		activityOpts := withLocalActivityOpts(sessCtx)
 		_ = temporalsdk_workflow.ExecuteLocalActivity(activityOpts, updatePackageLocalActivity, w.logger, w.colsvc, &updatePackageLocalActivityParams{
@@ -848,6 +858,8 @@ func (w *ProcessingWorkflow) transfer(sessCtx temporalsdk_workflow.Context, tinf
 			Status:       collection.StatusInProgress,
 			TransferID:   tinfo.TransferID,
 			PipelineID:   tinfo.PipelineID,
+
+			ProcessingConfig: tinfo.SubmittedProcessingConfig,
 		}).Get(activityOpts, nil)
 	}
 
@@ -875,6 +887,8 @@ func (w *ProcessingWorkflow) transfer(sessCtx temporalsdk_workflow.Context, tinf
 			PipelineID:   tinfo.PipelineID,
 			Status:       collection.StatusInProgress,
 			SIPID:        tinfo.SIPID,
+
+			ProcessingConfig: tinfo.SubmittedProcessingConfig,
 		}).Get(activityOpts, nil)
 	}
 
@@ -904,6 +918,7 @@ func (w *ProcessingWorkflow) transfer(sessCtx temporalsdk_workflow.Context, tinf
 func (w *ProcessingWorkflow) resetForFullReprocess(sessCtx temporalsdk_workflow.Context, tinfo *TransferInfo) error {
 	tinfo.TempFile = ""
 	tinfo.TransferID = ""
+	tinfo.SubmittedProcessingConfig = nil
 	tinfo.SIPID = ""
 	tinfo.PipelineID = ""
 	tinfo.StoredAt = time.Time{}

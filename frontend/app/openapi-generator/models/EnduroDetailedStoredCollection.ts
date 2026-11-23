@@ -52,6 +52,10 @@ export interface EnduroDetailedStoredCollection {
      */
     pipelineId?: string;
     /**
+     * Processing configuration name submitted to Archivematica. Empty when Archivematica was left to choose its default.
+     */
+    processingConfig?: string;
+    /**
      * Datetime when storage was last reconciled
      */
     reconciliationCheckedAt?: Date;
@@ -141,6 +145,7 @@ export function EnduroDetailedStoredCollectionFromJSONTyped(json: any, ignoreDis
         'name': json['name'] == null ? undefined : json['name'],
         'originalId': json['original_id'] == null ? undefined : json['original_id'],
         'pipelineId': json['pipeline_id'] == null ? undefined : json['pipeline_id'],
+        'processingConfig': json['processing_config'] == null ? undefined : json['processing_config'],
         'reconciliationCheckedAt': json['reconciliation_checked_at'] == null ? undefined : (parseDateTime(json['reconciliation_checked_at'])),
         'reconciliationError': json['reconciliation_error'] == null ? undefined : json['reconciliation_error'],
         'reconciliationStatus': json['reconciliation_status'] == null ? undefined : json['reconciliation_status'],
@@ -171,6 +176,7 @@ export function EnduroDetailedStoredCollectionToJSONTyped(value?: EnduroDetailed
         'name': value['name'],
         'original_id': value['originalId'],
         'pipeline_id': value['pipelineId'],
+        'processing_config': value['processingConfig'],
         'reconciliation_checked_at': value['reconciliationCheckedAt'] == null ? value['reconciliationCheckedAt'] : serializeDateTime(value['reconciliationCheckedAt']),
         'reconciliation_error': value['reconciliationError'],
         'reconciliation_status': value['reconciliationStatus'],

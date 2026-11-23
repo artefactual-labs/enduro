@@ -2,6 +2,8 @@ package design
 
 import (
 	. "goa.design/goa/v3/dsl"
+
+	"github.com/artefactual-labs/enduro/internal/validation"
 )
 
 var _ = Service("batch", func() {
@@ -14,7 +16,10 @@ var _ = Service("batch", func() {
 		Payload(func() {
 			Attribute("path", String)
 			Attribute("pipeline", String)
-			Attribute("processing_config", String)
+			Attribute("processing_config", String, func() {
+				MaxLength(validation.MaxProcessingConfigNameLength)
+				Example("automated")
+			})
 			Attribute("completed_dir", String)
 			Attribute("retention_period", String)
 			Attribute("reject_duplicates", Boolean, func() { Default(false) })

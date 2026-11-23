@@ -9,6 +9,8 @@
 package server
 
 import (
+	"unicode/utf8"
+
 	batch "github.com/artefactual-labs/enduro/internal/api/gen/batch"
 	goa "goa.design/goa/v3/pkg"
 )
@@ -322,6 +324,11 @@ func NewBrowsePayload(path *string) *batch.BrowsePayload {
 func ValidateSubmitRequestBody(body *SubmitRequestBody) (err error) {
 	if body.Path == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("path", "body"))
+	}
+	if body.ProcessingConfig != nil {
+		if utf8.RuneCountInString(*body.ProcessingConfig) > 255 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("body.processing_config", *body.ProcessingConfig, utf8.RuneCountInString(*body.ProcessingConfig), 255, false))
+		}
 	}
 	if body.Depth != nil {
 		if *body.Depth < 0 {
