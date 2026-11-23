@@ -990,7 +990,8 @@ definitions:
                 example: false
             processing_config:
                 type: string
-                example: abc123
+                example: automated
+                maxLength: 255
             reject_duplicates:
                 type: boolean
                 default: false
@@ -1008,7 +1009,7 @@ definitions:
             path: abc123
             pipeline: abc123
             process_name_metadata: false
-            processing_config: abc123
+            processing_config: automated
             reject_duplicates: false
             retention_period: abc123
             transfer_type: abc123
@@ -1575,6 +1576,10 @@ definitions:
                 description: Identifier of Archivematica pipeline
                 example: d1845cb6-a5ea-474a-9ab8-26f9bcd919f5
                 format: uuid
+            processing_config:
+                type: string
+                description: Processing configuration name submitted to Archivematica. Empty when Archivematica was left to choose its default.
+                example: abc123
             reconciliation_checked_at:
                 type: string
                 description: Datetime when storage was last reconciled
@@ -1636,6 +1641,7 @@ definitions:
             name: abc123
             original_id: abc123
             pipeline_id: d1845cb6-a5ea-474a-9ab8-26f9bcd919f5
+            processing_config: abc123
             reconciliation_checked_at: "1970-01-01T00:00:01Z"
             reconciliation_error: abc123
             reconciliation_status: partial

@@ -194,6 +194,8 @@ func (s *ProcessingWorkflowTestSuite) TestReconciliationRetryPreservesExistingSt
 		SIPID:        "aip-id",
 		StoredAt:     time.Time{},
 		Status:       collection.StatusQueued,
+
+		ProcessingConfig: new("previous-config"),
 	}).Return(nil).Once()
 
 	s.env.OnActivity(nha_activities.ParseNameLocalActivity, mock.Anything, "key").Return(&nha.NameInfo{}, nil).Once()
@@ -206,6 +208,8 @@ func (s *ProcessingWorkflowTestSuite) TestReconciliationRetryPreservesExistingSt
 		SIPID:        "aip-id",
 		StoredAt:     time.Time{},
 		Status:       collection.StatusError,
+
+		ProcessingConfig: new("previous-config"),
 	}).Return(nil).Once()
 
 	s.env.ExecuteWorkflow(s.workflow.Execute, &collection.ProcessingWorkflowRequest{
@@ -216,6 +220,8 @@ func (s *ProcessingWorkflowTestSuite) TestReconciliationRetryPreservesExistingSt
 		ExistingTransferID: "transfer-id",
 		ExistingAIPID:      "aip-id",
 		ExistingPipelineID: "pipeline-id",
+
+		ExistingProcessingConfig: new("previous-config"),
 	})
 
 	s.True(s.env.IsWorkflowCompleted())
@@ -262,6 +268,8 @@ func (s *ProcessingWorkflowTestSuite) TestFullReprocessRetryClearsExistingState(
 		ExistingTransferID: "transfer-id",
 		ExistingAIPID:      "aip-id",
 		ExistingPipelineID: "pipeline-id",
+
+		ExistingProcessingConfig: new("previous-config"),
 	})
 
 	s.True(s.env.IsWorkflowCompleted())
@@ -307,6 +315,8 @@ func (s *ProcessingWorkflowTestSuite) TestReconciliationRetryNotFoundFallsBackTo
 		SIPID:        "aip-id",
 		StoredAt:     time.Time{},
 		Status:       collection.StatusQueued,
+
+		ProcessingConfig: new("previous-config"),
 	}).Return(nil).Once()
 
 	s.env.OnActivity(nha_activities.ParseNameLocalActivity, mock.Anything, "key").Return(&nha.NameInfo{}, nil).Once()
@@ -318,6 +328,7 @@ func (s *ProcessingWorkflowTestSuite) TestReconciliationRetryNotFoundFallsBackTo
 				ID:                 "pipeline-id",
 				TransferDir:        "/transfer-dir",
 				TransferLocationID: "transfer-location-id",
+				ProcessingConfig:   "pipeline-default",
 			}
 			return &out, nil
 		}).Once()
@@ -368,7 +379,7 @@ func (s *ProcessingWorkflowTestSuite) TestReconciliationRetryNotFoundFallsBackTo
 		TransferLocationID: "transfer-location-id",
 		RelPath:            "key",
 		Name:               "key",
-		ProcessingConfig:   "",
+		ProcessingConfig:   "bulk-choice",
 		TransferType:       "",
 		Accession:          "",
 	}).Return(&activities.TransferActivityResponse{
@@ -383,6 +394,8 @@ func (s *ProcessingWorkflowTestSuite) TestReconciliationRetryNotFoundFallsBackTo
 		SIPID:        "",
 		StoredAt:     time.Time{},
 		Status:       collection.StatusInProgress,
+
+		ProcessingConfig: new("bulk-choice"),
 	}).Return(nil).Once()
 	s.env.OnActivity(activities.PollTransferActivityName, &activities.PollTransferActivityParams{
 		PipelineName: "pipeline",
@@ -396,6 +409,8 @@ func (s *ProcessingWorkflowTestSuite) TestReconciliationRetryNotFoundFallsBackTo
 		SIPID:        "new-aip-id",
 		StoredAt:     time.Time{},
 		Status:       collection.StatusInProgress,
+
+		ProcessingConfig: new("bulk-choice"),
 	}).Return(nil).Once()
 	s.env.OnActivity(activities.PollIngestActivityName, &activities.PollIngestActivityParams{
 		PipelineName: "pipeline",
@@ -412,6 +427,8 @@ func (s *ProcessingWorkflowTestSuite) TestReconciliationRetryNotFoundFallsBackTo
 		SIPID:        "new-aip-id",
 		StoredAt:     storedAt,
 		Status:       collection.StatusDone,
+
+		ProcessingConfig: new("bulk-choice"),
 	}).Return(nil).Once()
 
 	s.env.ExecuteWorkflow(s.workflow.Execute, &collection.ProcessingWorkflowRequest{
@@ -423,6 +440,9 @@ func (s *ProcessingWorkflowTestSuite) TestReconciliationRetryNotFoundFallsBackTo
 		ExistingTransferID: "transfer-id",
 		ExistingAIPID:      "aip-id",
 		ExistingPipelineID: "pipeline-id",
+
+		ExistingProcessingConfig: new("previous-config"),
+		ProcessingConfig:         "bulk-choice",
 	})
 
 	s.True(s.env.IsWorkflowCompleted())
@@ -902,6 +922,7 @@ func (s *ProcessingWorkflowTestSuite) TestRecoveryEnabledReconcilesAfterSuccessf
 				ID:                 "pipeline-id",
 				TransferDir:        "/transfer-dir",
 				TransferLocationID: "transfer-location-id",
+				ProcessingConfig:   "pipeline-default",
 				TransferPublisher: publisher.Config{
 					Type: "sftp",
 				},
@@ -940,7 +961,7 @@ func (s *ProcessingWorkflowTestSuite) TestRecoveryEnabledReconcilesAfterSuccessf
 		TransferLocationID: "transfer-location-id",
 		RelPath:            "archivematica/transfers/key",
 		Name:               "key",
-		ProcessingConfig:   "",
+		ProcessingConfig:   "pipeline-default",
 		TransferType:       "",
 		Accession:          "",
 	}).Return(&activities.TransferActivityResponse{
@@ -955,6 +976,8 @@ func (s *ProcessingWorkflowTestSuite) TestRecoveryEnabledReconcilesAfterSuccessf
 		SIPID:        "",
 		StoredAt:     time.Time{},
 		Status:       collection.StatusInProgress,
+
+		ProcessingConfig: new("pipeline-default"),
 	}).Return(nil).Once()
 	s.env.OnActivity(activities.PollTransferActivityName, &activities.PollTransferActivityParams{
 		PipelineName: "pipeline",
@@ -968,6 +991,8 @@ func (s *ProcessingWorkflowTestSuite) TestRecoveryEnabledReconcilesAfterSuccessf
 		SIPID:        "aip-id",
 		StoredAt:     time.Time{},
 		Status:       collection.StatusInProgress,
+
+		ProcessingConfig: new("pipeline-default"),
 	}).Return(nil).Once()
 	s.env.OnActivity(activities.PollIngestActivityName, &activities.PollIngestActivityParams{
 		PipelineName: "pipeline",
@@ -1002,6 +1027,8 @@ func (s *ProcessingWorkflowTestSuite) TestRecoveryEnabledReconcilesAfterSuccessf
 		SIPID:        "aip-id",
 		StoredAt:     finalStoredAt,
 		Status:       collection.StatusDone,
+
+		ProcessingConfig: new("pipeline-default"),
 	}).Return(nil).Once()
 
 	s.env.ExecuteWorkflow(s.workflow.Execute, &collection.ProcessingWorkflowRequest{
@@ -1148,6 +1175,8 @@ func (s *ProcessingWorkflowTestSuite) TestRecoveryEnabledRetriesIndeterminateAft
 		SIPID:        "",
 		StoredAt:     time.Time{},
 		Status:       collection.StatusInProgress,
+
+		ProcessingConfig: new(""),
 	}).Return(nil).Once()
 	s.env.OnActivity(activities.PollTransferActivityName, &activities.PollTransferActivityParams{
 		PipelineName: "pipeline",
@@ -1161,6 +1190,8 @@ func (s *ProcessingWorkflowTestSuite) TestRecoveryEnabledRetriesIndeterminateAft
 		SIPID:        "aip-id",
 		StoredAt:     time.Time{},
 		Status:       collection.StatusInProgress,
+
+		ProcessingConfig: new(""),
 	}).Return(nil).Once()
 	s.env.OnActivity(activities.PollIngestActivityName, &activities.PollIngestActivityParams{
 		PipelineName: "pipeline",
@@ -1216,6 +1247,8 @@ func (s *ProcessingWorkflowTestSuite) TestRecoveryEnabledRetriesIndeterminateAft
 		SIPID:        "aip-id",
 		StoredAt:     finalStoredAt,
 		Status:       collection.StatusDone,
+
+		ProcessingConfig: new(""),
 	}).Return(nil).Once()
 
 	s.env.ExecuteWorkflow(s.workflow.Execute, &collection.ProcessingWorkflowRequest{
@@ -1302,6 +1335,8 @@ func (s *ProcessingWorkflowTestSuite) TestRecoveryEnabledRetriesNotFoundAfterSuc
 		SIPID:        "",
 		StoredAt:     time.Time{},
 		Status:       collection.StatusInProgress,
+
+		ProcessingConfig: new(""),
 	}).Return(nil).Once()
 	s.env.OnActivity(activities.PollTransferActivityName, &activities.PollTransferActivityParams{
 		PipelineName: "pipeline",
@@ -1315,6 +1350,8 @@ func (s *ProcessingWorkflowTestSuite) TestRecoveryEnabledRetriesNotFoundAfterSuc
 		SIPID:        "aip-id",
 		StoredAt:     time.Time{},
 		Status:       collection.StatusInProgress,
+
+		ProcessingConfig: new(""),
 	}).Return(nil).Once()
 	s.env.OnActivity(activities.PollIngestActivityName, &activities.PollIngestActivityParams{
 		PipelineName: "pipeline",
@@ -1368,6 +1405,8 @@ func (s *ProcessingWorkflowTestSuite) TestRecoveryEnabledRetriesNotFoundAfterSuc
 		SIPID:        "aip-id",
 		StoredAt:     finalStoredAt,
 		Status:       collection.StatusDone,
+
+		ProcessingConfig: new(""),
 	}).Return(nil).Once()
 
 	s.env.ExecuteWorkflow(s.workflow.Execute, &collection.ProcessingWorkflowRequest{
@@ -1454,6 +1493,8 @@ func (s *ProcessingWorkflowTestSuite) TestRecoveryEnabledFailsWhenNotFoundPersis
 		SIPID:        "",
 		StoredAt:     time.Time{},
 		Status:       collection.StatusInProgress,
+
+		ProcessingConfig: new(""),
 	}).Return(nil).Once()
 	s.env.OnActivity(activities.PollTransferActivityName, &activities.PollTransferActivityParams{
 		PipelineName: "pipeline",
@@ -1467,6 +1508,8 @@ func (s *ProcessingWorkflowTestSuite) TestRecoveryEnabledFailsWhenNotFoundPersis
 		SIPID:        "aip-id",
 		StoredAt:     time.Time{},
 		Status:       collection.StatusInProgress,
+
+		ProcessingConfig: new(""),
 	}).Return(nil).Once()
 	s.env.OnActivity(activities.PollIngestActivityName, &activities.PollIngestActivityParams{
 		PipelineName: "pipeline",
@@ -1502,6 +1545,8 @@ func (s *ProcessingWorkflowTestSuite) TestRecoveryEnabledFailsWhenNotFoundPersis
 		SIPID:        "aip-id",
 		StoredAt:     time.Time{},
 		Status:       collection.StatusError,
+
+		ProcessingConfig: new(""),
 	}).Return(nil).Once()
 
 	s.env.ExecuteWorkflow(s.workflow.Execute, &collection.ProcessingWorkflowRequest{
@@ -1592,6 +1637,8 @@ func (s *ProcessingWorkflowTestSuite) TestRecoveryEnabledPromotesIngestFailureWh
 		SIPID:        "",
 		StoredAt:     time.Time{},
 		Status:       collection.StatusInProgress,
+
+		ProcessingConfig: new(""),
 	}).Return(nil).Once()
 	s.env.OnActivity(activities.PollTransferActivityName, &activities.PollTransferActivityParams{
 		PipelineName: "pipeline",
@@ -1605,6 +1652,8 @@ func (s *ProcessingWorkflowTestSuite) TestRecoveryEnabledPromotesIngestFailureWh
 		SIPID:        "aip-id",
 		StoredAt:     time.Time{},
 		Status:       collection.StatusInProgress,
+
+		ProcessingConfig: new(""),
 	}).Return(nil).Once()
 	s.env.OnActivity(activities.PollIngestActivityName, &activities.PollIngestActivityParams{
 		PipelineName: "pipeline",
@@ -1639,6 +1688,8 @@ func (s *ProcessingWorkflowTestSuite) TestRecoveryEnabledPromotesIngestFailureWh
 		SIPID:        "aip-id",
 		StoredAt:     finalStoredAt,
 		Status:       collection.StatusDone,
+
+		ProcessingConfig: new(""),
 	}).Return(nil).Once()
 
 	s.env.ExecuteWorkflow(s.workflow.Execute, &collection.ProcessingWorkflowRequest{
@@ -1724,6 +1775,8 @@ func (s *ProcessingWorkflowTestSuite) TestRecoveryEnabledFailsFastOnNotFoundAfte
 		SIPID:        "",
 		StoredAt:     time.Time{},
 		Status:       collection.StatusInProgress,
+
+		ProcessingConfig: new(""),
 	}).Return(nil).Once()
 	s.env.OnActivity(activities.PollTransferActivityName, &activities.PollTransferActivityParams{
 		PipelineName: "pipeline",
@@ -1737,6 +1790,8 @@ func (s *ProcessingWorkflowTestSuite) TestRecoveryEnabledFailsFastOnNotFoundAfte
 		SIPID:        "aip-id",
 		StoredAt:     time.Time{},
 		Status:       collection.StatusInProgress,
+
+		ProcessingConfig: new(""),
 	}).Return(nil).Once()
 	s.env.OnActivity(activities.PollIngestActivityName, &activities.PollIngestActivityParams{
 		PipelineName: "pipeline",
@@ -1768,6 +1823,8 @@ func (s *ProcessingWorkflowTestSuite) TestRecoveryEnabledFailsFastOnNotFoundAfte
 		SIPID:        "aip-id",
 		StoredAt:     time.Time{},
 		Status:       collection.StatusError,
+
+		ProcessingConfig: new(""),
 	}).Return(nil).Once()
 
 	s.env.ExecuteWorkflow(s.workflow.Execute, &collection.ProcessingWorkflowRequest{
@@ -1855,6 +1912,8 @@ func (s *ProcessingWorkflowTestSuite) TestRecoveryEnabledFailsFastOnReplicatedPa
 		SIPID:        "",
 		StoredAt:     time.Time{},
 		Status:       collection.StatusInProgress,
+
+		ProcessingConfig: new(""),
 	}).Return(nil).Once()
 	s.env.OnActivity(activities.PollTransferActivityName, &activities.PollTransferActivityParams{
 		PipelineName: "pipeline",
@@ -1868,6 +1927,8 @@ func (s *ProcessingWorkflowTestSuite) TestRecoveryEnabledFailsFastOnReplicatedPa
 		SIPID:        "aip-id",
 		StoredAt:     time.Time{},
 		Status:       collection.StatusInProgress,
+
+		ProcessingConfig: new(""),
 	}).Return(nil).Once()
 	s.env.OnActivity(activities.PollIngestActivityName, &activities.PollIngestActivityParams{
 		PipelineName: "pipeline",
@@ -1896,6 +1957,8 @@ func (s *ProcessingWorkflowTestSuite) TestRecoveryEnabledFailsFastOnReplicatedPa
 		SIPID:        "aip-id",
 		StoredAt:     time.Time{},
 		Status:       collection.StatusError,
+
+		ProcessingConfig: new(""),
 	}).Return(nil).Once()
 
 	s.env.ExecuteWorkflow(s.workflow.Execute, &collection.ProcessingWorkflowRequest{

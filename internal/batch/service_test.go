@@ -3,6 +3,7 @@ package batch
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 	"time"
 
@@ -31,7 +32,7 @@ func TestBatchServiceSubmit(t *testing.T) {
 	logger := logr.Discard()
 	pipeline := "am"
 
-	t.Run("Fails with empty or invalid parameters parameters", func(t *testing.T) {
+	t.Run("Fails with empty or invalid parameters", func(t *testing.T) {
 		client := &temporalsdk_mocks.Client{}
 		batchsvc := NewService(logger, client, taskQueue, completedDirs)
 
@@ -41,6 +42,12 @@ func TestBatchServiceSubmit(t *testing.T) {
 		rp := "invalid-duration-format"
 		_, err = batchsvc.Submit(ctx, &goabatch.SubmitPayload{Pipeline: &pipeline, Path: "/some/path", RetentionPeriod: &rp})
 		assert.Error(t, err, "error starting batch - retention period format is invalid")
+
+		_, err = batchsvc.Submit(ctx, &goabatch.SubmitPayload{
+			Path:             "/some/path",
+			ProcessingConfig: new(strings.Repeat("é", 256)),
+		})
+		assert.Error(t, err, "processing configuration name must be at most 255 characters")
 	})
 
 	t.Run("Fails when workflow engine is unavailable", func(t *testing.T) {
@@ -65,7 +72,8 @@ func TestBatchServiceSubmit(t *testing.T) {
 
 	t.Run("Returns batch result", func(t *testing.T) {
 		client := &temporalsdk_mocks.Client{}
-		processingConfig, completedDir, retentionPeriod, transferType := "default", "/tmp", "2h", "standard"
+		processingConfig := strings.Repeat("é", 255)
+		completedDir, retentionPeriod, transferType := "/tmp", "2h", "standard"
 
 		workflowRun := &temporalsdk_mocks.WorkflowRun{}
 		workflowRun.On("GetID").Return("batch-workflow")

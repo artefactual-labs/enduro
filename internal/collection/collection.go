@@ -12,6 +12,7 @@ import (
 
 	goacollection "github.com/artefactual-labs/enduro/internal/api/gen/collection"
 	"github.com/artefactual-labs/enduro/internal/pipeline"
+	"github.com/artefactual-labs/enduro/internal/validation"
 )
 
 type Service interface {
@@ -19,7 +20,7 @@ type Service interface {
 	Goa() goacollection.Service
 	Create(context.Context, *Collection) error
 	CheckDuplicate(ctx context.Context, id uint) (bool, error)
-	UpdateWorkflowStatus(ctx context.Context, ID uint, name, workflowID, runID, transferID, aipID, pipelineID string, status Status, storedAt time.Time) error
+	UpdateWorkflowStatus(ctx context.Context, ID uint, name, workflowID, runID, transferID, aipID, pipelineID string, processingConfig *string, status Status, storedAt time.Time) error
 	// UpdateReconciliationState replaces the stored reconciliation columns. Nil
 	// values clear the corresponding database fields.
 	UpdateReconciliationState(ctx context.Context, ID uint, aipStoredAt, checkedAt *time.Time, status, errMsg *string) error
@@ -129,7 +130,7 @@ func publishEvent(ctx context.Context, events EventService, eventType string, id
 	})
 }
 
-func (svc *collectionImpl) UpdateWorkflowStatus(ctx context.Context, ID uint, name, workflowID, runID, transferID, aipID, pipelineID string, status Status, storedAt time.Time) error {
+func (svc *collectionImpl) UpdateWorkflowStatus(ctx context.Context, ID uint, name, workflowID, runID, transferID, aipID, pipelineID string, processingConfig *string, status Status, storedAt time.Time) error {
 	// Ensure that storedAt is reset during retries.
 	completedAt := &storedAt
 	if status == StatusInProgress {
@@ -139,7 +140,13 @@ func (svc *collectionImpl) UpdateWorkflowStatus(ctx context.Context, ID uint, na
 		completedAt = nil
 	}
 
-	query := `UPDATE collection SET name = (?), workflow_id = (?), run_id = (?), transfer_id = (?), aip_id = (?), pipeline_id = (?), status = (?), completed_at = (?) WHERE id = (?)`
+	// An older worker may already have submitted a name too long to record.
+	// Leave it unknown so the transfer IDs and status can still be saved.
+	if processingConfig != nil && validation.ValidateProcessingConfigName(*processingConfig) != nil {
+		processingConfig = nil
+	}
+
+	query := `UPDATE collection SET name = (?), workflow_id = (?), run_id = (?), transfer_id = (?), aip_id = (?), pipeline_id = (?), processing_config = (?), status = (?), completed_at = (?) WHERE id = (?)`
 	args := []any{
 		name,
 		workflowID,
@@ -147,6 +154,7 @@ func (svc *collectionImpl) UpdateWorkflowStatus(ctx context.Context, ID uint, na
 		transferID,
 		aipID,
 		pipelineID,
+		processingConfig,
 		status,
 		completedAt,
 		ID,
@@ -269,7 +277,7 @@ func updateRowTx(ctx context.Context, tx *sqlx.Tx, query string, args []any) err
 }
 
 func (svc *collectionImpl) read(ctx context.Context, ID uint) (*Collection, error) {
-	query := "SELECT id, name, workflow_id, run_id, transfer_id, aip_id, original_id, pipeline_id, status, CONVERT_TZ(created_at, @@session.time_zone, '+00:00') AS created_at, CONVERT_TZ(started_at, @@session.time_zone, '+00:00') AS started_at, CONVERT_TZ(completed_at, @@session.time_zone, '+00:00') AS completed_at, CONVERT_TZ(aip_stored_at, @@session.time_zone, '+00:00') AS aip_stored_at, reconciliation_status, CONVERT_TZ(reconciliation_checked_at, @@session.time_zone, '+00:00') AS reconciliation_checked_at, reconciliation_error FROM collection WHERE id = (?)"
+	query := "SELECT id, name, workflow_id, run_id, transfer_id, aip_id, original_id, pipeline_id, processing_config, status, CONVERT_TZ(created_at, @@session.time_zone, '+00:00') AS created_at, CONVERT_TZ(started_at, @@session.time_zone, '+00:00') AS started_at, CONVERT_TZ(completed_at, @@session.time_zone, '+00:00') AS completed_at, CONVERT_TZ(aip_stored_at, @@session.time_zone, '+00:00') AS aip_stored_at, reconciliation_status, CONVERT_TZ(reconciliation_checked_at, @@session.time_zone, '+00:00') AS reconciliation_checked_at, reconciliation_error FROM collection WHERE id = (?)"
 	args := []any{ID}
 	c := Collection{}
 

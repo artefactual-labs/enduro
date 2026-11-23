@@ -19,6 +19,10 @@ type Collection struct {
 	PipelineID string `db:"pipeline_id"`
 	Status     Status `db:"status"`
 
+	// NULL means the submission was not recorded. An empty name means Enduro
+	// left the configuration choice to Archivematica.
+	ProcessingConfig sql.NullString `db:"processing_config"`
+
 	// It defaults to CURRENT_TIMESTAMP(6) so populated as soon as possible.
 	CreatedAt time.Time `db:"created_at"`
 
@@ -72,6 +76,7 @@ func (c Collection) GoaDetail() *goacollection.EnduroDetailedStoredCollection {
 		AipID:                   formatOptionalString(c.AIPID),
 		OriginalID:              formatOptionalString(c.OriginalID),
 		PipelineID:              formatOptionalString(c.PipelineID),
+		ProcessingConfig:        formatOptionalNullString(c.ProcessingConfig),
 		Status:                  c.Status.String(),
 		CreatedAt:               formatTime(c.CreatedAt),
 		StartedAt:               formatOptionalTime(c.StartedAt),

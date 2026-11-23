@@ -36,13 +36,14 @@ func createPackageLocalActivity(ctx context.Context, logger logr.Logger, colsvc 
 }
 
 type updatePackageLocalActivityParams struct {
-	CollectionID uint
-	Key          string
-	PipelineID   string
-	TransferID   string
-	SIPID        string
-	StoredAt     time.Time
-	Status       collection.Status
+	CollectionID     uint
+	Key              string
+	PipelineID       string
+	TransferID       string
+	ProcessingConfig *string `json:",omitempty"`
+	SIPID            string
+	StoredAt         time.Time
+	Status           collection.Status
 }
 
 func updatePackageLocalActivity(ctx context.Context, logger logr.Logger, colsvc collection.Service, params *updatePackageLocalActivityParams) error {
@@ -51,7 +52,7 @@ func updatePackageLocalActivity(ctx context.Context, logger logr.Logger, colsvc 
 	err := colsvc.UpdateWorkflowStatus(
 		ctx, params.CollectionID, params.Key, info.WorkflowExecution.ID,
 		info.WorkflowExecution.RunID, params.TransferID, params.SIPID, params.PipelineID,
-		params.Status, params.StoredAt,
+		params.ProcessingConfig, params.Status, params.StoredAt,
 	)
 	if err != nil {
 		logger.Error(err, "Error updating collection")

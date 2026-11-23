@@ -280,6 +280,7 @@ func (w *goaWrapper) Retry(ctx context.Context, payload *goacollection.RetryPayl
 	req.ExistingTransferID = col.TransferID
 	req.ExistingAIPID = col.AIPID
 	req.ExistingPipelineID = col.PipelineID
+	req.ExistingProcessingConfig = formatOptionalNullString(col.ProcessingConfig)
 	tr := noop.NewTracerProvider().Tracer("")
 	if err := InitProcessingWorkflow(ctx, tr, w.cc, req); err != nil {
 		return nil, fmt.Errorf("error starting the new workflow instance: %w", err)

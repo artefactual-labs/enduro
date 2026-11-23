@@ -35,7 +35,7 @@ func UsageCommands() []string {
 // UsageExamples produces an example of a valid invocation of the CLI tool.
 func UsageExamples() string {
 	return os.Args[0] + " " + "pipeline list --name \"abc123\" --status false" + "\n" +
-		os.Args[0] + " " + "batch submit --body '{\n      \"completed_dir\": \"abc123\",\n      \"depth\": 1,\n      \"exclude_hidden_files\": false,\n      \"path\": \"abc123\",\n      \"pipeline\": \"abc123\",\n      \"process_name_metadata\": false,\n      \"processing_config\": \"abc123\",\n      \"reject_duplicates\": false,\n      \"retention_period\": \"abc123\",\n      \"transfer_type\": \"abc123\"\n   }'" + "\n" +
+		os.Args[0] + " " + "batch submit --body '{\n      \"completed_dir\": \"abc123\",\n      \"depth\": 1,\n      \"exclude_hidden_files\": false,\n      \"path\": \"abc123\",\n      \"pipeline\": \"abc123\",\n      \"process_name_metadata\": false,\n      \"processing_config\": \"automated\",\n      \"reject_duplicates\": false,\n      \"retention_period\": \"abc123\",\n      \"transfer_type\": \"abc123\"\n   }'" + "\n" +
 		os.Args[0] + " " + "collection monitor" + "\n" +
 		""
 }
@@ -483,7 +483,7 @@ func batchSubmitUsage() {
 
 	fmt.Fprintln(os.Stderr)
 	fmt.Fprintln(os.Stderr, "Example:")
-	fmt.Fprintf(os.Stderr, "    %s %s\n", os.Args[0], "batch submit --body '{\n      \"completed_dir\": \"abc123\",\n      \"depth\": 1,\n      \"exclude_hidden_files\": false,\n      \"path\": \"abc123\",\n      \"pipeline\": \"abc123\",\n      \"process_name_metadata\": false,\n      \"processing_config\": \"abc123\",\n      \"reject_duplicates\": false,\n      \"retention_period\": \"abc123\",\n      \"transfer_type\": \"abc123\"\n   }'")
+	fmt.Fprintf(os.Stderr, "    %s %s\n", os.Args[0], "batch submit --body '{\n      \"completed_dir\": \"abc123\",\n      \"depth\": 1,\n      \"exclude_hidden_files\": false,\n      \"path\": \"abc123\",\n      \"pipeline\": \"abc123\",\n      \"process_name_metadata\": false,\n      \"processing_config\": \"automated\",\n      \"reject_duplicates\": false,\n      \"retention_period\": \"abc123\",\n      \"transfer_type\": \"abc123\"\n   }'")
 }
 
 func batchStatusUsage() {

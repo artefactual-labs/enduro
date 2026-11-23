@@ -67,6 +67,9 @@ func (s *batchImpl) Submit(ctx context.Context, payload *goabatch.SubmitPayload)
 		input.PipelineName = *payload.Pipeline
 	}
 	if payload.ProcessingConfig != nil {
+		if err := validation.ValidateProcessingConfigName(*payload.ProcessingConfig); err != nil {
+			return nil, goabatch.MakeNotValid(err)
+		}
 		input.ProcessingConfig = *payload.ProcessingConfig
 	}
 	if payload.CompletedDir != nil {

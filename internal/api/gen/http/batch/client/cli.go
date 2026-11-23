@@ -11,6 +11,7 @@ package client
 import (
 	"encoding/json"
 	"fmt"
+	"unicode/utf8"
 
 	batch "github.com/artefactual-labs/enduro/internal/api/gen/batch"
 	goa "goa.design/goa/v3/pkg"
@@ -27,7 +28,12 @@ func BuildSubmitPayload(batchSubmitBody *string) (*batch.SubmitPayload, error) {
 		}
 		err = json.Unmarshal([]byte(*batchSubmitBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"completed_dir\": \"abc123\",\n      \"depth\": 1,\n      \"exclude_hidden_files\": false,\n      \"path\": \"abc123\",\n      \"pipeline\": \"abc123\",\n      \"process_name_metadata\": false,\n      \"processing_config\": \"abc123\",\n      \"reject_duplicates\": false,\n      \"retention_period\": \"abc123\",\n      \"transfer_type\": \"abc123\"\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"completed_dir\": \"abc123\",\n      \"depth\": 1,\n      \"exclude_hidden_files\": false,\n      \"path\": \"abc123\",\n      \"pipeline\": \"abc123\",\n      \"process_name_metadata\": false,\n      \"processing_config\": \"automated\",\n      \"reject_duplicates\": false,\n      \"retention_period\": \"abc123\",\n      \"transfer_type\": \"abc123\"\n   }'")
+		}
+		if body.ProcessingConfig != nil {
+			if utf8.RuneCountInString(*body.ProcessingConfig) > 255 {
+				err = goa.MergeErrors(err, goa.InvalidLengthError("body.processing_config", *body.ProcessingConfig, utf8.RuneCountInString(*body.ProcessingConfig), 255, false))
+			}
 		}
 		if body.Depth < 0 {
 			err = goa.MergeErrors(err, goa.InvalidRangeError("body.depth", body.Depth, 0, true))

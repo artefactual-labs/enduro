@@ -221,6 +221,9 @@ type EnduroDetailedStoredCollection struct {
 	OriginalID *string
 	// Identifier of Archivematica pipeline
 	PipelineID *string
+	// Processing configuration name submitted to Archivematica. Empty when
+	// Archivematica was left to choose its default.
+	ProcessingConfig *string
 	// Creation datetime
 	CreatedAt string
 	// Start datetime
@@ -494,6 +497,7 @@ func newEnduroDetailedStoredCollection(vres *collectionviews.EnduroDetailedStore
 		AipID:                   vres.AipID,
 		OriginalID:              vres.OriginalID,
 		PipelineID:              vres.PipelineID,
+		ProcessingConfig:        vres.ProcessingConfig,
 		StartedAt:               vres.StartedAt,
 		CompletedAt:             vres.CompletedAt,
 		AipStoredAt:             vres.AipStoredAt,
@@ -530,6 +534,7 @@ func newEnduroDetailedStoredCollectionView(res *EnduroDetailedStoredCollection) 
 		AipID:                   res.AipID,
 		OriginalID:              res.OriginalID,
 		PipelineID:              res.PipelineID,
+		ProcessingConfig:        res.ProcessingConfig,
 		CreatedAt:               &res.CreatedAt,
 		StartedAt:               res.StartedAt,
 		CompletedAt:             res.CompletedAt,

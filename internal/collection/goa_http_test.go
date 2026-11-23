@@ -1,6 +1,7 @@
 package collection
 
 import (
+	"database/sql"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -54,6 +55,47 @@ func TestCollectionShowHTTPWorkflowID(t *testing.T) {
 			assert.Equal(t, body.ID, uint(42))
 			assert.Equal(t, body.WorkflowID, workflowID)
 			assert.Equal(t, body.RunID, recorder.row.RunID)
+		})
+	}
+}
+
+func TestCollectionShowHTTPProcessingConfig(t *testing.T) {
+	t.Parallel()
+
+	for _, tt := range []struct {
+		name   string
+		config sql.NullString
+		want   *string
+	}{
+		{name: "submitted name", config: sql.NullString{String: "local-storage", Valid: true}, want: new("local-storage")},
+		{name: "Archivematica default", config: sql.NullString{Valid: true}, want: new("")},
+		{name: "not recorded"},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			recorder := newExecRecorderDB(t)
+			recorder.row = &Collection{
+				ID:               42,
+				Status:           StatusError,
+				CreatedAt:        time.Date(2026, time.October, 22, 12, 0, 0, 0, time.UTC),
+				ProcessingConfig: tt.config,
+			}
+			svc := NewService(testLogger(), recorder.db, nil, "", nil)
+			mux := goahttp.NewMuxer()
+			server := collectionsvr.New(goacollection.NewEndpoints(svc.Goa()), mux,
+				goahttp.RequestDecoder, goahttp.ResponseEncoder, nil, nil)
+			collectionsvr.Mount(mux, server)
+
+			response := httptest.NewRecorder()
+			mux.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/collection/42", nil))
+
+			assert.Equal(t, response.Code, http.StatusOK, "response: %s", response.Body.String())
+			var body struct {
+				ProcessingConfig *string `json:"processing_config"`
+			}
+			assert.NilError(t, json.Unmarshal(response.Body.Bytes(), &body))
+			assert.DeepEqual(t, body.ProcessingConfig, tt.want)
 		})
 	}
 }

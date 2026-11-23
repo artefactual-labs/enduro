@@ -73,15 +73,15 @@ configuration section](./configuration-reference.md#watcher) for more details.
 
 - To start a new batch ingest, click on Batch import in the upper right corner
   of the Collections tab. This will open a new batch import page.
-- Enter the path of the directory containing the transfers to be ingested.
-  When the batch path browser is configured, click Browse to select a directory
-  under the configured browser root instead of typing the path manually.
-- Enter the name of the Archivematica processing pipeline that will be used to
-  perform the ingest.
-- Set the depth when the transfers are not direct children of the selected
-  batch path.
-- Click Submit. Note that the page does not change when Submit is clicked;
-  don't re-click.
+- Enter the path of the directory containing the transfers to be ingested. When
+  the batch path browser is configured, click Browse to select a directory under
+  the configured browser root instead of typing the path manually.
+- Select the Archivematica pipeline that will process the transfers. Optionally
+  choose a **Processing configuration** from that pipeline.
+- Set the depth when the transfers are not direct children of the selected batch
+  path.
+- Click **Submit**, review the path and processing configuration, then confirm
+  the submission.
 
 ![Batch import](./assets/batch-import.png)
 
@@ -90,17 +90,28 @@ configuration section](./configuration-reference.md#watcher) for more details.
 - As each transfer is processed into an AIP and placed in archival storage, its
   status will change to DONE. Congratulations! You have just used Enduro to
   perform batch processing.
-- NOTE: Enduro will automatically use the "automated" processing configuration
-  file in the selected Archivematica pipeline for each transfer.
-- NOTE: If you have your Archivematica dashboard open you will see the
-  transfers appearing in the Archivematica transfer tab and then in the ingest
-  tab. Once the transfers have finished processing and the AIP has been placed
-  in archival storage, however, the transfers will no longer be visible in the
-  transfer and ingest tabs. Enduro has cleared them out of those tabs in order
-  to ensure that the tabs don't get cluttered. However, if an error has
-  occurred and the Enduro Collections tab shows a status of ERROR, the failed
-  transfer remains visible in the transfer and/or ingest tabs (depending on
-  which micro-service failed).
+- NOTE: If you have your Archivematica dashboard open you will see the transfers
+  appearing in the Archivematica transfer tab and then in the ingest tab. Once
+  the transfers have finished processing and the AIP has been placed in archival
+  storage, however, the transfers will no longer be visible in the transfer and
+  ingest tabs. Enduro has cleared them out of those tabs in order to ensure that
+  the tabs don't get cluttered. However, if an error has occurred and the Enduro
+  Collections tab shows a status of ERROR, the failed transfer remains visible
+  in the transfer and/or ingest tabs (depending on which micro-service failed).
+
+### Viewing a transfer's processing configuration
+
+Open a collection and look under **Pipeline** on the **Overview** tab. After
+submission, **Processing configuration** shows the name Enduro sent to
+Archivematica. Enduro uses the selection from the batch import form when
+provided, or the [pipeline processing configuration] if set.
+
+**Archivematica default** means Enduro left the choice to Archivematica. **Not
+recorded** means the collection has no saved value, as with transfers submitted
+before Enduro started recording this information.
+
+If a retry reconciles an existing AIP, Enduro keeps the saved name. A full
+reprocess records the configuration for the new transfer.
 
 ## Collection status state machine
 
@@ -266,3 +277,4 @@ Common entry points:
 - [Example `enduro.toml`](https://github.com/artefactual-labs/enduro/blob/main/enduro.toml)
 
 [Live updates behind proxies]: ./installation.md#live-updates-behind-proxies
+[pipeline processing configuration]: ./configuration-reference.md#processingconfig

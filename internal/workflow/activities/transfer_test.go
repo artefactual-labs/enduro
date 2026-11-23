@@ -13,6 +13,25 @@ import (
 	"github.com/artefactual-labs/enduro/internal/temporal"
 )
 
+func TestTransferActivityRejectsOversizedProcessingConfig(t *testing.T) {
+	registry := newPipelineRegistry(t, func(w http.ResponseWriter, r *http.Request) {
+		t.Errorf("unexpected Archivematica request: %s %s", r.Method, r.URL.Path)
+		w.WriteHeader(http.StatusBadRequest)
+	})
+	activity := NewTransferActivity(registry)
+	var suite temporalsdk_testsuite.WorkflowTestSuite
+	env := suite.NewTestActivityEnvironment()
+	env.RegisterActivity(activity.Execute)
+
+	_, err := env.ExecuteActivity(activity.Execute, &TransferActivityParams{
+		PipelineName:     "am",
+		ProcessingConfig: strings.Repeat("é", 256),
+	})
+
+	assert.ErrorContains(t, err, "processing configuration name must be at most 255 characters")
+	assert.Assert(t, temporal.NonRetryableError(err))
+}
+
 func TestTransferActivityIdempotencyVersionGate(t *testing.T) {
 	tests := map[string]struct {
 		version        string

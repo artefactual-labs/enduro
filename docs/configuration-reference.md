@@ -675,7 +675,8 @@ E.g.: `""`
 
 #### `processingConfig`
 
-Name of the processing configuration to be used when starting a transfer.
+Name of the processing configuration to use when starting a transfer. Enduro
+accepts names up to 255 characters long.
 
 E.g.: `"automated"`
 

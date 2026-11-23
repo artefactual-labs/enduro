@@ -21,6 +21,7 @@ import (
 
 	"github.com/artefactual-labs/enduro/internal/pipeline/sync/semaphore"
 	"github.com/artefactual-labs/enduro/internal/publisher"
+	"github.com/artefactual-labs/enduro/internal/validation"
 )
 
 var ErrRecoveryConfigInvalid = errors.New("invalid recovery configuration")
@@ -60,6 +61,9 @@ func (c RecoveryConfig) IsStandaloneLocation(locationID string) bool {
 }
 
 func (c Config) Validate() error {
+	if err := validation.ValidateProcessingConfigName(c.ProcessingConfig); err != nil {
+		return err
+	}
 	if err := c.TransferPublisher.Validate(); err != nil {
 		return err
 	}

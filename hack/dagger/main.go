@@ -383,7 +383,7 @@ func (m *Enduro) smokeEnvironment(ctx context.Context, source *dagger.Directory,
 		return nil, err
 	}
 
-	ambox := m.amboxService()
+	ambox := m.amboxService(smokeAmboxConfig)
 	ambox, err = ambox.Start(ctx)
 	if err != nil {
 		return nil, err
@@ -445,7 +445,7 @@ func (m *Enduro) objectStorageEnvironment(ctx context.Context, source *dagger.Di
 		return nil, err
 	}
 
-	ambox := m.amboxService()
+	ambox := m.amboxService("")
 	ambox, err = ambox.Start(ctx)
 	if err != nil {
 		return nil, err
@@ -796,12 +796,18 @@ func withoutOTelEnv(container *dagger.Container) *dagger.Container {
 	return container.WithEnvVariable("OTEL_TRACES_EXPORTER", "none")
 }
 
-func (m *Enduro) amboxService() *dagger.Service {
-	return dag.Container().
+func (m *Enduro) amboxService(config string) *dagger.Service {
+	container := dag.Container().
 		From(amboxImage).
 		WithNewFile("/etc/sftpgo/initial-data.json", sftpgoInitialData(), dagger.ContainerWithNewFileOpts{
 			Permissions: 0o644,
-		}).
+		})
+	if config != "" {
+		container = container.WithNewFile("/etc/ambox/config.yaml", config, dagger.ContainerWithNewFileOpts{
+			Permissions: 0o644,
+		})
+	}
+	return container.
 		WithExposedPort(64080).
 		WithExposedPort(64081).
 		WithExposedPort(64022).
@@ -1126,6 +1132,22 @@ func (m *Enduro) convertEnduroCoverage(
 
 	return converter.Directory("/artifacts"), nil
 }
+
+// Keep the batch preset's decisions identical to the pipeline default so the
+// smoke tests can check that Enduro preserves the selected name.
+const smokeAmboxConfig = `
+version: v1
+processing:
+  configs:
+    - name: automated
+      extends: automated
+      config:
+        normalize: do_not_normalize
+    - name: enduro-batch
+      extends: automated
+      config:
+        normalize: do_not_normalize
+`
 
 func enduroConfig() string {
 	return `
