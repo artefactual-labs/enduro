@@ -24,14 +24,14 @@ jobs:
   mod:
     name: Check Go modules
     timeout-minutes: 10
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
       - name: Checkout code
         uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
       - name: Install Go
-        uses: actions/setup-go@v7.0.0
+        uses: actions/setup-go@v7.1.0
         with:
           go-version-file: go.mod
       - name: Check go.mod
@@ -39,7 +39,7 @@ jobs:
   lint:
     name: Lint Go
     timeout-minutes: 15
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     permissions:
       contents: read
     steps:
@@ -48,7 +48,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Install Go
-        uses: actions/setup-go@v7.0.0
+        uses: actions/setup-go@v7.1.0
         with:
           go-version-file: go.mod
       - name: Get date
@@ -71,14 +71,14 @@ jobs:
   test:
     name: Test Go
     timeout-minutes: 30
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
       - name: Checkout code
         uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
       - name: Install Go
-        uses: actions/setup-go@v7.0.0
+        uses: actions/setup-go@v7.1.0
         with:
           go-version-file: go.mod
       - name: Test
@@ -109,7 +109,7 @@ jobs:
   smoke-coverage:
     name: Smoke coverage
     needs: frontend
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 45
     permissions:
       contents: read
@@ -147,7 +147,7 @@ jobs:
         env:
           DAGGER_NO_NAG: "1"
         with:
-          version: "1.0.0-beta.27"
+          version: "1.0.0-beta.28"
       - name: Run smoke tests
         env:
           SUITE: ${{ (github.ref != 'refs/heads/dev/containers' || (github.event_name == 'workflow_dispatch' && inputs.full-tests)) && 'smoke-tests' || 'coverage-check' }}
@@ -180,7 +180,7 @@ jobs:
   frontend:
     name: Test and build frontend
     timeout-minutes: 20
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
       - name: Checkout code
         uses: actions/checkout@v7.0.1
@@ -190,7 +190,7 @@ jobs:
       - name: Install Node
         uses: actions/setup-node@v7.1.0
         with:
-          node-version: 24.22.3
+          node-version: 26.13.1
           cache: npm
           cache-dependency-path: frontend/package-lock.json
       - name: Install frontend dependencies
@@ -231,7 +231,7 @@ jobs:
     needs: frontend
     permissions:
       contents: read
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 40
     steps:
       - name: Check out code
@@ -242,7 +242,7 @@ jobs:
       - name: Install Go
         # Snapshot builds do not publish release artifacts.
         # jactionlint ignore=cache-poisoning
-        uses: actions/setup-go@v7.0.0
+        uses: actions/setup-go@v7.1.0
         with:
           go-version-file: go.mod
       - name: Download frontend assets
@@ -258,7 +258,7 @@ jobs:
       - name: Set up Docker with the containerd image store
         uses: docker/setup-docker-action@v5.7.0
         with:
-          version: v29.9.3
+          version: v29.10.0
           daemon-config: '{"features":{"containerd-snapshotter":true}}'
       - name: Set up Docker Buildx
         # Snapshot builds do not publish release artifacts.
@@ -267,7 +267,7 @@ jobs:
       - name: Build the archive and both container images without publishing
         uses: goreleaser/goreleaser-action@v7.3.0
         with:
-          version: "2.20.2"
+          version: "2.20.3"
           args: release --clean --snapshot --skip=before
       - name: Export the built images
         run: ./hack/containers/export.sh

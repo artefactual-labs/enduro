@@ -20,28 +20,23 @@
   },
   "dependencies": {
     "@iconify-json/entypo": "^1.2.1",
-    "@iconify-json/lucide": "^1.2.154",
-    "@iconify-json/simple-icons": "^1.2.102",
-    "@nuxt/ui": "^4.12.0",
+    "@iconify-json/lucide": "^1.2.158",
+    "@iconify-json/simple-icons": "^1.2.103",
+    "@nuxt/ui": "^4.13.0",
     "@vueuse/core": "^15.0.0",
     "nuxt": "^4.6.4",
     "tailwindcss": "^4.3.5",
     "vue-router": "^5.5.1"
   },
-  "overrides": {
-    "fontless": {
-      "esbuild": "0.28.2"
-    }
-  },
   "devDependencies": {
     "@nuxt/eslint": "^1.17.0",
     "@nuxt/test-utils": "^4.4.0",
-    "@vitest/coverage-v8": "^5.1.0",
-    "@vue/test-utils": "^2.5.1",
+    "@vitest/coverage-v8": "^5.1.1",
+    "@vue/test-utils": "^2.6.0",
     "eslint": "^10.15.0",
     "happy-dom": "^21.0.4",
     "typescript": "^6.0.3",
-    "vitest": "^5.1.0",
+    "vitest": "^5.1.1",
     "vue-tsc": "^3.3.14"
   }
 }

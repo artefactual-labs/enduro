@@ -51,9 +51,9 @@ jobs:
             suite: argmin
         include:
           - arch: amd64
-            runner: ubuntu-24.04
+            runner: ubuntu-26.04
           - arch: arm64
-            runner: ubuntu-24.04-arm
+            runner: ubuntu-26.04-arm
     env:
       IMAGE_REF: ${{ inputs.image-ref }}
       IMAGE_VERSION: ${{ inputs.image-version }}
@@ -87,7 +87,7 @@ jobs:
       - name: Set up Docker with the containerd image store
         uses: docker/setup-docker-action@v5.7.0
         with:
-          version: v29.9.3
+          version: v29.10.0
           set-host: true
           daemon-config: '{"features":{"containerd-snapshotter":true}}'
       - name: Log in to GitHub Container Registry
@@ -122,7 +122,7 @@ jobs:
       - name: Install Dagger
         uses: dagger/dagger-for-github@v8.4.1
         with:
-          version: "1.0.0-beta.27"
+          version: "1.0.0-beta.28"
       - name: Test the built image
         shell: bash
         run: |
