@@ -17,16 +17,16 @@ const (
 	temporalImage     = "temporalio/server:1.32.2"
 	temporalToolImage = "temporalio/admin-tools:1.32.2"
 	goImage           = "golang:1.27.4-bookworm"
-	nodeImage         = "node:24.22.3-bookworm"
-	redisImage        = "redis:8.2.11-alpine3.22"
+	nodeImage         = "node:26.13.1-bookworm"
+	redisImage        = "redis:8.10.3-alpine3.23"
 	minioLatestImage  = "ghcr.io/coollabsio/minio:RELEASE.2025-10-15T17-29-55Z@sha256:69b55a1c1c5dc285ce04db96689f5b2102317fc77a50680a1874ca6efd1c87f9"
 	siloImage         = "docker.io/pgsty/silo:RELEASE.2026-11-12T00-00-00Z@sha256:c20d112390b9a9ce8c11b8af95ad35bcaa62f4759663c09c936cd8d2b511f329"
 	argminBuildImage  = "rust:1.100.0-bookworm"
-	argminRevision    = "78234dc37a026f890c61182c9f7837b33fab3e78"
-	seaweedFSImage    = "chrislusf/seaweedfs:4.54"
+	argminRevision    = "888fb047670a15b2f5bdf9522b893c820c7525d2"
+	seaweedFSImage    = "chrislusf/seaweedfs:4.55"
 	amboxImage        = "ghcr.io/sevein/ambox:1.2.2"
 	playwrightImage   = "mcr.microsoft.com/playwright:v1.65.1-noble"
-	lgtmImage         = "grafana/otel-lgtm:0.41.0"
+	lgtmImage         = "grafana/otel-lgtm:0.41.1"
 )
 
 type Enduro struct {

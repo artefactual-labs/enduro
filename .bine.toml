@@ -8,7 +8,7 @@ version = "2.15.0"
 [[bins]]
 name = "goreleaser"
 url = "https://github.com/goreleaser/goreleaser"
-version = "2.20.2"
+version = "2.20.3"
 
 [[bins]]
 name = "go-mod-outdated"
@@ -42,7 +42,7 @@ version = "1.8.2"
 
 [[bins]]
 name = "gh-actions-lock"
-version = "0.4.1"
+version = "0.5.1"
 go_package = "github.com/github/gh-actions-lock/cmd/gh-actions-lock"
 
 [[bins]]
