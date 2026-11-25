@@ -1,6 +1,8 @@
 package activities
 
 import (
+	"crypto/sha256"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -11,6 +13,7 @@ import (
 	"gotest.tools/v3/fs"
 
 	"github.com/artefactual-labs/enduro/internal/nha"
+	workflowactivities "github.com/artefactual-labs/enduro/internal/workflow/activities"
 )
 
 func TestDPJReceiptsRejectTagFilesOutsidePayload(t *testing.T) {
@@ -87,6 +90,48 @@ func TestConvertedReceiptsRequireManifestedInputs(t *testing.T) {
 				prod := createProdActivity(t, map[string]any{"receiptpath": out})
 				err := prod.Execute(t.Context(), &UpdateProductionSystemActivityParams{FullPath: dir.Path(), NameInfo: info})
 				assert.ErrorContains(t, err, tc.wantErr)
+				published, err := filepath.Glob(filepath.Join(out, "*.mft"))
+				assert.NilError(t, err)
+				assert.Equal(t, len(published), 0)
+			}
+		})
+	}
+}
+
+func TestConversionCannotSubstituteReceiptTags(t *testing.T) {
+	const journal = "<avlxml/>"
+	const ids = `[{"file":"objects/DPJ/journal/avlxml.xml","identifiers":[{"identifierType":"avleveringsidentifikator","identifier":"wrong-parent"}]}]`
+	info := nha.NameInfo{Type: nha.TransferTypeDPJ, Identifier: "journal-id"}
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		t.Error("unexpected HARI delivery")
+	}))
+	defer server.Close()
+	hari := createHariActivity(t, map[string]any{"baseurl": server.URL})
+	for _, tc := range []struct{ payload, content, tag, tagContent, missing string }{
+		{"DPJ/journal/avlxml.xml", journal, "metadata/identifiers.json", ids, "identifiers.json"},
+		{"metadata/identifiers.json", ids, "DPJ/journal/avlxml.xml", journal, "AVLXML file"},
+	} {
+		t.Run(tc.missing, func(t *testing.T) {
+			dir := fs.NewDir(t, "bag",
+				fs.WithFile("bagit.txt", "BagIt-Version: 0.97\nTag-File-Character-Encoding: UTF-8\n"),
+				fs.WithFile("bag-info.txt", fmt.Sprintf("Payload-Oxum: %d.1\n", len(tc.content))),
+				fs.WithFile("manifest-sha256.txt", fmt.Sprintf("%x  data/%s\n", sha256.Sum256([]byte(tc.content)), tc.payload)),
+				fs.WithDir(filepath.Join("data", filepath.Dir(tc.payload)), fs.WithFile(filepath.Base(tc.payload), tc.content)),
+				fs.WithDir(filepath.Dir(tc.tag), fs.WithFile(filepath.Base(tc.tag), tc.tagContent)),
+			)
+			defer dir.Remove()
+			result, err := workflowactivities.NewBundleActivity(nil, nil).Execute(t.Context(), &workflowactivities.BundleActivityParams{
+				TempFile: dir.Path(), TransferDir: t.TempDir(), IsDir: true, Unbag: true,
+			})
+			assert.NilError(t, err)
+			assert.Assert(t, result.Unbagged)
+			err = hari.Execute(t.Context(), &UpdateHARIActivityParams{FullPath: result.FullPath, NameInfo: info, ConvertedLayout: result.Layout})
+			assert.ErrorContains(t, err, tc.missing)
+			if tc.tag == "metadata/identifiers.json" {
+				out := t.TempDir()
+				err = createProdActivity(t, map[string]any{"receiptpath": out}).Execute(t.Context(),
+					&UpdateProductionSystemActivityParams{FullPath: result.FullPath, NameInfo: info, ConvertedLayout: result.Layout})
+				assert.ErrorContains(t, err, tc.missing)
 				published, err := filepath.Glob(filepath.Join(out, "*.mft"))
 				assert.NilError(t, err)
 				assert.Equal(t, len(published), 0)

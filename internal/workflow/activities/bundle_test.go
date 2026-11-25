@@ -516,10 +516,7 @@ e91f941be5973ff71f1dccbdd1a32d598881893a7f21be516aca743da38b1689 bagit.txt
 
 	expected := fs.Expected(
 		t,
-		fs.WithFile(
-			"foobar.txt",
-			"Hello world!\n",
-		),
+		fs.WithDir("objects", fs.WithFile("foobar.txt", "Hello world!\n"), fs.MatchAnyFileMode),
 		fs.WithDir(
 			"metadata",
 			fs.WithMode(0o775),
@@ -561,10 +558,42 @@ e91f941be5973ff71f1dccbdd1a32d598881893a7f21be516aca743da38b1689 bagit.txt
 	)
 
 	path := tempdir.Path()
-	err := unbag(path)
+	converted, err := unbag(path)
+	assert.Check(t, converted != nil)
 
 	assert.NilError(t, err)
 	assert.Assert(t, fs.Equal(path, expected))
+}
+
+func TestConvertBagKeepsMetadataBesideObjects(t *testing.T) {
+	for _, journal := range []string{"DPJ/journal.xml", "objects/DPJ/journal.xml"} {
+		t.Run(journal, func(t *testing.T) {
+			const metadata = "metadata/identifiers.json"
+			xml, identifiers := "<journal/>", "[]"
+			manifest := fmt.Sprintf("%x  data/%s\n%x  data/%s\n", sha256.Sum256([]byte(xml)), journal, sha256.Sum256([]byte(identifiers)), metadata)
+			dir := fs.NewDir(t, "bag",
+				fs.WithFile("bagit.txt", "BagIt-Version: 0.97\nTag-File-Character-Encoding: UTF-8\n"),
+				fs.WithFile("bag-info.txt", fmt.Sprintf("Payload-Oxum: %d.2\n", len(xml)+len(identifiers))),
+				fs.WithFile("manifest-sha256.txt", manifest),
+				fs.WithDir("data/"+filepath.Dir(journal), fs.WithFile("journal.xml", xml)),
+				fs.WithDir("data/metadata", fs.WithFile("identifiers.json", identifiers)),
+			)
+			defer dir.Remove()
+			result, err := NewBundleActivity(nil, nil).Execute(t.Context(), &BundleActivityParams{
+				TempFile: dir.Path(), TransferDir: t.TempDir(), IsDir: true, Unbag: true,
+			})
+			assert.NilError(t, err)
+			assert.Assert(t, result.Unbagged)
+			for name, want := range map[string]string{
+				"objects/DPJ/journal.xml": xml, metadata: identifiers,
+				"metadata/checksum.sha256": fmt.Sprintf("%x  ../objects/DPJ/journal.xml\n%x  ../metadata/identifiers.json\n", sha256.Sum256([]byte(xml)), sha256.Sum256([]byte(identifiers))),
+			} {
+				data, err := os.ReadFile(filepath.Join(result.FullPath, name))
+				assert.NilError(t, err)
+				assert.Equal(t, string(data), want)
+			}
+		})
+	}
 }
 
 func TestInPlaceBagConversionCanBeRetried(t *testing.T) {
@@ -587,9 +616,10 @@ func TestInPlaceBagConversionCanBeRetried(t *testing.T) {
 	for range 2 {
 		result, err := activity.Execute(t.Context(), params)
 		assert.NilError(t, err)
+		assert.Assert(t, result.Unbagged)
 		assert.Assert(t, result.FullPath != source.Join("bag"))
 		assert.Equal(t, result.FullPath, source.Join(result.RelPath))
-		data, err := os.ReadFile(filepath.Join(result.FullPath, "content"))
+		data, err := os.ReadFile(filepath.Join(result.FullPath, "objects", "content"))
 		assert.NilError(t, err)
 		assert.Equal(t, string(data), content)
 		assert.NilError(t, os.RemoveAll(result.FullPathBeforeStrip))
@@ -597,4 +627,32 @@ func TestInPlaceBagConversionCanBeRetried(t *testing.T) {
 	data, err := os.ReadFile(source.Join("bag", "data", "content"))
 	assert.NilError(t, err)
 	assert.Equal(t, string(data), content)
+}
+
+func TestConversionRejectsLinkBrokenByMetadataMove(t *testing.T) {
+	const target = "metadata/record.txt"
+	content := strings.Repeat("x", len(target))
+	hash := sha256.Sum256([]byte(content))
+	source := fs.NewDir(t, "bag",
+		fs.WithFile("bagit.txt", "BagIt-Version: 0.97\nTag-File-Character-Encoding: UTF-8\n"),
+		fs.WithFile("bag-info.txt", fmt.Sprintf("Payload-Oxum: %d.2\n", 2*len(content))),
+		fs.WithFile("manifest-sha256.txt", fmt.Sprintf("%x  data/alias\n%x  data/%s\n", hash, hash, target)),
+		fs.WithDir("data/metadata", fs.WithFile("record.txt", content)),
+	)
+	defer source.Remove()
+	assert.NilError(t, os.Symlink(target, source.Join("data", "alias")))
+	stage := t.TempDir()
+	bags, err := bagit.NewValidator(bagit.WithTempCacheDir())
+	assert.NilError(t, err)
+	defer bags.Close()
+	_, err = NewBundleActivity(nil, bags).Execute(t.Context(), &BundleActivityParams{
+		TempFile: source.Path(), TransferDir: stage, IsDir: true, Unbag: true, CheckBagBeforeUnbag: true, RequireBag: true,
+	})
+	assert.ErrorContains(t, err, "conversion changes the target of payload link")
+	data, err := os.ReadFile(source.Join("data", "alias"))
+	assert.NilError(t, err)
+	assert.Equal(t, string(data), content)
+	entries, err := os.ReadDir(stage)
+	assert.NilError(t, err)
+	assert.Equal(t, len(entries), 0)
 }

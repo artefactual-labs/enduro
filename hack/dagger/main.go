@@ -263,13 +263,16 @@ func (m *Enduro) StartupTest(ctx context.Context,
 	// Share the staged files with the test endpoint so it can inspect exactly
 	// what Enduro hands off to Archivematica.
 	watched := dag.CacheVolume(cacheBuster + "-watched")
+	conversionDrop := dag.CacheVolume(cacheBuster + "-conversion")
 	transfers := dag.CacheVolume(cacheBuster + "-transfers")
 	transferMount := dagger.ContainerWithMountedCacheOpts{Owner: "65532:65532"}
-	pipeline := dag.Container().From(nodeImage).
+	endpoint := dag.Container().From(nodeImage).
 		WithFile("/pipeline.mjs", source.File("hack/dagger/smoke/startup-pipeline.mjs")).
 		WithMountedCache("/runtime/transfers", transfers, transferMount).
-		WithExposedPort(8080).
-		AsService(dagger.ContainerAsServiceOpts{Args: []string{"node", "/pipeline.mjs"}})
+		WithExposedPort(8080)
+	serve := dagger.ContainerAsServiceOpts{Args: []string{"node", "/pipeline.mjs"}}
+	pipeline := endpoint.AsService(serve)
+	conversion := endpoint.WithEnvVariable("PIPELINE_ID", "445fae44-b594-4dd4-959f-88bff04aa05b").AsService(serve)
 	bag := dag.Directory().
 		WithNewFile("bagit.txt", "BagIt-Version: 1.0\nTag-File-Character-Encoding: UTF-8\n").
 		WithNewFile("manifest-sha256.txt", "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  data/.DS_Store\n").
@@ -286,8 +289,10 @@ func (m *Enduro) StartupTest(ctx context.Context,
 	runtime := image.WithServiceBinding("mysql", mysql).
 		WithServiceBinding("temporal", temporal).
 		WithServiceBinding("pipeline", pipeline).
+		WithServiceBinding("conversion", conversion).
 		WithEnvVariable("E2E_CACHE_BUSTER", cacheBuster).
 		WithMountedCache("/runtime/watched", watched, transferMount).
+		WithMountedCache("/runtime/conversion", conversionDrop, transferMount).
 		WithMountedCache("/runtime/transfers", transfers, transferMount).
 		WithDirectory("/runtime/batch", dag.Directory().
 			WithDirectory("filtered/incomplete", bag).
@@ -322,6 +327,23 @@ key = "test"
 transferDir = "/runtime/transfers"
 capacity = 1
 unbag = false
+[[watcher.filesystem]]
+name = "conversion"
+path = "/runtime/conversion"
+inotify = true
+pipeline = "conversion"
+ignore = '\.part$'
+transferType = "unzipped bag"
+excludeHiddenFiles = false
+[[pipeline]]
+id = "445fae44-b594-4dd4-959f-88bff04aa05b"
+name = "conversion"
+baseURL = "http://conversion:8080"
+user = "test"
+key = "test"
+transferDir = "/runtime/transfers"
+capacity = 1
+unbag = true
 [[hooks."hari"]]
 disabled = true
 [[hooks."prod"]]
@@ -334,8 +356,10 @@ disabled = true
 	service := runtime.AsService(dagger.ContainerAsServiceOpts{UseEntrypoint: true})
 	tester := dag.Container().From(nodeImage).WithServiceBinding("enduro", service).
 		WithServiceBinding("pipeline", pipeline).
+		WithServiceBinding("conversion", conversion).
 		WithEnvVariable("E2E_CACHE_BUSTER", cacheBuster).
 		WithMountedCache("/runtime/watched", watched, transferMount).
+		WithMountedCache("/runtime/conversion", conversionDrop, transferMount).
 		WithDirectory("/fixture", bag).
 		WithFile("/startup.mjs", source.File("hack/dagger/smoke/startup.mjs")).
 		WithExec([]string{"node", "/startup.mjs"})

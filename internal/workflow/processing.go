@@ -527,12 +527,13 @@ func (w *ProcessingWorkflow) SessionHandler(sessCtx temporalsdk_workflow.Context
 			defer cleanupPreparedFiles()
 
 			err = w.sendReceipts(sessCtx, decisions, &sendReceiptsParams{
-				SIPID:        tinfo.SIPID,
-				StoredAt:     tinfo.StoredAt,
-				FullPath:     tinfo.Bundle.FullPath,
-				PipelineName: tinfo.PipelineName,
-				NameInfo:     nameInfo,
-				CollectionID: tinfo.CollectionID,
+				ConvertedLayout: tinfo.Bundle.Layout,
+				SIPID:           tinfo.SIPID,
+				StoredAt:        tinfo.StoredAt,
+				FullPath:        tinfo.Bundle.FullPath,
+				PipelineName:    tinfo.PipelineName,
+				NameInfo:        nameInfo,
+				CollectionID:    tinfo.CollectionID,
 			})
 			if err != nil {
 				return fmt.Errorf("error delivering receipt(s): %w", err)
@@ -672,12 +673,13 @@ func (w *ProcessingWorkflow) SessionHandler(sessCtx temporalsdk_workflow.Context
 	// Deliver receipts.
 	{
 		err := w.sendReceipts(sessCtx, decisions, &sendReceiptsParams{
-			SIPID:        tinfo.SIPID,
-			StoredAt:     tinfo.StoredAt,
-			FullPath:     tinfo.Bundle.FullPath,
-			PipelineName: tinfo.PipelineName,
-			NameInfo:     nameInfo,
-			CollectionID: tinfo.CollectionID,
+			ConvertedLayout: tinfo.Bundle.Layout,
+			SIPID:           tinfo.SIPID,
+			StoredAt:        tinfo.StoredAt,
+			FullPath:        tinfo.Bundle.FullPath,
+			PipelineName:    tinfo.PipelineName,
+			NameInfo:        nameInfo,
+			CollectionID:    tinfo.CollectionID,
 		})
 		if err != nil {
 			return fmt.Errorf("error delivering receipt(s): %w", err)
@@ -873,6 +875,10 @@ func (w *ProcessingWorkflow) transfer(sessCtx temporalsdk_workflow.Context, tinf
 	// Transfer.
 	{
 		if tinfo.TransferID == "" {
+			transferType := tinfo.TransferType
+			if tinfo.Bundle.Unbagged && transferType == "unzipped bag" {
+				transferType = "standard"
+			}
 			transferResponse := activities.TransferActivityResponse{}
 			processingConfig := tinfo.ProcessingConfiguration()
 			activityOpts := withActivityOptsForRequest(sessCtx)
@@ -882,7 +888,7 @@ func (w *ProcessingWorkflow) transfer(sessCtx temporalsdk_workflow.Context, tinf
 				RelPath:            tinfo.Bundle.RelPath,
 				Name:               tinfo.Key,
 				ProcessingConfig:   processingConfig,
-				TransferType:       tinfo.TransferType,
+				TransferType:       transferType,
 				Accession:          nameMetadata.Accession,
 			}).Get(activityOpts, &transferResponse)
 			if err != nil {

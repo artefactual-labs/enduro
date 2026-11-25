@@ -7,7 +7,7 @@ const siblingID = "71bd0ab3-e496-4ec0-9146-048abf471df5";
 const siblingSIP = "71bd0ab3-e496-4ec0-9146-048abf471df6";
 const headers = {
   "content-type": "application/json",
-  "x-archivematica-id": "e1b9a096-c3ca-4ee2-9010-7b76ba37d318",
+  "x-archivematica-id": process.env.PIPELINE_ID ?? "e1b9a096-c3ca-4ee2-9010-7b76ba37d318",
   "x-archivematica-version": "1.18.0",
 };
 const submissions = [];
@@ -38,6 +38,12 @@ createServer(async (req, res) => {
         return reply(422, { error: "expected a staged transfer directory" });
       }
       const dir = join("/runtime/transfers", relative);
+      if (name === "converted") {
+        submission.checksum = await readFile(join(dir, "metadata/checksum.sha256"), "utf8");
+        submission.payload = await readFile(join(dir, "objects/payload.txt"), "utf8");
+        submission.declaration = await readFile(join(dir, "metadata/submissionDocumentation/bagit.txt"), "utf8");
+        return reply(201, { id: "02603572-36a1-43a4-a785-3812fd4fdef0" });
+      }
       submission.declaration = await readFile(join(dir, "bagit.txt"), "utf8");
       submission.manifest = await readFile(join(dir, "manifest-sha256.txt"), "utf8");
       if (name === "sibling") {
@@ -56,7 +62,7 @@ createServer(async (req, res) => {
     if (req.url === `/api/ingest/status/${siblingSIP}`) {
       return reply(200, { status: "COMPLETE" });
     }
-    if (req.method === "GET" && req.url === `/api/transfer/status/${transferID}`) {
+    if (req.method === "GET" && [transferID, "02603572-36a1-43a4-a785-3812fd4fdef0"].some((id) => req.url === `/api/transfer/status/${id}`)) {
       return reply(200, { status: "PROCESSING" });
     }
     return reply(500, { error: `unexpected request ${req.method} ${req.url}` });
