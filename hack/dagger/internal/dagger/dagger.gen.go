@@ -101,6 +101,9 @@ type AgentMessage = core.AgentMessage
 // One workspace value with a complete path and all required dimension keys. Reading metadata does not evaluate the value. Different addresses remain distinct even if they return the same object.
 type Artifact = core.Artifact
 
+// ArtifactDimensionKeysOpts contains options for Artifact.DimensionKeys
+type ArtifactDimensionKeysOpts = core.ArtifactDimensionKeysOpts
+
 // ArtifactURIOpts contains options for Artifact.URI
 type ArtifactURIOpts = core.ArtifactURIOpts
 
@@ -118,6 +121,12 @@ type ArtifactPath = core.ArtifactPath
 type Artifacts = core.Artifacts
 
 type WithArtifactsFunc = core.WithArtifactsFunc
+
+// ArtifactsDimensionsOpts contains options for Artifacts.Dimensions
+type ArtifactsDimensionsOpts = core.ArtifactsDimensionsOpts
+
+// ArtifactsFilterDimensionsOpts contains options for Artifacts.FilterDimensions
+type ArtifactsFilterDimensionsOpts = core.ArtifactsFilterDimensionsOpts
 
 // ArtifactsFilterDirectivesOpts contains options for Artifacts.FilterDirectives
 type ArtifactsFilterDirectivesOpts = core.ArtifactsFilterDirectivesOpts
@@ -1028,6 +1037,8 @@ const (
 	ArtifactDimensionKindCollection ArtifactDimensionKind = core.ArtifactDimensionKindCollection
 
 	ArtifactDimensionKindModule ArtifactDimensionKind = core.ArtifactDimensionKindModule
+
+	ArtifactDimensionKindName ArtifactDimensionKind = core.ArtifactDimensionKindName
 
 	ArtifactDimensionKindType ArtifactDimensionKind = core.ArtifactDimensionKindType
 )

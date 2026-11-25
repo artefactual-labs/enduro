@@ -147,7 +147,7 @@ jobs:
         env:
           DAGGER_NO_NAG: "1"
         with:
-          version: "1.0.0-beta.28"
+          version: "1.0.0-beta.29"
       - name: Run smoke tests
         env:
           SUITE: ${{ (github.ref != 'refs/heads/dev/containers' || (github.event_name == 'workflow_dispatch' && inputs.full-tests)) && 'smoke-tests' || 'coverage-check' }}
