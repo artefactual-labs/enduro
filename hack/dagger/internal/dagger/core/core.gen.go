@@ -1250,9 +1250,21 @@ func (r *Artifact) Description(ctx context.Context) (string, error) {
 	return response, q.Execute(ctx)
 }
 
-// The module name, collection keys, and full path key in the artifact type dimension.
-func (r *Artifact) DimensionKeys(ctx context.Context) ([]ArtifactDimensionKey, error) {
+// ArtifactDimensionKeysOpts contains options for Artifact.DimensionKeys
+type ArtifactDimensionKeysOpts struct {
+	// Return all artifact coordinates, including constant dimensions.
+	All bool
+}
+
+// The artifact coordinates in its source selection's visible dimensions. Without a source selection, return all coordinates.
+func (r *Artifact) DimensionKeys(ctx context.Context, opts ...ArtifactDimensionKeysOpts) ([]ArtifactDimensionKey, error) {
 	q := r.query.Select("dimensionKeys")
+	for i := len(opts) - 1; i >= 0; i-- {
+		// `all` optional argument
+		if !querybuilder.IsZeroValue(opts[i].All) {
+			q = q.Arg("all", opts[i].All)
+		}
+	}
 
 	q = q.Select("id")
 
@@ -1573,7 +1585,7 @@ func (r *ArtifactDimension) UnmarshalJSON(bs []byte) error {
 	return nil
 }
 
-// Stable identifier: collection schema path, type:TypeName for an artifact type, or module.
+// Collection schema type name, module, name, or a legacy selector identifier.
 func (r *ArtifactDimension) Identifier(ctx context.Context) (string, error) {
 	if r.identifier != nil {
 		return *r.identifier, nil
@@ -2179,7 +2191,7 @@ func (r *Artifacts) DimensionDefinitions(ctx context.Context) ([]ArtifactDimensi
 	return convert(response), nil
 }
 
-// List collection items represented in this selection for the given dimension. Preserve parent keys and remove duplicate item addresses. Does not evaluate item values.
+// List collection items represented in this selection. Retain the source selection's visible dimensions without evaluating item values.
 func (r *Artifacts) DimensionItems(ctx context.Context, dimension string) ([]Artifact, error) {
 	q := r.query.Select("dimensionItems")
 	q = q.Arg("dimension", dimension)
@@ -2224,9 +2236,21 @@ func (r *Artifacts) DimensionKeys(ctx context.Context, dimension string) ([]stri
 	return response, q.Execute(ctx)
 }
 
-// List dimension identifiers represented in this selection, sorted with no duplicates.
-func (r *Artifacts) Dimensions(ctx context.Context) ([]string, error) {
+// ArtifactsDimensionsOpts contains options for Artifacts.Dimensions
+type ArtifactsDimensionsOpts struct {
+	// List all workspace schema dimensions without runtime discovery.
+	All bool
+}
+
+// List dimensions whose cells differ across selected rows. Missing cells differ from present keys.
+func (r *Artifacts) Dimensions(ctx context.Context, opts ...ArtifactsDimensionsOpts) ([]string, error) {
 	q := r.query.Select("dimensions")
+	for i := len(opts) - 1; i >= 0; i-- {
+		// `all` optional argument
+		if !querybuilder.IsZeroValue(opts[i].All) {
+			q = q.Arg("all", opts[i].All)
+		}
+	}
 
 	var response []string
 
@@ -2246,9 +2270,21 @@ func (r *Artifacts) FilterDimensionKeys(dimension string, keys []string) *Artifa
 	}
 }
 
+// ArtifactsFilterDimensionsOpts contains options for Artifacts.FilterDimensions
+type ArtifactsFilterDimensionsOpts struct {
+	// Remove artifacts with any listed dimension.
+	Exclude bool
+}
+
 // Keep artifacts selected through any listed dimension.
-func (r *Artifacts) FilterDimensions(dimensions []string) *Artifacts {
+func (r *Artifacts) FilterDimensions(dimensions []string, opts ...ArtifactsFilterDimensionsOpts) *Artifacts {
 	q := r.query.Select("filterDimensions")
+	for i := len(opts) - 1; i >= 0; i-- {
+		// `exclude` optional argument
+		if !querybuilder.IsZeroValue(opts[i].Exclude) {
+			q = q.Arg("exclude", opts[i].Exclude)
+		}
+	}
 	q = q.Arg("dimensions", dimensions)
 
 	return &Artifacts{
@@ -2507,7 +2543,7 @@ func (r *Artifacts) Modules(ctx context.Context) ([]Module, error) {
 	return convert(response), nil
 }
 
-// Require exactly one artifact; fail if there are zero or multiple matches. Several matches are listed, one address per line.
+// Require exactly one artifact from the selected items snapshot; fail if there are zero or multiple matches.
 func (r *Artifacts) One() *Artifact {
 	q := r.query.Select("one")
 
@@ -5757,6 +5793,8 @@ type ContainerWithMountedTempOpts struct {
 	Size int
 	// Replace "${VAR}" or "$VAR" in the value of path according to the current environment variables defined in the container (e.g. "/$VAR/foo").
 	Expand bool
+	// Keep the temporary directory on the engine's disk instead of in memory, for contents too large for memory. Each process gets an empty directory of its own, removed once the process ends. It can't be combined with size.
+	Disk bool
 }
 
 // Retrieves this container plus a temporary directory mounted at the given path. Any writes will be ephemeral to a single withExec call; they will not be persisted to subsequent withExecs.
@@ -5770,6 +5808,10 @@ func (r *Container) WithMountedTemp(path string, opts ...ContainerWithMountedTem
 		// `expand` optional argument
 		if !querybuilder.IsZeroValue(opts[i].Expand) {
 			q = q.Arg("expand", opts[i].Expand)
+		}
+		// `disk` optional argument
+		if !querybuilder.IsZeroValue(opts[i].Disk) {
+			q = q.Arg("disk", opts[i].Disk)
 		}
 	}
 	q = q.Arg("path", path)
@@ -6507,6 +6549,31 @@ func (r *CurrentModule) GeneratedContextDirectory() *Directory {
 		query:     q,
 		refetchID: r.refetchID,
 	}
+}
+
+// The Git ref of the module's source: the resolved commit of a Git source, or the HEAD of the repository that contains a local source. Null for a Directory source, or a local source outside a Git repository.
+//
+// Its asRepository pins HEAD to that commit. For a local source, the repository holds the whole checkout, including files the module does not load, so asRepository.uncommitted lists the uncommitted changes of the whole checkout.
+//
+// For a Git source loaded from a private remote, asRepository and tree are read without the credentials of the client that loaded the module and may fail to authenticate; commitSha needs none.
+//
+// A local repository is read when this field is first selected for a module load, not when the module loads: a file changed in between can differ from the module's contextDirectory.
+//
+// A function result cached across sessions is not recomputed when the repository changes: use the PER_SESSION or NEVER cache policy for a function that returns what it reads from this field.
+func (r *CurrentModule) GitRef(ctx context.Context) (*GitRef, error) {
+	q := r.query.Select("gitRef")
+
+	q = q.Select("id")
+	var objectID *ID
+	if err := q.Bind(&objectID).Execute(ctx); err != nil {
+		return nil, err
+	}
+	if objectID == nil {
+		return nil, nil
+	}
+	return &GitRef{
+		query: selectNode(q.Root(), *objectID, "GitRef"),
+	}, nil
 }
 
 // A unique identifier for this CurrentModule.
@@ -25022,6 +25089,8 @@ func (v ArtifactDimensionKind) Name() string {
 		return "MODULE"
 	case ArtifactDimensionKindType:
 		return "TYPE"
+	case ArtifactDimensionKindName:
+		return "NAME"
 	default:
 		return ""
 	}
@@ -25054,6 +25123,8 @@ func (v *ArtifactDimensionKind) UnmarshalJSON(dt []byte) error {
 		*v = ArtifactDimensionKindCollection
 	case "MODULE":
 		*v = ArtifactDimensionKindModule
+	case "NAME":
+		*v = ArtifactDimensionKindName
 	case "TYPE":
 		*v = ArtifactDimensionKindType
 	default:
@@ -25068,6 +25139,8 @@ const (
 	ArtifactDimensionKindModule ArtifactDimensionKind = "MODULE"
 
 	ArtifactDimensionKindType ArtifactDimensionKind = "TYPE"
+
+	ArtifactDimensionKindName ArtifactDimensionKind = "NAME"
 )
 
 // Sharing mode of the cache volume.

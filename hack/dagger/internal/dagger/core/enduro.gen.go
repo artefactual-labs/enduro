@@ -218,12 +218,10 @@ type EnduroSmokeTestsOpts struct {
 // prepares the transfer locally and publishes it to ambox over SFTP, which
 // exercises the publish, transfer, cleanup, and completion workflow path.
 //
-// It also drives the Nuxt batch-import form with Playwright, submitting a
-// simple directory transfer from a filesystem path visible to Enduro. The suite
-// waits for processing to finish, downloads the generated AIPs through Enduro,
-// and performs basic checks on the AIPs and Temporal history. It returns a
-// Dagger directory with downloaded AIPs and diagnostic reports for local
-// inspection or CI artifact upload.
+// It also drives the Nuxt batch-import form with Playwright to submit an
+// unzipped bag. The suite downloads the AIPs through Enduro, verifies the bag's
+// original payload, and checks the Temporal history. It returns a Dagger
+// directory with the AIPs and diagnostic reports for local inspection or CI.
 //
 // Call from the repository root with:
 //

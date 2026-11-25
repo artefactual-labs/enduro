@@ -2,11 +2,12 @@
 # Any Dagger command may update this file; always commit it with your changes.
 # Run `dagger lock update` to refresh the pinned versions.
 [["version","2"]]
-["","git-latest",["github.com/dagger/go-sdk"],"refs/tags/v1.6.0"]
+["","git-latest",["github.com/dagger/go-sdk"],"refs/tags/v1.7.0"]
 ["","git-latest",["github.com/dagger/sdk-helpers",["version","v1.0.11"]],"refs/tags/v1.0.11"]
 ["","git-latest",["github.com/dagger/sdk-helpers",["version","v1.0.8"]],"refs/tags/v1.0.8"]
 ["","git-sha",["github.com/dagger/go-sdk","refs/tags/v1.4.0"],"8c1d739c0de53daa6f26eb8c0de851d649597bba"]
 ["","git-sha",["github.com/dagger/go-sdk","refs/tags/v1.6.0"],"9f90a588c86406a9f6c36fb164d86b15677882a4"]
+["","git-sha",["github.com/dagger/go-sdk","refs/tags/v1.7.0"],"fedaced4c12bfb795a49e16ce7c6e27cc3fec946"]
 ["","git-sha",["github.com/dagger/sdk-helpers","refs/tags/v1.0.11"],"3be7456c40d9206b648ac44e418f30aa79bc6190"]
 ["","git-sha",["github.com/dagger/sdk-helpers","refs/tags/v1.0.8"],"31dafd0c74d9a08faa00c09dce87a5af072e7a9d"]
 ["","oci-sha",["docker.io/chrislusf/seaweedfs:4.48"],"sha256:4e61d15fd35994cb1e43e1e553dff106794841fd9a99ade2fc8c8bfce4d7872d"]
