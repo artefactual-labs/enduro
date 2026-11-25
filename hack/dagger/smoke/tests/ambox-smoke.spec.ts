@@ -1,5 +1,6 @@
 import { expect, test, type APIRequestContext, type Page } from "@playwright/test";
 import { execFile as execFileCallback } from "node:child_process";
+import { createHash } from "node:crypto";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { promisify } from "node:util";
@@ -20,6 +21,10 @@ const expectedProcessingWorkflows = Number(
 );
 const verifyBatchWorkflow = process.env.VERIFY_BATCH_WORKFLOW === "true";
 const batchProcessingConfig = "enduro-batch";
+const batchOriginal = {
+  name: "hello.txt",
+  bytes: Buffer.from("Hello from the unzipped BagIt transfer.\n", "utf8"),
+};
 const batchTransferName =
   process.env.BATCH_TRANSFER_NAME ??
   `avl-other-sip-2.16.578.1.39.100.11.${cacheBuster}-20260721`;
@@ -227,16 +232,27 @@ test("LGTM captures the completed transfer's workflow trace", async ({ request }
   }).toPass({ timeout: 60_000, intervals: [1_000, 2_000, 5_000] });
 });
 
-test("Nuxt batch import form submits a directory transfer", async ({ page }) => {
+test("Nuxt batch import form submits an unzipped bag", async ({ page }) => {
   test.setTimeout(120_000);
 
-  await test.step("prepare a batch transfer visible to Enduro", async () => {
+  await test.step("prepare a bag with a manifest-listed hidden file", async () => {
     const transferDir = path.join(batchDir, batchTransferName);
     await fs.rm(transferDir, { recursive: true, force: true });
-    await fs.mkdir(path.join(transferDir, "objects"), { recursive: true });
+    await fs.mkdir(path.join(transferDir, "data"), { recursive: true });
     await fs.writeFile(
-      path.join(transferDir, "objects", "hello.txt"),
-      `hello from ${batchTransferName}\n`,
+      path.join(transferDir, "bagit.txt"),
+      "BagIt-Version: 1.0\nTag-File-Character-Encoding: UTF-8\n",
+    );
+    const payload = [batchOriginal, { name: ".DS_Store", bytes: Buffer.alloc(0) }];
+    const manifest = [];
+    for (const { name, bytes } of payload) {
+      await fs.writeFile(path.join(transferDir, "data", name), bytes);
+      const digest = createHash("sha256").update(bytes).digest("hex");
+      manifest.push(`${digest}  data/${name}`);
+    }
+    await fs.writeFile(
+      path.join(transferDir, "manifest-sha256.txt"),
+      manifest.join("\n") + "\n",
     );
     await execFile("chown", ["-R", "65532:65532", transferDir]);
   });
@@ -269,6 +285,9 @@ test("Nuxt batch import form submits a directory transfer", async ({ page }) => 
     await page
       .getByRole("option", { name: batchProcessingConfig, exact: true })
       .click();
+    await page.getByRole("combobox", { name: "Transfer type" }).click();
+    await page.getByRole("option", { name: "Unzipped bag", exact: true }).click();
+    await page.getByRole("checkbox", { name: "Exclude hidden files" }).uncheck();
 
     await page.getByRole("button", { name: "Submit" }).click();
     const confirmation = page
@@ -288,6 +307,8 @@ test("Nuxt batch import form submits a directory transfer", async ({ page }) => 
     ]);
     expect(submission.postDataJSON()).toMatchObject({
       processing_config: batchProcessingConfig,
+      transfer_type: "unzipped bag",
+      exclude_hidden_files: false,
     });
 
     await Promise.race([
@@ -312,7 +333,7 @@ test("Nuxt batch import form submits a directory transfer", async ({ page }) => 
   });
 });
 
-test("batch transfer records the processing configuration and produces an AIP", async ({
+test("batch bag preserves its original and records its processing configuration", async ({
   page,
 }) => {
   const request = page.request;
@@ -326,6 +347,7 @@ test("batch transfer records the processing configuration and produces an AIP", 
     transferName: batchTransferName,
     artifactPrefix: "batch-",
     extractDir: "/tmp/batch-aip-extract",
+    expectedOriginal: batchOriginal,
   });
   expect(detail.processing_config).toBe(batchProcessingConfig);
 
@@ -581,6 +603,7 @@ async function downloadAndInspectAIP(
     transferName: string;
     artifactPrefix: string;
     extractDir: string;
+    expectedOriginal?: { name: string; bytes: Buffer };
   },
 ) {
   const aipName = `${opts.artifactPrefix}aip.7z`;
@@ -640,6 +663,14 @@ async function downloadAndInspectAIP(
   expect(mets).toMatch(
     /Archivematica-[0-9]+\.[0-9]+|<[^>]*agentName[^>]*>Archivematica</,
   );
+  if (opts.expectedOriginal) {
+    const originalPath = path.join(
+      path.dirname(metsPath),
+      "objects",
+      opts.expectedOriginal.name,
+    );
+    expect(await fs.readFile(originalPath)).toEqual(opts.expectedOriginal.bytes);
+  }
 
   await writeTextArtifact(
     inspectionName,

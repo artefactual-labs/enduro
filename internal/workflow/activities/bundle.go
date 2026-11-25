@@ -11,9 +11,10 @@ import (
 	"path/filepath"
 	"strings"
 
+	bagit "github.com/artefactual-labs/bagit-gython"
 	"github.com/otiai10/copy"
 
-	"github.com/artefactual-labs/enduro/internal/bagit"
+	legacybagit "github.com/artefactual-labs/enduro/internal/bagit"
 	"github.com/artefactual-labs/enduro/internal/bundler"
 	"github.com/artefactual-labs/enduro/internal/temporal"
 )
@@ -42,23 +43,27 @@ import (
 //
 // After staging or reuse, the activity may remove hidden files and optionally
 // convert BagIt packages into Archivematica's standard transfer layout.
-type BundleActivity struct{}
+type BundleActivity struct {
+	bags *bagit.Validator
+}
 
 // NewBundleActivity creates a bundle activity instance.
-func NewBundleActivity() *BundleActivity {
-	return &BundleActivity{}
+func NewBundleActivity(bags *bagit.Validator) *BundleActivity {
+	return &BundleActivity{bags: bags}
 }
 
 // BundleActivityParams configures how transfer content should be staged.
 type BundleActivityParams struct {
-	TransferDir        string // Pipeline transfer source directory.
-	Key                string // Object key, batch transfer name, or destination file name.
-	TempFile           string // Downloaded file or extracted directory to stage for non-batch transfers.
-	StripTopLevelDir   bool   // Remove the copied directory wrapper when it has exactly one child directory.
-	ExcludeHiddenFiles bool   // Remove or skip dotfiles and dot-directories from the staged transfer.
-	IsDir              bool   // Treat TempFile as a directory transfer instead of a single file.
-	BatchDir           string // Watched batch directory containing Key when processing a batch transfer.
-	Unbag              bool   // Convert a BagIt package into an Archivematica transfer after staging.
+	TransferDir         string // Pipeline transfer source directory.
+	Key                 string // Object key, batch transfer name, or destination file name.
+	TempFile            string // Downloaded file or extracted directory to stage for non-batch transfers.
+	StripTopLevelDir    bool   // Remove the copied directory wrapper when it has exactly one child directory.
+	ExcludeHiddenFiles  bool   // Remove or skip dotfiles and dot-directories from the staged transfer.
+	IsDir               bool   // Treat TempFile as a directory transfer instead of a single file.
+	BatchDir            string // Watched batch directory containing Key when processing a batch transfer.
+	Unbag               bool   // Convert a BagIt package into an Archivematica transfer after staging.
+	CheckBagBeforeUnbag bool   // Check completeness before conversion on a new submission.
+	RequireBag          bool   // The submission explicitly requires an unzipped bag.
 }
 
 // BundleActivityResult identifies the transfer location after staging.
@@ -127,6 +132,23 @@ func (a *BundleActivity) Execute(ctx context.Context, params *BundleActivityPara
 	}
 
 	if params.Unbag {
+		if params.CheckBagBeforeUnbag {
+			// The completeness check needs the bag layout before conversion.
+			if _, err := checkStagedBag(ctx, res.FullPath, params.RequireBag, a.bags.CheckCompletenessContext); err != nil {
+				// No activity result will reach workflow cleanup. Remove only
+				// a staging directory created by this activity.
+				if res.FullPathBeforeStrip != "" {
+					if cleanupErr := os.RemoveAll(res.FullPathBeforeStrip); cleanupErr != nil {
+						combined := errors.Join(err, fmt.Errorf("clean up staged transfer: %w", cleanupErr))
+						if temporal.NonRetryableError(err) {
+							return nil, temporal.NewNonRetryableError(combined)
+						}
+						return nil, combined
+					}
+				}
+				return nil, err
+			}
+		}
 		err = unbag(res.FullPath)
 		if err != nil {
 			return nil, temporal.NewNonRetryableError(err)
@@ -453,7 +475,7 @@ func unbag(path string) error {
 	}
 
 	// Confirm completeness of the bag.
-	if err := bagit.Complete(path); err != nil {
+	if err := legacybagit.Complete(path); err != nil {
 		return err
 	}
 

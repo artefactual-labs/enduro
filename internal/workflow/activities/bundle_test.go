@@ -17,7 +17,7 @@ func TestBundleActivity(t *testing.T) {
 	t.Parallel()
 
 	t.Run("Excludes hidden files", func(t *testing.T) {
-		activity := NewBundleActivity()
+		activity := NewBundleActivity(nil)
 		ts := &temporalsdk_testsuite.WorkflowTestSuite{}
 		env := ts.NewTestActivityEnvironment()
 		env.RegisterActivity(activity.Execute)
@@ -63,7 +63,7 @@ func TestBundleActivity(t *testing.T) {
 	})
 
 	t.Run("Remove hidden files when BatchDir is a subfolder of the TransferDir", func(t *testing.T) {
-		activity := NewBundleActivity()
+		activity := NewBundleActivity(nil)
 		ts := &temporalsdk_testsuite.WorkflowTestSuite{}
 		env := ts.NewTestActivityEnvironment()
 		env.RegisterActivity(activity.Execute)
@@ -108,7 +108,7 @@ func TestBundleActivity(t *testing.T) {
 	})
 
 	t.Run("Reuses batch transfer when BatchDir is a filesystem alias of TransferDir", func(t *testing.T) {
-		activity := NewBundleActivity()
+		activity := NewBundleActivity(nil)
 		ts := &temporalsdk_testsuite.WorkflowTestSuite{}
 		env := ts.NewTestActivityEnvironment()
 		env.RegisterActivity(activity.Execute)
@@ -154,7 +154,7 @@ func TestBundleActivity(t *testing.T) {
 	})
 
 	t.Run("Reuses batch transfer when BatchDir is a filesystem alias of a TransferDir subdirectory", func(t *testing.T) {
-		activity := NewBundleActivity()
+		activity := NewBundleActivity(nil)
 		ts := &temporalsdk_testsuite.WorkflowTestSuite{}
 		env := ts.NewTestActivityEnvironment()
 		env.RegisterActivity(activity.Execute)
@@ -200,7 +200,7 @@ func TestBundleActivity(t *testing.T) {
 	})
 
 	t.Run("Copies batch transfer when BatchDir is outside TransferDir", func(t *testing.T) {
-		activity := NewBundleActivity()
+		activity := NewBundleActivity(nil)
 		ts := &temporalsdk_testsuite.WorkflowTestSuite{}
 		env := ts.NewTestActivityEnvironment()
 		env.RegisterActivity(activity.Execute)
@@ -238,7 +238,7 @@ func TestBundleActivity(t *testing.T) {
 	})
 
 	t.Run("Bundles batch file when BatchDir is outside TransferDir", func(t *testing.T) {
-		activity := NewBundleActivity()
+		activity := NewBundleActivity(nil)
 		ts := &temporalsdk_testsuite.WorkflowTestSuite{}
 		env := ts.NewTestActivityEnvironment()
 		env.RegisterActivity(activity.Execute)
@@ -276,7 +276,7 @@ func TestBundleActivity(t *testing.T) {
 			t.Skip("chmod permissions are not portable on Windows")
 		}
 
-		activity := NewBundleActivity()
+		activity := NewBundleActivity(nil)
 		ts := &temporalsdk_testsuite.WorkflowTestSuite{}
 		env := ts.NewTestActivityEnvironment()
 		env.RegisterActivity(activity.Execute)
@@ -327,7 +327,7 @@ func TestBundleActivity(t *testing.T) {
 	})
 
 	t.Run("Removes hidden directories recursively", func(t *testing.T) {
-		activity := NewBundleActivity()
+		activity := NewBundleActivity(nil)
 		ts := &temporalsdk_testsuite.WorkflowTestSuite{}
 		env := ts.NewTestActivityEnvironment()
 		env.RegisterActivity(activity.Execute)

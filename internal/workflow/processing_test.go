@@ -1,13 +1,19 @@
 package workflow
 
 import (
+	"archive/zip"
 	"context"
+	"crypto/sha256"
 	"errors"
 	"fmt"
+	"os"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
+	bagit "github.com/artefactual-labs/bagit-gython"
+	"github.com/artefactual-sdps/temporal-activities/archiveextract"
 	"github.com/go-logr/logr"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
@@ -17,6 +23,7 @@ import (
 	temporalsdk_workflow "go.temporal.io/sdk/workflow"
 	"go.uber.org/mock/gomock"
 	"gotest.tools/v3/assert"
+	"gotest.tools/v3/fs"
 
 	"github.com/artefactual-labs/enduro/internal/collection"
 	collectionfake "github.com/artefactual-labs/enduro/internal/collection/fake"
@@ -26,6 +33,7 @@ import (
 	"github.com/artefactual-labs/enduro/internal/publisher"
 	"github.com/artefactual-labs/enduro/internal/reconciliation"
 	"github.com/artefactual-labs/enduro/internal/temporal"
+	"github.com/artefactual-labs/enduro/internal/validation"
 	"github.com/artefactual-labs/enduro/internal/workflow/activities"
 	"github.com/artefactual-labs/enduro/internal/workflow/hooks"
 )
@@ -46,6 +54,8 @@ func (s *ProcessingWorkflowTestSuite) SetupTest() {
 	ctrl := gomock.NewController(s.T())
 	s.env = s.NewTestWorkflowEnvironment()
 	s.env.SetWorkerOptions(temporalsdk_worker.Options{EnableSessionWorker: true})
+	s.env.RegisterActivityWithOptions(func(*activities.ValidateTransferActivityParams) error { return nil },
+		temporalsdk_activity.RegisterOptions{Name: activities.ValidateTransferActivityName})
 	s.hooks = buildHooks(s.T(), ctrl)
 	pipelineRegistry, _ := pipeline.NewPipelineRegistry(logr.Discard(), []pipeline.Config{}, nil, nil)
 	s.workflow = NewProcessingWorkflow(s.hooks, collectionfake.NewMockService(ctrl), pipelineRegistry, logr.Discard(), Config{})
@@ -374,6 +384,10 @@ func (s *ProcessingWorkflowTestSuite) TestReconciliationRetryNotFoundFallsBackTo
 		RelPath:  "key",
 		FullPath: "/transfer-dir/key",
 	}, nil).Once()
+	s.env.OnActivity(activities.ValidateTransferActivityName, &activities.ValidateTransferActivityParams{
+		Path:                 "/transfer-dir/key",
+		CheckBagCompleteness: true,
+	}).Return(nil).Once()
 	s.env.OnActivity(activities.TransferActivityName, &activities.TransferActivityParams{
 		PipelineName:       "pipeline",
 		TransferLocationID: "transfer-location-id",
@@ -467,6 +481,8 @@ func (s *ProcessingWorkflowTestSuite) TestReconciliationRetryCompleteDeliversRec
 	s.Require().NoError(err)
 	s.workflow = NewProcessingWorkflow(s.hooks, collectionfake.NewMockService(ctrl), pipelineRegistry, logr.Discard(), Config{})
 	registerWorkflowActivityStubs(s.env)
+	s.env.OnActivity(activities.ValidateTransferActivityName, mock.Anything).
+		Return(temporal.NewNonRetryableError(errors.New("receipt-only retries must skip validation"))).Maybe()
 
 	completedAt := "2026-03-17T08:00:00Z"
 	finalStoredAt := time.Date(2026, time.March, 17, 8, 0, 0, 0, time.UTC)
@@ -566,6 +582,7 @@ func (s *ProcessingWorkflowTestSuite) TestReconciliationRetryCompleteDeliversRec
 
 	s.True(s.env.IsWorkflowCompleted())
 	s.NoError(s.env.GetWorkflowError())
+	s.env.AssertNotCalled(s.T(), activities.ValidateTransferActivityName, mock.Anything)
 }
 
 func (s *ProcessingWorkflowTestSuite) TestReconciliationRetryRequiresExistingAIPID() {
@@ -1081,7 +1098,7 @@ func (s *ProcessingWorkflowTestSuite) TestRebuildsBundleWhenPublishingSourceIsMi
 		cleanup, err := s.workflow.rebuildBundleWhenPublishedSourceMissing(ctx, tinfo, &collection.ProcessingWorkflowRequest{
 			Key:      "key",
 			BatchDir: "/batch-dir",
-		})
+		}, nil)
 		if err != nil {
 			return err
 		}
@@ -1974,6 +1991,247 @@ func (s *ProcessingWorkflowTestSuite) TestRecoveryEnabledFailsFastOnReplicatedPa
 
 func TestProcessingWorkflow(t *testing.T) {
 	suite.Run(t, new(ProcessingWorkflowTestSuite))
+}
+
+func TestProcessingWorkflowRejectsIncompleteBag(t *testing.T) {
+	validator, err := bagit.NewValidator(bagit.WithDeferredRuntime(), bagit.WithTempCacheDir())
+	assert.NilError(t, err)
+	t.Cleanup(func() { assert.NilError(t, validator.Close()) })
+
+	for _, tc := range []struct {
+		name         string
+		transferType string
+		inPlace      bool
+		archive      bool
+		unbag        bool
+	}{
+		{name: "copied batch", transferType: "standard"},
+		{name: "in-place batch", transferType: "unzipped bag", inPlace: true},
+		{name: "watched archive with unbagging", transferType: "unzipped bag", archive: true, unbag: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			// The empty hidden file tests manifest membership independently of
+			// checksum verification and Payload-Oxum.
+			const payload = "hello\n"
+			source := fs.NewDir(t, "source", fs.WithDir("transfer",
+				fs.WithFile("bagit.txt", "BagIt-Version: 1.0\nTag-File-Character-Encoding: UTF-8\n"),
+				fs.WithFile("manifest-sha256.txt", fmt.Sprintf("%x  data/hello world.txt\n%x  data/.DS_Store\n", sha256.Sum256([]byte(payload)), sha256.Sum256(nil))),
+				fs.WithDir("data", fs.WithFile("hello world.txt", payload), fs.WithFile(".DS_Store", "")),
+			))
+			defer source.Remove()
+			transferDir := t.TempDir()
+			if tc.inPlace {
+				transferDir = source.Path()
+			}
+			registry, err := pipeline.NewPipelineRegistry(logr.Discard(), []pipeline.Config{{
+				Name:        "pipeline",
+				ID:          "pipeline-id",
+				Capacity:    1,
+				TransferDir: transferDir,
+				Unbag:       tc.unbag,
+				TransferPublisher: publisher.Config{
+					Type:                  "sftp",
+					Host:                  "example.invalid",
+					User:                  "test",
+					Password:              "test",
+					InsecureIgnoreHostKey: true,
+				},
+			}}, nil, nil)
+			assert.NilError(t, err)
+			p, err := registry.ByName("pipeline")
+			assert.NilError(t, err)
+
+			ctrl := gomock.NewController(t)
+			colsvc := collectionfake.NewMockService(ctrl)
+			colsvc.EXPECT().Create(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, c *collection.Collection) error {
+				assert.Check(t, c.Status == collection.StatusQueued)
+				c.ID = 12345
+				return nil
+			})
+			colsvc.EXPECT().SetStatusInProgress(gomock.Any(), uint(12345), gomock.Any()).DoAndReturn(func(context.Context, uint, time.Time) error {
+				_, inUse := p.Capacity()
+				assert.Check(t, inUse == 1)
+				return nil
+			})
+			colsvc.EXPECT().UpdateWorkflowStatus(gomock.Any(), uint(12345), "transfer", gomock.Any(), gomock.Any(),
+				"", "", "", nil, collection.StatusError, time.Time{},
+			).Return(nil)
+
+			req := &collection.ProcessingWorkflowRequest{
+				PipelineName:       "pipeline",
+				BatchDir:           source.Path(),
+				Key:                "transfer",
+				IsDir:              true,
+				ExcludeHiddenFiles: true,
+				TransferType:       tc.transferType,
+			}
+			h := hooks.NewHooks(map[string]map[string]any{"hari": {"disabled": true}, "prod": {"disabled": true}})
+			w := NewProcessingWorkflow(h, colsvc, registry, logr.Discard(), Config{ActivityHeartbeatTimeout: time.Minute})
+			ts := &temporalsdk_testsuite.WorkflowTestSuite{}
+			env := ts.NewTestWorkflowEnvironment()
+			// The first real BagIt activity extracts the embedded interpreter.
+			env.SetTestTimeout(time.Minute)
+			env.SetWorkerOptions(temporalsdk_worker.Options{EnableSessionWorker: true})
+			env.RegisterActivityWithOptions(activities.NewAcquirePipelineActivity(registry).Execute,
+				temporalsdk_activity.RegisterOptions{Name: activities.AcquirePipelineActivityName})
+			bundle := activities.NewBundleActivity(validator)
+			validate := activities.NewValidateTransferActivity(validator)
+			var bundleAttempts, validateAttempts atomic.Int32
+			env.RegisterActivityWithOptions(func(ctx context.Context, params *activities.BundleActivityParams) (*activities.BundleActivityResult, error) {
+				bundleAttempts.Add(1)
+				assert.Check(t, params.CheckBagBeforeUnbag == tc.unbag)
+				assert.Check(t, params.RequireBag == (tc.unbag && tc.transferType == "unzipped bag"))
+				return bundle.Execute(ctx, params)
+			}, temporalsdk_activity.RegisterOptions{Name: activities.BundleActivityName})
+			env.RegisterActivityWithOptions(func(ctx context.Context, params *activities.ValidateTransferActivityParams) error {
+				validateAttempts.Add(1)
+				assert.Check(t, params.CheckBagCompleteness)
+				assert.Check(t, params.RequireBag == (tc.transferType == "unzipped bag"))
+				return validate.Execute(ctx, params)
+			}, temporalsdk_activity.RegisterOptions{Name: activities.ValidateTransferActivityName})
+			env.RegisterActivityWithOptions(func(*activities.PublishTransferActivityParams) (*activities.PublishTransferActivityResult, error) {
+				t.Error("invalid bag reached publishing")
+				return nil, temporal.NewNonRetryableError(errors.New("unexpected publishing"))
+			}, temporalsdk_activity.RegisterOptions{Name: activities.PublishTransferActivityName})
+			env.RegisterActivityWithOptions(func(*activities.TransferActivityParams) (*activities.TransferActivityResponse, error) {
+				t.Error("invalid bag reached Archivematica submission")
+				return nil, temporal.NewNonRetryableError(errors.New("unexpected submission"))
+			}, temporalsdk_activity.RegisterOptions{Name: activities.TransferActivityName})
+			env.RegisterActivityWithOptions(activities.NewCleanUpActivity().Execute,
+				temporalsdk_activity.RegisterOptions{Name: activities.CleanUpActivityName})
+
+			var downloadPath, extractedPath string
+			if tc.archive {
+				req.BatchDir = ""
+				req.WatcherName = "watcher"
+				req.IsDir = false
+				file, err := os.CreateTemp(t.TempDir(), "download-*.zip")
+				assert.NilError(t, err)
+				downloadPath = file.Name()
+				archive := zip.NewWriter(file)
+				assert.NilError(t, archive.AddFS(os.DirFS(source.Join("transfer"))))
+				assert.NilError(t, archive.Close())
+				assert.NilError(t, file.Close())
+				env.RegisterActivityWithOptions(func(string, string, string) (string, error) {
+					return downloadPath, nil
+				}, temporalsdk_activity.RegisterOptions{Name: activities.DownloadActivityName})
+				env.RegisterActivityWithOptions(func(ctx context.Context, params *archiveextract.Params) (*archiveextract.Result, error) {
+					result, err := archiveextract.New(archiveextract.Config{}).Execute(ctx, params)
+					if err == nil {
+						extractedPath = result.ExtractPath
+					}
+					return result, err
+				}, temporalsdk_activity.RegisterOptions{Name: archiveextract.Name})
+			}
+			env.ExecuteWorkflow(w.Execute, req)
+			assert.Assert(t, env.IsWorkflowCompleted())
+			assert.ErrorContains(t, env.GetWorkflowError(), "data/.DS_Store")
+			assert.Assert(t, temporal.NonRetryableError(env.GetWorkflowError()))
+			assert.Equal(t, bundleAttempts.Load(), int32(1))
+			if tc.unbag {
+				assert.Equal(t, validateAttempts.Load(), int32(0))
+			} else {
+				assert.Equal(t, validateAttempts.Load(), int32(1))
+			}
+			_, inUse := p.Capacity()
+			assert.Equal(t, inUse, int64(0))
+			_, err = os.Stat(source.Join("transfer", "data", "hello world.txt"))
+			assert.NilError(t, err)
+			if !tc.inPlace {
+				_, err = os.Stat(source.Join("transfer", "data", ".DS_Store"))
+				assert.NilError(t, err)
+				entries, err := os.ReadDir(transferDir)
+				assert.NilError(t, err)
+				assert.Equal(t, len(entries), 0)
+			}
+			if tc.archive {
+				assert.Assert(t, extractedPath != "")
+				for _, path := range []string{downloadPath, extractedPath} {
+					_, err := os.Stat(path)
+					assert.ErrorIs(t, err, os.ErrNotExist)
+				}
+			}
+		})
+	}
+}
+
+func TestSessionHandlerBagValidationGuard(t *testing.T) {
+	for _, tc := range []struct {
+		name      string
+		version   temporalsdk_workflow.Version
+		checksums bool
+		submitted bool
+		published bool
+		unbag     bool
+	}{
+		{name: "old history", version: temporalsdk_workflow.DefaultVersion},
+		{name: "old history with checksum check", version: temporalsdk_workflow.DefaultVersion, checksums: true},
+		{name: "already submitted with checksum check", version: 1, checksums: true, submitted: true},
+		{name: "already published", version: 1, published: true},
+		{name: "unbagged with checksum check", version: 1, checksums: true, unbag: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			colsvc := collectionfake.NewMockService(gomock.NewController(t))
+			w := NewProcessingWorkflow(nil, colsvc, nil, logr.Discard(), Config{ActivityHeartbeatTimeout: time.Minute})
+			ts := &temporalsdk_testsuite.WorkflowTestSuite{}
+			env := ts.NewTestWorkflowEnvironment()
+			env.SetWorkerOptions(temporalsdk_worker.Options{EnableSessionWorker: true})
+			registerWorkflowActivityStubs(env)
+			env.RegisterActivityWithOptions(func(*activities.ValidateTransferActivityParams) error {
+				return temporal.NewNonRetryableError(errors.New("unexpected transfer validation"))
+			}, temporalsdk_activity.RegisterOptions{Name: activities.ValidateTransferActivityName})
+			env.OnGetVersion("reject-incomplete-bags", temporalsdk_workflow.DefaultVersion, 1).Return(tc.version).Once()
+			env.OnActivity(setStatusInProgressLocalActivity, mock.Anything, mock.Anything, uint(12345), mock.Anything).Return(nil).Once()
+			env.OnActivity(releasePipelineLocalActivity, mock.Anything, mock.Anything, "pipeline").Return(nil).Once()
+
+			path := t.TempDir()
+			validationConfig := validation.Config{ChecksumsCheckEnabled: tc.checksums}
+			if tc.checksums {
+				env.OnActivity(activities.ValidateTransferActivityName, &activities.ValidateTransferActivityParams{
+					Config: validationConfig,
+					Path:   path,
+				}).Return(nil).Once()
+			}
+			wantErr := "submission reached"
+			if tc.submitted {
+				wantErr = "polling reached"
+				env.OnActivity(updatePackageLocalActivity, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+				env.OnActivity(activities.PollTransferActivityName, mock.Anything).
+					Return("", temporal.NewNonRetryableError(errors.New(wantErr))).Once()
+			} else {
+				env.OnActivity(activities.TransferActivityName, mock.MatchedBy(func(params *activities.TransferActivityParams) bool {
+					return params.TransferType == "unzipped bag"
+				})).
+					Return(nil, temporal.NewNonRetryableError(errors.New(wantErr))).Once()
+			}
+			env.ExecuteWorkflow(func(ctx temporalsdk_workflow.Context) error {
+				activityOpts := temporalsdk_workflow.WithActivityOptions(ctx, temporalsdk_workflow.ActivityOptions{StartToCloseTimeout: time.Minute})
+				sessCtx, err := temporalsdk_workflow.CreateSession(activityOpts, &temporalsdk_workflow.SessionOptions{
+					CreationTimeout: time.Minute, ExecutionTimeout: time.Hour, HeartbeatTimeout: time.Minute,
+				})
+				if err != nil {
+					return err
+				}
+				tinfo := &TransferInfo{
+					CollectionID:   12345,
+					PipelineName:   "pipeline",
+					PipelineConfig: &pipeline.Config{Unbag: tc.unbag},
+					TransferType:   "unzipped bag",
+					Bundle:         activities.BundleActivityResult{FullPath: path},
+				}
+				if tc.submitted {
+					tinfo.TransferID = "existing-transfer"
+				}
+				if tc.published {
+					tinfo.PipelineConfig.TransferPublisher.Type = "sftp"
+					tinfo.PublishedTransfer.RelPath = "published/key"
+				}
+				return w.SessionHandler(sessCtx, 1, tinfo, nha.NameInfo{}, validationConfig, NewTimer(), nil, &collection.ProcessingWorkflowRequest{})
+			})
+			assert.ErrorContains(t, env.GetWorkflowError(), wantErr)
+			env.AssertExpectations(t)
+		})
+	}
 }
 
 func buildHooks(t *testing.T, ctrl *gomock.Controller) *hooks.Hooks {

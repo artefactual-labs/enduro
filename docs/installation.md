@@ -90,6 +90,13 @@ more about the configuration details [here](./configuration-reference.md).
 Review the [Security Configuration](./security-configuration.md) guide before
 exposing Enduro to operators.
 
+On Linux, bag validation runs an embedded Python interpreter that requires
+glibc. The worker extracts it into the system temporary directory on the first
+bag check. The Enduro user must be able to write and execute files there. If the
+default directory is mounted `noexec`, set `TMPDIR` to one that permits
+execution. The release container supplies glibc. Its temporary directory
+requirements are in the [container guide].
+
 Before upgrading, follow the [Enduro upgrade procedure] to ensure that all
 Enduro Workflow Executions are closed. By default, Enduro applies pending
 database migrations automatically when it starts. See

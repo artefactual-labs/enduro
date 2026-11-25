@@ -95,9 +95,74 @@ configuration section](./configuration-reference.md#watcher) for more details.
   the transfers have finished processing and the AIP has been placed in archival
   storage, however, the transfers will no longer be visible in the transfer and
   ingest tabs. Enduro has cleared them out of those tabs in order to ensure that
-  the tabs don't get cluttered. However, if an error has occurred and the Enduro
-  Collections tab shows a status of ERROR, the failed transfer remains visible
-  in the transfer and/or ingest tabs (depending on which micro-service failed).
+  the tabs don't get cluttered. If a transfer fails in Archivematica, it can
+  remain visible there in the Transfer or Ingest tab. Failures before
+  submission, such as a bag check failure, appear in Enduro.
+
+### Processing BagIt transfers
+
+[Archivematica can ingest bags directly]. Enduro checks bag directories in batch
+imports and bags extracted from watched archives. It checks that the files
+listed in the manifests are still present after filtering.
+
+Choose **Unzipped bag** for a source that should always send bags, or
+**Standard** for a source that also sends ordinary folders. If your
+Archivematica workflow expects the standard transfer layout, choose **Standard**
+and enable `unbag` on the pipeline.
+
+#### Choosing a transfer type
+
+- **Watched folders** use the `transferType` in their
+  [filesystem watcher settings]. Set it in the matching `[[watcher.filesystem]]`
+  entry in `enduro.toml` for all transfers from that watcher.
+- **Batch imports** use the **Transfer type** field on the **Batch import**
+  form. Choose it for each batch. Leaving it blank uses **Standard**.
+
+Use **Unzipped bag** when every transfer from the watcher or batch should be a
+bag. Enduro reports a missing `bagit.txt` at the transfer root as a bag check
+failure. Leave `unbag` off to send the bag intact and let Archivematica process
+it as an unzipped bag. This lets Archivematica use the fields in
+[`bag-info.txt` as source metadata].
+
+Use **Standard** when the same watcher or batch also handles ordinary folders or
+files. A `bagit.txt` at the transfer root tells Enduro to check the folder as a
+bag before sending it as **Standard**. Ordinary folders skip the bag check.
+
+#### Bag checks before submission
+
+For batch imports, supply bags as unpacked directories to have Enduro check them
+before submission.
+
+Keep hidden-file filtering off when a bag's manifest lists hidden files. If a
+batch source is already in the pipeline's transfer directory, filtering can
+remove files from the source itself.
+
+Enduro compares the files with the manifests after filtering hidden files and
+before publishing the transfer or sending it to Archivematica. This checks which
+files are present. Enduro verifies file contents against their checksums when it
+unbags a transfer. If filtering removes a listed file such as `data/.DS_Store`,
+Enduro marks the collection **ERROR** and frees its pipeline slot.
+
+Each item in a batch has its own workflow. A failed bag check affects that
+collection, and the other items in the batch continue processing.
+
+Open the collection's **Workflow** tab for the reason and, when available,
+counts of missing and unexpected files and up to ten example paths. If the
+source bag was incomplete, correct it and retry the collection.
+
+**Retry** uses the original transfer and filtering settings. If filtering
+removed a required file, restore it at the source if needed and submit the
+affected bag again with **Exclude hidden files** cleared for the batch, or
+`excludeHiddenFiles = false` for the watcher.
+
+#### Converting bags for Archivematica
+
+Bag conversion is a pipeline setting. Set [`unbag`] to `true` in the
+`[[pipeline]]` entry in `enduro.toml` for the pipeline that receives the watched
+transfer or batch.
+
+Enduro verifies the bag's checksums before converting it. Choose **Standard** to
+send the converted directory to Archivematica.
 
 ### Viewing a transfer's processing configuration
 
@@ -276,5 +341,9 @@ Common entry points:
 - [Recovery Guide](./user-manual-recovery.md)
 - [Example `enduro.toml`](https://github.com/artefactual-labs/enduro/blob/main/enduro.toml)
 
+[archivematica can ingest bags directly]: https://www.archivematica.org/en/docs/archivematica-1.18/user-manual/transfer/bags/
+[`bag-info.txt` as source metadata]: https://www.archivematica.org/en/docs/archivematica-1.18/user-manual/transfer/bags/#index-and-search-bag-metadata
+[filesystem watcher settings]: ./configuration-reference.md#watcherfilesystem
 [Live updates behind proxies]: ./installation.md#live-updates-behind-proxies
 [pipeline processing configuration]: ./configuration-reference.md#processingconfig
+[`unbag`]: ./configuration-reference.md#unbag-boolean

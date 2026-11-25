@@ -15,10 +15,9 @@ is required. The existing Linux AMD64 archive remains available with its
 original layout; ARM64 is added for containers only.
 
 The image includes the Enduro binary, embedded web interface and database
-migrations, CA certificates, timezone data, and license. It uses the same pinned
-Chainguard static base as depbot and runs as UID/GID `65532:65532`. There is no
-shell or package manager. Enduro is the entrypoint and receives container stop
-signals directly.
+migrations, CA certificates, timezone data, and license. The Chainguard base
+provides glibc for the embedded Python BagIt validator. Enduro runs as UID/GID
+`65532:65532` and receives container stop signals directly.
 
 ## Run a release image
 
@@ -85,20 +84,20 @@ docker run --rm --name enduro \
   --mount type=bind,src=/srv/enduro/enduro.toml,dst=/etc/enduro/enduro.toml,readonly \
   --mount type=bind,src=/srv/enduro/processing,dst=/var/lib/enduro/processing \
   --mount type=bind,src=/srv/enduro/transfers,dst=/var/lib/enduro/transfers \
-  --read-only --tmpfs /tmp:rw,nosuid,nodev,mode=1777 \
+  --read-only --tmpfs /tmp:rw,exec,nosuid,nodev,mode=1777 \
   --cap-drop ALL --security-opt no-new-privileges \
   ghcr.io/artefactual-labs/enduro:vX.Y.Z
 ```
 
-The example binds the host port to loopback; expose Enduro through your
-configured reverse proxy and authentication setup. `/tmp` is required for
-temporary files. If `processingDir` is empty, Enduro also uses the temporary
-directory for processing; provide sufficient capacity for the expected packages.
-Mount any additional writable paths enabled by your configuration.
-`/home/nonroot` is the default home and working directory; with a read-only root
-filesystem, add a writable mount there only if your configuration needs it. A
-deployment can override the user, provided its mounted files and directories
-have matching permissions.
+The example binds the host port to loopback. Expose Enduro through your
+configured reverse proxy and authentication setup. The worker extracts the
+embedded BagIt validator on its first bag check. Its temporary directory must
+allow the worker to write and execute files. If `processingDir` is empty,
+provide enough temporary space for the packages as well. Mount any additional
+writable paths enabled by your configuration. `/home/nonroot` is the default
+home and working directory. With a read-only root filesystem, add a writable
+mount there only if your configuration needs it. A deployment can override the
+user, provided its mounted files and directories have matching permissions.
 
 Database migrations are embedded and run at startup by default. Follow the
 [upgrade procedure] before upgrading an existing deployment.
