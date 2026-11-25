@@ -60,6 +60,40 @@ func TestProdActivity(t *testing.T) {
 }
 `,
 		},
+		"DPJ parent comes from the bag payload": {
+			params: UpdateProductionSystemActivityParams{
+				StoredAt:     time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
+				PipelineName: "foo-bar-001",
+				NameInfo: nha.NameInfo{
+					Identifier: "aa1df25d-1477-4085-8be3-a17fed20f843",
+					Type:       nha.TransferTypeDPJ,
+				},
+			},
+			dirOpts: []fs.PathOp{
+				fs.WithFile("bagit.txt", "BagIt-Version: 1.0\nTag-File-Character-Encoding: UTF-8\n"),
+				fs.WithDir("DPJ/journal", fs.WithFile("avlxml.xml", "<tag/>")),
+				fs.WithDir("metadata", fs.WithFile("identifiers.json", "[]")),
+				fs.WithDir("data/objects/DPJ/journal"),
+				fs.WithFile("data/objects/DPJ/journal/avlxml.xml", "<xml/>"),
+				fs.WithDir("data/metadata"),
+				fs.WithFile("data/metadata/identifiers.json", `[{
+					"file": "objects/DPJ/journal/avlxml.xml",
+					"identifiers": [{
+						"identifierType": "avleveringsidentifikator",
+						"identifier": "3.15.578.1.39.120.11.9896.12"
+					}]
+				}]`),
+			},
+			wantContent: `{
+  "identifier": "aa1df25d-1477-4085-8be3-a17fed20f843",
+  "type": "dpj",
+  "accepted": true,
+  "message": "Package was processed by Archivematica pipeline foo-bar-001",
+  "timestamp": "2009-11-10T23:00:00Z",
+  "parent": "3.15.578.1.39.120.11.9896.12"
+}
+`,
+		},
 		"Receipt does not include parentID in AVLXML SIP": {
 			params: UpdateProductionSystemActivityParams{
 				StoredAt:     time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),

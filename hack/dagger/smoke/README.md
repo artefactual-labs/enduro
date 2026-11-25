@@ -16,11 +16,13 @@ export. It can import a production image archive, pull an immutable registry
 reference, or build Enduro from source with Go binary coverage instrumentation.
 The tests own the user-visible scenarios:
 
-- submit a zip through the filesystem watcher,
-- recover a failed production-system receipt with an operator decision,
-- submit a directory through the Nuxt batch-import form with an explicit
-  processing configuration distinct from the pipeline default and verify that
-  the collection API and dashboard show the selected name,
+- submit an AVLXML ZIP through the filesystem watcher, inspect the XML sent to a
+  recording HARI service, and retry a failed PROD delivery without resending the
+  successful HARI receipt,
+- submit an intact DPJ bag through the Nuxt batch-import form, retry a failed
+  HARI request, and verify both receipts identify the original parent,
+- select an explicit processing configuration distinct from the pipeline default
+  and verify that the collection API and dashboard show the selected name,
 - wait for Enduro collections to complete,
 - download each generated AIP and inspect its METS file,
 - retrieve the completed filesystem transfer's trace from LGTM and check its
