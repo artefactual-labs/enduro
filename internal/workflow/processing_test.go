@@ -2074,7 +2074,7 @@ func TestProcessingWorkflowRejectsIncompleteBag(t *testing.T) {
 			env.SetWorkerOptions(temporalsdk_worker.Options{EnableSessionWorker: true})
 			env.RegisterActivityWithOptions(activities.NewAcquirePipelineActivity(registry).Execute,
 				temporalsdk_activity.RegisterOptions{Name: activities.AcquirePipelineActivityName})
-			bundle := activities.NewBundleActivity(validator)
+			bundle := activities.NewBundleActivity(nil, validator)
 			validate := activities.NewValidateTransferActivity(validator)
 			var bundleAttempts, validateAttempts atomic.Int32
 			env.RegisterActivityWithOptions(func(ctx context.Context, params *activities.BundleActivityParams) (*activities.BundleActivityResult, error) {

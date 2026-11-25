@@ -629,7 +629,7 @@ func registerWorker(
 	w.RegisterActivityWithOptions(activities.NewAcquirePipelineActivity(pipelineRegistry).Execute, temporalsdk_activity.RegisterOptions{Name: activities.AcquirePipelineActivityName})
 	w.RegisterActivityWithOptions(activities.NewDownloadActivity(h, pipelineRegistry, wsvc).Execute, temporalsdk_activity.RegisterOptions{Name: activities.DownloadActivityName})
 	w.RegisterActivityWithOptions(archiveextract.New(config.ExtractActivity).Execute, temporalsdk_activity.RegisterOptions{Name: archiveextract.Name})
-	w.RegisterActivityWithOptions(activities.NewBundleActivity(bags).Execute, temporalsdk_activity.RegisterOptions{Name: activities.BundleActivityName})
+	w.RegisterActivityWithOptions(activities.NewBundleActivity(wsvc, bags).Execute, temporalsdk_activity.RegisterOptions{Name: activities.BundleActivityName})
 	w.RegisterActivityWithOptions(activities.NewValidateTransferActivity(bags).Execute, temporalsdk_activity.RegisterOptions{Name: activities.ValidateTransferActivityName})
 	w.RegisterActivityWithOptions(activities.NewPublishTransferActivity(pipelineRegistry).Execute, temporalsdk_activity.RegisterOptions{Name: activities.PublishTransferActivityName})
 	w.RegisterActivityWithOptions(activities.NewCleanUpPublishedTransferActivity(pipelineRegistry).Execute, temporalsdk_activity.RegisterOptions{Name: activities.CleanUpPublishedActivityName})

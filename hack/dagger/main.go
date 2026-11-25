@@ -262,6 +262,7 @@ func (m *Enduro) StartupTest(ctx context.Context,
 	cacheBuster := fmt.Sprintf("startup-%d", time.Now().UnixNano())
 	// Share the staged files with the test endpoint so it can inspect exactly
 	// what Enduro hands off to Archivematica.
+	watched := dag.CacheVolume(cacheBuster + "-watched")
 	transfers := dag.CacheVolume(cacheBuster + "-transfers")
 	transferMount := dagger.ContainerWithMountedCacheOpts{Owner: "65532:65532"}
 	pipeline := dag.Container().From(nodeImage).
@@ -286,7 +287,7 @@ func (m *Enduro) StartupTest(ctx context.Context,
 		WithServiceBinding("temporal", temporal).
 		WithServiceBinding("pipeline", pipeline).
 		WithEnvVariable("E2E_CACHE_BUSTER", cacheBuster).
-		WithDirectory("/runtime/watched", dag.Directory(), dagger.ContainerWithDirectoryOpts{Owner: "65532:65532"}).
+		WithMountedCache("/runtime/watched", watched, transferMount).
 		WithMountedCache("/runtime/transfers", transfers, transferMount).
 		WithDirectory("/runtime/batch", dag.Directory().
 			WithDirectory("filtered/incomplete", bag).
@@ -308,6 +309,10 @@ taskQueue = "global"
 name = "startup"
 path = "/runtime/watched"
 inotify = true
+pipeline = "startup"
+ignore = '\.part$'
+transferType = "unzipped bag"
+excludeHiddenFiles = true
 [[pipeline]]
 id = "e1b9a096-c3ca-4ee2-9010-7b76ba37d318"
 name = "startup"
@@ -330,6 +335,8 @@ disabled = true
 	tester := dag.Container().From(nodeImage).WithServiceBinding("enduro", service).
 		WithServiceBinding("pipeline", pipeline).
 		WithEnvVariable("E2E_CACHE_BUSTER", cacheBuster).
+		WithMountedCache("/runtime/watched", watched, transferMount).
+		WithDirectory("/fixture", bag).
 		WithFile("/startup.mjs", source.File("hack/dagger/smoke/startup.mjs")).
 		WithExec([]string{"node", "/startup.mjs"})
 	if _, err := tester.Stdout(ctx); err != nil {
@@ -625,7 +632,7 @@ func (m *Enduro) runSmokeSuite(ctx context.Context, env *smokeEnvironment) (*dag
 		WithEnvVariable("BATCH_DIR", "/runtime/batch").
 		WithEnvVariable("RECEIPTS_DIR", "/runtime/receipts/out").
 		WithEnvVariable("ARTIFACTS_DIR", "/artifacts").
-		WithEnvVariable("EXPECTED_PROCESSING_WORKFLOWS", "2").
+		WithEnvVariable("EXPECTED_PROCESSING_WORKFLOWS", "3").
 		WithEnvVariable("VERIFY_BATCH_WORKFLOW", "true").
 		WithFile("/usr/local/bin/temporal", temporalCLI, dagger.ContainerWithFileOpts{
 			Permissions: 0o755,
@@ -733,7 +740,7 @@ func (m *Enduro) resetRuntime(ctx context.Context, volumes runtimeVolumes, cache
 		WithMountedCache("/runtime/coverage", volumes.coverage).
 		WithExec([]string{"sh", "-ceu", strings.TrimSpace(`
 			rm -rf /runtime/batch/* /runtime/watched/* /runtime/completed/* /runtime/transfers/* /runtime/processing/* /runtime/receipts/* /runtime/storage/* /runtime/coverage/*
-			mkdir -p /runtime/batch /runtime/watched /runtime/completed /runtime/transfers /runtime/processing /runtime/receipts /runtime/storage /runtime/coverage/raw
+			mkdir -p /runtime/batch /runtime/watched/bags.part /runtime/completed /runtime/transfers /runtime/processing /runtime/receipts /runtime/storage /runtime/coverage/raw
 			chown -R 65532:65532 /runtime
 		`)})
 
@@ -1227,6 +1234,15 @@ stripTopLevelDir = true
 rejectDuplicates = false
 excludeHiddenFiles = false
 transferType = "standard"
+
+[[watcher.filesystem]]
+name = "e2e-bags"
+path = "/runtime/watched/bags.part"
+inotify = true
+pipeline = "ambox"
+ignore = '\.part$'
+transferType = "unzipped bag"
+excludeHiddenFiles = false
 
 [[pipeline]]
 name = "ambox"

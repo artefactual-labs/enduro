@@ -23,6 +23,8 @@ The tests own the user-visible scenarios:
   HARI request, and verify both receipts identify the original parent,
 - select an explicit processing configuration distinct from the pipeline default
   and verify that the collection API and dashboard show the selected name,
+- deliver an unpacked bag through a filesystem watcher and verify the nested
+  original file in the downloaded AIP,
 - wait for Enduro collections to complete,
 - download each generated AIP and inspect its METS file,
 - retrieve the completed filesystem transfer's trace from LGTM and check its
@@ -113,10 +115,15 @@ make container-startup
 
 This imports the native archive from `dist/containers` and checks database
 migrations, the API, embedded dashboard assets, and shutdown with MySQL and
-Temporal. CI runs startup acceptance on native AMD64 and ARM64. Full acceptance
-also runs the main Archivematica, SeaweedFS, and argmin image suites on AMD64.
-Snapshot jobs receive archives without registry credentials; release jobs test
-the candidate by immutable digest. A separate source-built smoke suite collects
+Temporal. It also drops an unpacked bag into a watcher with hidden-file
+filtering enabled and checks the missing manifest entry in the workflow history,
+zero submissions to the test pipeline, and preservation of the original dotfile.
+A mixed batch then checks that the incomplete collection fails while its valid
+sibling completes on the same single-slot pipeline.
+CI runs startup acceptance on native AMD64 and ARM64. Full acceptance also runs
+the main Archivematica, SeaweedFS, and argmin image suites on AMD64. Snapshot
+jobs receive archives without registry credentials; release jobs test the
+candidate by immutable digest. A separate source-built smoke suite collects
 coverage. CI reuses one frontend build for the snapshot images and the coverage
 build.
 

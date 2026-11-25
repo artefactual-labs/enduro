@@ -59,7 +59,7 @@ func checkStagedBag(ctx context.Context, path string, required bool, check func(
 		return false, nil
 	}
 	if err == nil && info.Mode()&os.ModeSymlink != 0 {
-		info, err = resolveBagLink(root, marker)
+		info, err = resolveTransferLink(root, marker)
 		if err != nil {
 			return false, err
 		}
@@ -73,26 +73,7 @@ func checkStagedBag(ctx context.Context, path string, required bool, check func(
 
 	// The validator opens paths by name, including manifests and data/.
 	// Walk without following links and check their targets through the root.
-	if err := fs.WalkDir(root.FS(), ".", func(name string, entry fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		if err := ctx.Err(); err != nil {
-			return err
-		}
-		mode := entry.Type()
-		if mode&fs.ModeSymlink != 0 {
-			info, err := resolveBagLink(root, name)
-			if err != nil {
-				return err
-			}
-			mode = info.Mode()
-		}
-		if !mode.IsRegular() && !mode.IsDir() {
-			return temporal.NewNonRetryableError(fmt.Errorf("unsupported file type in transfer: %q", name))
-		}
-		return nil
-	}); err != nil {
+	if err := checkTransferLinks(ctx, root); err != nil {
 		return false, err
 	}
 
@@ -105,7 +86,30 @@ func checkStagedBag(ctx context.Context, path string, required bool, check func(
 	return true, nil
 }
 
-func resolveBagLink(root *os.Root, name string) (fs.FileInfo, error) {
+func checkTransferLinks(ctx context.Context, root *os.Root) error {
+	return fs.WalkDir(root.FS(), ".", func(name string, entry fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+		mode := entry.Type()
+		if mode&fs.ModeSymlink != 0 {
+			info, err := resolveTransferLink(root, name)
+			if err != nil {
+				return err
+			}
+			mode = info.Mode()
+		}
+		if !mode.IsRegular() && !mode.IsDir() {
+			return temporal.NewNonRetryableError(fmt.Errorf("unsupported file type in transfer: %q", name))
+		}
+		return nil
+	})
+}
+
+func resolveTransferLink(root *os.Root, name string) (fs.FileInfo, error) {
 	info, err := root.Stat(name)
 	if err == nil {
 		return info, nil
@@ -114,7 +118,7 @@ func resolveBagLink(root *os.Root, name string) (fs.FileInfo, error) {
 	// Preserve retries for filesystem I/O errors.
 	var errno syscall.Errno
 	if !errors.As(err, &errno) || errors.Is(err, os.ErrNotExist) || errors.Is(err, syscall.ELOOP) || errors.Is(err, syscall.ENOTDIR) {
-		return nil, temporal.NewNonRetryableError(fmt.Errorf("BagIt link %q must resolve inside the transfer: %w", name, err))
+		return nil, temporal.NewNonRetryableError(fmt.Errorf("link %q must resolve inside the transfer: %w", name, err))
 	}
 	return nil, err
 }
