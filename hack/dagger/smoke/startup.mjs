@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdir, writeFile } from "node:fs/promises";
+import { cp, mkdir, readFile, rename, writeFile } from "node:fs/promises";
 
 const base = "http://enduro:9000";
 const pipeline = "http://pipeline:8080";
@@ -56,15 +56,25 @@ for (const [, asset] of assets) {
   assert.ok((await response.arrayBuffer()).byteLength > 0, asset);
 }
 
-// Stage a bag with a manifest-listed dotfile. Its workflow history records
-// the missing file if filtering ran before the embedded validator.
+async function assertRejectedBag(name) {
+  const collection = await waitForCollection(name, (item) => item.status === "error");
+  const history = await (await get(`/collection/${collection.id}/workflow`)).json();
+  const historyText = JSON.stringify(history);
+  assert.match(historyText, /BagIt validation failed/);
+  assert.match(historyText, /data\/\.DS_Store/);
+  assert.ok(!collection.transfer_id, "incomplete bag must not be submitted");
+  return history;
+}
+
+// Rename a complete directory on the shared mount to trigger one watcher event.
+await cp("/fixture", "/runtime/watched/drop.part", { recursive: true });
+await rename("/runtime/watched/drop.part", "/runtime/watched/drop");
+const watcherHistory = await assertRejectedBag("drop");
+assert.deepEqual(await (await get("/submissions", pipeline)).json(), []);
+assert.equal(await readFile("/runtime/watched/drop/data/.DS_Store", "utf8"), "");
+
 await submitBag("filtered", true);
-const collection = await waitForCollection("incomplete", (item) => item.status === "error");
-const history = await (await get(`/collection/${collection.id}/workflow`)).json();
-const historyText = JSON.stringify(history);
-assert.match(historyText, /BagIt validation failed/);
-assert.match(historyText, /data\/\.DS_Store/);
-assert.ok(!collection.transfer_id, "incomplete bag must not be submitted");
+const history = await assertRejectedBag("incomplete");
 const sibling = await waitForCollection("sibling", (item) => ["done", "error"].includes(item.status));
 assert.equal(sibling.status, "done");
 assert.deepEqual((await (await get("/submissions", pipeline)).json()).map((s) => [s.name, s.type]), [
@@ -88,6 +98,7 @@ assert.deepEqual(submissions[1], {
 assert.equal(intact.transfer_id, "71bd0ab3-e496-4ec0-9146-048abf471df4");
 
 await mkdir("/artifacts", { recursive: true });
+await writeFile("/artifacts/watcher-bag-history.json", JSON.stringify(watcherHistory, null, 2) + "\n");
 await writeFile("/artifacts/bag-history.json", JSON.stringify(history, null, 2) + "\n");
 await writeFile("/artifacts/bag-submission.json", JSON.stringify(submissions[1], null, 2) + "\n");
 await writeFile("/artifacts/startup.json", JSON.stringify({

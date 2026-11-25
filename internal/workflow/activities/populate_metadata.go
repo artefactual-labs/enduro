@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/artefactual-labs/enduro/internal/pipeline"
 )
@@ -30,25 +29,29 @@ func (a *PopulateMetadataActivity) Execute(ctx context.Context, params *Populate
 		return errors.New("unexpected parameters")
 	}
 
-	path := filepath.Join(params.Path, "metadata")
-	err := os.MkdirAll(path, 0o755)
+	root, err := os.OpenRoot(params.Path)
+	if err != nil {
+		return err
+	}
+	defer root.Close()
+
+	err = root.MkdirAll("metadata", 0o755)
 	if err != nil {
 		return err
 	}
 
-	path = filepath.Join(path, "metadata.csv")
-	f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0o664)
+	f, err := root.OpenFile("metadata/metadata.csv", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0o664)
 	if err != nil {
 		return fmt.Errorf("it was not possible to open the metadata file: %v", err)
 	}
 
 	csvw := csv.NewWriter(f)
-	_ = csvw.WriteAll(
+	err = csvw.WriteAll(
 		[][]string{
 			{"parts", "dc.identifier"},
 			{"objects", params.Identifier},
 		},
 	)
 
-	return csvw.Error()
+	return errors.Join(err, f.Close())
 }

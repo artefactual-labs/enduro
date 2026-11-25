@@ -790,6 +790,9 @@ func (w *ProcessingWorkflow) prepareBundle(sessCtx temporalsdk_workflow.Context,
 			BatchDir:           tinfo.BatchDir,
 			Unbag:              tinfo.PipelineConfig.Unbag,
 		}
+		if tinfo.IsDir && tinfo.BatchDir == "" && tinfo.TempFile == "" {
+			params.WatcherName = tinfo.WatcherName
+		}
 		if options != nil {
 			params.CheckBagBeforeUnbag = options.checkBagBeforeUnbag
 			params.RequireBag = options.requireBag

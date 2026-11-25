@@ -1,6 +1,8 @@
 package activities
 
 import (
+	"crypto/sha256"
+	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -8,16 +10,33 @@ import (
 	"syscall"
 	"testing"
 
+	bagit "github.com/artefactual-labs/bagit-gython"
 	temporalsdk_testsuite "go.temporal.io/sdk/testsuite"
 	"gotest.tools/v3/assert"
 	"gotest.tools/v3/fs"
+
+	"github.com/artefactual-labs/enduro/internal/temporal"
+	"github.com/artefactual-labs/enduro/internal/watcher"
 )
 
 func TestBundleActivity(t *testing.T) {
 	t.Parallel()
 
+	t.Run("a staging directory inside the input is cleaned up", func(t *testing.T) {
+		source := t.TempDir()
+		destination := filepath.Join(source, "transfers")
+		assert.NilError(t, os.Mkdir(destination, 0o700))
+		_, err := NewBundleActivity(nil, nil).Execute(t.Context(), &BundleActivityParams{
+			TempFile: source, TransferDir: destination, IsDir: true,
+		})
+		assert.ErrorContains(t, err, "cannot stage a transfer inside its source directory")
+		items, err := os.ReadDir(destination)
+		assert.NilError(t, err)
+		assert.Equal(t, len(items), 0)
+	})
+
 	t.Run("Excludes hidden files", func(t *testing.T) {
-		activity := NewBundleActivity(nil)
+		activity := NewBundleActivity(nil, nil)
 		ts := &temporalsdk_testsuite.WorkflowTestSuite{}
 		env := ts.NewTestActivityEnvironment()
 		env.RegisterActivity(activity.Execute)
@@ -63,7 +82,7 @@ func TestBundleActivity(t *testing.T) {
 	})
 
 	t.Run("Remove hidden files when BatchDir is a subfolder of the TransferDir", func(t *testing.T) {
-		activity := NewBundleActivity(nil)
+		activity := NewBundleActivity(nil, nil)
 		ts := &temporalsdk_testsuite.WorkflowTestSuite{}
 		env := ts.NewTestActivityEnvironment()
 		env.RegisterActivity(activity.Execute)
@@ -108,7 +127,7 @@ func TestBundleActivity(t *testing.T) {
 	})
 
 	t.Run("Reuses batch transfer when BatchDir is a filesystem alias of TransferDir", func(t *testing.T) {
-		activity := NewBundleActivity(nil)
+		activity := NewBundleActivity(nil, nil)
 		ts := &temporalsdk_testsuite.WorkflowTestSuite{}
 		env := ts.NewTestActivityEnvironment()
 		env.RegisterActivity(activity.Execute)
@@ -154,7 +173,7 @@ func TestBundleActivity(t *testing.T) {
 	})
 
 	t.Run("Reuses batch transfer when BatchDir is a filesystem alias of a TransferDir subdirectory", func(t *testing.T) {
-		activity := NewBundleActivity(nil)
+		activity := NewBundleActivity(nil, nil)
 		ts := &temporalsdk_testsuite.WorkflowTestSuite{}
 		env := ts.NewTestActivityEnvironment()
 		env.RegisterActivity(activity.Execute)
@@ -200,7 +219,7 @@ func TestBundleActivity(t *testing.T) {
 	})
 
 	t.Run("Copies batch transfer when BatchDir is outside TransferDir", func(t *testing.T) {
-		activity := NewBundleActivity(nil)
+		activity := NewBundleActivity(nil, nil)
 		ts := &temporalsdk_testsuite.WorkflowTestSuite{}
 		env := ts.NewTestActivityEnvironment()
 		env.RegisterActivity(activity.Execute)
@@ -238,7 +257,7 @@ func TestBundleActivity(t *testing.T) {
 	})
 
 	t.Run("Bundles batch file when BatchDir is outside TransferDir", func(t *testing.T) {
-		activity := NewBundleActivity(nil)
+		activity := NewBundleActivity(nil, nil)
 		ts := &temporalsdk_testsuite.WorkflowTestSuite{}
 		env := ts.NewTestActivityEnvironment()
 		env.RegisterActivity(activity.Execute)
@@ -276,7 +295,7 @@ func TestBundleActivity(t *testing.T) {
 			t.Skip("chmod permissions are not portable on Windows")
 		}
 
-		activity := NewBundleActivity(nil)
+		activity := NewBundleActivity(nil, nil)
 		ts := &temporalsdk_testsuite.WorkflowTestSuite{}
 		env := ts.NewTestActivityEnvironment()
 		env.RegisterActivity(activity.Execute)
@@ -327,7 +346,7 @@ func TestBundleActivity(t *testing.T) {
 	})
 
 	t.Run("Removes hidden directories recursively", func(t *testing.T) {
-		activity := NewBundleActivity(nil)
+		activity := NewBundleActivity(nil, nil)
 		ts := &temporalsdk_testsuite.WorkflowTestSuite{}
 		env := ts.NewTestActivityEnvironment()
 		env.RegisterActivity(activity.Execute)
@@ -368,6 +387,89 @@ func TestBundleActivity(t *testing.T) {
 		)
 		assert.Equal(t, res.FullPath, sipSourceDir)
 	})
+}
+
+func TestBundleWatchedDirectory(t *testing.T) {
+	watched := t.TempDir()
+	nested := filepath.Join(watched, "transfer", "nested")
+	assert.NilError(t, os.MkdirAll(nested, 0o755))
+	assert.NilError(t, os.WriteFile(filepath.Join(nested, "a file.txt"), []byte("good"), 0o600))
+	assert.NilError(t, os.Symlink("a file.txt", filepath.Join(nested, "alias.txt")))
+	assert.NilError(t, os.Symlink("transfer", filepath.Join(watched, "inside")))
+	assert.NilError(t, os.Symlink(t.TempDir(), filepath.Join(watched, "outside")))
+	svc, err := watcher.New(t.Context(), &watcher.Config{
+		Filesystem: []*watcher.FilesystemConfig{{Name: "drop", Path: watched}},
+	})
+	assert.NilError(t, err)
+	activity := NewBundleActivity(svc, nil)
+	params := &BundleActivityParams{WatcherName: "drop", Key: "inside", IsDir: true, TransferDir: t.TempDir()}
+	result, err := activity.Execute(t.Context(), params)
+	assert.NilError(t, err)
+	content, err := os.ReadFile(filepath.Join(result.FullPath, "nested", "a file.txt"))
+	assert.NilError(t, err)
+	assert.Equal(t, string(content), "good")
+
+	target, err := os.Readlink(filepath.Join(result.FullPath, "nested", "alias.txt"))
+	assert.NilError(t, err)
+	assert.Equal(t, target, "a file.txt")
+
+	assert.NilError(t, os.Symlink(t.TempDir(), filepath.Join(nested, "external")))
+	params.TransferDir = t.TempDir()
+	_, err = activity.Execute(t.Context(), params)
+	assert.ErrorContains(t, err, "must resolve inside the transfer")
+	entries, err := os.ReadDir(params.TransferDir)
+	assert.NilError(t, err)
+	assert.Equal(t, len(entries), 0)
+
+	params.Key = "outside"
+	_, err = activity.Execute(t.Context(), params)
+	assert.ErrorContains(t, err, "open transfer in watcher directory")
+	assert.Assert(t, temporal.NonRetryableError(err))
+}
+
+func TestBundleFailedBagConversion(t *testing.T) {
+	watched := t.TempDir()
+	bag := filepath.Join(watched, "bag")
+	assert.NilError(t, os.MkdirAll(filepath.Join(bag, "data"), 0o755))
+	assert.NilError(t, os.WriteFile(filepath.Join(bag, "data", "payload.txt"), []byte("Hello world!\n"), 0o600))
+	assert.NilError(t, os.WriteFile(filepath.Join(bag, "bagit.txt"), []byte("BagIt-Version: 0.97\nTag-File-Character-Encoding: UTF-8\n"), 0o600))
+	assert.NilError(t, os.WriteFile(filepath.Join(bag, "manifest-sha256.txt"), []byte("0ba904eae8773b70c75333db4de2f3ac45a8ad4ddba1b242f0b3cfc199391dd8  data/payload.txt\n"), 0o600))
+	assert.NilError(t, os.WriteFile(filepath.Join(bag, "bag-info.txt"), []byte("Payload-Oxum: 13.1\n"), 0o600))
+	assert.NilError(t, os.WriteFile(filepath.Join(bag, "metadata"), []byte("occupied"), 0o600))
+	svc, err := watcher.New(t.Context(), &watcher.Config{
+		Filesystem: []*watcher.FilesystemConfig{{Name: "drop", Path: watched}},
+	})
+	assert.NilError(t, err)
+	// Exercise conversion itself even when the separate preflight is disabled.
+	activity := NewBundleActivity(svc, nil)
+	params := &BundleActivityParams{
+		WatcherName: "drop", Key: "bag", TransferDir: t.TempDir(),
+		IsDir: true, Unbag: true,
+	}
+
+	_, err = activity.Execute(t.Context(), params)
+	assert.ErrorContains(t, err, "metadata")
+	assert.Assert(t, temporal.NonRetryableError(err))
+	entries, err := os.ReadDir(params.TransferDir)
+	assert.NilError(t, err)
+	assert.Equal(t, len(entries), 0)
+	content, err := os.ReadFile(filepath.Join(bag, "data", "payload.txt"))
+	assert.NilError(t, err)
+	assert.Equal(t, string(content), "Hello world!\n")
+
+	// Failed conversion also leaves an in-place batch source untouched.
+	outside := t.TempDir()
+	assert.NilError(t, os.Remove(filepath.Join(bag, "metadata")))
+	assert.NilError(t, os.Symlink(outside, filepath.Join(bag, "metadata")))
+	params.BatchDir = watched
+	params.TransferDir = watched
+	_, err = activity.Execute(t.Context(), params)
+	assert.ErrorContains(t, err, "metadata")
+	entries, err = os.ReadDir(outside)
+	assert.NilError(t, err)
+	assert.Equal(t, len(entries), 0)
+	_, err = os.Stat(filepath.Join(bag, "bagit.txt"))
+	assert.NilError(t, err)
 }
 
 func TestUnbag(t *testing.T) {
@@ -463,4 +565,36 @@ e91f941be5973ff71f1dccbdd1a32d598881893a7f21be516aca743da38b1689 bagit.txt
 
 	assert.NilError(t, err)
 	assert.Assert(t, fs.Equal(path, expected))
+}
+
+func TestInPlaceBagConversionCanBeRetried(t *testing.T) {
+	const content = "hello"
+	source := fs.NewDir(t, "batch", fs.WithDir("bag",
+		fs.WithFile("bagit.txt", "BagIt-Version: 0.97\nTag-File-Character-Encoding: UTF-8\n"),
+		fs.WithFile("bag-info.txt", "Payload-Oxum: 5.1\n"),
+		fs.WithFile("manifest-sha256.txt", fmt.Sprintf("%x  data/content\n", sha256.Sum256([]byte(content)))),
+		fs.WithDir("data", fs.WithFile("content", content)),
+	))
+	defer source.Remove()
+	bags, err := bagit.NewValidator(bagit.WithTempCacheDir())
+	assert.NilError(t, err)
+	defer bags.Close()
+	activity := NewBundleActivity(nil, bags)
+	params := &BundleActivityParams{
+		BatchDir: source.Path(), TransferDir: source.Path(), Key: "bag",
+		IsDir: true, Unbag: true, RequireBag: true, CheckBagBeforeUnbag: true,
+	}
+	for range 2 {
+		result, err := activity.Execute(t.Context(), params)
+		assert.NilError(t, err)
+		assert.Assert(t, result.FullPath != source.Join("bag"))
+		assert.Equal(t, result.FullPath, source.Join(result.RelPath))
+		data, err := os.ReadFile(filepath.Join(result.FullPath, "content"))
+		assert.NilError(t, err)
+		assert.Equal(t, string(data), content)
+		assert.NilError(t, os.RemoveAll(result.FullPathBeforeStrip))
+	}
+	data, err := os.ReadFile(source.Join("bag", "data", "content"))
+	assert.NilError(t, err)
+	assert.Equal(t, string(data), content)
 }

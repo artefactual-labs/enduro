@@ -259,11 +259,6 @@ test("Nuxt batch import form submits an unzipped bag", async ({ page }) => {
   await test.step("prepare a bag with a manifest-listed hidden file", async () => {
     const transferDir = path.join(batchDir, batchTransferName);
     await fs.rm(transferDir, { recursive: true, force: true });
-    await fs.mkdir(path.join(transferDir, "data"), { recursive: true });
-    await fs.writeFile(
-      path.join(transferDir, "bagit.txt"),
-      "BagIt-Version: 1.0\nTag-File-Character-Encoding: UTF-8\n",
-    );
     const identifiers = [{
       file: "objects/DPJ/journal/avlxml.xml",
       identifiers: [{ identifierType: "avleveringsidentifikator", identifier: batchParent }],
@@ -274,18 +269,7 @@ test("Nuxt batch import form submits an unzipped bag", async ({ page }) => {
       { name: "DPJ/journal/avlxml.xml", bytes: Buffer.from(journal) },
       { name: "metadata/identifiers.json", bytes: Buffer.from(JSON.stringify(identifiers)) },
     ];
-    const manifest = [];
-    for (const { name, bytes } of payload) {
-      const target = path.join(transferDir, "data", name);
-      await fs.mkdir(path.dirname(target), { recursive: true });
-      await fs.writeFile(target, bytes);
-      const digest = createHash("sha256").update(bytes).digest("hex");
-      manifest.push(`${digest}  data/${name}`);
-    }
-    await fs.writeFile(
-      path.join(transferDir, "manifest-sha256.txt"),
-      manifest.join("\n") + "\n",
-    );
+    await writeBag(transferDir, payload);
     await execFile("chown", ["-R", "65532:65532", transferDir]);
   });
 
@@ -439,6 +423,26 @@ test("batch bag preserves its original and records its processing configuration"
       `status=${collection.status}`,
     ].join("\n") + "\n",
   );
+});
+
+test("a directory dropped into a filesystem watcher produces an intact bag AIP", async ({ request }) => {
+  const identifier = `2.16.578.1.39.100.11.1.${cacheBuster}`;
+  const name = `avl-other-sip-${identifier}-20260721`;
+  const dir = path.join(watchedDir, "bags.part", name);
+  const original = { name: "nested/watched.txt", bytes: Buffer.from("From the directory watcher.\n") };
+  await writeBag(`${dir}.part`, [
+    original,
+    { name: ".DS_Store", bytes: Buffer.alloc(0) },
+    { name: "AVLXML/objekter/avlxml.xml", bytes: Buffer.from(`<avlxml><avleveringsidentifikator>${identifier}</avleveringsidentifikator></avlxml>`) },
+  ]);
+  await fs.rename(`${dir}.part`, dir);
+  const collection = await waitForCollectionDone(request, name, {
+    artifactPrefix: "watched-bag-", logPrefix: "watched bag",
+  });
+  await downloadAndInspectAIP(request, {
+    collection, transferName: name, artifactPrefix: "watched-bag-",
+    extractDir: "/tmp/watched-bag-aip", expectedOriginal: original,
+  });
 });
 
 test("Temporal histories include the expected workflow activities", async () => {
@@ -842,4 +846,24 @@ async function hariDeliveries(request: APIRequestContext, aipID: string) {
 function expectSameStorageTime(hari: string, prod: string) {
   // HARI encodes the storage timestamp to whole seconds.
   expect(Date.parse(hari)).toBe(Math.floor(Date.parse(prod) / 1000) * 1000);
+}
+
+async function writeBag(transferDir: string, payload: { name: string; bytes: Buffer }[]) {
+  await fs.mkdir(path.join(transferDir, "data"), { recursive: true });
+  await fs.writeFile(
+    path.join(transferDir, "bagit.txt"),
+    "BagIt-Version: 1.0\nTag-File-Character-Encoding: UTF-8\n",
+  );
+  const manifest = [];
+  for (const { name, bytes } of payload) {
+    const target = path.join(transferDir, "data", name);
+    await fs.mkdir(path.dirname(target), { recursive: true });
+    await fs.writeFile(target, bytes);
+    const digest = createHash("sha256").update(bytes).digest("hex");
+    manifest.push(`${digest}  data/${name}`);
+  }
+  await fs.writeFile(
+    path.join(transferDir, "manifest-sha256.txt"),
+    manifest.join("\n") + "\n",
+  );
 }

@@ -1,6 +1,8 @@
 package activities
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/go-logr/logr"
@@ -39,4 +41,23 @@ func TestPopulateMetadataActivity(t *testing.T) {
 
 	assert.NilError(t, err)
 	assert.Assert(t, fs.Equal(tempdir.Path(), expected))
+}
+
+func TestPopulateMetadataConfinesWrites(t *testing.T) {
+	for _, linkDir := range []bool{true, false} {
+		dir, external := t.TempDir(), t.TempDir()
+		target := filepath.Join(external, "metadata.csv")
+		assert.NilError(t, os.WriteFile(target, []byte("original"), 0o600))
+		if linkDir {
+			assert.NilError(t, os.Symlink(external, filepath.Join(dir, "metadata")))
+		} else {
+			assert.NilError(t, os.Mkdir(filepath.Join(dir, "metadata"), 0o755))
+			assert.NilError(t, os.Symlink(target, filepath.Join(dir, "metadata", "metadata.csv")))
+		}
+		err := NewPopulateMetadataActivity(nil).Execute(t.Context(), &PopulateMetadataActivityParams{Path: dir, Identifier: "12345"})
+		assert.Assert(t, err != nil)
+		content, err := os.ReadFile(target)
+		assert.NilError(t, err)
+		assert.Equal(t, string(content), "original")
+	}
 }

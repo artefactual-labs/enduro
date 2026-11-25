@@ -101,9 +101,16 @@ configuration section](./configuration-reference.md#watcher) for more details.
 
 ### Processing BagIt transfers
 
-[Archivematica can ingest bags directly]. Enduro checks bag directories in batch
-imports and bags extracted from watched archives. It checks that the files
-listed in the manifests are still present after filtering.
+[Archivematica can ingest bags directly]. Enduro checks bag directories
+submitted through batch imports or filesystem watchers, and bags extracted from
+watched archives. It checks that the files listed in the manifests are still
+present after filtering.
+
+When delivering an unpacked bag to a filesystem watcher, prepare the whole
+directory before renaming it into the watched folder on the same filesystem. If
+you prepare it inside the watched folder, use a temporary name matched by the
+watcher’s `ignore` setting. Leave `stripTopLevelDir` off when `bagit.txt` is at
+the root of the directory you deliver.
 
 Choose **Unzipped bag** for a source that should always send bags, or
 **Standard** for a source that also sends ordinary folders. If your
@@ -135,7 +142,8 @@ before submission.
 
 Keep hidden-file filtering off when a bag's manifest lists hidden files. If a
 batch source is already in the pipeline's transfer directory, filtering can
-remove files from the source itself.
+remove files from the source itself. When converting a bag, Enduro filters and
+converts a private copy so the original is available for retry.
 
 Enduro compares the files with the manifests after filtering hidden files and
 before publishing the transfer or sending it to Archivematica. This checks which
