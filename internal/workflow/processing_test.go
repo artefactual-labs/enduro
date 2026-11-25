@@ -2200,6 +2200,9 @@ func TestSessionHandlerBagValidationGuard(t *testing.T) {
 					Return("", temporal.NewNonRetryableError(errors.New(wantErr))).Once()
 			} else {
 				env.OnActivity(activities.TransferActivityName, mock.MatchedBy(func(params *activities.TransferActivityParams) bool {
+					if tc.unbag {
+						return params.TransferType == "standard"
+					}
 					return params.TransferType == "unzipped bag"
 				})).
 					Return(nil, temporal.NewNonRetryableError(errors.New(wantErr))).Once()
@@ -2217,7 +2220,7 @@ func TestSessionHandlerBagValidationGuard(t *testing.T) {
 					PipelineName:   "pipeline",
 					PipelineConfig: &pipeline.Config{Unbag: tc.unbag},
 					TransferType:   "unzipped bag",
-					Bundle:         activities.BundleActivityResult{FullPath: path},
+					Bundle:         activities.BundleActivityResult{FullPath: path, Unbagged: tc.unbag},
 				}
 				if tc.submitted {
 					tinfo.TransferID = "existing-transfer"

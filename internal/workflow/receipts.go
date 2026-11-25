@@ -7,18 +7,20 @@ import (
 	temporalsdk_temporal "go.temporal.io/sdk/temporal"
 	temporalsdk_workflow "go.temporal.io/sdk/workflow"
 
+	"github.com/artefactual-labs/enduro/internal/bagit"
 	"github.com/artefactual-labs/enduro/internal/nha"
 	nha_activities "github.com/artefactual-labs/enduro/internal/nha/activities"
 	"github.com/artefactual-labs/enduro/internal/workflow/hooks"
 )
 
 type sendReceiptsParams struct {
-	SIPID        string
-	StoredAt     time.Time
-	FullPath     string
-	PipelineName string
-	NameInfo     nha.NameInfo
-	CollectionID uint
+	ConvertedLayout *bagit.ConvertedLayout
+	SIPID           string
+	StoredAt        time.Time
+	FullPath        string
+	PipelineName    string
+	NameInfo        nha.NameInfo
+	CollectionID    uint
 }
 
 func (w *ProcessingWorkflow) sendReceipts(ctx temporalsdk_workflow.Context, decisions *operatorDecisionHandler, params *sendReceiptsParams) error {
@@ -30,11 +32,12 @@ func (w *ProcessingWorkflow) sendReceipts(ctx temporalsdk_workflow.Context, deci
 			},
 		}
 		err := executeActivityWithOperatorDecision(ctx, decisions, w.colsvc, params.CollectionID, opts, nha_activities.UpdateHARIActivityName, &nha_activities.UpdateHARIActivityParams{
-			SIPID:        params.SIPID,
-			StoredAt:     params.StoredAt,
-			FullPath:     params.FullPath,
-			PipelineName: params.PipelineName,
-			NameInfo:     params.NameInfo,
+			SIPID:           params.SIPID,
+			StoredAt:        params.StoredAt,
+			FullPath:        params.FullPath,
+			ConvertedLayout: params.ConvertedLayout,
+			PipelineName:    params.PipelineName,
+			NameInfo:        params.NameInfo,
 		})
 		if err != nil {
 			return fmt.Errorf("error sending hari receipt: %w", err)
@@ -49,10 +52,11 @@ func (w *ProcessingWorkflow) sendReceipts(ctx temporalsdk_workflow.Context, deci
 			},
 		}
 		err := executeActivityWithOperatorDecision(ctx, decisions, w.colsvc, params.CollectionID, opts, nha_activities.UpdateProductionSystemActivityName, &nha_activities.UpdateProductionSystemActivityParams{
-			StoredAt:     params.StoredAt,
-			PipelineName: params.PipelineName,
-			NameInfo:     params.NameInfo,
-			FullPath:     params.FullPath,
+			StoredAt:        params.StoredAt,
+			PipelineName:    params.PipelineName,
+			NameInfo:        params.NameInfo,
+			FullPath:        params.FullPath,
+			ConvertedLayout: params.ConvertedLayout,
 		})
 		if err != nil {
 			return fmt.Errorf("error sending prod receipt: %w", err)

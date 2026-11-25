@@ -71,9 +71,11 @@ type BundleActivityParams struct {
 
 // BundleActivityResult identifies the transfer location after staging.
 type BundleActivityResult struct {
-	RelPath             string // Path of the transfer relative to the transfer directory.
-	FullPath            string // Full path to the transfer in the worker running the session.
-	FullPathBeforeStrip string // Same as FullPath but includes the top-level dir even when stripped.
+	RelPath             string                       // Path of the transfer relative to the transfer directory.
+	FullPath            string                       // Full path to the transfer in the worker running the session.
+	Layout              *legacybagit.ConvertedLayout `json:",omitempty"`
+	Unbagged            bool                         `json:",omitempty"` // The staged content was converted to a standard transfer.
+	FullPathBeforeStrip string                       // Same as FullPath but includes the top-level dir even when stripped.
 }
 
 // Execute stages or reuses transfer content and returns its pipeline-visible path.
@@ -164,7 +166,8 @@ func (a *BundleActivity) Execute(ctx context.Context, params *BundleActivityPara
 				return nil, err
 			}
 		}
-		err = unbag(res.FullPath)
+		res.Layout, err = unbag(res.FullPath)
+		res.Unbagged = res.Layout != nil
 		if err != nil {
 			return nil, temporal.NewNonRetryableError(err)
 		}
@@ -528,48 +531,103 @@ func stripDirContainer(path string) (string, error) {
 }
 
 // unbag converts a bagged transfer into a standard Archivematica transfer.
-// It returns a nil error if a bag is not identified, and non-nil errors when
-// the bag seems invalid, without verifying the actual file contents.
-func unbag(path string) error {
+// The result records whether conversion took place for the submission activity.
+func unbag(path string) (*legacybagit.ConvertedLayout, error) {
 	root, err := os.OpenRoot(path)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer root.Close()
 
 	if _, err := root.Stat("bagit.txt"); err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			return nil
+			return nil, nil
 		}
-		return err
+		return nil, err
 	}
 
-	// Confirm completeness of the bag.
 	if err := legacybagit.Complete(path); err != nil {
-		return err
+		return nil, err
 	}
+	layout := &legacybagit.ConvertedLayout{}
+	if err := convertBag(root, layout); err != nil {
+		return nil, err
+	}
+	return layout, nil
+}
 
-	// Move files in data up one level if 'objects' folder already exists.
-	// Otherwise, rename data to objects.
-	data, err := root.Stat("data")
+func convertBag(root *os.Root, layout *legacybagit.ConvertedLayout) error {
+	// Preserve a supplied Archivematica transfer layout. Flat bags need an
+	// objects directory, with any transfer metadata alongside it.
+	isDir := func(name string) (bool, error) {
+		info, err := root.Stat(name)
+		if errors.Is(err, os.ErrNotExist) {
+			return false, nil
+		}
+		return err == nil && info.IsDir(), err
+	}
+	structured, err := isDir("data/objects")
 	if err != nil {
 		return err
 	}
-	if data.IsDir() {
+	hasMetadata, err := isDir("data/metadata")
+	if err != nil {
+		return err
+	}
+	transferPath := func(payload string) string {
+		if structured || (hasMetadata && (payload == "metadata" || strings.HasPrefix(payload, "metadata/"))) {
+			return payload
+		}
+		return "objects/" + payload
+	}
+
+	// Track each payload link's destination before moving its containing
+	// directory. A link may still resolve after conversion but point to a
+	// different file. Conversion always operates on a private staging copy.
+	payloadRoot, err := root.OpenRoot("data")
+	if err != nil {
+		return err
+	}
+	defer payloadRoot.Close()
+	links := make(map[string]os.FileInfo)
+	if err := fs.WalkDir(payloadRoot.FS(), ".", func(name string, entry fs.DirEntry, err error) error {
+		if err != nil || entry.Type()&fs.ModeSymlink == 0 {
+			return err
+		}
+		target, err := payloadRoot.Stat(name)
+		if err != nil {
+			return fmt.Errorf("resolve payload link %q: %w", name, err)
+		}
+		links[name] = target
+		return nil
+	}); err != nil {
+		return err
+	}
+	if structured {
 		items, err := fs.ReadDir(root.FS(), "data")
 		if err != nil {
 			return err
 		}
 		for _, item := range items {
+			layout.PayloadRoots = append(layout.PayloadRoots, item.Name())
 			if err := root.Rename(filepath.Join("data", item.Name()), item.Name()); err != nil {
 				return err
 			}
 		}
-		if err := root.RemoveAll("data"); err != nil {
+		if err := root.Remove("data"); err != nil {
 			return err
 		}
-	} else if err := root.Rename("data", "objects"); err != nil {
-		return err
+	} else {
+		layout.PayloadRoots = []string{"objects"}
+		if hasMetadata {
+			layout.PayloadRoots = append(layout.PayloadRoots, "metadata")
+			if err := root.Rename("data/metadata", "metadata"); err != nil {
+				return err
+			}
+		}
+		if err := root.Rename("data", "objects"); err != nil {
+			return err
+		}
 	}
 
 	const metadataPath = "metadata"
@@ -601,18 +659,20 @@ func unbag(path string) error {
 			}
 			return err
 		}
-		defer newFile.Close()
-
 		scanner := bufio.NewScanner(file)
 		for scanner.Scan() {
-			line := scanner.Text()
-			newLine := ""
-			if strings.Contains(line, "data/objects/") {
-				newLine = strings.Replace(line, "data/objects/", "../objects/", 1)
-			} else {
-				newLine = strings.Replace(line, "data/", "../objects/", 1)
+			before, payload, ok := strings.Cut(scanner.Text(), "data/")
+			if !ok {
+				newFile.Close()
+				return errors.New("invalid payload manifest entry")
 			}
-			fmt.Fprintln(newFile, newLine)
+			if _, err := fmt.Fprintln(newFile, before+"../"+transferPath(payload)); err != nil {
+				newFile.Close()
+				return err
+			}
+		}
+		if err := errors.Join(scanner.Err(), newFile.Close()); err != nil {
+			return err
 		}
 
 		break // One file is enough.
@@ -633,6 +693,13 @@ func unbag(path string) error {
 	} {
 		if err := root.Rename(item, filepath.Join(documentationPath, item)); err != nil && !errors.Is(err, os.ErrNotExist) {
 			return err
+		}
+	}
+
+	for name, original := range links {
+		current, err := root.Stat(transferPath(name))
+		if err != nil || !os.SameFile(original, current) {
+			return fmt.Errorf("bag conversion changes the target of payload link %q", name)
 		}
 	}
 

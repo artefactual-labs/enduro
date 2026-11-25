@@ -169,8 +169,10 @@ Bag conversion is a pipeline setting. Set [`unbag`] to `true` in the
 `[[pipeline]]` entry in `enduro.toml` for the pipeline that receives the watched
 transfer or batch.
 
-Enduro verifies the bag's checksums before converting it. Choose **Standard** to
-send the converted directory to Archivematica.
+Enduro verifies the bag's checksums before converting it. With **Unzipped bag**
+selected, Enduro requires a bag as input and submits the converted directory to
+Archivematica as **Standard**. With **Standard** selected, the same pipeline can
+also accept ordinary directories.
 
 ### Viewing a transfer's processing configuration
 

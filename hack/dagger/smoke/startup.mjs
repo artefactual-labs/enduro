@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { cp, mkdir, readFile, rename, writeFile } from "node:fs/promises";
 
 const base = "http://enduro:9000";
@@ -96,6 +97,23 @@ assert.deepEqual(submissions[1], {
   hiddenFile: "",
 });
 assert.equal(intact.transfer_id, "71bd0ab3-e496-4ec0-9146-048abf471df4");
+
+const drop = "/runtime/conversion/converted.part";
+const payload = "Watched payload.\n";
+const digest = createHash("sha256").update(payload).digest("hex");
+const declaration = "BagIt-Version: 0.97\nTag-File-Character-Encoding: UTF-8\n";
+await mkdir(`${drop}/data`, { recursive: true });
+await writeFile(`${drop}/data/payload.txt`, payload);
+await writeFile(`${drop}/bagit.txt`, declaration);
+await writeFile(`${drop}/bag-info.txt`, `Payload-Oxum: ${Buffer.byteLength(payload)}.1\n`);
+await writeFile(`${drop}/manifest-sha256.txt`, `${digest}  data/payload.txt\n`);
+await rename(drop, "/runtime/conversion/converted");
+const converted = await waitForCollection("converted", (item) => item.transfer_id || item.status === "error");
+assert.deepEqual(await (await get("/submissions", "http://conversion:8080")).json(), [{
+  name: "converted", type: "standard", checksum: `${digest}  ../objects/payload.txt\n`, payload, declaration,
+}]);
+assert.equal(converted.transfer_id, "02603572-36a1-43a4-a785-3812fd4fdef0");
+assert.equal(await readFile("/runtime/conversion/converted/data/payload.txt", "utf8"), payload);
 
 await mkdir("/artifacts", { recursive: true });
 await writeFile("/artifacts/watcher-bag-history.json", JSON.stringify(watcherHistory, null, 2) + "\n");
