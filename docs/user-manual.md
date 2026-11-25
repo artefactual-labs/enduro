@@ -327,6 +327,36 @@ When queue growth or unexpectedly low throughput shows up in production, check:
 - whether recovery-enabled pipelines are spending time waiting on
   post-ingest reconciliation
 
+### Disk usage during processing
+
+Size each volume for the transfers that can occupy it at the same time. Peak
+space depends on how content arrives and whether Enduro publishes a remote copy.
+
+- **Files received by a watcher.** Enduro downloads the file into
+  `processingDir` (the worker's temporary directory if unset). For an ordinary
+  file, it moves the download into a transfer under `transferDir`. For an
+  archive, the download and its extracted contents can both remain in
+  `processingDir` while Enduro stages a copy of the extracted contents in
+  `transferDir`.
+- **Directories and batch imports.** Enduro copies a directory dropped into a
+  filesystem watcher into `transferDir`. It also copies batch files and batch
+  directories located outside `transferDir`. A batch directory already inside
+  `transferDir` can usually be submitted in place. Converting an unpacked bag
+  there requires a working copy so the original remains available for retry.
+- **SFTP publishing.** Allow room for the prepared transfer at the remote
+  destination as well as on the worker.
+
+For example, a watched 10 GB archive that expands to 40 GB can use roughly 50 GB
+in `processingDir` and another 40 GB in `transferDir` at the same time. If both
+directories share a volume, allow about 90 GB of free space for that transfer
+alone, in addition to any original stored there.
+
+Enduro normally removes temporary files after processing and receipt handling
+finish. A collection waiting for a receipt retry can still occupy disk after
+releasing its pipeline slot, so include pending receipts in capacity estimates.
+Worker crashes or cleanup errors can leave temporary files behind. The original
+source follows the configured retention or completed-directory policy.
+
 ## Configuration
 
 Enduro is configured via the `enduro.toml` configuration file, which uses
