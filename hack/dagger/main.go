@@ -74,6 +74,7 @@ type smokeEnvironment struct {
 	enduro      *dagger.Service
 	redis       *dagger.Service
 	storage     *dagger.Service
+	hari        *dagger.Service
 	lgtm        *dagger.Service
 }
 
@@ -425,10 +426,15 @@ func (m *Enduro) smokeEnvironment(ctx context.Context, source *dagger.Directory,
 		return nil, err
 	}
 
+	hari := dag.Container().From(nodeImage).
+		WithFile("/hari.mjs", source.File("hack/dagger/smoke/hari.mjs")).
+		WithEnvVariable("E2E_CACHE_BUSTER", cacheBuster).
+		WithExposedPort(8080).AsService(dagger.ContainerAsServiceOpts{Args: []string{"node", "/hari.mjs"}})
 	lgtm := m.lgtmService(cacheBuster)
 	enduro := m.enduroRuntime(image, volumes, ambox, enduroConfig(), coverage, cacheBuster).
 		WithServiceBinding("mysql", mysql).
 		WithServiceBinding("temporal", temporal).
+		WithServiceBinding("hari", hari).
 		WithServiceBinding("lgtm", lgtm).
 		AsService(dagger.ContainerAsServiceOpts{UseEntrypoint: true})
 
@@ -442,6 +448,7 @@ func (m *Enduro) smokeEnvironment(ctx context.Context, source *dagger.Directory,
 		ambox:       ambox,
 		enduro:      enduro,
 		lgtm:        lgtm,
+		hari:        hari,
 	}, nil
 }
 
@@ -604,6 +611,7 @@ func (m *Enduro) runSmokeSuite(ctx context.Context, env *smokeEnvironment) (*dag
 		WithServiceBinding("enduro", env.enduro).
 		WithServiceBinding("ambox", env.ambox).
 		WithServiceBinding("temporal", env.temporal).
+		WithServiceBinding("hari", env.hari).
 		WithServiceBinding("lgtm", env.lgtm).
 		WithMountedCache("/runtime/batch", env.volumes.batch).
 		WithMountedCache("/runtime/watched", env.volumes.watched).
@@ -617,7 +625,6 @@ func (m *Enduro) runSmokeSuite(ctx context.Context, env *smokeEnvironment) (*dag
 		WithEnvVariable("BATCH_DIR", "/runtime/batch").
 		WithEnvVariable("RECEIPTS_DIR", "/runtime/receipts/out").
 		WithEnvVariable("ARTIFACTS_DIR", "/artifacts").
-		WithEnvVariable("BATCH_TRANSFER_NAME", fmt.Sprintf("avl-other-sip-2.16.578.1.39.100.11.%s-20260721", env.cacheBuster)).
 		WithEnvVariable("EXPECTED_PROCESSING_WORKFLOWS", "2").
 		WithEnvVariable("VERIFY_BATCH_WORKFLOW", "true").
 		WithFile("/usr/local/bin/temporal", temporalCLI, dagger.ContainerWithFileOpts{
@@ -1256,9 +1263,9 @@ reconcileExistingAIP = true
 checksumsCheckEnabled = false
 
 [[hooks."hari"]]
-baseURL = ""
-mock = true
-disabled = true
+baseURL = "http://hari:8080"
+mock = false
+disabled = false
 
 [[hooks."prod"]]
 receiptPath = "/runtime/receipts/out"

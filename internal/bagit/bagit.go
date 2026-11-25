@@ -21,3 +21,9 @@ func Valid(path string) error {
 
 	return bag.ValidateBag(false, true)
 }
+
+// ConvertedLayout records which top-level transfer entries came from data/.
+// Receipt activities use it to distinguish submitted content from bag tags.
+type ConvertedLayout struct {
+	PayloadRoots []string
+}

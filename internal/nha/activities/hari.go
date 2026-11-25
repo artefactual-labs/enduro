@@ -5,19 +5,22 @@ import (
 	"context"
 	"encoding/json"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"net"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"os"
-	"path/filepath"
+	"path"
 	"strings"
 	"time"
 
 	"github.com/go-logr/logr"
 
+	"github.com/artefactual-labs/enduro/internal/bagit"
 	"github.com/artefactual-labs/enduro/internal/nha"
 	"github.com/artefactual-labs/enduro/internal/temporal"
 	"github.com/artefactual-labs/enduro/internal/workflow/hooks"
@@ -45,11 +48,12 @@ func NewUpdateHARIActivity(h *hooks.Hooks) *UpdateHARIActivity {
 }
 
 type UpdateHARIActivityParams struct {
-	SIPID        string
-	StoredAt     time.Time
-	FullPath     string
-	PipelineName string
-	NameInfo     nha.NameInfo
+	ConvertedLayout *bagit.ConvertedLayout `json:",omitempty"`
+	SIPID           string
+	StoredAt        time.Time
+	FullPath        string
+	PipelineName    string
+	NameInfo        nha.NameInfo
 }
 
 func (a UpdateHARIActivity) Execute(ctx context.Context, params *UpdateHARIActivityParams) error {
@@ -69,12 +73,20 @@ func (a UpdateHARIActivity) Execute(ctx context.Context, params *UpdateHARIActiv
 		apiURL = ts.URL
 	}
 
-	path := a.avlxml(params.FullPath, params.NameInfo.Type)
-	if path == "" {
+	root, err := openReceiptPayload(params.FullPath, params.ConvertedLayout)
+	if err != nil {
+		return fmt.Errorf("open receipt payload: %w", err)
+	}
+	defer root.Close()
+	xmlPath, err := a.receiptJournal(root, params.NameInfo.Type)
+	if err != nil {
+		return err
+	}
+	if xmlPath == "" {
 		return temporal.NewNonRetryableError(fmt.Errorf("error reading AVLXML file: not found"))
 	}
 
-	f, err := os.Open(path)
+	f, err := root.Open(xmlPath)
 	if err != nil {
 		return fmt.Errorf("error opening AVLXML file: %v", err)
 	}
@@ -96,7 +108,7 @@ func (a UpdateHARIActivity) Execute(ctx context.Context, params *UpdateHARIActiv
 	{
 		if params.NameInfo.Type != nha.TransferTypeAVLXML {
 			const idtype = "avleveringsidentifikator"
-			parentID, err = readIdentifier(params.FullPath, params.NameInfo.Type.String()+"/journal/avlxml.xml", idtype)
+			parentID, err = readIdentifier(root, params.NameInfo.Type.String()+"/journal/avlxml.xml", idtype)
 			if err != nil {
 				return temporal.NewNonRetryableError(fmt.Errorf("error looking up avleveringsidentifikator: %v", err))
 			}
@@ -110,11 +122,39 @@ func (a UpdateHARIActivity) Execute(ctx context.Context, params *UpdateHARIActiv
 	return nil
 }
 
+func (a UpdateHARIActivity) receiptJournal(payload *receiptPayload, kind nha.TransferType) (string, error) {
+	if payload.bag {
+		objects, err := payload.OpenRoot("objects")
+		if err == nil {
+			defer objects.Close()
+			if name := a.avlxml(objects, kind); name != "" {
+				candidate := path.Join("objects", name)
+				// A flat bag acquires the objects prefix during conversion.
+				ok, err := payload.includes(candidate, candidate, name)
+				if err != nil || ok {
+					return candidate, err
+				}
+			}
+		} else if !errors.Is(err, os.ErrNotExist) {
+			return "", err
+		}
+	}
+	name := a.avlxml(payload.Root, kind)
+	if name == "" {
+		return "", nil
+	}
+	ok, err := payload.includes(name, name)
+	if !ok {
+		return "", err
+	}
+	return name, nil
+}
+
 // avlxml attempts to find the AVLXML document in multiple known locations.
-func (a UpdateHARIActivity) avlxml(path string, kind nha.TransferType) string {
+func (a UpdateHARIActivity) avlxml(root *os.Root, kind nha.TransferType) string {
 	firstMatch := func(locs []string) string {
 		for _, loc := range locs {
-			if stat, err := os.Stat(loc); err == nil && !stat.IsDir() {
+			if stat, err := root.Stat(loc); err == nil && !stat.IsDir() {
 				return loc
 			}
 		}
@@ -128,7 +168,7 @@ func (a UpdateHARIActivity) avlxml(path string, kind nha.TransferType) string {
 
 	if kind == nha.TransferTypeAVLXML {
 		const objekter = "objekter"
-		matches, err := filepath.Glob(filepath.Join(path, nhaType, objekter, "avlxml-*.xml"))
+		matches, err := fs.Glob(root.FS(), path.Join(nhaType, objekter, "avlxml-*.xml"))
 		if err != nil {
 			panic(err)
 		}
@@ -136,16 +176,16 @@ func (a UpdateHARIActivity) avlxml(path string, kind nha.TransferType) string {
 			return matches[0]
 		}
 		return firstMatch([]string{
-			filepath.Join(path, nhaType, objekter, "avlxml.xml"),
-			filepath.Join(path, nhaTypeLower, objekter, "avlxml.xml"),
+			path.Join(nhaType, objekter, "avlxml.xml"),
+			path.Join(nhaTypeLower, objekter, "avlxml.xml"),
 		})
 	}
 
 	return firstMatch([]string{
-		filepath.Join(path, nhaType, "journal/avlxml.xml"),
-		filepath.Join(path, nhaType, "Journal/avlxml.xml"),
-		filepath.Join(path, nhaTypeLower, "journal/avlxml.xml"),
-		filepath.Join(path, nhaTypeLower, "Journal/avlxml.xml"),
+		path.Join(nhaType, "journal/avlxml.xml"),
+		path.Join(nhaType, "Journal/avlxml.xml"),
+		path.Join(nhaTypeLower, "journal/avlxml.xml"),
+		path.Join(nhaTypeLower, "Journal/avlxml.xml"),
 	})
 }
 

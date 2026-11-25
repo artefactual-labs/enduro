@@ -25,9 +25,11 @@ const batchOriginal = {
   name: "hello.txt",
   bytes: Buffer.from("Hello from the unzipped BagIt transfer.\n", "utf8"),
 };
-const batchTransferName =
-  process.env.BATCH_TRANSFER_NAME ??
-  `avl-other-sip-2.16.578.1.39.100.11.${cacheBuster}-20260721`;
+const batchIdentifier = `2.16.578.1.39.100.11.${cacheBuster}`;
+const batchTransferName = `dpj-sip-${batchIdentifier}-20260721`;
+const batchParent = "2.16.578.1.39.100.11.234";
+const journal =
+  "<avlxml><avleveringsbeskrivelse>Synthetic journal</avleveringsbeskrivelse></avlxml>";
 
 type Collection = {
   id: number;
@@ -78,7 +80,12 @@ test("filesystem transfer resumes after a prod receipt decision", async ({
       path.join(stageDir, "objects", "hello.txt"),
       `hello from ${runID}\n`,
     );
-    await execFile("zip", ["-qr", `/tmp/${transferName}`, "objects"], {
+    await fs.mkdir(path.join(stageDir, "AVLXML", "objekter"), { recursive: true });
+    await fs.writeFile(
+      path.join(stageDir, "AVLXML", "objekter", "avlxml.xml"),
+      `<avlxml><avleveringsidentifikator>${receiptIdentifier}</avleveringsidentifikator><pasientjournal>synthetic-private-marker</pasientjournal></avlxml>`,
+    );
+    await execFile("zip", ["-qr", `/tmp/${transferName}`, "objects", "AVLXML"], {
       cwd: stageDir,
     });
 
@@ -129,14 +136,15 @@ test("filesystem transfer resumes after a prod receipt decision", async ({
   });
 
   const receiptFiles = await fs.readdir(receiptsDir);
-  const receiptName = receiptFiles.find(
+  const matches = receiptFiles.filter(
     (name) =>
       name.startsWith(`Receipt_${receiptIdentifier}_`) &&
       name.endsWith(".mft"),
   );
-  expect(receiptName).toBeTruthy();
+  expect(matches).toHaveLength(1);
+  const [receiptName] = matches;
 
-  const receiptPath = path.join(receiptsDir, receiptName ?? "");
+  const receiptPath = path.join(receiptsDir, receiptName);
   const receipt = JSON.parse(await fs.readFile(receiptPath, "utf8"));
   expect(receipt).toMatchObject({
     identifier: receiptIdentifier,
@@ -157,6 +165,19 @@ test("filesystem transfer resumes after a prod receipt decision", async ({
     extractDir: "/tmp/aip-extract",
   });
   expect(detail.processing_config).toBe("automated");
+  const deliveries = await hariDeliveries(request, detail.aip_id);
+  expect(deliveries).toHaveLength(1);
+  const [delivery] = deliveries;
+  expect(delivery).toMatchObject({
+    status: 200,
+    contentType: "application/json",
+    receipt: { type: "avlxml", message: "AVLXML was processed by Archivematica pipeline ambox" },
+  });
+  expect(delivery.receipt.parent).toBeUndefined();
+  expectSameStorageTime(delivery.receipt.timestamp, receipt.timestamp);
+  const xml = Buffer.from(delivery.receipt.xml, "base64").toString();
+  expect(xml).toContain(`<avleveringsidentifikator>${receiptIdentifier}</avleveringsidentifikator>`);
+  expect(xml).not.toMatch(/pasientjournal|synthetic-private-marker/);
 
   await writeTextArtifact(
     "report.txt",
@@ -243,10 +264,21 @@ test("Nuxt batch import form submits an unzipped bag", async ({ page }) => {
       path.join(transferDir, "bagit.txt"),
       "BagIt-Version: 1.0\nTag-File-Character-Encoding: UTF-8\n",
     );
-    const payload = [batchOriginal, { name: ".DS_Store", bytes: Buffer.alloc(0) }];
+    const identifiers = [{
+      file: "objects/DPJ/journal/avlxml.xml",
+      identifiers: [{ identifierType: "avleveringsidentifikator", identifier: batchParent }],
+    }];
+    const payload = [
+      batchOriginal,
+      { name: ".DS_Store", bytes: Buffer.alloc(0) },
+      { name: "DPJ/journal/avlxml.xml", bytes: Buffer.from(journal) },
+      { name: "metadata/identifiers.json", bytes: Buffer.from(JSON.stringify(identifiers)) },
+    ];
     const manifest = [];
     for (const { name, bytes } of payload) {
-      await fs.writeFile(path.join(transferDir, "data", name), bytes);
+      const target = path.join(transferDir, "data", name);
+      await fs.mkdir(path.dirname(target), { recursive: true });
+      await fs.writeFile(target, bytes);
       const digest = createHash("sha256").update(bytes).digest("hex");
       manifest.push(`${digest}  data/${name}`);
     }
@@ -337,6 +369,27 @@ test("batch bag preserves its original and records its processing configuration"
   page,
 }) => {
   const request = page.request;
+  const pending = await waitForCollectionStatus(request, batchTransferName, "pending", {
+    artifactPrefix: "batch-", logPrefix: "batch HARI retry",
+  });
+  const pendingResponse = await request.get(`${enduroURL}/collection/${pending.id}`);
+  expect(pendingResponse.ok()).toBeTruthy();
+  const { aip_id } = await pendingResponse.json();
+  const attempts = await hariDeliveries(request, aip_id);
+  expect(attempts.map((entry) => entry.status)).toEqual([503]);
+  expect(attempts[0].receipt).toMatchObject({
+    type: "dpj",
+    parent: batchParent,
+    xml: Buffer.from(journal).toString("base64"),
+    message: "AVLXML was processed by Archivematica pipeline ambox",
+  });
+  const prodFiles = async () => (await fs.readdir(receiptsDir))
+    .filter((name) => name.startsWith(`Receipt_${batchIdentifier}_`));
+  expect(await prodFiles()).toEqual([]);
+  const retry = await request.post(`${enduroURL}/collection/${pending.id}/decision`, {
+    data: { option: "RETRY_ONCE" },
+  });
+  expect(retry.ok(), await retry.text()).toBeTruthy();
   const collection = await waitForCollectionDone(request, batchTransferName, {
     artifactPrefix: "batch-",
     logPrefix: "batch collection",
@@ -350,6 +403,22 @@ test("batch bag preserves its original and records its processing configuration"
     expectedOriginal: batchOriginal,
   });
   expect(detail.processing_config).toBe(batchProcessingConfig);
+  expect(detail.aip_id).toBe(aip_id);
+  expect(await hariDeliveries(request, aip_id)).toEqual([
+    attempts[0], { ...attempts[0], status: 200 },
+  ]);
+  const files = await prodFiles();
+  expect(files).toHaveLength(1);
+  expect(files[0]).toMatch(/\.mft$/);
+  const prod = JSON.parse(await fs.readFile(path.join(receiptsDir, files[0]), "utf8"));
+  expect(prod).toMatchObject({
+    identifier: batchIdentifier,
+    type: "dpj",
+    parent: batchParent,
+    accepted: true,
+    message: "Package was processed by Archivematica pipeline ambox",
+  });
+  expectSameStorageTime(attempts[0].receipt.timestamp, prod.timestamp);
 
   await page.goto(`${enduroURL}/collections/${collection.id}`, {
     waitUntil: "domcontentloaded",
@@ -753,4 +822,24 @@ function countOccurrences(value: string, pattern: string): number {
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function hariDeliveries(request: APIRequestContext, aipID: string) {
+  expect(aipID).toBeTruthy();
+  const response = await request.get("http://hari:8080/deliveries");
+  expect(response.ok()).toBeTruthy();
+  type Delivery = {
+    status: number;
+    contentType: string;
+    receipt: { aip_id: string; xml: string; timestamp: string; parent?: string };
+  };
+  const deliveries: Delivery[] = await response.json();
+  const attempts = deliveries.filter((entry) => entry.receipt.aip_id === aipID);
+  await writeJSONArtifact(`hari-${aipID}.json`, attempts);
+  return attempts;
+}
+
+function expectSameStorageTime(hari: string, prod: string) {
+  // HARI encodes the storage timestamp to whole seconds.
+  expect(Date.parse(hari)).toBe(Math.floor(Date.parse(prod) / 1000) * 1000);
 }

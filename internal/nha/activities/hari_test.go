@@ -417,6 +417,50 @@ func TestHARIActivity(t *testing.T) {
 		},
 	}
 
+	// Tag files can have the same names as payload files. Only the latter
+	// describe the submitted journal and its parent.
+	ordinary := tests["Receipt is delivered successfully (DPJ)"]
+	ordinary.dirOpts = append(append([]fs.PathOp{}, ordinary.dirOpts...), fs.WithDir("metadata/submissionDocumentation", fs.WithFile("bagit.txt", "reference copy")))
+	ordinary.hariConfig = map[string]any{}
+	tests["ordinary transfer with a documented declaration"] = ordinary
+
+	converted := tests["Receipt is delivered successfully (DPJ)"]
+	converted.hariConfig = map[string]any{}
+	converted.dirOpts = []fs.PathOp{
+		fs.WithDir("metadata/submissionDocumentation", fs.WithFile("bagit.txt", "BagIt-Version: 0.97\n"), fs.WithFile("manifest-sha256.txt", "digest  data/DPJ/journal/avlxml.xml\ndigest  data/metadata/identifiers.json\n")),
+		fs.WithDir("DPJ/journal", fs.WithFile("avlxml.xml", "<tag/>")),
+		fs.WithDir("objects/DPJ/journal", fs.WithFile("avlxml.xml", "<avlxml/>")),
+		fs.WithDir("metadata", fs.WithFile("identifiers.json", `[{"file":"objects/DPJ/journal/avlxml.xml","identifiers":[{"identifierType":"avleveringsidentifikator","identifier":"12345"}]}]`)),
+	}
+	tests["converted DPJ journal in objects with transfer-level identifiers"] = converted
+
+	structured := tests["Receipt is delivered successfully (DPJ)"]
+	structured.hariConfig = map[string]any{}
+	structured.dirOpts = []fs.PathOp{
+		fs.WithFile("bagit.txt", "BagIt-Version: 1.0\nTag-File-Character-Encoding: UTF-8\n"),
+		fs.WithDir("data/objects/DPJ/journal", fs.WithFile("avlxml.xml", "<avlxml/>")),
+		fs.WithDir("data/metadata", fs.WithFile("identifiers.json", `[{"file":"objects/DPJ/journal/avlxml.xml","identifiers":[{"identifierType":"avleveringsidentifikator","identifier":"12345"}]}]`)),
+	}
+	tests["structured intact DPJ journal and parent"] = structured
+
+	bag := tests["Receipt is delivered successfully (DPJ)"]
+	bag.hariConfig = map[string]any{}
+	bag.dirOpts = []fs.PathOp{
+		fs.WithFile("bagit.txt", "BagIt-Version: 1.0\nTag-File-Character-Encoding: UTF-8\n"),
+		fs.WithDir("DPJ/journal", fs.WithFile("avlxml.xml", "<tag/>")),
+		fs.WithDir("metadata", fs.WithFile("identifiers.json", "[]")),
+		fs.WithDir("data", bag.dirOpts...),
+	}
+	tests["DPJ journal and parent come from the bag payload"] = bag
+
+	avlBag := tests["Receipt is delivered successfully (AVLXML alt.)"]
+	avlBag.hariConfig = map[string]any{}
+	avlBag.dirOpts = []fs.PathOp{
+		fs.WithFile("bagit.txt", "BagIt-Version: 1.0\nTag-File-Character-Encoding: UTF-8\n"),
+		fs.WithDir("data", avlBag.dirOpts...),
+	}
+	tests["AVLXML is trimmed inside an intact bag"] = avlBag
+
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()

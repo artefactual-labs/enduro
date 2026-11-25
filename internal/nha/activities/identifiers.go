@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 )
 
@@ -25,10 +24,10 @@ type TransferIdentifierPair struct {
 }
 
 // readIdentifiers returns the identifiers found in the given transfer path.
-func readIdentifiers(path string) (TransferIdentifiers, error) {
+func readIdentifiers(root *os.Root) (TransferIdentifiers, error) {
 	identifiers := TransferIdentifiers([]TransferIdentifier{})
 
-	blob, err := os.ReadFile(filepath.Join(path, "metadata", "identifiers.json"))
+	blob, err := root.ReadFile("metadata/identifiers.json")
 	if err != nil {
 		return nil, err
 	}
@@ -42,8 +41,15 @@ func readIdentifiers(path string) (TransferIdentifiers, error) {
 
 // readIdentifier returns the specified identifier found in the given transfer
 // path. file matching uses case-insensitive suffix matching.
-func readIdentifier(path, fileSuffix, idtype string) (string, error) {
-	identifiers, err := readIdentifiers(path)
+func readIdentifier(root *receiptPayload, fileSuffix, idtype string) (string, error) {
+	ok, err := root.includes("metadata/identifiers.json", "metadata/identifiers.json")
+	if err != nil {
+		return "", err
+	}
+	if !ok {
+		return "", errors.New("metadata/identifiers.json missing from original payload")
+	}
+	identifiers, err := readIdentifiers(root.Root)
 	if err != nil {
 		return "", fmt.Errorf("error reading identifier: %v", err)
 	}

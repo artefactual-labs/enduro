@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/artefactual-labs/enduro/internal/bagit"
 	"github.com/artefactual-labs/enduro/internal/nha"
 	"github.com/artefactual-labs/enduro/internal/temporal"
 	"github.com/artefactual-labs/enduro/internal/workflow/hooks"
@@ -28,10 +29,11 @@ func NewUpdateProductionSystemActivity(h *hooks.Hooks) *UpdateProductionSystemAc
 }
 
 type UpdateProductionSystemActivityParams struct {
-	StoredAt     time.Time
-	PipelineName string
-	NameInfo     nha.NameInfo
-	FullPath     string
+	ConvertedLayout *bagit.ConvertedLayout `json:",omitempty"`
+	StoredAt        time.Time
+	PipelineName    string
+	NameInfo        nha.NameInfo
+	FullPath        string
 }
 
 func (a *UpdateProductionSystemActivity) Execute(ctx context.Context, params *UpdateProductionSystemActivityParams) error {
@@ -59,9 +61,16 @@ func (a *UpdateProductionSystemActivity) Execute(ctx context.Context, params *Up
 	var parentID string
 	{
 		if params.NameInfo.Type != nha.TransferTypeAVLXML {
-			const idtype = "avleveringsidentifikator"
-			parentID, err = readIdentifier(params.FullPath, params.NameInfo.Type.String()+"/journal/avlxml.xml", idtype)
+			root, err := openReceiptPayload(params.FullPath, params.ConvertedLayout)
 			if err != nil {
+				file.Close()
+				return fmt.Errorf("open receipt payload: %w", err)
+			}
+			defer root.Close()
+			const idtype = "avleveringsidentifikator"
+			parentID, err = readIdentifier(root, params.NameInfo.Type.String()+"/journal/avlxml.xml", idtype)
+			if err != nil {
+				file.Close()
 				return temporal.NewNonRetryableError(fmt.Errorf("error looking up avleveringsidentifikator: %v", err))
 			}
 		}
