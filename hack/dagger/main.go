@@ -84,12 +84,10 @@ type smokeEnvironment struct {
 // prepares the transfer locally and publishes it to ambox over SFTP, which
 // exercises the publish, transfer, cleanup, and completion workflow path.
 //
-// It also drives the Nuxt batch-import form with Playwright, submitting a
-// simple directory transfer from a filesystem path visible to Enduro. The suite
-// waits for processing to finish, downloads the generated AIPs through Enduro,
-// and performs basic checks on the AIPs and Temporal history. It returns a
-// Dagger directory with downloaded AIPs and diagnostic reports for local
-// inspection or CI artifact upload.
+// It also drives the Nuxt batch-import form with Playwright to submit an
+// unzipped bag. The suite downloads the AIPs through Enduro, verifies the bag's
+// original payload, and checks the Temporal history. It returns a Dagger
+// directory with the AIPs and diagnostic reports for local inspection or CI.
 //
 // Call from the repository root with:
 //
@@ -261,6 +259,19 @@ func (m *Enduro) StartupTest(ctx context.Context,
 		return nil, fmt.Errorf("expected direct Enduro entrypoint, got %q", entrypoint)
 	}
 	cacheBuster := fmt.Sprintf("startup-%d", time.Now().UnixNano())
+	// Share the staged files with the test endpoint so it can inspect exactly
+	// what Enduro hands off to Archivematica.
+	transfers := dag.CacheVolume(cacheBuster + "-transfers")
+	transferMount := dagger.ContainerWithMountedCacheOpts{Owner: "65532:65532"}
+	pipeline := dag.Container().From(nodeImage).
+		WithFile("/pipeline.mjs", source.File("hack/dagger/smoke/startup-pipeline.mjs")).
+		WithMountedCache("/runtime/transfers", transfers, transferMount).
+		WithExposedPort(8080).
+		AsService(dagger.ContainerAsServiceOpts{Args: []string{"node", "/pipeline.mjs"}})
+	bag := dag.Directory().
+		WithNewFile("bagit.txt", "BagIt-Version: 1.0\nTag-File-Character-Encoding: UTF-8\n").
+		WithNewFile("manifest-sha256.txt", "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  data/.DS_Store\n").
+		WithNewFile("data/.DS_Store", "")
 	mysql := m.mysqlService(source)
 	mysql, err = mysql.Start(ctx)
 	if err != nil {
@@ -272,8 +283,16 @@ func (m *Enduro) StartupTest(ctx context.Context,
 	}
 	runtime := image.WithServiceBinding("mysql", mysql).
 		WithServiceBinding("temporal", temporal).
+		WithServiceBinding("pipeline", pipeline).
 		WithEnvVariable("E2E_CACHE_BUSTER", cacheBuster).
 		WithDirectory("/runtime/watched", dag.Directory(), dagger.ContainerWithDirectoryOpts{Owner: "65532:65532"}).
+		WithMountedCache("/runtime/transfers", transfers, transferMount).
+		WithDirectory("/runtime/batch", dag.Directory().
+			WithDirectory("filtered/incomplete", bag).
+			WithDirectory("filtered/sibling", bag.WithoutFile("data/.DS_Store").
+				WithNewFile("data/sibling.txt", "").
+				WithNewFile("manifest-sha256.txt", "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  data/sibling.txt\n")).
+			WithDirectory("unfiltered/intact", bag), dagger.ContainerWithDirectoryOpts{Owner: "65532:65532"}).
 		WithNewFile("/etc/enduro/enduro.toml", `
 verbosity = 2
 [api]
@@ -288,6 +307,19 @@ taskQueue = "global"
 name = "startup"
 path = "/runtime/watched"
 inotify = true
+[[pipeline]]
+id = "e1b9a096-c3ca-4ee2-9010-7b76ba37d318"
+name = "startup"
+baseURL = "http://pipeline:8080"
+user = "test"
+key = "test"
+transferDir = "/runtime/transfers"
+capacity = 1
+unbag = false
+[[hooks."hari"]]
+disabled = true
+[[hooks."prod"]]
+disabled = true
 `).WithExposedPort(9000)
 	// Startup coverage isn't aggregated; the full suites collect workflow coverage.
 	if coverage {
@@ -295,6 +327,7 @@ inotify = true
 	}
 	service := runtime.AsService(dagger.ContainerAsServiceOpts{UseEntrypoint: true})
 	tester := dag.Container().From(nodeImage).WithServiceBinding("enduro", service).
+		WithServiceBinding("pipeline", pipeline).
 		WithEnvVariable("E2E_CACHE_BUSTER", cacheBuster).
 		WithFile("/startup.mjs", source.File("hack/dagger/smoke/startup.mjs")).
 		WithExec([]string{"node", "/startup.mjs"})

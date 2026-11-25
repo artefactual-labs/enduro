@@ -766,16 +766,19 @@ E.g.: `24h` (String)
 
 #### `unbag` (Boolean)
 
-If enabled, bagged transfers will be unbagged.
+If enabled, Enduro verifies the bag's checksums before converting it to an
+Archivematica transfer. When disabled, Enduro still checks the completeness of
+incoming bag directories before submission. See [bag checks before submission].
 
 E.g.: `false`
 
 ## `[validation]`
 
-#### `checksumsCheckEnabled` (String)
+#### `checksumsCheckEnabled` (Boolean)
 
-If enabled, this validator will stop the workflow with an error if the
-transfer does not include a document with checksums, e.g. `checksum.sha1`.
+When enabled, the staged Archivematica transfer must contain a checksum file
+such as `metadata/checksum.sha1`. BagIt payload manifests live at the bag root,
+so a bag can pass the completeness check and still fail this requirement.
 
 E.g.: `false`
 
@@ -846,5 +849,6 @@ E.g.: `30s` (String)
 
 See https://github.com/artefactual-labs/enduro/blob/main/enduro.toml.
 
+[bag checks before submission]: user-manual.md#bag-checks-before-submission
 [Data Source Name format]: https://github.com/go-sql-driver/mysql#dsn-data-source-name
 [RE2 syntax]: https://github.com/google/re2/wiki/Syntax

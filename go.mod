@@ -4,6 +4,7 @@ go 1.27.4
 
 require (
 	github.com/alicebob/miniredis/v2 v2.40.0
+	github.com/artefactual-labs/bagit-gython v0.7.0
 	github.com/artefactual-sdps/temporal-activities v0.0.0-20261028182908-24bee595a164
 	github.com/aws/aws-sdk-go-v2 v1.48.0
 	github.com/aws/aws-sdk-go-v2/config v1.33.21
@@ -112,6 +113,7 @@ require (
 	github.com/go-openapi/validate v1.0.3 // indirect
 	github.com/go-viper/mapstructure/v2 v2.5.0 // indirect
 	github.com/godbus/dbus/v5 v5.2.4 // indirect
+	github.com/gofrs/flock v0.13.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/gohugoio/hashstructure v1.1.0 // indirect
 	github.com/golang/mock v1.7.0-rc.1 // indirect
@@ -134,6 +136,7 @@ require (
 	github.com/klauspost/compress v1.20.5 // indirect
 	github.com/klauspost/cpuid/v2 v2.4.2 // indirect
 	github.com/klauspost/pgzip v1.3.0 // indirect
+	github.com/kluctl/go-embed-python v0.0.0-3.14.6-20260610-1 // indirect
 	github.com/kr/fs v0.1.0 // indirect
 	github.com/manveru/faker v0.0.0-20171103152722-9fbc68a78c4d // indirect
 	github.com/mholt/archives v0.1.5 // indirect
@@ -170,6 +173,7 @@ require (
 	github.com/sigstore/sigstore v1.11.4 // indirect
 	github.com/sigstore/sigstore-go v1.4.1 // indirect
 	github.com/sigstore/timestamp-authority/v2 v2.2.2 // indirect
+	github.com/sirupsen/logrus v1.9.4 // indirect
 	github.com/sorairolake/lzip-go v0.3.8 // indirect
 	github.com/spf13/cast v1.10.0 // indirect
 	github.com/stangelandcl/ppmd v0.1.1 // indirect

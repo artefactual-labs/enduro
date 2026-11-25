@@ -379,7 +379,7 @@ func (w *ProcessingWorkflow) Execute(ctx temporalsdk_workflow.Context, req *coll
 			// of losing the worker but not otherwise. This scenario seems to be
 			// identifiable when we have an error but the root context has not
 			// been canceled.
-			if sessErr != nil && (errors.Is(sessErr, temporalsdk_workflow.ErrSessionFailed) || temporalsdk_temporal.IsCanceledError(sessErr)) {
+			if isSessionInterrupted(sessErr) {
 				// Root context canceled, hence workflow canceled.
 				if ctx.Err() == temporalsdk_workflow.ErrCanceled {
 					return nil
@@ -520,7 +520,7 @@ func (w *ProcessingWorkflow) SessionHandler(sessCtx temporalsdk_workflow.Context
 			// deliver receipts, but it no longer needs exclusive pipeline access.
 			_ = release(sessCtx)
 
-			cleanupPreparedFiles, err := w.prepareBundle(sessCtx, tinfo)
+			cleanupPreparedFiles, err := w.prepareBundle(sessCtx, tinfo, nil)
 			if err != nil {
 				return err
 			}
@@ -542,14 +542,30 @@ func (w *ProcessingWorkflow) SessionHandler(sessCtx temporalsdk_workflow.Context
 		}
 	}
 
-	cleanupPreparedFiles, err := w.prepareBundle(sessCtx, tinfo)
+	// Existing runs keep their activity scheduling. Check bags only while
+	// preparing a new submission that has not yet been published.
+	version := temporalsdk_workflow.GetVersion(sessCtx, "reject-incomplete-bags", temporalsdk_workflow.DefaultVersion, 1)
+	checkBag := version >= 1 && tinfo.TransferID == "" && tinfo.PublishedTransfer == (activities.PublishTransferActivityResult{})
+	requireBag := checkBag && tinfo.TransferType == "unzipped bag"
+	var bundleOptions *bundlePreparationOptions
+	if version >= 1 {
+		bundleOptions = &bundlePreparationOptions{
+			checkBagBeforeUnbag: checkBag && tinfo.PipelineConfig.Unbag,
+			requireBag:          requireBag && tinfo.PipelineConfig.Unbag,
+		}
+	}
+
+	cleanupPreparedFiles, err := w.prepareBundle(sessCtx, tinfo, bundleOptions)
 	if err != nil {
 		return err
 	}
 	// On a session retry, tinfo.Bundle may point at files created on a worker
 	// that is no longer running this workflow. Rebuild before publishing when
 	// the publisher still needs that local source path.
-	if cleanupRebuiltFiles, err := w.rebuildBundleWhenPublishedSourceMissing(sessCtx, tinfo, req); err != nil {
+	if cleanupRebuiltFiles, err := w.rebuildBundleWhenPublishedSourceMissing(sessCtx, tinfo, req, bundleOptions); err != nil {
+		if bundleOptions != nil && !isSessionInterrupted(err) {
+			cleanupPreparedFiles()
+		}
 		return err
 	} else if cleanupRebuiltFiles != nil {
 		cleanupOriginalFiles := cleanupPreparedFiles
@@ -562,14 +578,21 @@ func (w *ProcessingWorkflow) SessionHandler(sessCtx temporalsdk_workflow.Context
 
 	// Validate transfer.
 	{
-		if validationConfig.IsEnabled() && tinfo.Bundle != (activities.BundleActivityResult{}) {
+		// Unbagging validates the original layout during preparation.
+		checkBagCompleteness := checkBag && !tinfo.PipelineConfig.Unbag
+		if (validationConfig.IsEnabled() || checkBagCompleteness) && tinfo.Bundle != (activities.BundleActivityResult{}) {
 			activityOpts := temporalsdk_workflow.WithActivityOptions(sessCtx, temporalsdk_workflow.ActivityOptions{
 				ScheduleToStartTimeout: forever,
 				StartToCloseTimeout:    time.Minute * 5,
 			})
+			if checkBagCompleteness {
+				activityOpts = withActivityOptsForLongLivedRequest(sessCtx)
+			}
 			err := temporalsdk_workflow.ExecuteActivity(activityOpts, activities.ValidateTransferActivityName, &activities.ValidateTransferActivityParams{
-				Config: validationConfig,
-				Path:   tinfo.Bundle.FullPath,
+				Config:               validationConfig,
+				Path:                 tinfo.Bundle.FullPath,
+				CheckBagCompleteness: checkBagCompleteness,
+				RequireBag:           checkBagCompleteness && requireBag,
 			}).Get(activityOpts, nil)
 			if err != nil {
 				return err
@@ -664,7 +687,12 @@ func (w *ProcessingWorkflow) SessionHandler(sessCtx temporalsdk_workflow.Context
 	return nil
 }
 
-func (w *ProcessingWorkflow) prepareBundle(sessCtx temporalsdk_workflow.Context, tinfo *TransferInfo) (func(), error) {
+type bundlePreparationOptions struct {
+	checkBagBeforeUnbag bool
+	requireBag          bool
+}
+
+func (w *ProcessingWorkflow) prepareBundle(sessCtx temporalsdk_workflow.Context, tinfo *TransferInfo, options *bundlePreparationOptions) (func(), error) {
 	// These paths live in Enduro's processing area and must be cleaned up even
 	// when the workflow later short-circuits into receipt delivery only.
 	tempBlob := tinfo.TempFile
@@ -715,27 +743,7 @@ func (w *ProcessingWorkflow) prepareBundle(sessCtx temporalsdk_workflow.Context,
 		}
 	}
 
-	if tinfo.Bundle == (activities.BundleActivityResult{}) {
-		// BundleActivity normalizes watcher and batch inputs into a transfer
-		// directory layout that the rest of the workflow can treat uniformly.
-		activityOpts := withActivityOptsForLongLivedRequest(sessCtx)
-		err := temporalsdk_workflow.ExecuteActivity(activityOpts, activities.BundleActivityName, &activities.BundleActivityParams{
-			TransferDir:        tinfo.PipelineConfig.TransferDir,
-			Key:                tinfo.Key,
-			IsDir:              tinfo.IsDir,
-			TempFile:           tinfo.TempFile,
-			StripTopLevelDir:   tinfo.StripTopLevelDir,
-			ExcludeHiddenFiles: tinfo.ExcludeHiddenFiles,
-			BatchDir:           tinfo.BatchDir,
-			Unbag:              tinfo.PipelineConfig.Unbag,
-		}).Get(activityOpts, &tinfo.Bundle)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	bundleFullPathBeforeStrip := tinfo.Bundle.FullPathBeforeStrip
-	return func() {
+	cleanup := func(bundleFullPathBeforeStrip, publishedRemotePath string) {
 		// We need disconnected context here because when session gets released the
 		// cleanup activities get scheduled and then immediately canceled.
 		var filesToRemove []string
@@ -751,14 +759,14 @@ func (w *ProcessingWorkflow) prepareBundle(sessCtx temporalsdk_workflow.Context,
 		cleanUpCtx, cancel := temporalsdk_workflow.NewDisconnectedContext(sessCtx)
 		defer cancel()
 		activityOpts := withActivityOptsForLocalAction(cleanUpCtx)
-		if tinfo.PublishedTransfer.RemotePath != "" {
+		if publishedRemotePath != "" {
 			// Published transfer cleanup is best-effort: failures should be
 			// visible in logs but must not mask the workflow's real outcome.
 			if err := temporalsdk_workflow.ExecuteActivity(activityOpts, activities.CleanUpPublishedActivityName, &activities.CleanUpPublishedTransferActivityParams{
 				PipelineName: tinfo.PipelineName,
-				RemotePath:   tinfo.PublishedTransfer.RemotePath,
+				RemotePath:   publishedRemotePath,
 			}).Get(activityOpts, nil); err != nil {
-				w.logger.Error(err, "failed to clean up published transfer", "path", tinfo.PublishedTransfer.RemotePath)
+				w.logger.Error(err, "failed to clean up published transfer", "path", publishedRemotePath)
 			}
 		}
 		if err := temporalsdk_workflow.ExecuteActivity(activityOpts, activities.CleanUpActivityName, &activities.CleanUpActivityParams{
@@ -766,7 +774,37 @@ func (w *ProcessingWorkflow) prepareBundle(sessCtx temporalsdk_workflow.Context,
 		}).Get(activityOpts, nil); err != nil {
 			w.logger.Error(err, "failed to clean up temporary files", "path", tempExtracted)
 		}
-	}, nil
+	}
+
+	if tinfo.Bundle == (activities.BundleActivityResult{}) {
+		// BundleActivity normalizes watcher and batch inputs into a transfer
+		// directory layout that the rest of the workflow can treat uniformly.
+		activityOpts := withActivityOptsForLongLivedRequest(sessCtx)
+		params := &activities.BundleActivityParams{
+			TransferDir:        tinfo.PipelineConfig.TransferDir,
+			Key:                tinfo.Key,
+			IsDir:              tinfo.IsDir,
+			TempFile:           tinfo.TempFile,
+			StripTopLevelDir:   tinfo.StripTopLevelDir,
+			ExcludeHiddenFiles: tinfo.ExcludeHiddenFiles,
+			BatchDir:           tinfo.BatchDir,
+			Unbag:              tinfo.PipelineConfig.Unbag,
+		}
+		if options != nil {
+			params.CheckBagBeforeUnbag = options.checkBagBeforeUnbag
+			params.RequireBag = options.requireBag
+
+		}
+		if err := temporalsdk_workflow.ExecuteActivity(activityOpts, activities.BundleActivityName, params).Get(activityOpts, &tinfo.Bundle); err != nil {
+			if options != nil && (tempBlob != "" || tempExtracted != "") && !isSessionInterrupted(err) {
+				cleanup("", "")
+			}
+			return nil, err
+		}
+	}
+
+	bundleFullPathBeforeStrip := tinfo.Bundle.FullPathBeforeStrip
+	return func() { cleanup(bundleFullPathBeforeStrip, tinfo.PublishedTransfer.RemotePath) }, nil
 }
 
 // rebuildBundleWhenPublishedSourceMissing repairs stale session-local bundle
@@ -775,6 +813,7 @@ func (w *ProcessingWorkflow) rebuildBundleWhenPublishedSourceMissing(
 	sessCtx temporalsdk_workflow.Context,
 	tinfo *TransferInfo,
 	req *collection.ProcessingWorkflowRequest,
+	options *bundlePreparationOptions,
 ) (func(), error) {
 	if !tinfo.PipelineConfig.TransferPublisher.Enabled() ||
 		tinfo.PublishedTransfer != (activities.PublishTransferActivityResult{}) ||
@@ -797,7 +836,11 @@ func (w *ProcessingWorkflow) rebuildBundleWhenPublishedSourceMissing(
 	}
 
 	resetPreparedTransferForPublisherRetry(tinfo, req)
-	return w.prepareBundle(sessCtx, tinfo)
+	return w.prepareBundle(sessCtx, tinfo, options)
+}
+
+func isSessionInterrupted(err error) bool {
+	return errors.Is(err, temporalsdk_workflow.ErrSessionFailed) || temporalsdk_temporal.IsCanceledError(err)
 }
 
 // resetPreparedTransferForPublisherRetry rewinds only derived staging state.

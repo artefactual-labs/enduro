@@ -15,6 +15,7 @@ import (
 	"syscall"
 	"time"
 
+	bagit "github.com/artefactual-labs/bagit-gython"
 	"github.com/artefactual-sdps/temporal-activities/archiveextract"
 	"github.com/go-logr/logr"
 	"github.com/hashicorp/go-cleanhttp"
@@ -324,6 +325,18 @@ func main() {
 		}
 	}
 
+	// All task queues in this process share the embedded runtime. Extract it
+	// on the first bag and bound concurrent checks by both sessions and CPUs.
+	bags, err := bagit.NewValidator(
+		bagit.WithDeferredRuntime(),
+		bagit.WithTempCacheDir(),
+		bagit.WithPoolSize(max(1, min(config.Worker.MaxConcurrentSessionExecutionSize, runtime.GOMAXPROCS(0)))),
+	)
+	if err != nil {
+		logger.Error(err, "Error setting up BagIt validation.")
+		os.Exit(1)
+	}
+
 	for _, p := range pipelineRegistry.List() {
 		if p.Status(ctx) == "active" {
 			logger.Info("Creating worker and task queue", "Pipeline", p.TaskQueue)
@@ -339,6 +352,7 @@ func main() {
 			colsvc,
 			wsvc,
 			batchsvc,
+			bags,
 			logger,
 			&g,
 		)
@@ -351,6 +365,7 @@ func main() {
 		colsvc,
 		wsvc,
 		batchsvc,
+		bags,
 		logger,
 		&g,
 	)
@@ -426,6 +441,9 @@ func main() {
 	}
 
 	err = g.Run()
+	if closeErr := bags.Close(); closeErr != nil {
+		logger.Error(closeErr, "Error closing BagIt validator.")
+	}
 	if err != nil {
 		logger.Error(err, "Application failure.")
 		os.Exit(1)
@@ -591,6 +609,7 @@ func registerWorker(
 	colsvc collection.Service,
 	wsvc watcher.Service,
 	batchsvc batch.Service,
+	bags *bagit.Validator,
 	logger logr.Logger,
 	g *run.Group,
 ) {
@@ -610,8 +629,8 @@ func registerWorker(
 	w.RegisterActivityWithOptions(activities.NewAcquirePipelineActivity(pipelineRegistry).Execute, temporalsdk_activity.RegisterOptions{Name: activities.AcquirePipelineActivityName})
 	w.RegisterActivityWithOptions(activities.NewDownloadActivity(h, pipelineRegistry, wsvc).Execute, temporalsdk_activity.RegisterOptions{Name: activities.DownloadActivityName})
 	w.RegisterActivityWithOptions(archiveextract.New(config.ExtractActivity).Execute, temporalsdk_activity.RegisterOptions{Name: archiveextract.Name})
-	w.RegisterActivityWithOptions(activities.NewBundleActivity().Execute, temporalsdk_activity.RegisterOptions{Name: activities.BundleActivityName})
-	w.RegisterActivityWithOptions(activities.NewValidateTransferActivity().Execute, temporalsdk_activity.RegisterOptions{Name: activities.ValidateTransferActivityName})
+	w.RegisterActivityWithOptions(activities.NewBundleActivity(bags).Execute, temporalsdk_activity.RegisterOptions{Name: activities.BundleActivityName})
+	w.RegisterActivityWithOptions(activities.NewValidateTransferActivity(bags).Execute, temporalsdk_activity.RegisterOptions{Name: activities.ValidateTransferActivityName})
 	w.RegisterActivityWithOptions(activities.NewPublishTransferActivity(pipelineRegistry).Execute, temporalsdk_activity.RegisterOptions{Name: activities.PublishTransferActivityName})
 	w.RegisterActivityWithOptions(activities.NewCleanUpPublishedTransferActivity(pipelineRegistry).Execute, temporalsdk_activity.RegisterOptions{Name: activities.CleanUpPublishedActivityName})
 	w.RegisterActivityWithOptions(activities.NewTransferActivity(pipelineRegistry).Execute, temporalsdk_activity.RegisterOptions{Name: activities.TransferActivityName})

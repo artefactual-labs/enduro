@@ -1,6 +1,6 @@
 # GoReleaser supplies the compiled binary for each target platform.
-# Keep the runtime base aligned with depbot's static, nonroot image.
-FROM cgr.dev/chainguard/static:latest@sha256:8658e9eaeb2294fa0e49b0667f7d66b4e21fa7690b8d2a4c30cd1d013ceb9eb7
+# The embedded BagIt validator runs a Python interpreter linked against glibc.
+FROM cgr.dev/chainguard/glibc-dynamic:latest@sha256:d553920723f9c0dedef07166a6295d35b9f7173a3c37f5a7b5692b4b5f62a7b3
 ARG TARGETPLATFORM
 COPY --chmod=0555 ${TARGETPLATFORM}/enduro /usr/local/bin/enduro
 COPY LICENSE /usr/share/licenses/enduro/LICENSE
